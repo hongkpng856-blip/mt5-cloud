@@ -222,6 +222,64 @@ except Exception as e:
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()
 
+@sio.on('install_ea_command')
+def on_install_ea(data):
+    """收到 Server 指令：下載並安裝 EA 去 MT5"""
+    ea_name = data.get('ea_name', '')
+    url = data.get('download_url', '')
+
+    print(f"📥 Installing EA: {ea_name}")
+    print(f"   Downloading from: {url}")
+
+    try:
+        import requests
+        resp = requests.get(url, timeout=30)
+        if resp.status_code == 200:
+            # 搵 MT5 Experts 目錄
+            experts_dir = None
+            appdata = os.environ.get('APPDATA', '')
+            terminal_dir = os.path.join(appdata, 'MetaQuotes', 'Terminal')
+            if os.path.isdir(terminal_dir):
+                for folder in sorted(os.listdir(terminal_dir)):
+                    ep = os.path.join(terminal_dir, folder, 'MQL5', 'Experts')
+                    if os.path.isdir(ep):
+                        experts_dir = ep
+                        break
+                if not experts_dir:
+                    common = os.path.join(terminal_dir, 'Common', 'MQL5', 'Experts')
+                    if os.path.isdir(common):
+                        experts_dir = common
+
+            if experts_dir:
+                filepath = os.path.join(experts_dir, ea_name)
+                with open(filepath, 'wb') as f:
+                    f.write(resp.content)
+                print(f"✅ Installed: {filepath}")
+
+                # 嘗試 Compile
+                metaeditor = None
+                for prog in ['C:\\Program Files\\MetaTrader 5\\metaeditor64.exe',
+                             'C:\\Program Files (x86)\\MetaTrader 5\\metaeditor64.exe']:
+                    if os.path.isfile(prog):
+                        metaeditor = prog
+                        break
+                if metaeditor and ea_name.endswith('.mq5'):
+                    import subprocess
+                    subprocess.run([metaeditor, f'/compile:"{filepath}"', '/s'],
+                                 capture_output=True, timeout=30)
+                    print(f"⚙️  Compiled: {ea_name}")
+
+                sio.emit('install_result', {"status": "ok", "ea": ea_name})
+            else:
+                print("❌ Cannot find MT5 Experts folder")
+                sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": "MT5 not found"})
+        else:
+            print(f"❌ Download failed: {resp.status_code}")
+            sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": f"HTTP {resp.status_code}"})
+    except Exception as e:
+        print(f"❌ Install error: {e}")
+        sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
+
 # Keep running
 try:
     while True:

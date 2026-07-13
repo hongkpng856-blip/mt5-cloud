@@ -5,7 +5,7 @@ import os
 import json
 import uuid
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -195,6 +195,26 @@ def api_analysis():
         "correlation_keys": ea_keys
     })
 
+# === API: EA 庫 ===
+EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
+
+@app.route('/api/ea-library')
+def api_ea_library():
+    """返回 EA 庫列表"""
+    files = []
+    if os.path.isdir(EA_LIBRARY_DIR):
+        for f in sorted(os.listdir(EA_LIBRARY_DIR)):
+            if f.endswith('.mq5'):
+                path = os.path.join(EA_LIBRARY_DIR, f)
+                size = os.path.getsize(path)
+                files.append({"name": f, "size": f"{size/1024:.1f} KB"})
+    return jsonify({"files": files, "count": len(files)})
+
+@app.route('/api/ea-library/<path:filename>')
+def api_ea_download(filename):
+    """下載 EA 檔案"""
+    return send_from_directory(EA_LIBRARY_DIR, filename)
+
 # === WebSocket: Agent ===
 @socketio.on('connect')
 def handle_connect():
@@ -221,6 +241,19 @@ def handle_sync(data):
         agent.status = data.get('status','connected')
         db.session.commit()
         emit('agent_update', {}, room=agent.agent_id)
+
+@socketio.on('agent_install_ea')
+def handle_install_ea(data):
+    """用戶㩒 Install EA，通知 Agent 去下載同安裝"""
+    agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
+    if agent:
+        ea_name = data.get('ea_name')
+        # 叫 Agent 下載並安裝
+        emit('install_ea_command', {
+            "ea_name": ea_name,
+            "download_url": f"{request.host_url}api/ea-library/{ea_name}"
+        }, room=agent.agent_id)
+        emit('install_result', {"status": "sent", "ea": ea_name})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

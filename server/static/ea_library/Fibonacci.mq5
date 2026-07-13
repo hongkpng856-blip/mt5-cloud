@@ -1,0 +1,33 @@
+//+------------------------------------------------------------------+
+//| Fibonacci.mq5                                                 |
+//| 測試用 EA #28 - 斐波那契              |
+//+------------------------------------------------------------------+
+#property copyright      "測試策略 #28"
+#property version        "1.00"
+#property description    "斐波那契"
+#property description    "Fib 回調 0.618"
+
+input double LotSize     = 0.01;     // 每單手數
+input int    MagicNumber = 20240028; // EA ID
+input bool   EnableLog   = true;     // 啟用日誌
+
+int OnInit()
+{
+   if(EnableLog) Print("✅ Fibonacci 已啟動！策略：斐波那契");
+   return(INIT_SUCCEEDED);
+}
+
+void OnDeinit(const int reason)
+{
+   if(EnableLog) Print("🛑 Fibonacci 已停止");
+}
+
+void OnTick()
+{
+   static datetime lastBar = 0;
+   if(TimeCurrent() - lastBar < 60) return;
+   lastBar = TimeCurrent();
+
+   Comment("斐波那契\nFib 回調 0.618\nMagic: " + IntegerToString(MagicNumber) + "\n狀態：等待交易信號");
+}
+//+------------------------------------------------------------------+
