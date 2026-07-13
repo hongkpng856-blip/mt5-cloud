@@ -305,6 +305,21 @@ def handle_register(data):
         agent.last_seen = datetime.utcnow()
         db.session.commit()
         emit('registered', {"status":"ok"})
+        # 自動推送 EA 配置俾 Agent
+        user = agent.user
+        if user and user.ea_config and user.ea_config != '{}':
+            try:
+                config = json.loads(user.ea_config)
+                ea_names = [k for k in config.keys() if not k.endswith('_tf') and not k.endswith('_lot') and k != '_default_lot']
+                if ea_names:
+                    emit('install_ea_command', {
+                        "ea_name": "all",
+                        "ea_list": ea_names,
+                        "download_url": f"{request.host_url}api/ea-library/"
+                    }, room=agent.agent_id)
+                    print(f"[WS] Auto-sent EA config to agent {agent.agent_id}: {len(ea_names)} EAs")
+            except:
+                pass
 
 @socketio.on('agent_sync')
 def handle_sync(data):

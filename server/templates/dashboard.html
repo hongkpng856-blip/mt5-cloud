@@ -274,7 +274,7 @@ async function saveEAConfig() {
         socket.emit('agent_install_ea', { agent_id: dashData.agent_id, ea_name: 'all' });
         showLog('📡 Agent 在線，已發送安裝指令...', 'log-info');
     } else {
-        showLog('💡 Agent 離線，安裝後 Agent 會自動同步', 'log-warn');
+        showLog('💡 Agent 離線，連線後會自動同步安裝 EA ✅', 'log-warn');
     }
 }
 
