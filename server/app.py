@@ -291,6 +291,18 @@ def api_ea_upload():
 
     return jsonify({"success": True, "filename": filename, "size": f"{os.path.getsize(filepath)/1024:.1f} KB"})
 
+@app.route('/api/agent-download')
+def api_agent_download():
+    """下載 Windows Agent 安裝檔"""
+    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    return send_from_directory(agent_dir, 'install_agent.bat')
+
+@app.route('/api/agent-py')
+def api_agent_py():
+    """下載 agent.py"""
+    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    return send_from_directory(agent_dir, 'agent.py')
+
 # === WebSocket: Agent ===
 @socketio.on('connect')
 def handle_connect():
