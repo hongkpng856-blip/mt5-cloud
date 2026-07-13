@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: mt5-cloud
+    runtime: python
+    repo: https://github.com/hongkpng855-lang/mt5-cloud
+    branch: master
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k eventlet -w 1 -b 0.0.0.0:10000 app:app
+    healthCheckPath: /
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
