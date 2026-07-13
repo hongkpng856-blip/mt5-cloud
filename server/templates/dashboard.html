@@ -43,9 +43,42 @@
         .scroll-box::-webkit-scrollbar { width:6px; }
         .scroll-box::-webkit-scrollbar-thumb { background:#30363d; border-radius:3px; }
 
+        .step-box { background:#0d1117; border:1px solid #30363d; border-radius:10px; padding:16px; }
+        .step-box .step-num { width:28px; height:28px; border-radius:50%; background:#238636; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; margin-bottom:8px; }
+        .step-box h4 { font-size:14px; margin-bottom:4px; }
+        .step-box p { font-size:12px; color:#8b949e; }
+
         .corr-table { font-size:11px; }
         .corr-table th, .corr-table td { padding:4px 8px; text-align:center; }
         .corr-table th { min-width:50px; }
+
+        /* === 手機 Responsive === */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width:100%; padding:12px 16px; flex-direction:row; align-items:center; gap:12px; border-right:none; border-bottom:1px solid #30363d; overflow-x:auto; }
+            .sidebar h2 { font-size:14px; margin-bottom:0; white-space:nowrap; }
+            .sidebar a { font-size:12px; padding:6px 10px; white-space:nowrap; }
+            .sidebar .logout { margin-top:0; margin-left:auto; }
+            .main { padding:16px; }
+            .card { padding:16px; }
+            .card-title { font-size:14px; }
+            .stat-box { min-width:calc(50% - 8px); flex:1 1 calc(50% - 8px); }
+            .stat-box .value { font-size:16px; }
+            .step-box { font-size:13px; }
+            .step-box h4 { font-size:13px; }
+            .step-box p { font-size:11px; }
+            .btn { font-size:12px; padding:6px 12px; }
+            .ea-table { font-size:11px; }
+            .ea-table th { font-size:10px; padding:4px; }
+            .ea-table td { padding:4px; }
+            .ea-table select { max-width:80px; font-size:10px; padding:2px; }
+            .ea-table input { width:40px; font-size:10px; padding:2px; }
+            .scroll-box { max-height:300px; }
+            .ea-table { min-width:600px; }
+            .scroll-box { overflow-x:auto; }
+            [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
+            #onboardingCard > div { grid-template-columns:1fr !important; }
+        }
         .log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:12px; display:none; }
         .log-box.show { display:block; }
         .log-success { color:#3fb950; }
@@ -76,15 +109,58 @@
         </div>
     </div>
 
-    <!-- EA 配對表 -->
+    <!-- Getting Started (for new users) -->
+    <div class="card" id="onboardingCard">
+    <div class="card-title">🚀 第一次用？跟住呢 4 步</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="step-box">
+            <div class="step-num">1</div>
+            <h4>下載 EA</h4>
+            <p>由下面 EA 庫揀策略，或者上傳你自己嘅 EA</p>
+        </div>
+        <div class="step-box">
+            <div class="step-num">2</div>
+            <h4>安裝去 MT5</h4>
+            <p>將 .mq5 放入 MT5 Experts folder，開 MetaEditor Compile (F7)</p>
+        </div>
+        <div class="step-box">
+            <div class="step-num">3</div>
+            <h4>安裝 Agent</h4>
+            <p>Download agent.py，用你嘅 Agent ID 連接</p>
+        </div>
+        <div class="step-box">
+            <div class="step-num">4</div>
+            <h4>睇分析</h4>
+            <p>Agent sync 完數據，Dashboard 自動顯示 Performance + Correlation</p>
+        </div>
+    </div>
+    </div>
+
+    <!-- EA Library - 平台提供 -->
     <div class="card">
-        <div class="card-title">📦 EA 配對表 <span id="eaCount" class="badge">0</span></div>
+        <div class="card-title">📦 EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span></div>
+        <div class="scroll-box" style="max-height:250px">
+            <table class="ea-table" id="officialTable">
+                <thead><tr><th>EA 名稱</th><th>大小</th><th></th></tr></thead>
+                <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:#8b949e">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 我的配對庫（=我的倉庫） -->
+    <div class="card">
+        <div class="card-title">📋 我的配對庫 <span id="eaCount" class="badge">0</span>
+            <span style="font-size:11px;color:#8b949e;font-weight:normal">— 可以上傳自己嘅 EA</span>
+        </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
             <button class="btn" onclick="loadEAConfig()">🔄 重新整理</button>
             <button class="btn btn-orange" onclick="saveEAConfig()">💾 儲存配對</button>
-            <span style="display:flex;align-items:center;gap:4px;margin-left:8px">
+            <label class="btn" style="cursor:pointer">📤 上傳自己嘅 EA
+                <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
+            </label>
+            <span style="display:flex;align-items:center;gap:4px;margin-left:auto">
                 <span style="font-size:12px;color:#8b949e">Lots:</span>
-                <input type="number" id="defaultLot" value="0.01" min="0.01" max="100" step="0.01" style="width:55px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 6px;font-size:13px;text-align:center">
+                <input type="number" id="defaultLot" value="1.00" min="0.01" max="100" step="0.01" style="width:55px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 6px;font-size:13px;text-align:center">
                 <button class="btn" onclick="applyAllLots()" style="padding:4px 10px;font-size:12px">📋 全部</button>
             </span>
         </div>
@@ -92,9 +168,9 @@
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th>
+                    <th>EA</th><th>來源</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th>
                 </tr></thead>
-                <tbody id="eaTableBody"><tr><td colspan="7" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
+                <tbody id="eaTableBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -145,6 +221,7 @@ async function loadEAConfig() {
             const sym = eaMappings[name] || allSymbols[0];
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
+            const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
 
             // 從 analysis 攞 data
             const eaData = analysisData ? analysisData.per_ea.find(e => e.ea.includes(name)) : null;
@@ -154,6 +231,7 @@ async function loadEAConfig() {
 
             html += `<tr>
                 <td><b>${name}</b></td>
+                <td><span style="font-size:10px;${isOfficial?'color:#3fb950':'color:#8b949e'}">${isOfficial?'🟢 平台提供':'⬜ 你上傳'}</span></td>
                 <td><select class="ea-sym" data-ea="${name}">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select></td>
                 <td><select class="ea-tf" data-ea="${name}">${['M1','M5','M15','M30','H1','H4','D1','W1','MN1'].map(t => `<option ${t===tf?'selected':''}>${t}</option>`).join('')}</select></td>
                 <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
@@ -188,6 +266,16 @@ async function saveEAConfig() {
         body: JSON.stringify({mappings})
     });
     showLog('✅ EA config saved!');
+
+    // 如果 Agent 在線，自動發送安裝指令
+    const dashRes = await fetch('/api/dashboard');
+    const dashData = await dashRes.json();
+    if (dashData.status === 'connected' || dashData.status === 'running') {
+        socket.emit('agent_install_ea', { agent_id: dashData.agent_id, ea_name: 'all' });
+        showLog('📡 Agent 在線，已發送安裝指令...', 'log-info');
+    } else {
+        showLog('💡 Agent 離線，安裝後 Agent 會自動同步', 'log-warn');
+    }
 }
 
 function showLog(msg, cls='log-success') {
@@ -263,8 +351,88 @@ async function loadAnalysis() {
 loadDashboard();
 loadEAConfig();
 loadAnalysis();
+loadEALibrary();
 setInterval(loadDashboard, 5000);
 setInterval(loadAnalysis, 10000);
+
+// === EA Library ===
+async function loadEALibrary() {
+    try {
+        const res = await fetch('/api/ea-library');
+        const data = await res.json();
+
+        // 官方 EA
+        const official = (data.files || []).filter(f => f.type === 'official');
+        document.getElementById('officialCount').textContent = official.length;
+        let oHtml = '';
+        official.forEach(f => {
+            const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
+            const added = document.querySelector(`.ea-sym[data-ea="${baseName}"]`) !== null;
+            oHtml += `<tr>
+                <td><b>${f.name}</b> <span style="font-size:10px;color:#3fb950">平台提供</span></td>
+                <td style="font-size:12px;color:#8b949e">${f.size}</td>
+                <td>${added ? '<span style="color:#3fb950;font-size:11px">✅ 已加入</span>'
+                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')">➕ 移去配對</button>`}</td>
+            </tr>`;
+        });
+        const offTable = document.querySelector('#officialTable tbody');
+        if (offTable) offTable.innerHTML = oHtml || '<tr><td colspan="3" style="text-align:center;padding:20px;color:#8b949e">—</td></tr>';
+
+        // 用戶上傳嘅 EA 直接放 EA 倉庫下面
+        const userFiles = (data.files || []).filter(f => f.type === 'user');
+        if (userFiles.length > 0) {
+            userFiles.forEach(f => {
+                const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
+                const added = document.querySelector(`.ea-sym[data-ea="${baseName}"]`) !== null;
+                if (!added) {
+                    // 自動加入配對庫
+                    addEAToPairing(baseName, f.name, '用戶');
+                }
+            });
+        }
+    } catch(e) {}
+}
+
+async function addEAToPairing(baseName, fileName, source) {
+    // 直接 save 去 server
+    const res = await fetch('/api/ea-config');
+    const data = await res.json();
+    let mappings = data.mappings || {};
+    const dl = mappings['_default_lot'] || 1.00;
+    mappings[baseName] = mappings[baseName] || 'EURUSD';
+    mappings[baseName+'_tf'] = mappings[baseName+'_tf'] || 'H1';
+    mappings[baseName+'_lot'] = mappings[baseName+'_lot'] || dl;
+
+    await fetch('/api/ea-config', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({mappings})
+    });
+    loadEALibrary();
+    loadEAConfig();
+    showLog('✅ ' + fileName + ' 已加入配對表！請設定 Symbol/TF/Lots 然後㩒儲存', 'log-success');
+}
+
+async function uploadEA() {
+    const input = document.getElementById('eaUploadInput');
+    if (!input.files.length) return;
+    const file = input.files[0];
+    const form = new FormData();
+    form.append('file', file);
+    try {
+        const res = await fetch('/api/ea-library/upload', { method: 'POST', body: form });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ ' + data.filename + ' 上傳成功！');
+            loadEALibrary();
+        } else {
+            alert('❌ ' + (data.error || 'Upload failed'));
+        }
+    } catch(e) {
+        alert('❌ Upload error: ' + e.message);
+    }
+    input.value = '';
+}
 </script>
 </body>
 </html>

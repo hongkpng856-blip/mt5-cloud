@@ -21,12 +21,21 @@
         .card input:focus { border-color: #58a6ff; outline: none; }
         .card button {
             width: 100%; padding: 10px; background: #238636; border: 1px solid #2ea043;
-            border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+            border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 8px;
         }
         .card button:hover { background: #2ea043; }
+        .card button.btn2 { background: #1f6feb; border-color: #388bfd; }
+        .card button.btn2:hover { background: #388bfd; }
         .card p { text-align: center; margin-top: 16px; font-size: 13px; }
         .card a { color: #58a6ff; text-decoration: none; }
         .error { color: #f85149; font-size: 13px; margin-bottom: 12px; display: none; }
+        @media (max-width: 768px) {
+            .card { width:90%; padding:24px; }
+            .card h1 { font-size:20px; }
+            .card input { font-size:16px; padding:12px; }
+            .card button { font-size:16px; padding:14px; }
+            body { padding:20px 0; }
+        }
     </style>
 </head>
 <body>
@@ -38,6 +47,8 @@
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
+        <button class="btn2" onclick="devLogin()">🔐 Dev Account 快速登入</button>
+        <div id="devInfo" style="display:none;margin-top:12px;padding:12px;background:#1a3a2a;border:1px solid #3fb950;border-radius:6px;font-size:13px">✅ Dev Account 已登入</div>
         <p>No account? <a href="/register">Register</a></p>
     </div>
     <script>
@@ -58,6 +69,38 @@
             } else {
                 window.location.href = '/dashboard';
             }
+        }
+
+        async function createTestAccount() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ 建立中...';
+            const res = await fetch('/api/test-account', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('testResult').innerHTML =
+                    '✅ 測試帳號已建立<br>' +
+                    '<b>Username:</b> ' + data.username + '<br>' +
+                    '<b>Password:</b> ' + data.password + '<br>' +
+                    '<b>Agent ID:</b> ' + data.agent_id + '<br><br>' +
+                    '<button onclick="autoLogin(\'' + data.username + '\',\'' + data.password + '\')" style="padding:8px 16px;background:#238636;border:1px solid #2ea043;border-radius:6px;color:#fff;cursor:pointer;font-size:13px">🔑 自動登入</button>';
+                document.getElementById('testResult').style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.innerHTML = '🧪 建立測試帳號';
+        }
+
+        async function autoLogin(u, p) {
+            document.getElementById('username').value = u;
+            document.getElementById('password').value = p;
+            login({ preventDefault: () => {} });
+        }
+
+        async function devLogin() {
+            document.getElementById('username').value = 'dev';
+            document.getElementById('password').value = 'dev1234';
+            document.getElementById('devInfo').style.display = 'block';
+            await login({ preventDefault: () => {} });
         }
     </script>
 </body>

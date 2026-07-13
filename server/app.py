@@ -10,6 +10,7 @@ from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from collections import defaultdict
 import math
 
@@ -47,6 +48,15 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
+    # 建立固定 Dev Account（如果未存在）
+    if not User.query.filter_by(username='dev').first():
+        dev_user = User(username='dev', email='dev@mt5cloud.com',
+                        password=generate_password_hash('dev1234'))
+        db.session.add(dev_user)
+        dev_agent = Agent(agent_id='DEV00001', user=dev_user)
+        db.session.add(dev_agent)
+        db.session.commit()
+        print("✅ Dev account created: dev / dev1234")
 
 # 預設交易品種
 ALL_SYMBOLS = ['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','NZDUSD',
@@ -93,6 +103,29 @@ def login():
             return jsonify({"success":True})
         return jsonify({"error":"Invalid credentials"}),401
     return render_template('login.html')
+
+@app.route('/api/test-account', methods=['POST'])
+def api_test_account():
+    """建立測試帳號（一鍵生成）"""
+    import string, random
+    # Generate random username
+    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    username = f"test_{suffix}"
+    password = "test1234"
+
+    user = User(username=username, email=f"{username}@test.com",
+                password=generate_password_hash(password))
+    db.session.add(user)
+    agent = Agent(agent_id=str(uuid.uuid4())[:8], user=user)
+    db.session.add(agent)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "username": username,
+        "password": password,
+        "agent_id": agent.agent_id
+    })
 
 @app.route('/logout')
 @login_required
@@ -197,23 +230,66 @@ def api_analysis():
 
 # === API: EA 庫 ===
 EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'static', 'user_ea')
+
+# 確保目錄存在
+os.makedirs(EA_LIBRARY_DIR, exist_ok=True)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.route('/api/ea-library')
 def api_ea_library():
-    """返回 EA 庫列表"""
+    """返回 EA 庫列表（平台提供 + 用戶上傳）"""
     files = []
+    # 平台提供嘅 EA
     if os.path.isdir(EA_LIBRARY_DIR):
         for f in sorted(os.listdir(EA_LIBRARY_DIR)):
             if f.endswith('.mq5'):
                 path = os.path.join(EA_LIBRARY_DIR, f)
                 size = os.path.getsize(path)
-                files.append({"name": f, "size": f"{size/1024:.1f} KB"})
+                files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "official", "author": "Platform"})
+    # 用戶上傳嘅 EA
+    if current_user.is_authenticated:
+        user_dir = os.path.join(UPLOAD_DIR, current_user.username)
+        if os.path.isdir(user_dir):
+            for f in sorted(os.listdir(user_dir)):
+                if f.endswith(('.mq5','.ex5')):
+                    path = os.path.join(user_dir, f)
+                    size = os.path.getsize(path)
+                    files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "user", "author": current_user.username})
     return jsonify({"files": files, "count": len(files)})
 
 @app.route('/api/ea-library/<path:filename>')
 def api_ea_download(filename):
-    """下載 EA 檔案"""
+    """下載 EA 檔案（先睇用戶目錄，再睇官方目錄）"""
+    # 先睇用戶上傳目錄
+    if current_user.is_authenticated:
+        user_dir = os.path.join(UPLOAD_DIR, current_user.username)
+        user_path = os.path.join(user_dir, filename)
+        if os.path.isfile(user_path):
+            return send_from_directory(user_dir, filename)
+    # 再睇官方目錄
     return send_from_directory(EA_LIBRARY_DIR, filename)
+
+@app.route('/api/ea-library/upload', methods=['POST'])
+@login_required
+def api_ea_upload():
+    """用戶上傳自己嘅 EA"""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+    if not file.filename.endswith(('.mq5', '.ex5')):
+        return jsonify({"error": "Only .mq5 and .ex5 files allowed"}), 400
+
+    # 儲存去用戶專屬目錄
+    user_dir = os.path.join(UPLOAD_DIR, current_user.username)
+    os.makedirs(user_dir, exist_ok=True)
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(user_dir, filename)
+    file.save(filepath)
+
+    return jsonify({"success": True, "filename": filename, "size": f"{os.path.getsize(filepath)/1024:.1f} KB"})
 
 # === WebSocket: Agent ===
 @socketio.on('connect')
