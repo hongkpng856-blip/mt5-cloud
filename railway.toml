@@ -1,0 +1,11 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "cd server && pip install -r requirements.txt"
+
+[deploy]
+startCommand = "cd server && gunicorn -k eventlet -w 1 -b 0.0.0.0:${PORT:-5000} app:app"
+healthcheckPath = "/"
+restartPolicyType = "ON_FAILURE"
+
+[web]
+domain = ""
