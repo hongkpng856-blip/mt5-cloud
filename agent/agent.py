@@ -110,6 +110,27 @@ def get_mt5_status():
                 "comment": p.comment
             })
 
+    # Sync 交易歷史（用嚟做分析）
+    from datetime import datetime, timedelta
+    since = datetime.now() - timedelta(days=365)
+    deals = mt5.history_deals_get(since, datetime.now())
+    data["deals"] = []
+    if deals:
+        for d in deals[-200:]:  # 最近 200 筆
+            data["deals"].append({
+                "ticket": d.ticket,
+                "symbol": d.symbol,
+                "type": d.type,
+                "volume": d.volume,
+                "price": d.price,
+                "profit": round(d.profit, 2),
+                "commission": round(d.commission, 2),
+                "swap": round(d.swap, 2),
+                "magic": d.magic,
+                "time": str(datetime.fromtimestamp(d.time)),
+                "comment": d.comment
+            })
+
     mt5.shutdown()
     return data
 

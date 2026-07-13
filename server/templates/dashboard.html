@@ -130,6 +130,26 @@
             <h3>📡 Agent Connection <span id="connectionBadge" class="badge badge-gray">Unknown</span></h3>
             <p style="font-size:13px;color:#8b949e" id="lastSeen">Waiting for agent...</p>
         </div>
+
+        <!-- Analysis Section -->
+        <div class="card">
+            <h3>📊 Performance Summary</h3>
+            <div class="status-bar" id="summaryStats">
+                <div class="stat"><div class="label">Total Trades</div><div class="value" id="anTrades">—</div></div>
+                <div class="stat"><div class="label">Win Rate</div><div class="value" id="anWinRate" style="color:#3fb950">—</div></div>
+                <div class="stat"><div class="label">Total P&L</div><div class="value" id="anProfit">—</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🤖 Per-EA Analysis <span id="eaCount" class="badge">0</span></h3>
+            <div id="eaAnalysisTable"></div>
+        </div>
+
+        <div class="card">
+            <h3>🔗 Correlation Matrix</h3>
+            <div id="correlationTable" style="overflow-x:auto"></div>
+        </div>
     </div>
 
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
@@ -188,6 +208,54 @@
 
         loadDashboard();
         setInterval(loadDashboard, 5000);
+
+        // === Load Analysis ===
+        async function loadAnalysis() {
+            try {
+                const res = await fetch('/api/analysis');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.error) return;
+
+                const s = data.summary;
+                document.getElementById('anTrades').textContent = s.total_trades;
+                document.getElementById('anWinRate').textContent = s.win_rate + '%';
+                document.getElementById('anProfit').textContent = (s.total_profit >= 0 ? '+' : '') + '$' + s.total_profit.toFixed(2);
+                document.getElementById('anProfit').style.color = s.total_profit >= 0 ? '#3fb950' : '#f85149';
+
+                // Per-EA
+                document.getElementById('eaCount').textContent = data.per_ea.length;
+                let html = '<table class="ea-table" style="width:100%;font-size:13px"><thead><tr><th>EA</th><th>Symbol</th><th>Trades</th><th>Wins</th><th>Losses</th><th>Win Rate</th><th>P&L</th></tr></thead><tbody>';
+                for (const e of data.per_ea) {
+                    html += `<tr><td><b>${e.ea}</b></td><td>${e.symbol}</td><td>${e.trades}</td><td style="color:#3fb950">${e.wins}</td><td style="color:#f85149">${e.losses}</td><td>${e.win_rate}%</td><td style="color:${e.profit>=0?'#3fb950':'#f85149'};font-weight:600">${e.profit>=0?'+':''}$${e.profit.toFixed(2)}</td></tr>`;
+                }
+                html += '</tbody></table>';
+                document.getElementById('eaAnalysisTable').innerHTML = html;
+
+                // Correlation Matrix
+                if (data.correlation_matrix && data.correlation_matrix.length > 1) {
+                    let cm = '<table class="ea-table" style="font-size:11px"><thead><tr><th style="min-width:80px">EA</th>';
+                    for (const k of data.correlation_keys) {
+                        cm += `<th style="text-align:center;min-width:50px">${k.length>15?k.substring(0,13)+'..':k}</th>`;
+                    }
+                    cm += '</tr></thead><tbody>';
+                    for (const row of data.correlation_matrix) {
+                        cm += `<tr><td style="font-size:10px">${row.ea.length>15?row.ea.substring(0,13)+'..':row.ea}</td>`;
+                        for (const k of data.correlation_keys) {
+                            const v = row[k] || 0;
+                            const color = v > 0.5 ? '#3fb950' : v > 0 ? '#2d6a3a' : v < -0.5 ? '#f85149' : v < 0 ? '#6a2d2d' : '#484f58';
+                            cm += `<td style="text-align:center;color:${color};font-weight:${Math.abs(v)>0.5?'600':'400'}">${v.toFixed(2)}</td>`;
+                        }
+                        cm += '</tr>';
+                    }
+                    cm += '</tbody></table>';
+                    document.getElementById('correlationTable').innerHTML = cm;
+                }
+            } catch(e) {}
+        }
+
+        loadAnalysis();
+        setInterval(loadAnalysis, 10000);
     </script>
 </body>
 </html>

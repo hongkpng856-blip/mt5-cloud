@@ -35,11 +35,11 @@ class Agent(db.Model):
     agent_id = db.Column(db.String(64), unique=True, nullable=False)
     name = db.Column(db.String(80), default='My MT5')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    status = db.Column(db.String(20), default='offline')  # offline/connected/running
+    status = db.Column(db.String(20), default='offline')
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    account_info = db.Column(db.Text, default='{}')  # JSON
+    account_info = db.Column(db.Text, default='{}')
     positions = db.Column(db.Text, default='[]')
-    history = db.Column(db.Text, default='[]')
+    deals = db.Column(db.Text, default='[]')  # 交易歷史
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -135,6 +135,96 @@ def api_dashboard():
         "agent_id": agent.agent_id
     })
 
+# === API: 分析（Per-EA, Correlation, Ranking）===
+@app.route('/api/analysis')
+@login_required
+def api_analysis():
+    agent = Agent.query.filter_by(user_id=current_user.id).first()
+    deals_data = json.loads(agent.deals or '[]')
+    
+    if not deals_data:
+        return jsonify({"error": "No data yet. Agent needs to sync first."})
+
+    # 轉換為類似 MT5 嘅結構
+    class DealLike:
+        def __init__(self, d):
+            self.magic = d['magic']
+            self.symbol = d['symbol']
+            self.profit = d['profit']
+            self.time = d.get('time', '')
+
+    deals = [DealLike(d) for d in deals_data]
+
+    # Per-EA by (magic, symbol)
+    from collections import defaultdict
+    per_ea = defaultdict(lambda: {"trades": 0, "profit": 0, "wins": 0, "losses": 0})
+    for d in deals:
+        key = f"{d.magic}_{d.symbol}"
+        per_ea[key]["trades"] += 1
+        per_ea[key]["profit"] += d.profit
+        if d.profit > 0: per_ea[key]["wins"] += 1
+        elif d.profit < 0: per_ea[key]["losses"] += 1
+
+    per_ea_list = []
+    for key, info in sorted(per_ea.items()):
+        total = info["wins"] + info["losses"]
+        wr = round((info["wins"]/total*100), 1) if total > 0 else 0
+        parts = key.split("_", 1)
+        per_ea_list.append({
+            "ea": f"Magic#{parts[0]}",
+            "symbol": parts[1] if len(parts) > 1 else "",
+            "trades": info["trades"],
+            "profit": round(info["profit"], 2),
+            "wins": info["wins"],
+            "losses": info["losses"],
+            "win_rate": wr
+        })
+
+    # Correlation
+    daily_pnl = defaultdict(lambda: defaultdict(float))
+    for d in deals:
+        if not d.time: continue
+        date_key = str(d.time)[:10]
+        key = f"{d.magic}_{d.symbol}"
+        daily_pnl[key][date_key] += d.profit
+
+    ea_keys = sorted(daily_pnl.keys())
+    all_dates = sorted(set(d for dates in daily_pnl.values() for d in dates.keys()))
+    matrix = {ek: [daily_pnl[ek].get(dt, 0) for dt in all_dates] for ek in ea_keys}
+
+    import math
+    def pearson(x, y):
+        n = len(x)
+        if n < 3: return 0
+        sx=sum(x); sy=sum(y); sxx=sum(v*v for v in x); syy=sum(v*v for v in y); sxy=sum(x[i]*y[i] for i in range(n))
+        denom = math.sqrt((n*sxx - sx*sx) * (n*syy - sy*sy))
+        return (n*sxy - sx*sy)/denom if denom != 0 else 0
+
+    corr_matrix = []
+    for ek1 in ea_keys:
+        row = {"ea": ek1}
+        for ek2 in ea_keys:
+            row[ek2] = round(pearson(matrix[ek1], matrix[ek2]), 2)
+        corr_matrix.append(row)
+
+    # Summary
+    total_profit = sum(d.profit for d in deals)
+    wins = sum(1 for d in deals if d.profit > 0)
+    losses = sum(1 for d in deals if d.profit < 0)
+    win_rate = round(wins/(wins+losses)*100, 2) if (wins+losses) > 0 else 0
+
+    return jsonify({
+        "summary": {
+            "total_trades": len(deals),
+            "wins": wins, "losses": losses,
+            "win_rate": win_rate,
+            "total_profit": round(total_profit, 2),
+        },
+        "per_ea": per_ea_list,
+        "correlation_matrix": corr_matrix,
+        "correlation_keys": ea_keys
+    })
+
 # === WebSocket: Agent 溝通 ===
 @socketio.on('connect')
 def handle_connect():
@@ -161,6 +251,7 @@ def handle_agent_sync(data):
     if agent:
         agent.account_info = json.dumps(data.get('account', {}))
         agent.positions = json.dumps(data.get('positions', []))
+        agent.deals = json.dumps(data.get('deals', []))
         agent.last_seen = datetime.utcnow()
         agent.status = data.get('status', 'connected')
         db.session.commit()
