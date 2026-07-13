@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MT5 Cloud</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hero { text-align: center; max-width: 600px; padding: 40px; }
+        .hero h1 {
+            font-size: 48px;
+            background: linear-gradient(135deg, #58a6ff, #3fb950);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        .hero p { color: #8b949e; font-size: 18px; margin-bottom: 32px; }
+        .btn {
+            display: inline-block; padding: 12px 32px; border-radius: 8px;
+            font-size: 16px; font-weight: 600; text-decoration: none;
+            transition: all 0.15s; margin: 0 8px;
+        }
+        .btn-primary { background: #238636; color: #fff; border: 1px solid #2ea043; }
+        .btn-primary:hover { background: #2ea043; }
+        .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+        .btn-secondary:hover { background: #30363d; }
+        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 48px; text-align: left; }
+        .feature { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; }
+        .feature h3 { font-size: 14px; margin-bottom: 6px; }
+        .feature p { font-size: 12px; color: #8b949e; }
+        .status-bar {
+            margin-top: 48px; padding: 16px; background: #161b22;
+            border: 1px solid #30363d; border-radius: 12px;
+            text-align: center; font-size: 13px; color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>☁️ MT5 Cloud</h1>
+        <p>Connect your MetaTrader 5 to the cloud.<br>
+        Manage EAs, automate trading, analyze performance — all from your browser.</p>
+
+        <a href="/login" class="btn btn-primary">Login</a>
+        <a href="/register" class="btn btn-secondary">Register</a>
+
+        <div class="features">
+            <div class="feature">
+                <h3>🔌 Windows Agent</h3>
+                <p>Install a tiny app on your PC that bridges MT5 to the cloud.</p>
+            </div>
+            <div class="feature">
+                <h3>📊 EA Analysis</h3>
+                <p>Per-EA performance, win rate, profit factor, correlation matrix.</p>
+            </div>
+            <div class="feature">
+                <h3>🤖 Auto Trading</h3>
+                <p>Deploy strategies from browser. Agent executes on your MT5.</p>
+            </div>
+            <div class="feature">
+                <h3>📈 Live Dashboard</h3>
+                <p>Real-time positions, P&L, account status from anywhere.</p>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            🟢 Server: Online &nbsp;·&nbsp; 📡 Agents: <span id="agentCount">0</span> connected
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        socket.on('connect', () => console.log('🟢 Connected to server'));
+        socket.on('agent_count', (data) => {
+            document.getElementById('agentCount').textContent = data.count || 0;
+        });
+    </script>
+</body>
+</html>

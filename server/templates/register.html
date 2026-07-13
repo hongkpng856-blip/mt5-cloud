@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — MT5 Cloud</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card {
+            background: #161b22; border: 1px solid #30363d;
+            border-radius: 12px; padding: 40px; width: 380px;
+        }
+        .card h1 { font-size: 24px; margin-bottom: 24px; text-align: center; }
+        .card input {
+            width: 100%; padding: 10px 12px; margin-bottom: 12px;
+            background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+            color: #e6edf3; font-size: 14px;
+        }
+        .card input:focus { border-color: #58a6ff; outline: none; }
+        .card button {
+            width: 100%; padding: 10px;
+            background: #238636; border: 1px solid #2ea043; border-radius: 6px;
+            color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+        }
+        .card button:hover { background: #2ea043; }
+        .card p { text-align: center; margin-top: 16px; font-size: 13px; }
+        .card a { color: #58a6ff; text-decoration: none; }
+        .error { color: #f85149; font-size: 13px; margin-bottom: 12px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📝 Register</h1>
+        <div class="error" id="error"></div>
+        <form onsubmit="register(event)">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password (min 6 chars)" minlength="6" required>
+            <button type="submit">Create Account</button>
+        </form>
+        <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
+    <script>
+        async function register(e) {
+            e.preventDefault();
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            });
+            const data = await res.json();
+            if (data.error) {
+                document.getElementById('error').textContent = data.error;
+                document.getElementById('error').style.display = 'block';
+            } else {
+                // Show agent_id
+                alert('✅ Registered! Your Agent ID: ' + data.agent_id + '\nSave this — you\'ll need it for the Windows Agent.');
+                window.location.href = '/dashboard';
+            }
+        }
+    </script>
+</body>
+</html>
