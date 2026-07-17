@@ -213,7 +213,7 @@ async function loadEAConfig() {
         // Default 30 EAs
         const defaultEAs = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"];
 
-        const dl = eaMappings['_default_lot'] || 0.01;
+        const dl = eaMappings['_default_lot'] || 1.00;
         document.getElementById('defaultLot').value = dl;
 
         let html = '';
@@ -224,7 +224,7 @@ async function loadEAConfig() {
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
 
             // 從 analysis 攞 data
-            const eaData = analysisData ? analysisData.per_ea.find(e => e.ea.includes(name)) : null;
+            const eaData = analysisData && analysisData.per_ea ? analysisData.per_ea.find(e => e.ea && e.ea.includes(name)) : null;
             const trades = eaData ? eaData.trades : 0;
             const wr = eaData ? eaData.win_rate : 0;
             const profit = eaData ? eaData.profit : 0;
@@ -247,18 +247,18 @@ async function loadEAConfig() {
 }
 
 function applyAllLots() {
-    const val = parseFloat(document.getElementById('defaultLot').value) || 0.01;
+    const val = parseFloat(document.getElementById('defaultLot').value) || 1.00;
     document.querySelectorAll('.ea-lot').forEach(i => i.value = val.toFixed(2));
 }
 
 async function saveEAConfig() {
     const mappings = {};
-    mappings['_default_lot'] = parseFloat(document.getElementById('defaultLot').value) || 0.01;
+    mappings['_default_lot'] = parseFloat(document.getElementById('defaultLot').value) || 1.00;
     document.querySelectorAll('.ea-sym').forEach(sel => {
         const name = sel.dataset.ea;
         mappings[name] = sel.value;
         mappings[name+'_tf'] = document.querySelector(`.ea-tf[data-ea="${name}"]`).value;
-        mappings[name+'_lot'] = parseFloat(document.querySelector(`.ea-lot[data-ea="${name}"]`).value) || 0.01;
+        mappings[name+'_lot'] = parseFloat(document.querySelector(`.ea-lot[data-ea="${name}"]`).value) || 1.00;
     });
     await fetch('/api/ea-config', {
         method: 'POST',
