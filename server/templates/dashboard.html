@@ -202,8 +202,8 @@ async function loadEAConfig() {
             const lot = eaMappings[name+'_lot'] || dl;
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
 
-            // 從 analysis 攞 data
-            const eaData = analysisData && analysisData.per_ea ? analysisData.per_ea.find(e => e.ea && e.ea.includes(name)) : null;
+            // 從 analysis 攞 data（match by symbol）
+            const eaData = analysisData && analysisData.per_ea_by_symbol ? analysisData.per_ea_by_symbol[sym] : null;
             const trades = eaData ? eaData.trades : 0;
             const wr = eaData ? eaData.win_rate : 0;
             const profit = eaData ? eaData.profit : 0;
