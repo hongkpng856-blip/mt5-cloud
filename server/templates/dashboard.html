@@ -133,9 +133,9 @@
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th><th></th>
+                    <th>EA</th><th>來源</th><th>Magic</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th><th></th>
                 </tr></thead>
-                <tbody id="eaTableBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
+                <tbody id="eaTableBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -177,7 +177,7 @@ async function loadEAConfig() {
 
         // 搵出已配對嘅 EA（config 入邊有 symbol 嘅就係）
         const pairedEAs = Object.keys(eaMappings).filter(k =>
-            !k.startsWith('_') && !k.endsWith('_tf') && !k.endsWith('_lot') &&
+            !k.startsWith('_') && !k.endsWith('_tf') && !k.endsWith('_lot') && !k.endsWith('_magic') &&
             eaMappings[k] && typeof eaMappings[k] === 'string'
         );
 
@@ -190,20 +190,35 @@ async function loadEAConfig() {
         // 過濾：只要未剷除嘅
         const activeEAs = pairedEAs.filter(name => !removed.includes(name));
 
+        // 用 analysis data 嘅 magic+symbol 組合自動分配俾 EA
+        const combos = analysisData && analysisData.per_ea_by_magic_symbol ? Object.keys(analysisData.per_ea_by_magic_symbol) : [];
+        let comboIndex = 0;
+
         let html = '';
         if (activeEAs.length === 0) {
-            html = `<tr><td colspan="9" style="text-align:center;padding:30px;color:#8b949e">
+            html = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#8b949e">
                 仲未加入任何 EA<br><span style="font-size:12px">去 📦 EA 倉庫 㩒「➕ 移去配對」開始</span>
             </td></tr>`;
         } else {
             activeEAs.forEach(name => {
-            const sym = eaMappings[name] || allSymbols[0];
+            let sym = eaMappings[name] || allSymbols[0];
+            let magic = eaMappings[name+'_magic'] || '240701';
+
+            // Auto-assign magic+symbol from available combos if not yet configured
+            if (!eaMappings[name] && combos.length > 0) {
+                const combo = combos[comboIndex % combos.length];
+                const [m, s] = combo.split('_', 2);
+                magic = m;
+                sym = s;
+                comboIndex++;
+            }
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
 
-            // 從 analysis 攞 data（match by symbol）
-            const eaData = analysisData && analysisData.per_ea_by_symbol ? analysisData.per_ea_by_symbol[sym] : null;
+            // 從 analysis 攞 data（match by magic+symbol）
+            const msKey = magic + '_' + sym;
+            const eaData = analysisData && analysisData.per_ea_by_magic_symbol ? analysisData.per_ea_by_magic_symbol[msKey] : null;
             const trades = eaData ? eaData.trades : 0;
             const wr = eaData ? eaData.win_rate : 0;
             const profit = eaData ? eaData.profit : 0;
@@ -211,6 +226,7 @@ async function loadEAConfig() {
             html += `<tr>
                 <td><b>${name}</b></td>
                 <td><span style="font-size:10px;${isOfficial?'color:#3fb950':'color:#8b949e'}">${isOfficial?'🟢 平台提供':'⬜ 你上傳'}</span></td>
+                <td><input type="number" class="ea-magic" data-ea="${name}" value="${magic}" style="width:70px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 4px;font-size:12px;text-align:center"></td>
                 <td><select class="ea-sym" data-ea="${name}">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select></td>
                 <td><select class="ea-tf" data-ea="${name}">${['M1','M5','M15','M30','H1','H4','D1','W1','MN1'].map(t => `<option ${t===tf?'selected':''}>${t}</option>`).join('')}</select></td>
                 <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
@@ -239,6 +255,7 @@ async function saveEAConfig() {
     document.querySelectorAll('.ea-sym').forEach(sel => {
         const name = sel.dataset.ea;
         mappings[name] = sel.value;
+        mappings[name+'_magic'] = document.querySelector(`.ea-magic[data-ea="${name}"]`).value || '240701';
         mappings[name+'_tf'] = document.querySelector(`.ea-tf[data-ea="${name}"]`).value;
         mappings[name+'_lot'] = parseFloat(document.querySelector(`.ea-lot[data-ea="${name}"]`).value) || 1.00;
     });
@@ -376,12 +393,34 @@ async function loadEALibrary() {
 }
 
 async function addEAToPairing(baseName, fileName, source) {
-    // 直接 save 去 server
     const res = await fetch('/api/ea-config');
     const data = await res.json();
     let mappings = data.mappings || {};
     const dl = mappings['_default_lot'] || 1.00;
-    mappings[baseName] = mappings[baseName] || 'EURUSD';
+
+    // Auto-pick unique magic+symbol from analysis
+    const analysisRes = await fetch('/api/analysis');
+    let combo = { magic: '240701', symbol: 'EURUSD' };
+    if (analysisRes.ok) {
+        const anData = await analysisRes.json();
+        if (anData.per_ea_by_magic_symbol) {
+            const combos = Object.keys(anData.per_ea_by_magic_symbol);
+            // Find a combo not already used by other EAs
+            const usedKeys = new Set();
+            for (const k of Object.keys(mappings)) {
+                if (!k.startsWith('_') && !k.endsWith('_tf') && !k.endsWith('_lot') && !k.endsWith('_magic') && typeof mappings[k] === 'string') {
+                    const m = mappings[k+'_magic'] || '240701';
+                    usedKeys.add(m + '_' + mappings[k]);
+                }
+            }
+            for (const c of combos) {
+                if (!usedKeys.has(c)) { const [m, s] = c.split('_', 2); combo = { magic: m, symbol: s }; break; }
+            }
+        }
+    }
+
+    mappings[baseName] = mappings[baseName] || combo.symbol;
+    mappings[baseName+'_magic'] = mappings[baseName+'_magic'] || combo.magic;
     mappings[baseName+'_tf'] = mappings[baseName+'_tf'] || 'H1';
     mappings[baseName+'_lot'] = mappings[baseName+'_lot'] || dl;
 

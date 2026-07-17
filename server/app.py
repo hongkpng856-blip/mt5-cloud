@@ -199,29 +199,40 @@ def api_analysis():
 
     per_ea_list = []
     per_ea_by_symbol = {}
+    per_ea_by_magic_symbol = {}
     for key, info in sorted(per_ea.items()):
         total = info["wins"]+info["losses"]
         wr = round(info["wins"]/total*100,1) if total>0 else 0
         parts = key.split("_",1)
+        magic = parts[0]
         symbol = parts[1] if len(parts)>1 else ""
         per_ea_list.append({
-            "ea": f"Magic#{parts[0]}", "symbol": symbol,
+            "ea": f"Magic#{magic}", "symbol": symbol, "magic": magic,
             "trades": info["trades"], "profit": round(info["profit"],2),
             "wins": info["wins"], "losses": info["losses"], "win_rate": wr
         })
-        # Group by symbol for frontend matching
+        # By symbol
         if symbol not in per_ea_by_symbol:
             per_ea_by_symbol[symbol] = {"trades":0,"profit":0,"wins":0,"losses":0}
         per_ea_by_symbol[symbol]["trades"] += info["trades"]
         per_ea_by_symbol[symbol]["profit"] += info["profit"]
         per_ea_by_symbol[symbol]["wins"] += info["wins"]
         per_ea_by_symbol[symbol]["losses"] += info["losses"]
-    # Add win_rate to per_ea_by_symbol
+        # By magic+symbol (precise matching)
+        ms_key = f"{magic}_{symbol}"
+        per_ea_by_magic_symbol[ms_key] = {
+            "trades": info["trades"], "profit": round(info["profit"],2),
+            "wins": info["wins"], "losses": info["losses"], "win_rate": wr,
+            "magic": magic, "symbol": symbol
+        }
     for sym in per_ea_by_symbol:
         info = per_ea_by_symbol[sym]
         total = info["wins"]+info["losses"]
         info["win_rate"] = round(info["wins"]/total*100,1) if total>0 else 0
         info["profit"] = round(info["profit"],2)
+
+    # Collect unique magic numbers
+    all_magics = sorted(set(str(d['magic']) for d in deals_data))
 
     # Correlation
     daily_pnl = defaultdict(lambda: defaultdict(float))
@@ -258,6 +269,8 @@ def api_analysis():
                    "win_rate":wr,"total_profit":round(total_profit,2)},
         "per_ea": per_ea_list,
         "per_ea_by_symbol": per_ea_by_symbol,
+        "per_ea_by_magic_symbol": per_ea_by_magic_symbol,
+        "all_magics": all_magics,
         "correlation_matrix": corr_matrix,
         "correlation_keys": ea_keys
     })
