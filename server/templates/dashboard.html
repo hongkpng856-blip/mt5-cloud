@@ -175,8 +175,11 @@ async function loadEAConfig() {
         eaMappings = data.mappings || {};
         allSymbols = data.all_symbols || ['EURUSD','GBPUSD','USDJPY','XAUUSD'];
 
-        // Default 30 EAs
-        const defaultEAs = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"];
+        // 搵出已配對嘅 EA（config 入邊有 symbol 嘅就係）
+        const pairedEAs = Object.keys(eaMappings).filter(k =>
+            !k.startsWith('_') && !k.endsWith('_tf') && !k.endsWith('_lot') &&
+            eaMappings[k] && typeof eaMappings[k] === 'string'
+        );
 
         const dl = eaMappings['_default_lot'] || 1.00;
         document.getElementById('defaultLot').value = dl;
@@ -184,8 +187,16 @@ async function loadEAConfig() {
         // 已剷除嘅 EA
         const removed = eaMappings['_removed'] || [];
 
+        // 過濾：只要未剷除嘅
+        const activeEAs = pairedEAs.filter(name => !removed.includes(name));
+
         let html = '';
-        defaultEAs.filter(name => !removed.includes(name)).forEach(name => {
+        if (activeEAs.length === 0) {
+            html = `<tr><td colspan="9" style="text-align:center;padding:30px;color:#8b949e">
+                仲未加入任何 EA<br><span style="font-size:12px">去 📦 EA 倉庫 㩒「➕ 移去配對」開始</span>
+            </td></tr>`;
+        } else {
+            activeEAs.forEach(name => {
             const sym = eaMappings[name] || allSymbols[0];
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
@@ -210,8 +221,10 @@ async function loadEAConfig() {
             </tr>`;
         });
 
+        } // end else
+
         document.getElementById('eaTableBody').innerHTML = html;
-        document.getElementById('eaCount').textContent = defaultEAs.filter(name => !removed.includes(name)).length;
+        document.getElementById('eaCount').textContent = activeEAs.length;
     } catch(e) { console.error(e); }
 }
 
@@ -336,7 +349,7 @@ async function loadEALibrary() {
         let oHtml = '';
         official.forEach(f => {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-            const added = document.querySelector(`.ea-sym[data-ea="${baseName}"]`) !== null;
+            const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string';
             oHtml += `<tr>
                 <td><b>${f.name}</b> <span style="font-size:10px;color:#3fb950">平台提供</span></td>
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
@@ -352,7 +365,7 @@ async function loadEALibrary() {
         if (userFiles.length > 0) {
             userFiles.forEach(f => {
                 const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-                const added = document.querySelector(`.ea-sym[data-ea="${baseName}"]`) !== null;
+                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string';
                 if (!added) {
                     // 自動加入配對庫
                     addEAToPairing(baseName, f.name, '用戶');
