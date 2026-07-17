@@ -133,9 +133,9 @@
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th>Magic</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th><th></th>
+                    <th>EA</th><th>來源</th><th>Magic</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th><th>狀態</th><th></th>
                 </tr></thead>
-                <tbody id="eaTableBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
+                <tbody id="eaTableBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -196,7 +196,7 @@ async function loadEAConfig() {
 
         let html = '';
         if (activeEAs.length === 0) {
-            html = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#8b949e">
+            html = `<tr><td colspan="11" style="text-align:center;padding:30px;color:#8b949e">
                 仲未加入任何 EA<br><span style="font-size:12px">去 📦 EA 倉庫 㩒「➕ 移去配對」開始</span>
             </td></tr>`;
         } else {
@@ -214,6 +214,8 @@ async function loadEAConfig() {
             }
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
+            const status = eaMappings[name+'_status'] || 'running';
+            const isRunning = status === 'running';
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
 
             // 從 analysis 攞 data（match by magic+symbol）
@@ -233,7 +235,13 @@ async function loadEAConfig() {
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
-                <td><button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="剷除 ${name}">🗑️</button></td>
+                <td style="text-align:center">
+                    <span style="font-size:16px;cursor:pointer" onclick="toggleEA('${name}')" title="${isRunning?'🟢 運行中 — 撳暫停':'🔴 已暫停 — 撳繼續'}">${isRunning?'🟢':'🔴'}</span>
+                </td>
+                <td>
+                    <button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'⏸️':'▶️'}</button>
+                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="剷除 ${name}">🗑️</button>
+                </td>
             </tr>`;
         });
 
@@ -441,6 +449,17 @@ async function deleteEA(eaName) {
         if (res.ok) {
             showLog(`🗑️ ${eaName} 已剷除`, 'log-error');
             loadEALibrary();
+            loadEAConfig();
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function toggleEA(eaName) {
+    try {
+        const res = await fetch(`/api/ea-config/${eaName}/toggle`, { method: 'POST' });
+        if (res.ok) {
+            const data = await res.json();
+            showLog(`${data.status==='paused'?'⏸️ 已暫停':'▶️ 已繼續'} ${eaName}`, data.status==='paused'?'log-warn':'log-success');
             loadEAConfig();
         }
     } catch(e) { console.error(e); }

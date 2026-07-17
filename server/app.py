@@ -164,6 +164,17 @@ def api_ea_config_delete(ea_name):
     db.session.commit()
     return jsonify({"success": True})
 
+@app.route('/api/ea-config/<ea_name>/toggle', methods=['POST'])
+@login_required
+def api_ea_config_toggle(ea_name):
+    """Toggle EA status：running ↔ paused"""
+    config = json.loads(current_user.ea_config or '{}')
+    current_status = config.get(ea_name + '_status', 'running')
+    config[ea_name + '_status'] = 'paused' if current_status == 'running' else 'running'
+    current_user.ea_config = json.dumps(config)
+    db.session.commit()
+    return jsonify({"success": True, "status": config[ea_name + '_status']})
+
 # === API: Dashboard ===
 @app.route('/api/dashboard')
 @login_required
