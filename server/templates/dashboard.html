@@ -75,6 +75,7 @@
         .log-success { color:#3fb950; }
         .log-error { color:#f85149; }
         .log-info { color:#58a6ff; }
+        .log-warn { color:#d29922; }
         .loading { display:inline-block; width:14px; height:14px; border:2px solid #30363d; border-top-color:#58a6ff; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; }
         @keyframes spin { to { transform:rotate(360deg); } }
     </style>
@@ -132,9 +133,9 @@
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th>
+                    <th>EA</th><th>來源</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th><th></th>
                 </tr></thead>
-                <tbody id="eaTableBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
+                <tbody id="eaTableBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -180,8 +181,11 @@ async function loadEAConfig() {
         const dl = eaMappings['_default_lot'] || 1.00;
         document.getElementById('defaultLot').value = dl;
 
+        // 已剷除嘅 EA
+        const removed = eaMappings['_removed'] || [];
+
         let html = '';
-        defaultEAs.forEach(name => {
+        defaultEAs.filter(name => !removed.includes(name)).forEach(name => {
             const sym = eaMappings[name] || allSymbols[0];
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
@@ -202,11 +206,12 @@ async function loadEAConfig() {
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
+                <td><button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="剷除 ${name}">🗑️</button></td>
             </tr>`;
         });
 
         document.getElementById('eaTableBody').innerHTML = html;
-        document.getElementById('eaCount').textContent = defaultEAs.length;
+        document.getElementById('eaCount').textContent = defaultEAs.filter(name => !removed.includes(name)).length;
     } catch(e) { console.error(e); }
 }
 
@@ -375,6 +380,18 @@ async function addEAToPairing(baseName, fileName, source) {
     loadEALibrary();
     loadEAConfig();
     showLog('✅ ' + fileName + ' 已加入配對表！請設定 Symbol/TF/Lots 然後㩒儲存', 'log-success');
+}
+
+async function deleteEA(eaName) {
+    if (!confirm(`確定要剷除 ${eaName} 嗎？`)) return;
+    try {
+        const res = await fetch(`/api/ea-config/${eaName}`, { method: 'DELETE' });
+        if (res.ok) {
+            showLog(`🗑️ ${eaName} 已剷除`, 'log-error');
+            loadEALibrary();
+            loadEAConfig();
+        }
+    } catch(e) { console.error(e); }
 }
 
 async function uploadEA() {

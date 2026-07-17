@@ -146,6 +146,24 @@ def api_ea_config():
         db.session.commit()
         return jsonify({"success": True})
 
+@app.route('/api/ea-config/<ea_name>', methods=['DELETE'])
+@login_required
+def api_ea_config_delete(ea_name):
+    """刪除一個 EA 嘅配對"""
+    config = json.loads(current_user.ea_config or '{}')
+    # 加去 _removed 列表
+    removed = config.get('_removed', [])
+    if ea_name not in removed:
+        removed.append(ea_name)
+    config['_removed'] = removed
+    # 刪除相關 key
+    for key in list(config.keys()):
+        if key == ea_name or key.startswith(ea_name + '_'):
+            del config[key]
+    current_user.ea_config = json.dumps(config)
+    db.session.commit()
+    return jsonify({"success": True})
+
 # === API: Dashboard ===
 @app.route('/api/dashboard')
 @login_required
