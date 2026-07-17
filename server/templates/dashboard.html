@@ -43,11 +43,6 @@
         .scroll-box::-webkit-scrollbar { width:6px; }
         .scroll-box::-webkit-scrollbar-thumb { background:#30363d; border-radius:3px; }
 
-        .step-box { background:#0d1117; border:1px solid #30363d; border-radius:10px; padding:16px; }
-        .step-box .step-num { width:28px; height:28px; border-radius:50%; background:#238636; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; margin-bottom:8px; }
-        .step-box h4 { font-size:14px; margin-bottom:4px; }
-        .step-box p { font-size:12px; color:#8b949e; }
-
         .corr-table { font-size:11px; }
         .corr-table th, .corr-table td { padding:4px 8px; text-align:center; }
         .corr-table th { min-width:50px; }
@@ -64,9 +59,6 @@
             .card-title { font-size:14px; }
             .stat-box { min-width:calc(50% - 8px); flex:1 1 calc(50% - 8px); }
             .stat-box .value { font-size:16px; }
-            .step-box { font-size:13px; }
-            .step-box h4 { font-size:13px; }
-            .step-box p { font-size:11px; }
             .btn { font-size:12px; padding:6px 12px; }
             .ea-table { font-size:11px; }
             .ea-table th { font-size:10px; padding:4px; }
@@ -77,7 +69,6 @@
             .ea-table { min-width:600px; }
             .scroll-box { overflow-x:auto; }
             [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
-            #onboardingCard > div { grid-template-columns:1fr !important; }
         }
         .log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:12px; display:none; }
         .log-box.show { display:block; }
@@ -106,33 +97,6 @@
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
             <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount">0</div></div>
-        </div>
-    </div>
-
-    <!-- Getting Started (for new users) -->
-    <div class="card" id="onboardingCard">
-        <div class="card-title">🚀 第一次用？跟住呢 4 步</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="step-box">
-                <div class="step-num">1</div>
-                <h4>安裝 MT5</h4>
-                <p>去你嘅 Broker 官網下載 MT5，開 Demo Account</p>
-            </div>
-            <div class="step-box">
-                <div class="step-num">2</div>
-                <h4>揀 EA 策略</h4>
-                <p>由上面 EA 倉庫揀策略，㩒「移去配對」</p>
-            </div>
-            <div class="step-box">
-                <div class="step-num">3</div>
-                <h4>下載 Agent</h4>
-                <p>Download <a href="/api/agent-download" style="color:#58a6ff">install_agent.bat</a>，雙撳就裝好</p>
-            </div>
-            <div class="step-box">
-                <div class="step-num">4</div>
-                <h4>睇分析</h4>
-                <p>Agent sync 完數據，Dashboard 自動顯示 Performance + Correlation</p>
-            </div>
         </div>
     </div>
 
