@@ -430,6 +430,20 @@ def handle_install_result(data):
     print(f"[WS] Install result: {data}")
     emit('install_result', data, broadcast=True)
 
+@socketio.on('deploy_ea')
+def handle_deploy_ea(data):
+    """用戶㩒 Deploy，通知 Agent 去 attach EA 去 chart"""
+    agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
+    if agent:
+        emit('deploy_ea_command', {
+            "ea_name": data.get('ea_name'),
+            "symbol": data.get('symbol'),
+            "tf": data.get('tf'),
+            "magic": data.get('magic'),
+            "lot": data.get('lot')
+        }, room=agent.agent_id)
+        emit('install_result', {"status": "sent", "ea": data.get('ea_name')})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"☁️  MT5 Cloud Server :{port}")

@@ -317,3 +317,99 @@ try:
 except KeyboardInterrupt:
     print("\n🛑 Agent stopped")
     sio.disconnect()
+
+# === Auto Deploy: 將 EA attach 去 MT5 chart ===
+@sio.on('deploy_ea_command')
+def on_deploy_ea(data):
+    """收到 Server 指令：將 EA 自動部署到 MT5 chart"""
+    ea_name = data.get('ea_name', '')
+    symbol = data.get('symbol', 'EURUSD')
+    tf = data.get('tf', 'H1')
+    magic = str(data.get('magic', '240701'))
+    lot = str(data.get('lot', '1.00'))
+
+    print(f"🚀 Deploying {ea_name} to {symbol} {tf}")
+
+    try:
+        # Find MT5 terminal path
+        mt5_terminal = None
+        for prog in ['C:\\\\Program Files\\\\MetaTrader 5\\\\terminal64.exe',
+                     'C:\\\\Program Files (x86)\\\\MetaTrader 5\\\\terminal64.exe']:
+            if os.path.isfile(prog):
+                mt5_terminal = prog
+                break
+
+        if not mt5_terminal:
+            sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": "MT5 not found"})
+            return
+
+        # 方法：用 MT5 嘅 /config 參數直接開 chart + EA
+        # MT5 支援 terminal64.exe /config:<path> 去載入設定檔
+        # Build a temporary config file
+        import tempfile
+        config_dir = os.path.join(tempfile.gettempdir(), 'mt5cloud_deploy')
+        os.makedirs(config_dir, exist_ok=True)
+
+        # Open chart using MT5 command line
+        # MT5 supports: terminal64.exe /profile:<name>  and we can send chart open command
+        import subprocess
+        import ctypes
+
+        # Activate MT5 window
+        hwnd = ctypes.windll.user32.FindWindowW(None, "MetaTrader 5")
+        if hwnd:
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
+            ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            print(f"   🖥️  MT5 window activated")
+            time.sleep(0.5)
+
+            # Ctrl+M → Market Watch, type symbol, Enter to open chart
+            import pyautogui
+            pyautogui.hotkey('ctrl', 'm')
+            time.sleep(0.3)
+            pyautogui.write(symbol)
+            time.sleep(0.2)
+            pyautogui.press('enter')
+            time.sleep(0.5)
+
+            # Ctrl+N → Navigator, navigate to EA
+            pyautogui.hotkey('ctrl', 'n')
+            time.sleep(0.5)
+            # Type EA name to search
+            pyautogui.write(ea_name.replace('.mq5','').replace('.ex5',''))
+            time.sleep(0.3)
+            # Double-click to attach
+            pyautogui.press('enter')
+            time.sleep(1)
+
+            # In the EA properties dialog, set parameters via Tab
+            # Tab to Inputs tab, then set magic/lot
+            pyautogui.press('tab', presses=3)
+            time.sleep(0.3)
+            pyautogui.hotkey('ctrl', 'right')  # Go to Inputs tab
+            time.sleep(0.3)
+            # Tab to first input, set Magic
+            pyautogui.press('tab')
+            time.sleep(0.2)
+            pyautogui.hotkey('ctrl', 'a')
+            pyautogui.write(magic)
+            # Tab to Lot
+            pyautogui.press('tab')
+            pyautogui.hotkey('ctrl', 'a')
+            pyautogui.write(lot)
+            # Press OK
+            pyautogui.press('enter')
+            time.sleep(0.3)
+            pyautogui.press('enter')
+
+            print(f"   ✅ {ea_name} deployed to {symbol} {tf}")
+            sio.emit('install_result', {"status": "ok", "ea": f"{ea_name} → {symbol} {tf} 🚀"})
+        else:
+            # MT5 not running, launch it
+            subprocess.Popen([mt5_terminal])
+            time.sleep(3)
+            sio.emit('install_result', {"status": "ok", "ea": f"{ea_name} — MT5 已啟動，請手動 drag EA 去 chart"})
+
+    except Exception as e:
+        print(f"   ❌ Deploy error: {e}")
+        sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})

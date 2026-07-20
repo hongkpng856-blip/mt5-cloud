@@ -274,6 +274,7 @@ async function loadEAConfig() {
                     <span style="font-size:16px;cursor:pointer" onclick="toggleEA('${name}')" title="${isRunning?'🟢 運行中 — 撳暫停':'🔴 已暫停 — 撳繼續'}">${isRunning?'🟢':'🔴'}</span>
                 </td>
                 <td>
+                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5">🚀</button>
                     <button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'⏸️':'▶️'}</button>
                     <button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="剷除 ${name}">🗑️</button>
                 </td>
@@ -498,6 +499,17 @@ async function toggleEA(eaName) {
             loadEAConfig();
         }
     } catch(e) { console.error(e); }
+}
+
+async function deployEA(eaName, symbol, tf, magic, lot) {
+    const dashRes = await fetch('/api/dashboard');
+    const dashData = await dashRes.json();
+    if (dashData.status !== 'connected' && dashData.status !== 'running') {
+        showLog('❌ Agent 離線，無法部署', 'log-error');
+        return;
+    }
+    socket.emit('deploy_ea', { agent_id: dashData.agent_id, ea_name: eaName, symbol, tf, magic, lot });
+    showLog(`🚀 正在部署 ${eaName} → ${symbol} ${tf}...`, 'log-info');
 }
 
 async function uploadEA() {
