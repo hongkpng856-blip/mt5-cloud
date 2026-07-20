@@ -255,19 +255,28 @@ def execute_deploy(data):
             report('❌ 找不到 MT5', 'error')
             return
 
-        # Connect to running MT5 or launch with retry
+        # Connect to running MT5 — window title varies by account
         connected = False
         for attempt in range(3):
             try:
-                app = Application(backend='win32').connect(title_re='.*MetaTrader.*', timeout=5)
-                report('🖥️ MT5 已連接')
-                connected = True
-                break
+                # MT5 window title shows account number, not 'MetaTrader'
+                # Try different patterns
+                for pattern in ['.*ICMarkets.*', '.*模擬.*', '.*MetaTrader.*', '.*']:
+                    try:
+                        app = Application(backend='win32').connect(title_re=pattern, timeout=3)
+                        report('🖥️ MT5 已連接')
+                        connected = True
+                        break
+                    except:
+                        continue
+                if connected:
+                    break
             except:
-                if attempt == 0:
-                    report('🖥️ 正在啟動 MT5...')
-                    subprocess.Popen([mt5_exe])
-                time.sleep(8)
+                pass
+            if attempt == 0:
+                report('🖥️ 正在啟動 MT5...')
+                subprocess.Popen([mt5_exe])
+            time.sleep(8)
 
         if not connected:
             report('❌ MT5 無法連接，請手動打開 MT5 後再撳 🚀', 'error')
