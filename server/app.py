@@ -41,6 +41,7 @@ class Agent(db.Model):
     account_info = db.Column(db.Text, default='{}')
     positions = db.Column(db.Text, default='[]')
     deals = db.Column(db.Text, default='[]')
+    deploy_queue = db.Column(db.Text, default='')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -286,6 +287,18 @@ def api_analysis():
         "correlation_keys": ea_keys
     })
 
+@app.route('/api/agent-poll-deploy', methods=['GET'])
+def api_agent_poll_deploy():
+    """Agent 每 2 秒 poll 呢個 endpoint，睇下有冇 deploy 指令"""
+    agent_id = request.args.get('agent_id')
+    agent = Agent.query.filter_by(agent_id=agent_id).first()
+    if agent and agent.deploy_queue:
+        data = json.loads(agent.deploy_queue)
+        agent.deploy_queue = ''  # Clear after reading
+        db.session.commit()
+        return jsonify(data)
+    return jsonify({})
+
 # === API: EA 庫 ===
 EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'static', 'user_ea')
@@ -432,16 +445,17 @@ def handle_install_result(data):
 
 @socketio.on('deploy_ea')
 def handle_deploy_ea(data):
-    """用戶㩒 Deploy，通知 Agent 去 attach EA 去 chart"""
+    """用戶㩒 Deploy，寫入 DB pending queue，Agent 會 poll"""
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
-        emit('deploy_ea_command', {
+        agent.deploy_queue = json.dumps({
             "ea_name": data.get('ea_name'),
             "symbol": data.get('symbol'),
             "tf": data.get('tf'),
             "magic": data.get('magic'),
             "lot": data.get('lot')
-        }, room=agent.agent_id)
+        })
+        db.session.commit()
         emit('install_result', {"status": "sent", "ea": data.get('ea_name')})
 
 if __name__ == '__main__':
