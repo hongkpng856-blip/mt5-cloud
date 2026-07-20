@@ -330,6 +330,9 @@ def on_deploy_ea(data):
 
     print(f"🚀 Deploying {ea_name} to {symbol} {tf}")
 
+    def report(status, msg):
+        sio.emit('install_result', {"status": status, "ea": ea_name, "msg": msg})
+
     try:
         # Find MT5 terminal path
         mt5_terminal = None
@@ -340,7 +343,7 @@ def on_deploy_ea(data):
                 break
 
         if not mt5_terminal:
-            sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": "MT5 not found"})
+            report('error', 'MT5 not found')
             return
 
         # 方法：用 MT5 嘅 /config 參數直接開 chart + EA
@@ -361,6 +364,7 @@ def on_deploy_ea(data):
             ctypes.windll.user32.SetForegroundWindow(hwnd)
             ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
             print(f"   🖥️  MT5 window activated")
+            report('info', '🖥️ MT5 已連接，正在部署...')
             time.sleep(0.5)
 
             # Ctrl+M → Market Watch, type symbol, Enter to open chart
@@ -403,13 +407,13 @@ def on_deploy_ea(data):
             pyautogui.press('enter')
 
             print(f"   ✅ {ea_name} deployed to {symbol} {tf}")
-            sio.emit('install_result', {"status": "ok", "ea": f"{ea_name} → {symbol} {tf} 🚀"})
+            report('ok', f'✅ {ea_name} → {symbol} {tf} 部署完成！')
         else:
             # MT5 not running, launch it
             subprocess.Popen([mt5_terminal])
             time.sleep(3)
-            sio.emit('install_result', {"status": "ok", "ea": f"{ea_name} — MT5 已啟動，請手動 drag EA 去 chart"})
+            report('ok', f'{ea_name} — MT5 已啟動，請手動 drag EA 去 chart')
 
     except Exception as e:
         print(f"   ❌ Deploy error: {e}")
-        sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
+        report('error', str(e))

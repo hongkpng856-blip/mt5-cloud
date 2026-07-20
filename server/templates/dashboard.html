@@ -189,11 +189,13 @@ const socket = io();
 // 聽 Agent 嘅安裝結果
 socket.on('install_result', (data) => {
     if (data.status === 'ok') {
-        showLog(`✅ 已安裝: ${data.ea}`, 'log-success');
+        showLog(`✅ ${data.msg || '已安裝: ' + data.ea}`, 'log-success');
     } else if (data.status === 'sent') {
-        showLog(`📡 已發送安裝指令`, 'log-info');
+        showLog(`📡 已發送指令: ${data.ea}`, 'log-info');
+    } else if (data.status === 'info') {
+        showLog(`${data.msg || data.ea}`, 'log-info');
     } else {
-        showLog(`❌ 安裝失敗: ${data.ea} — ${data.msg || 'unknown'}`, 'log-error');
+        showLog(`❌ ${data.msg || data.ea || 'unknown'}`, 'log-error');
     }
 });
 
