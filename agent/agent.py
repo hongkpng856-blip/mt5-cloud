@@ -233,38 +233,89 @@ def execute_deploy(data):
     lot = str(data.get('lot', '1.00'))
     print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} {tf}")
 
-    # 用 MT5 Python API 開 chart (symbol_select + 打開 chart)
-    opened = False
+    def report(msg, status='info'):
+        print(f"   {msg}")
+        sio.emit('install_result', {"status": status, "ea": ea_name, "msg": msg})
+
     try:
-        import MetaTrader5 as mt5
-        if mt5.initialize():
-            # Add symbol to Market Watch
-            mt5.symbol_select(symbol, True)
-            # Open chart via MT5 internal command (send hotkey via terminal input)
-            # MT5 doesn't have direct "open chart" via Python, but we can use chart_open via terminal
-            # Alternative: use Windows automation to open chart
-            mt5.shutdown()
-    except:
-        pass
+        from pywinauto import Application
+        from pywinauto.keyboard import send_keys
+        import subprocess
 
-    # Try launching MT5 with correct profile or just open it
-    import subprocess
-    mt5_exe = None
-    for prog in ['C:\\Program Files\\MetaTrader 5\\terminal64.exe',
-                 'C:\\Program Files (x86)\\MetaTrader 5\\terminal64.exe']:
-        if os.path.isfile(prog):
-            mt5_exe = prog
-            break
+        # Find or launch MT5
+        mt5_exe = None
+        for prog in ['C:\\Program Files\\MetaTrader 5\\terminal64.exe',
+                     'C:\\Program Files (x86)\\MetaTrader 5\\terminal64.exe']:
+            if os.path.isfile(prog):
+                mt5_exe = prog
+                break
 
-    if mt5_exe:
-        # Launch MT5 (it will just activate if already running)
-        subprocess.Popen([mt5_exe])
+        if not mt5_exe:
+            report('❌ 找不到 MT5', 'error')
+            return
 
-    # Instructions via install_result
-    sio.emit('install_result', {
-        "status": "ok", "ea": ea_name,
-        "msg": f"✅ 請喺 MT5 開 {symbol} {tf} chart → drag {ea_name} 落去 → Load {ea_name}.set → OK"
-    })
+        # Connect to running MT5 or launch
+        try:
+            app = Application(backend='win32').connect(title_re='.*MetaTrader.*', timeout=5)
+            report('🖥️ MT5 已連接')
+        except:
+            report('🖥️ 正在啟動 MT5...')
+            subprocess.Popen([mt5_exe])
+            time.sleep(10)
+            try:
+                app = Application(backend='win32').connect(title_re='.*MetaTrader.*', timeout=10)
+                report('🖥️ MT5 已啟動')
+            except Exception as ce:
+                report(f'❌ 無法連接 MT5: {str(ce)[:50]}', 'error')
+                return
+
+        dlg = app.top_window()
+        dlg.set_focus()
+        time.sleep(1)
+
+        # Step 1: Open chart — Ctrl+M, type symbol, Enter
+        report(f'📈 開 {symbol} chart...')
+        send_keys('^m')
+        time.sleep(0.5)
+        send_keys(symbol, pause=0.05)
+        time.sleep(0.3)
+        send_keys('{ENTER}')
+        time.sleep(1.5)
+
+        # Step 2: Attach EA — Ctrl+N, type EA name, Enter
+        report(f'🔌 載入 {ea_name}...')
+        send_keys('^n')
+        time.sleep(0.5)
+        ea_short = ea_name.replace('.mq5','').replace('.ex5','')
+        send_keys(ea_short, pause=0.05)
+        time.sleep(0.5)
+        send_keys('{ENTER}')
+        time.sleep(2)
+
+        # Step 3: In EA dialog — Navigate to Inputs, set params
+        report('⚙️ 設定參數...')
+        send_keys('{TAB 4}')
+        time.sleep(0.3)
+        send_keys('^{RIGHT}')  # Go to Inputs tab
+        time.sleep(0.5)
+        send_keys('{TAB}')
+        time.sleep(0.2)
+        send_keys('^a')
+        send_keys(magic, pause=0.03)
+        send_keys('{TAB}')
+        send_keys('^a')
+        send_keys(lot, pause=0.03)
+        time.sleep(0.3)
+
+        # Step 4: OK
+        send_keys('{ENTER}')
+        time.sleep(0.5)
+        send_keys('{ENTER}')
+
+        report(f'✅ {ea_name} → {symbol} {tf} 已部署！', 'ok')
+
+    except Exception as e:
+        report(f'❌ {str(e)[:80]}', 'error')
 
 print()
 print("=" * 56)
