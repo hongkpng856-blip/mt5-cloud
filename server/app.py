@@ -243,7 +243,7 @@ def api_analysis():
         info["profit"] = round(info["profit"],2)
 
     # Collect unique magic numbers
-    all_magics = sorted(set(str(d['magic']) for d in deals_data))
+    all_magics = sorted(set(str(d['magic']) for d in deals_data if d['magic'] != 0))
 
     # Correlation
     daily_pnl = defaultdict(lambda: defaultdict(float))
