@@ -293,15 +293,17 @@ def execute_deploy(data):
         pyautogui.FAILSAFE = False
         pyautogui.PAUSE = 0.1
 
-        # Step 1: Open chart via Market Watch
+        # Step 1: Open chart — File → New Chart → type symbol
         report(f'📈 開 {symbol} chart...')
-        pyautogui.hotkey('ctrl', 'm')
-        time.sleep(0.8)
-        pyautogui.write(symbol, interval=0.03)
+        # Alt+F → N (File → New Chart) → type symbol
+        pyautogui.hotkey('alt', 'f')
+        time.sleep(0.3)
+        pyautogui.press('n')  # New Chart
         time.sleep(0.5)
-        pyautogui.press('down')  # Select first match
-        time.sleep(0.2)
-        pyautogui.press('enter')  # Open chart
+        # Symbol selection dialog opens — type to search
+        pyautogui.write(symbol, interval=0.03)
+        time.sleep(0.3)
+        pyautogui.press('enter')
         time.sleep(1.5)
 
         # Step 2: Attach EA — Ctrl+N, search, Enter
