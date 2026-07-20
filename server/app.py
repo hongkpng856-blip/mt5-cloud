@@ -385,7 +385,8 @@ def handle_register(data):
                     emit('install_ea_command', {
                         "ea_name": "all",
                         "ea_list": ea_names,
-                        "download_url": f"{request.host_url}api/ea-library/"
+                        "download_url": f"{request.host_url}api/ea-library/",
+                        "ea_config": config
                     }, room=agent.agent_id)
                     print(f"[WS] Auto-sent EA config to agent {agent.agent_id}: {len(ea_names)} EAs")
             except:
@@ -418,7 +419,8 @@ def handle_install_ea(data):
         emit('install_ea_command', {
             "ea_name": ea_name,
             "ea_list": ea_list,
-            "download_url": download_url
+            "download_url": download_url,
+            "ea_config": json.loads(agent.user.ea_config or '{}')
         }, room=agent.agent_id)
         emit('install_result', {"status": "sent", "ea": ea_name})
 

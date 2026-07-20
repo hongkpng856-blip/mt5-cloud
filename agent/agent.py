@@ -230,15 +230,16 @@ def on_install_ea(data):
     url = data.get('download_url', '')
 
     # 如果係 'all'，就處理 ea_list
+    ea_config = data.get('ea_config', {})
     if ea_name == 'all' and ea_list:
         print(f"📥 Bulk install: {len(ea_list)} EAs")
         for name in ea_list:
-            download_and_install(name + '.mq5', url + name + '.mq5')
+            download_and_install(name + '.mq5', url + name + '.mq5', ea_config)
         return
 
-    download_and_install(ea_name, url)
+    download_and_install(ea_name, url, ea_config)
 
-def download_and_install(ea_name, url):
+def download_and_install(ea_name, url, ea_config=None):
     print(f"📥 Installing EA: {ea_name}")
     print(f"   Downloading from: {url}")
     try:
@@ -278,6 +279,25 @@ def download_and_install(ea_name, url):
                     subprocess.run([metaeditor, f'/compile:"{filepath}"', '/s'],
                                  capture_output=True, timeout=30)
                     print(f"⚙️  Compiled: {ea_name}")
+
+                # 生成 .set 參數檔
+                base_name = ea_name.replace('.mq5', '').replace('.ex5', '')
+                if ea_config:
+                    sym = ea_config.get(base_name, 'EURUSD')
+                    magic = str(ea_config.get(base_name + '_magic', '240701'))
+                    lot = str(ea_config.get(base_name + '_lot', '1.00'))
+                    tf = ea_config.get(base_name + '_tf', 'H1')
+                    presets_dir = os.path.join(os.path.dirname(experts_dir), 'Presets')
+                    os.makedirs(presets_dir, exist_ok=True)
+                    set_content = '; MT5 Cloud Preset for ' + base_name + '\n'
+                    set_content += '; Symbol=' + sym + '  Magic=' + magic + '  Lot=' + lot + '  TF=' + tf + '\n'
+                    set_content += '[Common]\n[Inputs]\n'
+                    set_content += 'MagicNumber=' + magic + '\n'
+                    set_content += 'LotSize=' + lot + '\n'
+                    set_path = os.path.join(presets_dir, base_name + '.set')
+                    with open(set_path, 'w') as f:
+                        f.write(set_content)
+                    print(f"📋 Preset: {set_path}")
 
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
