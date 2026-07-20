@@ -124,12 +124,30 @@ def on_install_ea(data):
     ea_config = data.get('ea_config', {})
 
     if ea_name == 'all' and ea_list:
-        print(f"📥 Bulk install: {len(ea_list)} EAs")
-        for name in ea_list:
-            download_and_install(name + '.mq5', url + name + '.mq5', ea_config)
+        print(f"📥 Bulk install: {len(ea_list)} EAs (background)")
+        sys.stdout.flush()
+        # Thread-safe install (唔阻塞 Socket.IO)
+        import threading
+        def _do_install():
+            for name in ea_list:
+                download_and_install(name + '.mq5', url + name + '.mq5', ea_config)
+        t = threading.Thread(target=_do_install, daemon=True)
+        t.start()
         return
 
-    download_and_install(ea_name, url, ea_config)
+    print(f"📥 Installing EA: {ea_name}")
+    sys.stdout.flush()
+    download_and_install(ea_name + '.mq5', url + ea_name + '.mq5', ea_config)
+
+
+# === Deploy via Socket.IO (background thread, 唔阻塞) ===
+@sio.on('deploy_ea')
+def on_deploy_ea(data):
+    print(f"🚀 [WS] Deploy command: {data}")
+    sys.stdout.flush()
+    import threading
+    t = threading.Thread(target=execute_deploy, args=(data,), daemon=True)
+    t.start()
 
 def download_and_install(ea_name, url, ea_config=None):
     print(f"📥 Installing EA: {ea_name}")
