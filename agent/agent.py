@@ -266,13 +266,12 @@ def execute_deploy(data):
         info = mt5.symbol_info(symbol)
         digits = info.digits if info else 5
         request = {
-            "action": mt5.TRADE_ACTION_PENDING,
+            "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
             "volume": float(lot),
-            "type": mt5.ORDER_TYPE_BUY_LIMIT,
-            "price": round(tick.bid * 0.9, digits),
-            "sl": 0, "tp": 0,
-            "deviation": 10,
+            "type": mt5.ORDER_TYPE_BUY,
+            "price": tick.ask,
+            "deviation": 20,
             "magic": int(magic),
             "comment": f"cloud_{ea_name}",
             "type_time": mt5.ORDER_TIME_GTC,
@@ -280,10 +279,12 @@ def execute_deploy(data):
         }
 
         result = mt5.order_send(request)
-        if result.retcode == mt5.TRADE_RETCODE_DONE:
+        if result and result.retcode == mt5.TRADE_RETCODE_DONE:
             report(f'✅ {ea_name} → {symbol} {tf} 已啟動！', 'ok')
+        elif result:
+            report(f'⚠️ retcode={result.retcode}', 'info')
         else:
-            report(f'⚠️ {result.comment}', 'info')
+            report(f'⚠️ {mt5.last_error()}', 'info')
 
         mt5.shutdown()
 
