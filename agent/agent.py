@@ -226,11 +226,21 @@ sync_thread.start()
 def on_install_ea(data):
     """收到 Server 指令：下載並安裝 EA 去 MT5"""
     ea_name = data.get('ea_name', '')
+    ea_list = data.get('ea_list', [])
     url = data.get('download_url', '')
 
+    # 如果係 'all'，就處理 ea_list
+    if ea_name == 'all' and ea_list:
+        print(f"📥 Bulk install: {len(ea_list)} EAs")
+        for name in ea_list:
+            download_and_install(name + '.mq5', url + name + '.mq5')
+        return
+
+    download_and_install(ea_name, url)
+
+def download_and_install(ea_name, url):
     print(f"📥 Installing EA: {ea_name}")
     print(f"   Downloading from: {url}")
-
     try:
         import requests
         resp = requests.get(url, timeout=30)

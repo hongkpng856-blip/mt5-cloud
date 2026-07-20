@@ -278,7 +278,8 @@ async function saveEAConfig() {
     const dashRes = await fetch('/api/dashboard');
     const dashData = await dashRes.json();
     if (dashData.status === 'connected' || dashData.status === 'running') {
-        socket.emit('agent_install_ea', { agent_id: dashData.agent_id, ea_name: 'all' });
+        const eaNames = Array.from(document.querySelectorAll('.ea-sym')).map(s => s.dataset.ea);
+        socket.emit('agent_install_ea', { agent_id: dashData.agent_id, ea_name: 'all', ea_list: eaNames });
         showLog('📡 Agent 在線，已發送安裝指令...', 'log-info');
     } else {
         showLog('💡 Agent 離線，連線後會自動同步安裝 EA ✅', 'log-warn');

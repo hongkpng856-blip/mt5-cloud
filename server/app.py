@@ -380,7 +380,7 @@ def handle_register(data):
         if user and user.ea_config and user.ea_config != '{}':
             try:
                 config = json.loads(user.ea_config)
-                ea_names = [k for k in config.keys() if not k.endswith('_tf') and not k.endswith('_lot') and k != '_default_lot']
+                ea_names = [k for k in config.keys() if not k.startswith('_') and not k.endswith('_tf') and not k.endswith('_lot') and not k.endswith('_magic') and not k.endswith('_status') and k not in ('_default_lot','_removed')]
                 if ea_names:
                     emit('install_ea_command', {
                         "ea_name": "all",
@@ -409,10 +409,16 @@ def handle_install_ea(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
         ea_name = data.get('ea_name')
-        # 叫 Agent 下載並安裝
+        ea_list = data.get('ea_list', [])
+        # Build download URL
+        if ea_name == 'all' and ea_list:
+            download_url = f"{request.host_url}api/ea-library/"
+        else:
+            download_url = f"{request.host_url}api/ea-library/{ea_name}"
         emit('install_ea_command', {
             "ea_name": ea_name,
-            "download_url": f"{request.host_url}api/ea-library/{ea_name}"
+            "ea_list": ea_list,
+            "download_url": download_url
         }, room=agent.agent_id)
         emit('install_result', {"status": "sent", "ea": ea_name})
 
