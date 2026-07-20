@@ -112,7 +112,7 @@ def get_mt5_status():
                 "comment": d.comment
             })
 
-    mt5.shutdown()
+    # Don't shutdown — keep MT5 connected for deploy
     return data
 
 # === Install EA handler ===
