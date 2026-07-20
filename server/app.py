@@ -446,9 +446,12 @@ def handle_install_result(data):
 
 @socketio.on('deploy_ea')
 def handle_deploy_ea(data):
-    """用戶㩒 Deploy，寫入 DB pending queue，Agent 會 poll"""
+    """接收 Dashboard 嘅 deploy 指令"""
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
+        # 直接 Socket.IO 發俾 Agent（更快更可靠）
+        socketio.emit('deploy_ea', data, room=agent.agent_id)
+        # 亦寫入 DB（fallback）
         agent.deploy_queue = json.dumps({
             "ea_name": data.get('ea_name'),
             "symbol": data.get('symbol'),

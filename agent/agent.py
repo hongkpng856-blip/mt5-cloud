@@ -199,24 +199,19 @@ def download_and_install(ea_name, url, ea_config=None):
         print(f"❌ Install error: {e}")
         sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
 
+# === Deploy via Socket.IO (instead of polling) ===
+@sio.on('deploy_ea')
+def on_deploy_ea(data):
+    print(f"🚀 [WS] Deploy command: {data}")
+    sys.stdout.flush()
+    execute_deploy(data)
+
 # === Main Loop ===
 def sync_loop():
-    """每 2 秒 poll deploy queue + 每 10 秒 sync MT5"""
+    """每 10 秒 sync MT5 data (唔再 poll deploy)"""
     last_sync = 0
     while True:
         try:
-            # Poll deploy queue from server (use localhost — faster & more reliable)
-            import requests as req
-            poll_url = f"http://localhost:5000/api/agent-poll-deploy?agent_id={AGENT_ID}"
-            resp = req.get(poll_url, timeout=5)
-            if resp.status_code == 200:
-                deploy_data = resp.json()
-                if deploy_data and 'ea_name' in deploy_data:
-                    print(f"🚀 [POLL] Deploy command: {deploy_data}")
-                    sys.stdout.flush()
-                    execute_deploy(deploy_data)
-
-            # Sync MT5 data every 10 seconds
             now = time.time()
             if sio.connected and now - last_sync >= 10:
                 data = get_mt5_status()
@@ -224,7 +219,7 @@ def sync_loop():
                 sio.emit('agent_sync', data)
                 last_sync = now
         except Exception as e:
-            print(f"   Sync poll error: {e}")
+            print(f"   Sync error: {e}")
         time.sleep(2)
 
 def execute_deploy(data):
