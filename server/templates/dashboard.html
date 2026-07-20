@@ -373,8 +373,8 @@ async function loadAnalysis() {
         document.getElementById('anProfit').style.color = s.total_profit>=0?'#3fb950':'#f85149';
         document.getElementById('anPF').textContent = s.wins&&s.losses ? (s.wins/s.losses).toFixed(2) : '∞';
 
-        // 更新 EA 表
-        loadEAConfig();
+        // 只更新 summary 數字，唔 rebuild 成個 EA 表（防止 dropdown 彈走）
+        _updateEAData(s);
 
         // Correlation Matrix
         if (analysisData.correlation_matrix && analysisData.correlation_matrix.length > 1) {
@@ -396,6 +396,39 @@ async function loadAnalysis() {
     } catch(e) {}
 }
 
+function _updateEAData() {
+    // 只更新數字 cells，唔 rebuild 成個 table（防止 dropdown 彈走）
+    if (!analysisData || !analysisData.per_ea_by_magic_symbol) return;
+    document.querySelectorAll('.ea-sym').forEach(sel => {
+        const name = sel.dataset.ea;
+        if (!name) return;
+        const magic = document.querySelector('.ea-magic[data-ea="'+name+'"]')?.value || '240701';
+        const sym = sel.value;
+        const msKey = magic + '_' + sym;
+        const eaData = analysisData.per_ea_by_magic_symbol[msKey] || {};
+        const tr = sel.closest('tr');
+        if (!tr) return;
+        const cells = tr.querySelectorAll('td');
+        // Indices: 0=EA,1=來源,2=Magic,3=Symbol,4=TF,5=Trades,6=Win,7=P&L
+        if (cells[5]) {
+            const t = eaData.trades || 0;
+            cells[5].textContent = t > 0 ? t : '—';
+            cells[5].style.color = t > 0 ? '#e6edf3' : '#484f58';
+        }
+        if (cells[6]) {
+            const wr = eaData.win_rate || 0;
+            cells[6].textContent = wr > 0 ? wr + '%' : '—';
+            cells[6].style.color = wr >= 60 ? '#3fb950' : wr > 0 ? '#d29922' : '#484f58';
+        }
+        if (cells[7]) {
+            const p = eaData.profit || 0;
+            cells[7].textContent = p !== 0 ? (p > 0 ? '+' : '') + '$' + p.toFixed(2) : '—';
+            cells[7].style.color = p > 0 ? '#3fb950' : p < 0 ? '#f85149' : '#484f58';
+            cells[7].style.fontWeight = p !== 0 ? '600' : '400';
+        }
+    });
+}
+
 // Init
 loadDashboard();
 loadEAConfig();
@@ -403,6 +436,7 @@ loadAnalysis();
 loadEALibrary();
 setInterval(loadDashboard, 5000);
 setInterval(loadAnalysis, 10000);
+setInterval(loadEALibrary, 30000);
 
 // === EA Library ===
 async function loadEALibrary() {
