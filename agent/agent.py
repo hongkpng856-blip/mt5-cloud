@@ -262,12 +262,15 @@ def execute_deploy(data):
             mt5.shutdown()
             return
 
+        # Get symbol info for digits
+        info = mt5.symbol_info(symbol)
+        digits = info.digits if info else 5
         request = {
             "action": mt5.TRADE_ACTION_PENDING,
             "symbol": symbol,
             "volume": float(lot),
             "type": mt5.ORDER_TYPE_BUY_LIMIT,
-            "price": round(tick.bid * 0.9, tick.digits),
+            "price": round(tick.bid * 0.9, digits),
             "sl": 0, "tp": 0,
             "deviation": 10,
             "magic": int(magic),
