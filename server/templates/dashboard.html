@@ -177,7 +177,7 @@ async function loadEAConfig() {
 
         // 搵出已配對嘅 EA（config 入邊有 symbol 嘅就係）
         const pairedEAs = Object.keys(eaMappings).filter(k =>
-            !k.startsWith('_') && !k.endsWith('_tf') && !k.endsWith('_lot') && !k.endsWith('_magic') &&
+            !k.startsWith('_') && !k.endsWith('_tf') && !k.endsWith('_lot') && !k.endsWith('_magic') && !k.endsWith('_status') &&
             eaMappings[k] && typeof eaMappings[k] === 'string'
         );
 
@@ -228,7 +228,7 @@ async function loadEAConfig() {
             html += `<tr>
                 <td><b>${name}</b></td>
                 <td><span style="font-size:10px;${isOfficial?'color:#3fb950':'color:#8b949e'}">${isOfficial?'🟢 平台提供':'⬜ 你上傳'}</span></td>
-                <td><input type="number" class="ea-magic" data-ea="${name}" value="${magic}" style="width:70px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 4px;font-size:12px;text-align:center"></td>
+                <td><select class="ea-magic" data-ea="${name}" style="width:85px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 4px;font-size:12px">${(analysisData&&analysisData.all_magics||['240701']).map(m => `<option ${m===magic?'selected':''} value="${m}">Magic ${m}</option>`).join('')}</select></td>
                 <td><select class="ea-sym" data-ea="${name}">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select></td>
                 <td><select class="ea-tf" data-ea="${name}">${['M1','M5','M15','M30','H1','H4','D1','W1','MN1'].map(t => `<option ${t===tf?'selected':''}>${t}</option>`).join('')}</select></td>
                 <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
@@ -263,7 +263,7 @@ async function saveEAConfig() {
     document.querySelectorAll('.ea-sym').forEach(sel => {
         const name = sel.dataset.ea;
         mappings[name] = sel.value;
-        mappings[name+'_magic'] = document.querySelector(`.ea-magic[data-ea="${name}"]`).value || '240701';
+        mappings[name+'_magic'] = document.querySelector('.ea-magic[data-ea="'+name+'"]').value || '240701';
         mappings[name+'_tf'] = document.querySelector(`.ea-tf[data-ea="${name}"]`).value;
         mappings[name+'_lot'] = parseFloat(document.querySelector(`.ea-lot[data-ea="${name}"]`).value) || 1.00;
     });
