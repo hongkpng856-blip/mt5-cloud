@@ -302,7 +302,7 @@ print("=" * 56)
 print("  Connecting...\n")
 
 try:
-    sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'])
+    sio.connect(f"{SERVER_URL}", transports=['websocket'])
 except Exception as e:
     print(f"❌ Cannot connect to server: {e}")
     print(f"   Make sure {SERVER_URL} is running")

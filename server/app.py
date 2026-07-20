@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # === Database ===
 class User(UserMixin, db.Model):
@@ -461,4 +461,4 @@ def handle_deploy_ea(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"☁️  MT5 Cloud Server :{port}")
-    socketio.run(app, host='0.0.0.0', port=port, debug=True)
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, use_reloader=False)
