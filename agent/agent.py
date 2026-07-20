@@ -205,9 +205,10 @@ def sync_loop():
     last_sync = 0
     while True:
         try:
-            # Poll deploy queue from server
+            # Poll deploy queue from server (use localhost — faster & more reliable)
             import requests as req
-            resp = req.get(f"{SERVER_URL}/api/agent-poll-deploy?agent_id={AGENT_ID}", timeout=5)
+            poll_url = f"http://localhost:5000/api/agent-poll-deploy?agent_id={AGENT_ID}"
+            resp = req.get(poll_url, timeout=5)
             if resp.status_code == 200:
                 deploy_data = resp.json()
                 if deploy_data and 'ea_name' in deploy_data:
