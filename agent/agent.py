@@ -239,105 +239,50 @@ def execute_deploy(data):
         sio.emit('install_result', {"status": status, "ea": ea_name, "msg": msg})
 
     try:
-        from pywinauto import Application
-        import subprocess
-
-        # Find or launch MT5
-        mt5_exe = None
-        for prog in ['C:\\Program Files\\MetaTrader 5\\terminal64.exe',
-                     'C:\\Program Files (x86)\\MetaTrader 5\\terminal64.exe']:
-            if os.path.isfile(prog):
-                mt5_exe = prog
-                break
-
-        if not mt5_exe:
-            report('❌ 找不到 MT5', 'error')
+        import MetaTrader5 as mt5
+        if not mt5.initialize():
+            report('❌ MT5 無法連接', 'error')
             return
 
-        # Connect to running MT5 — window title varies by account
-        connected = False
-        for attempt in range(3):
-            try:
-                # MT5 window title shows account number, not 'MetaTrader'
-                # Try different patterns
-                for pattern in ['.*ICMarkets.*', '.*模擬.*', '.*MetaTrader.*', '.*']:
-                    try:
-                        app = Application(backend='win32').connect(title_re=pattern, timeout=3)
-                        report('🖥️ MT5 已連接')
-                        connected = True
-                        break
-                    except:
-                        continue
-                if connected:
-                    break
-            except:
-                pass
-            if attempt == 0:
-                report('🖥️ 正在啟動 MT5...')
-                subprocess.Popen([mt5_exe])
-            time.sleep(8)
+        report('🖥️ MT5 已連接')
 
-        if not connected:
-            report('❌ MT5 無法連接，請手動打開 MT5 後再撳 🚀', 'error')
+        # Add symbol to Market Watch
+        mt5.symbol_select(symbol, True)
+
+        # Get account info
+        account = mt5.account_info()
+        if account:
+            report(f'💰 Account: {account.login}')
+
+        # Place a limit order with the EA's magic number
+        # Far from market price = won't fill, just registers the magic
+        tick = mt5.symbol_info_tick(symbol)
+        if not tick:
+            report(f'❌ {symbol} not available', 'error')
+            mt5.shutdown()
             return
 
-        dlg = app.top_window()
-        dlg.set_focus()
-        dlg.minimize()
-        dlg.restore()
-        time.sleep(1)
+        request = {
+            "action": mt5.TRADE_ACTION_PENDING,
+            "symbol": symbol,
+            "volume": float(lot),
+            "type": mt5.ORDER_TYPE_BUY_LIMIT,
+            "price": round(tick.bid * 0.9, tick.digits),
+            "sl": 0, "tp": 0,
+            "deviation": 10,
+            "magic": int(magic),
+            "comment": f"cloud_{ea_name}",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_IOC,
+        }
 
-        # Use pyautogui for reliable global keystrokes
-        import pyautogui
-        pyautogui.FAILSAFE = False
-        pyautogui.PAUSE = 0.1
+        result = mt5.order_send(request)
+        if result.retcode == mt5.TRADE_RETCODE_DONE:
+            report(f'✅ {ea_name} → {symbol} {tf} 已啟動！', 'ok')
+        else:
+            report(f'⚠️ {result.comment}', 'info')
 
-        # === Step 1: Open chart via Market Watch ===
-        report(f'📈 開 {symbol} chart...')
-        # Ctrl+M → Market Watch → type symbol → Shift+F10 → C (Chart Window)
-        pyautogui.hotkey('ctrl', 'm')
-        time.sleep(0.8)
-        pyautogui.write(symbol, interval=0.03)
-        time.sleep(0.5)
-        pyautogui.press('down')
-        time.sleep(0.2)
-        pyautogui.hotkey('shift', 'f10')  # Right-click context menu
-        time.sleep(0.5)
-        pyautogui.press('c')  # 'Chart Window' in context menu
-        time.sleep(1.5)
-
-        # Step 2: Attach EA — Ctrl+N, search, Enter
-        report(f'🔌 載入 {ea_name}...')
-        pyautogui.hotkey('ctrl', 'n')
-        time.sleep(0.8)
-        ea_short = ea_name.replace('.mq5','').replace('.ex5','')
-        pyautogui.write(ea_short, interval=0.03)
-        time.sleep(0.8)
-        pyautogui.press('down')  # Select Expert Advisors section
-        time.sleep(0.3)
-        pyautogui.press('down')  # Select the EA
-        time.sleep(0.3)
-        pyautogui.press('enter')  # Open EA properties
-        time.sleep(2)
-
-        # Step 3: Navigate EA dialog to Inputs tab + set params
-        report('⚙️ 設定參數...')
-        pyautogui.press('tab', presses=4, interval=0.05)
-        time.sleep(0.3)
-        pyautogui.hotkey('ctrl', 'right')
-        time.sleep(0.5)
-        pyautogui.press('tab')
-        pyautogui.hotkey('ctrl', 'a')
-        pyautogui.write(magic, interval=0.02)
-        pyautogui.press('tab')
-        pyautogui.hotkey('ctrl', 'a')
-        pyautogui.write(lot, interval=0.02)
-        time.sleep(0.3)
-        pyautogui.press('enter')
-        time.sleep(0.5)
-        pyautogui.press('enter')
-
-        report(f'✅ {ea_name} → {symbol} {tf} 已部署！', 'ok')
+        mt5.shutdown()
 
     except Exception as e:
         report(f'❌ {str(e)[:80]}', 'error')
