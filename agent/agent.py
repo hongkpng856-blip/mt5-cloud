@@ -254,20 +254,23 @@ def execute_deploy(data):
             report('❌ 找不到 MT5', 'error')
             return
 
-        # Connect to running MT5 or launch
-        try:
-            app = Application(backend='win32').connect(title_re='.*MetaTrader.*', timeout=5)
-            report('🖥️ MT5 已連接')
-        except:
-            report('🖥️ 正在啟動 MT5...')
-            subprocess.Popen([mt5_exe])
-            time.sleep(10)
+        # Connect to running MT5 or launch with retry
+        connected = False
+        for attempt in range(3):
             try:
-                app = Application(backend='win32').connect(title_re='.*MetaTrader.*', timeout=10)
-                report('🖥️ MT5 已啟動')
-            except Exception as ce:
-                report(f'❌ 無法連接 MT5: {str(ce)[:50]}', 'error')
-                return
+                app = Application(backend='win32').connect(title_re='.*MetaTrader.*', timeout=5)
+                report('🖥️ MT5 已連接')
+                connected = True
+                break
+            except:
+                if attempt == 0:
+                    report('🖥️ 正在啟動 MT5...')
+                    subprocess.Popen([mt5_exe])
+                time.sleep(8)
+
+        if not connected:
+            report('❌ MT5 無法連接，請手動打開 MT5 後再撳 🚀', 'error')
+            return
 
         dlg = app.top_window()
         dlg.set_focus()
