@@ -162,6 +162,17 @@
 <script>
 const socket = io();
 
+// 聽 Agent 嘅安裝結果
+socket.on('install_result', (data) => {
+    if (data.status === 'ok') {
+        showLog(`✅ 已安裝: ${data.ea}`, 'log-success');
+    } else if (data.status === 'sent') {
+        showLog(`📡 已發送安裝指令`, 'log-info');
+    } else {
+        showLog(`❌ 安裝失敗: ${data.ea} — ${data.msg || 'unknown'}`, 'log-error');
+    }
+});
+
 // === EA Config ===
 let eaMappings = {};
 let allSymbols = [];
@@ -280,7 +291,6 @@ async function saveEAConfig() {
     if (dashData.status === 'connected' || dashData.status === 'running') {
         const eaNames = Array.from(document.querySelectorAll('.ea-sym')).map(s => s.dataset.ea);
         socket.emit('agent_install_ea', { agent_id: dashData.agent_id, ea_name: 'all', ea_list: eaNames });
-        showLog('📡 Agent 在線，已發送安裝指令...', 'log-info');
     } else {
         showLog('💡 Agent 離線，連線後會自動同步安裝 EA ✅', 'log-warn');
     }

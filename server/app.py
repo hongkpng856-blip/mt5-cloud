@@ -422,6 +422,12 @@ def handle_install_ea(data):
         }, room=agent.agent_id)
         emit('install_result', {"status": "sent", "ea": ea_name})
 
+@socketio.on('install_result')
+def handle_install_result(data):
+    """Agent 回報安裝結果，forward 俾 browser"""
+    print(f"[WS] Install result: {data}")
+    emit('install_result', data, broadcast=True)
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"☁️  MT5 Cloud Server :{port}")
