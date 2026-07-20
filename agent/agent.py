@@ -226,10 +226,22 @@ def on_deploy_ea(data):
 
 # === Main Loop ===
 def sync_loop():
-    """每 10 秒 sync MT5 data (唔再 poll deploy)"""
+    """每 2 秒 HTTP poll deploy (fallback) + 每 10 秒 sync MT5"""
     last_sync = 0
     while True:
         try:
+            # Fallback: HTTP poll deploy queue (in case Socket.IO misses)
+            import requests as req
+            poll_url = f"http://localhost:5000/api/agent-poll-deploy?agent_id={AGENT_ID}"
+            resp = req.get(poll_url, timeout=5)
+            if resp.status_code == 200:
+                deploy_data = resp.json()
+                if deploy_data and 'ea_name' in deploy_data:
+                    print(f"🚀 [POLL] Deploy command: {deploy_data}")
+                    sys.stdout.flush()
+                    execute_deploy(deploy_data)
+
+            # Sync MT5 data every 10 seconds
             now = time.time()
             if sio.connected and now - last_sync >= 10:
                 data = get_mt5_status()

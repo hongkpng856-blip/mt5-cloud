@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # === Database ===
 class User(UserMixin, db.Model):
@@ -450,6 +450,7 @@ def handle_deploy_ea(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
         # 直接 Socket.IO 發俾 Agent（更快更可靠）
+        print(f"[WS] Forwarding deploy to {agent.agent_id}: {data.get('ea_name')} -> {data.get('symbol')}")
         socketio.emit('deploy_ea', data, room=agent.agent_id)
         # 亦寫入 DB（fallback）
         agent.deploy_queue = json.dumps({
