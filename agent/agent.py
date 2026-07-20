@@ -231,12 +231,23 @@ def execute_deploy(data):
     tf = data.get('tf', 'H1')
     magic = str(data.get('magic', '240701'))
     lot = str(data.get('lot', '1.00'))
-    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol}")
+    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} {tf}")
 
-    # MT5 command-line: terminal64.exe /symbol:EURUSD /period:H1
-    tf_map = {'M1':'1','M5':'5','M15':'15','M30':'30','H1':'60','H4':'240','D1':'1440','W1':'10080','MN1':'43200'}
-    period = tf_map.get(tf, '60')
+    # 用 MT5 Python API 開 chart (symbol_select + 打開 chart)
+    opened = False
+    try:
+        import MetaTrader5 as mt5
+        if mt5.initialize():
+            # Add symbol to Market Watch
+            mt5.symbol_select(symbol, True)
+            # Open chart via MT5 internal command (send hotkey via terminal input)
+            # MT5 doesn't have direct "open chart" via Python, but we can use chart_open via terminal
+            # Alternative: use Windows automation to open chart
+            mt5.shutdown()
+    except:
+        pass
 
+    # Try launching MT5 with correct profile or just open it
     import subprocess
     mt5_exe = None
     for prog in ['C:\\Program Files\\MetaTrader 5\\terminal64.exe',
@@ -246,17 +257,14 @@ def execute_deploy(data):
             break
 
     if mt5_exe:
-        # Open MT5 with the correct chart
-        subprocess.Popen([mt5_exe, f'/symbol:{symbol}', f'/period:{period}'])
-        sio.emit('install_result', {
-            "status": "ok", "ea": ea_name,
-            "msg": f"✅ MT5 已開啟 {symbol} chart！請 drag {ea_name} 去 chart → Load Preset → OK"
-        })
-    else:
-        sio.emit('install_result', {
-            "status": "ok", "ea": ea_name,
-            "msg": f"📁 EA 已就緒：{ea_name} | 去 MT5 → Navigator → 拉落 chart → Load {ea_name}.set"
-        })
+        # Launch MT5 (it will just activate if already running)
+        subprocess.Popen([mt5_exe])
+
+    # Instructions via install_result
+    sio.emit('install_result', {
+        "status": "ok", "ea": ea_name,
+        "msg": f"✅ 請喺 MT5 開 {symbol} {tf} chart → drag {ea_name} 落去 → Load {ea_name}.set → OK"
+    })
 
 print()
 print("=" * 56)
