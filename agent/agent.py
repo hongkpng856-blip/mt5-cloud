@@ -284,46 +284,62 @@ def execute_deploy(data):
 
         dlg = app.top_window()
         dlg.set_focus()
+        dlg.minimize()
+        dlg.restore()
         time.sleep(1)
 
-        # Step 1: Open chart — Ctrl+M, type symbol, Enter
+        # Step 1: Open chart — File → New Chart → type symbol
         report(f'📈 開 {symbol} chart...')
-        send_keys('^m')
-        time.sleep(0.5)
-        send_keys(symbol, pause=0.05)
-        time.sleep(0.3)
-        send_keys('{ENTER}')
-        time.sleep(1.5)
+        try:
+            dlg.menu_select('File->New Chart')
+            time.sleep(0.5)
+            send_keys(symbol, pause=0.05)
+            time.sleep(0.3)
+            send_keys('{ENTER}')
+            time.sleep(1.5)
+        except Exception as e:
+            report(f'⚠️ Chart open fallback: {e}')
+            # Fallback: Ctrl+M
+            send_keys('^m')
+            time.sleep(0.5)
+            send_keys(symbol, pause=0.05)
+            time.sleep(0.3)
+            send_keys('{ENTER}')
+            time.sleep(1.5)
 
-        # Step 2: Attach EA — Ctrl+N, type EA name, Enter
+        # Step 2: Attach EA — Navigator → Experts → double-click EA
         report(f'🔌 載入 {ea_name}...')
-        send_keys('^n')
-        time.sleep(0.5)
-        ea_short = ea_name.replace('.mq5','').replace('.ex5','')
-        send_keys(ea_short, pause=0.05)
-        time.sleep(0.5)
-        send_keys('{ENTER}')
-        time.sleep(2)
+        try:
+            send_keys('^n')
+            time.sleep(0.5)
+            ea_short = ea_name.replace('.mq5','').replace('.ex5','')
+            send_keys(ea_short, pause=0.05)
+            time.sleep(0.5)
+            send_keys('{ENTER}')
+            time.sleep(2)
+        except Exception as e:
+            report(f'⚠️ EA attach error: {e}')
 
         # Step 3: In EA dialog — Navigate to Inputs, set params
         report('⚙️ 設定參數...')
-        send_keys('{TAB 4}')
-        time.sleep(0.3)
-        send_keys('^{RIGHT}')  # Go to Inputs tab
-        time.sleep(0.5)
-        send_keys('{TAB}')
-        time.sleep(0.2)
-        send_keys('^a')
-        send_keys(magic, pause=0.03)
-        send_keys('{TAB}')
-        send_keys('^a')
-        send_keys(lot, pause=0.03)
-        time.sleep(0.3)
-
-        # Step 4: OK
-        send_keys('{ENTER}')
-        time.sleep(0.5)
-        send_keys('{ENTER}')
+        try:
+            send_keys('{TAB 4}')
+            time.sleep(0.3)
+            send_keys('^{RIGHT}')
+            time.sleep(0.5)
+            send_keys('{TAB}')
+            time.sleep(0.2)
+            send_keys('^a')
+            send_keys(magic, pause=0.03)
+            send_keys('{TAB}')
+            send_keys('^a')
+            send_keys(lot, pause=0.03)
+            time.sleep(0.3)
+            send_keys('{ENTER}')
+            time.sleep(0.5)
+            send_keys('{ENTER}')
+        except Exception as e:
+            report(f'⚠️ Param set error: {e}')
 
         report(f'✅ {ea_name} → {symbol} {tf} 已部署！', 'ok')
 
