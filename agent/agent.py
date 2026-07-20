@@ -288,58 +288,46 @@ def execute_deploy(data):
         dlg.restore()
         time.sleep(1)
 
-        # Step 1: Open chart — File → New Chart → type symbol
+        # Use pyautogui for reliable global keystrokes
+        import pyautogui
+        pyautogui.FAILSAFE = False
+        pyautogui.PAUSE = 0.1
+
+        # Step 1: Open chart — Ctrl+M (Market Watch), type symbol
         report(f'📈 開 {symbol} chart...')
-        try:
-            dlg.menu_select('File->New Chart')
-            time.sleep(0.5)
-            send_keys(symbol, pause=0.05)
-            time.sleep(0.3)
-            send_keys('{ENTER}')
-            time.sleep(1.5)
-        except Exception as e:
-            report(f'⚠️ Chart open fallback: {e}')
-            # Fallback: Ctrl+M
-            send_keys('^m')
-            time.sleep(0.5)
-            send_keys(symbol, pause=0.05)
-            time.sleep(0.3)
-            send_keys('{ENTER}')
-            time.sleep(1.5)
+        pyautogui.hotkey('ctrl', 'm')
+        time.sleep(0.6)
+        pyautogui.write(symbol, interval=0.03)
+        time.sleep(0.3)
+        pyautogui.press('enter')
+        time.sleep(1.5)
 
-        # Step 2: Attach EA — Navigator → Experts → double-click EA
+        # Step 2: Attach EA — Ctrl+N (Navigator), type EA name
         report(f'🔌 載入 {ea_name}...')
-        try:
-            send_keys('^n')
-            time.sleep(0.5)
-            ea_short = ea_name.replace('.mq5','').replace('.ex5','')
-            send_keys(ea_short, pause=0.05)
-            time.sleep(0.5)
-            send_keys('{ENTER}')
-            time.sleep(2)
-        except Exception as e:
-            report(f'⚠️ EA attach error: {e}')
+        pyautogui.hotkey('ctrl', 'n')
+        time.sleep(0.6)
+        ea_short = ea_name.replace('.mq5','').replace('.ex5','')
+        pyautogui.write(ea_short, interval=0.03)
+        time.sleep(0.5)
+        pyautogui.press('enter')
+        time.sleep(2)
 
-        # Step 3: In EA dialog — Navigate to Inputs, set params
+        # Step 3: Navigate EA dialog to Inputs tab + set params
         report('⚙️ 設定參數...')
-        try:
-            send_keys('{TAB 4}')
-            time.sleep(0.3)
-            send_keys('^{RIGHT}')
-            time.sleep(0.5)
-            send_keys('{TAB}')
-            time.sleep(0.2)
-            send_keys('^a')
-            send_keys(magic, pause=0.03)
-            send_keys('{TAB}')
-            send_keys('^a')
-            send_keys(lot, pause=0.03)
-            time.sleep(0.3)
-            send_keys('{ENTER}')
-            time.sleep(0.5)
-            send_keys('{ENTER}')
-        except Exception as e:
-            report(f'⚠️ Param set error: {e}')
+        pyautogui.press('tab', presses=4, interval=0.05)
+        time.sleep(0.3)
+        pyautogui.hotkey('ctrl', 'right')
+        time.sleep(0.5)
+        pyautogui.press('tab')
+        pyautogui.hotkey('ctrl', 'a')
+        pyautogui.write(magic, interval=0.02)
+        pyautogui.press('tab')
+        pyautogui.hotkey('ctrl', 'a')
+        pyautogui.write(lot, interval=0.02)
+        time.sleep(0.3)
+        pyautogui.press('enter')
+        time.sleep(0.5)
+        pyautogui.press('enter')
 
         report(f'✅ {ea_name} → {symbol} {tf} 已部署！', 'ok')
 
