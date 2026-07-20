@@ -221,8 +221,8 @@ def sync_loop():
                 data['agent_id'] = AGENT_ID
                 sio.emit('agent_sync', data)
                 last_sync = now
-        except:
-            pass
+        except Exception as e:
+            print(f"   Sync poll error: {e}")
         time.sleep(2)
 
 def execute_deploy(data):
