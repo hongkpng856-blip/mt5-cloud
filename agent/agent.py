@@ -240,7 +240,6 @@ def execute_deploy(data):
 
     try:
         from pywinauto import Application
-        from pywinauto.keyboard import send_keys
         import subprocess
 
         # Find or launch MT5
@@ -293,17 +292,18 @@ def execute_deploy(data):
         pyautogui.FAILSAFE = False
         pyautogui.PAUSE = 0.1
 
-        # Step 1: Open chart — File → New Chart → type symbol
+        # === Step 1: Open chart via Market Watch ===
         report(f'📈 開 {symbol} chart...')
-        # Alt+F → N (File → New Chart) → type symbol
-        pyautogui.hotkey('alt', 'f')
-        time.sleep(0.3)
-        pyautogui.press('n')  # New Chart
-        time.sleep(0.5)
-        # Symbol selection dialog opens — type to search
+        # Ctrl+M → Market Watch → type symbol → Shift+F10 → C (Chart Window)
+        pyautogui.hotkey('ctrl', 'm')
+        time.sleep(0.8)
         pyautogui.write(symbol, interval=0.03)
-        time.sleep(0.3)
-        pyautogui.press('enter')
+        time.sleep(0.5)
+        pyautogui.press('down')
+        time.sleep(0.2)
+        pyautogui.hotkey('shift', 'f10')  # Right-click context menu
+        time.sleep(0.5)
+        pyautogui.press('c')  # 'Chart Window' in context menu
         time.sleep(1.5)
 
         # Step 2: Attach EA — Ctrl+N, search, Enter
