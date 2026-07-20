@@ -186,16 +186,20 @@
 <script>
 const socket = io();
 
-// 聽 Agent 嘅安裝結果
+// 聽 Agent 嘅安裝結果 (dedup)
+let _lastLog = '';
 socket.on('install_result', (data) => {
+    const msg = data.msg || ('已安裝: ' + data.ea);
+    if (msg === _lastLog) return; // skip duplicate
+    _lastLog = msg;
     if (data.status === 'ok') {
-        showLog(`✅ ${data.msg || '已安裝: ' + data.ea}`, 'log-success');
+        showLog('✅ ' + msg, 'log-success');
     } else if (data.status === 'sent') {
-        showLog(`📡 已發送指令: ${data.ea}`, 'log-info');
+        showLog('📡 已發送指令: ' + data.ea, 'log-info');
     } else if (data.status === 'info') {
-        showLog(`${data.msg || data.ea}`, 'log-info');
+        showLog(msg, 'log-info');
     } else {
-        showLog(`❌ ${data.msg || data.ea || 'unknown'}`, 'log-error');
+        showLog('❌ ' + (msg || data.ea || 'unknown'), 'log-error');
     }
 });
 

@@ -439,9 +439,9 @@ def handle_install_ea(data):
 
 @socketio.on('install_result')
 def handle_install_result(data):
-    """Agent 回報安裝結果，forward 俾 browser"""
+    """Agent 回報安裝結果，forward 俾所有 browser"""
     print(f"[WS] Install result: {data}")
-    emit('install_result', data)
+    emit('install_result', data, broadcast=True, include_self=False)
 
 @socketio.on('deploy_ea')
 def handle_deploy_ea(data):
