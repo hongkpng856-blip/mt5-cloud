@@ -213,6 +213,7 @@ def sync_loop():
                 deploy_data = resp.json()
                 if deploy_data and 'ea_name' in deploy_data:
                     print(f"🚀 [POLL] Deploy command: {deploy_data}")
+                    sys.stdout.flush()
                     execute_deploy(deploy_data)
 
             # Sync MT5 data every 10 seconds
@@ -232,7 +233,15 @@ def execute_deploy(data):
     tf = data.get('tf', 'H1')
     magic = str(data.get('magic', '240701'))
     lot = str(data.get('lot', '1.00'))
-    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} {tf}")
+
+    # Broker symbol mapping (IC Markets 用嘅名)
+    SYMBOL_MAP = {
+        'DAX40': 'DE40',
+        'SP500': 'US500',
+    }
+    mt5_symbol = SYMBOL_MAP.get(symbol, symbol)
+
+    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} ({mt5_symbol}) {tf}")
 
     def report(msg, status='info'):
         print(f"   {msg}")
@@ -247,7 +256,7 @@ def execute_deploy(data):
         report('🖥️ MT5 已連接')
 
         # Add symbol to Market Watch
-        mt5.symbol_select(symbol, True)
+        mt5.symbol_select(mt5_symbol, True)
 
         # Get account info
         account = mt5.account_info()
@@ -256,18 +265,17 @@ def execute_deploy(data):
 
         # Place a limit order with the EA's magic number
         # Far from market price = won't fill, just registers the magic
-        tick = mt5.symbol_info_tick(symbol)
+        tick = mt5.symbol_info_tick(mt5_symbol)
         if not tick:
-            report(f'❌ {symbol} not available', 'error')
+            report(f'❌ {mt5_symbol} not available', 'error')
             mt5.shutdown()
             return
 
         # Get symbol info for digits
-        info = mt5.symbol_info(symbol)
-        digits = info.digits if info else 5
+        info = mt5.symbol_info(mt5_symbol)
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": symbol,
+            "symbol": mt5_symbol,
             "volume": float(lot),
             "type": mt5.ORDER_TYPE_BUY,
             "price": tick.ask,
@@ -280,7 +288,7 @@ def execute_deploy(data):
 
         result = mt5.order_send(request)
         if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-            report(f'✅ {ea_name} → {symbol} {tf} 已啟動！', 'ok')
+            report(f'✅ {ea_name} → {symbol} ({mt5_symbol}) {tf} 已啟動！', 'ok')
         elif result:
             report(f'⚠️ retcode={result.retcode}', 'info')
         else:

@@ -62,8 +62,9 @@ with app.app_context():
 # 預設交易品種
 ALL_SYMBOLS = ['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','NZDUSD',
                'EURJPY','GBPJPY','EURGBP','EURCHF','GBPCHF','AUDJPY',
-               'GBPAUD','EURNZD','XAUUSD','XAGUSD','US30','SP500',
-               'NAS100','DAX40','BTCUSD','ETHUSD']
+               'GBPAUD','EURNZD','XAUUSD','XAGUSD',
+               'US30','US500','DE40','UK100','JP225','AUS200',
+               'BTCUSD','ETHUSD']
 TIMEFRAMES = ['M1','M5','M15','M30','H1','H4','D1','W1','MN1']
 
 # === Frontend ===
