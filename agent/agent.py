@@ -140,14 +140,12 @@ def on_install_ea(data):
     download_and_install(ea_name + '.mq5', url + ea_name + '.mq5', ea_config)
 
 
-# === Deploy via Socket.IO (background thread, 唔阻塞) ===
+# === Deploy via Socket.IO (runs directly, install is already bg) ===
 @sio.on('deploy_ea')
 def on_deploy_ea(data):
-    print(f"🚀 [WS] Deploy command: {data}")
+    print(f"🚀 [WS] Deploy: {data}")
     sys.stdout.flush()
-    import threading
-    t = threading.Thread(target=execute_deploy, args=(data,), daemon=True)
-    t.start()
+    execute_deploy(data)
 
 def download_and_install(ea_name, url, ea_config=None):
     print(f"📥 Installing EA: {ea_name}")
@@ -226,18 +224,18 @@ def on_deploy_ea(data):
 
 # === Main Loop ===
 def sync_loop():
-    """每 2 秒 HTTP poll deploy (fallback) + 每 10 秒 sync MT5"""
+    """每 2 秒 HTTP poll deploy + 每 10 秒 sync MT5"""
     last_sync = 0
     while True:
         try:
-            # Fallback: HTTP poll deploy queue (in case Socket.IO misses)
+            # Poll deploy queue
             import requests as req
             poll_url = f"http://localhost:5000/api/agent-poll-deploy?agent_id={AGENT_ID}"
             resp = req.get(poll_url, timeout=5)
             if resp.status_code == 200:
                 deploy_data = resp.json()
                 if deploy_data and 'ea_name' in deploy_data:
-                    print(f"🚀 [POLL] Deploy command: {deploy_data}")
+                    print(f"🚀 [POLL] Deploy: {deploy_data}")
                     sys.stdout.flush()
                     execute_deploy(deploy_data)
 
@@ -248,8 +246,11 @@ def sync_loop():
                 data['agent_id'] = AGENT_ID
                 sio.emit('agent_sync', data)
                 last_sync = now
+        except ImportError:
+            # requests not installed yet
+            pass
         except Exception as e:
-            print(f"   Sync error: {e}")
+            print(f"   [SYNC] Error: {e}")
         time.sleep(2)
 
 def execute_deploy(data):
