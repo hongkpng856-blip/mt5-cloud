@@ -293,23 +293,29 @@ def execute_deploy(data):
         pyautogui.FAILSAFE = False
         pyautogui.PAUSE = 0.1
 
-        # Step 1: Open chart — Ctrl+M (Market Watch), type symbol
+        # Step 1: Open chart via Market Watch
         report(f'📈 開 {symbol} chart...')
         pyautogui.hotkey('ctrl', 'm')
-        time.sleep(0.6)
+        time.sleep(0.8)
         pyautogui.write(symbol, interval=0.03)
-        time.sleep(0.3)
-        pyautogui.press('enter')
+        time.sleep(0.5)
+        pyautogui.press('down')  # Select first match
+        time.sleep(0.2)
+        pyautogui.press('enter')  # Open chart
         time.sleep(1.5)
 
-        # Step 2: Attach EA — Ctrl+N (Navigator), type EA name
+        # Step 2: Attach EA — Ctrl+N, search, Enter
         report(f'🔌 載入 {ea_name}...')
         pyautogui.hotkey('ctrl', 'n')
-        time.sleep(0.6)
+        time.sleep(0.8)
         ea_short = ea_name.replace('.mq5','').replace('.ex5','')
         pyautogui.write(ea_short, interval=0.03)
-        time.sleep(0.5)
-        pyautogui.press('enter')
+        time.sleep(0.8)
+        pyautogui.press('down')  # Select Expert Advisors section
+        time.sleep(0.3)
+        pyautogui.press('down')  # Select the EA
+        time.sleep(0.3)
+        pyautogui.press('enter')  # Open EA properties
         time.sleep(2)
 
         # Step 3: Navigate EA dialog to Inputs tab + set params
