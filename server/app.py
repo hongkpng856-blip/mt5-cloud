@@ -20,7 +20,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Use eventlet on Render (gunicorn), threading on dev
+import os
+_async_mode = 'eventlet' if os.environ.get('RENDER', '') else 'threading'
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=_async_mode, logger=False, engineio_logger=False)
 
 # === Database ===
 class User(UserMixin, db.Model):
