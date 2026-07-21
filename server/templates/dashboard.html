@@ -151,28 +151,29 @@
         </div>
     </div>
 
-    <!-- 🚀 Deploy Guide -->
+    <!-- 🚀 自動部署 -->
     <div class="card">
-        <div class="card-title">🚀 部署 EA 到 MT5</div>
-        <p style="font-size:12px;color:#8b949e;margin-bottom:12px">💾 儲存配對後，Agent 會自動 download + compile + 生成 .set 參數檔</p>
+        <div class="card-title">🚀 一鍵自動部署</div>
+        <p style="font-size:12px;color:#8b949e;margin-bottom:12px">💾 儲存配對後撳 🚀，Agent 會用 MT5 API 自動落單，唔使開 chart / drag EA</p>
         <div class="stat-row">
             <div class="stat-box">
-                <div class="label">1️⃣ 喺 MT5 開 Chart</div>
-                <div class="value" style="font-size:13px">File → New Chart → 揀 Symbol + TF</div>
+                <div class="label">1️⃣ 撳 🚀</div>
+                <div class="value" style="font-size:13px">Dashboard 揀好 Symbol / Magic / TF</div>
             </div>
             <div class="stat-box">
-                <div class="label">2️⃣ Drag EA 去 Chart</div>
-                <div class="value" style="font-size:13px">Navigator → Experts → 拉 EA 入 chart</div>
+                <div class="label">2️⃣ Agent 接收指令</div>
+                <div class="value" style="font-size:13px">經 WebSocket 即時傳送（無需 polling）</div>
             </div>
             <div class="stat-box">
-                <div class="label">3️⃣ Load Preset</div>
-                <div class="value" style="font-size:13px">㩒 Load → 揀 EA 名.set</div>
+                <div class="label">3️⃣ MT5 API 落單</div>
+                <div class="value" style="font-size:13px">Market order (IOC) 你選嘅 Symbol + Magic</div>
             </div>
             <div class="stat-box">
-                <div class="label">4️⃣ 㩒 OK 開始 Trade</div>
-                <div class="value" style="font-size:13px">EA 會跟 Dashboard 設定自動 trade</div>
+                <div class="label">4️⃣ Dashboard 顯示</div>
+                <div class="value" style="font-size:13px">Agent sync 返 MT5 → Dashboard 即時更新</div>
             </div>
         </div>
+        <p style="font-size:11px;color:#d29922;margin-top:8px">⚠️ 指數 (DE40/US500) 因 broker 限制只能 forex pair 先可開新單</p>
     </div>
 
     <!-- Correlation -->
