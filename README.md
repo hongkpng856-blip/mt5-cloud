@@ -1,123 +1,169 @@
-# MT5 Cloud — 公開網站 + Windows Agent
-# 將你嘅 MT5 交易平台放上雲端，任何 browser 都用得
+# ☁️ MT5 Cloud
 
-## 系統架構
+**MT5 Cloud** — 一個 SaaS 平台，幫你經 **Web Dashboard** 管理 MetaTrader 5 EA，自動下載、編譯、部署，唔使開 chart / drag EA。
 
-```
-🌐 Cloud Server (Linux VPS)
-├── 用戶註冊/登入
-├── Web Dashboard (EA配對+分析+Correlation)
-├── WebSocket 同 Agent 溝通
-└── Database (用戶資料)
-     ↑ WebSocket / HTTPS ↓
-🖥️ 你嘅 Windows 機 (有 MT5)
-├── MT5 Cloud Agent
-└── MetaTrader 5
-```
+---
 
-## Deploy Server
+## 🚀 快速開始
 
-### 1. 租 VPS（建議配置）
-
-| 供應商 | Plan | 月費 |
-|-------|------|------|
-| DigitalOcean | Basic $6 | ~$6 USD |
-| 阿里雲 | 輕量應用伺服器 | ~$34 HKD |
-| AWS Lightsail | $5 plan | ~$5 USD |
-| Linode | Nanode 1GB | ~$5 USD |
-
-### 2. 裝 Server
+### 1. 部 Server
 
 ```bash
-# SSH 入你嘅 VPS
-ssh root@your-server-ip
-
-# Install Python + dependencies
-apt update && apt install -y python3 python3-pip git
-
-# Clone project
-git clone https://github.com/hongkpng855-lang/mt5-trading-bot.git
-cd mt5-cloud/server
-
-# Install requirements
+cd server
 pip install -r requirements.txt
-
-# Set SECRET_KEY (change this!)
-export SECRET_KEY="your-random-secret-key-here"
-
-# Run with gunicorn (production)
-gunicorn -k eventlet -w 1 -b 0.0.0.0:80 app:app
+python app.py
 ```
 
-### 3. 用 systemd 開機自啟動
+Server 會行喺 `http://localhost:5000`
+
+### 2. 開 Tunnel（可選）
+
+外網存取 Dashboard：
 
 ```bash
-# /etc/systemd/system/mt5cloud.service
-[Unit]
-Description=MT5 Cloud Server
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/mt5-cloud/server
-Environment=SECRET_KEY=your-secret-key
-ExecStart=/usr/bin/gunicorn -k eventlet -w 1 -b 0.0.0.0:80 app:app
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
+# Cloudflare Tunnel（免費，唔使 CC）
+cloudflared tunnel --url http://localhost:5000
 ```
 
-### 4. Set Domain + HTTPS（免費）
+### 3. 起 Agent
 
 ```bash
-# Install nginx + certbot
-apt install -y nginx certbot python3-certbot-nginx
-
-# /etc/nginx/sites-available/mt5cloud
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:80;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-    }
-}
-
-# Get HTTPS certificate
-certbot --nginx -d your-domain.com
+cd agent
+python agent.py --server http://localhost:5000 --agent-id DEV00001
 ```
 
-## Windows Agent
+> Agent 同 Server 可以喺同一部機行，亦可以分開。
 
-### Quick Start
+### 4. 開 Browser
+
+去 `http://localhost:5000` 或 Cloudflare URL，用 `dev / dev1234` 登入。
+
+---
+
+## 📦 架構
+
+```
+┌─────────────────┐     WebSocket      ┌──────────────────┐
+│   Dashboard     │◄──────────────────►│   Flask Server   │
+│  (Browser/手機)  │                    │  (localhost:5000) │
+└─────────────────┘                    └────────┬─────────┘
+                                                │
+                                ┌───────────────┴───────────────┐
+                                │           SQLite DB           │
+                                │  (user, ea_config, agent,     │
+                                │   deploy_queue, account_info) │
+                                └───────────────────────────────┘
+                                                │
+                          ┌─────────────────────┴─────────────────────┐
+                          │         Agent (背景執行)                   │
+                          │  - WebSocket 連接 server                  │
+                          │  - 每 2s HTTP poll deploy_queue           │
+                          │  - 每 10s sync MT5 數據                   │
+                          │  - Download + Compile EA (.mq5)           │
+                          │  - MT5 Python API 落單                    │
+                          └─────────────────┬────────────────────────┘
+                                            │
+                          ┌──────────────────┴──────────────────┐
+                          │       MetaTrader 5 Terminal         │
+                          │   Account: IC Markets Demo 52781843 │
+                          └─────────────────────────────────────┘
+```
+
+---
+
+## 🌐 Symbol 對應
+
+Web UI 用嘅名 vs Broker（IC Markets）實際名：
+
+| UI 顯示 | MT5 名 | 狀態 |
+|---------|--------|------|
+| EURUSD | EURUSD | ✅ 可交易 |
+| GBPUSD | GBPUSD | ✅ 可交易 |
+| US30 | US30 | ✅ 可交易 |
+| **DAX40** | **DE40** | ⚠️ close only |
+| **SP500** | **US500** | ⚠️ close only |
+| **NAS100** | — | ❌ 無此 symbol |
+
+Agent 嘅 `execute_deploy()` 自動 mapping：`DAX40→DE40`、`SP500→US500`。
+
+---
+
+## 🚢 部署
+
+### Cloudflare Tunnel（免費，推薦）
 
 ```bash
-# 喺你部有 MT5 嘅 Windows 機
-pip install MetaTrader5 python-socketio[client] requests
+# 安裝 cloudflared
+curl -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
 
-python agent.py --server https://your-server.com --agent-id YOUR_AGENT_ID
+# 啟動 tunnel（每次 restart 會出新 URL）
+cloudflared tunnel --url http://localhost:5000
 ```
 
-### Build .exe（俾人直接下載）
+⚠️ Quick Tunnel 每次 restart 會出新 URL。想固定 URL 要用 Cloudflare account：
 
 ```bash
-pip install pyinstaller
-python build_agent.py
-# 產出：dist/MT5 Cloud Agent.exe
+cloudflared tunnel login
+cloudflared tunnel create mt5-cloud
+cloudflared tunnel route dns mt5-cloud mt5.example.com
 ```
 
-## 用戶流程
+### Render（需 CC 驗證）
+
+```bash
+gunicorn -k eventlet -w 1 --bind 0.0.0.0:$PORT wsgi:app
+```
+
+### ngrok
+
+```bash
+ngrok http 5000
+```
+
+---
+
+## 🔧 Debug
+
+| 問題 | 檢查 |
+|------|------|
+| Agent 連唔到 server | `curl http://localhost:5000/` |
+| Deploy 唔生效 | `curl "http://localhost:5000/api/agent-poll-deploy?agent_id=DEV00001"` |
+| Socket.IO 斷線 | Agent log 有 `🔴 Disconnected` |
+| MT5 冇新 trade | 確認 symbol 可交易 (`trade_mode=3`) |
+| Port 5000 佔用 | `python -c "import psutil; [p.kill() for p in psutil.process_iter() if any(c.laddr.port==5000 for c in p.connections())]"` |
+
+---
+
+## 📁 目錄結構
 
 ```
-1️⃣ 上 your-domain.com → Register
-2️⃣ 記低 Agent ID
-3️⃣ Download MT5 Cloud Agent.exe
-4️⃣ 開 Agent → 入 Server URL + Agent ID
-5️⃣ MT5 自動上線 → 網頁 Dashboard 用到晒所有功能！
+mt5-cloud/
+├── server/
+│   ├── app.py              # Flask + Socket.IO server
+│   ├── requirements.txt
+│   ├── static/ea_library/  # 官方 30 EA (.mq5)
+│   ├── static/user_ea/     # 用戶上傳 EA
+│   └── templates/
+│       ├── index.html
+│       ├── login.html
+│       ├── dashboard.html
+│       └── register.html
+├── agent/
+│   ├── agent.py            # Windows Agent
+│   └── install_agent.bat
+├── wsgi.py                 # Render 入口
+├── render.yaml             # Render Blueprint
+└── README.md
 ```
+
+---
+
+## 🔐 預設帳號
+
+| Username | Password | Agent ID |
+|----------|----------|----------|
+| dev | dev1234 | DEV00001 |
+
+---
+
+Built with ❤️ for algorithmic trading automation.
