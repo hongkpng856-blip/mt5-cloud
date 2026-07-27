@@ -199,8 +199,70 @@ def api_dashboard():
         "account": account,
         "positions": positions,
         "agent_id": agent.agent_id,
-        "auto_trade_ea_count": auto_count
+        "auto_trade_ea_count": auto_count,
+        "auto_trade_status": compute_auto_trade_status(current_user)
     })
+
+
+def compute_auto_trade_status(user):
+    """即時計算 Auto-Trade 嘅 market condition"""
+    import MetaTrader5 as mt5
+    
+    TF_MAP = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}
+    MUL = {1:1, 5:5, 15:15, 30:30, 60:60, 240:240, 1440:1440, 10080:10080, 43200:43200}
+    
+    try:
+        cfg = json.loads(user.ea_config or '{}')
+        eas = [k for k in cfg if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status')) and isinstance(cfg[k], str)]
+    except:
+        return []
+    
+    if not mt5.initialize():
+        return []
+    
+    results = []
+    for ea in eas:
+        symbol = cfg[ea]
+        if symbol in ('DE40','US500','US100','JP225'):
+            # Indexes - might not have M1 data, skip for now
+            continue
+        tf_str = cfg.get(ea + '_tf', 'H1')
+        tf = TF_MAP.get(tf_str, 60)
+        mul = MUL.get(tf, 60)
+        
+        mt5.symbol_select(symbol, True)
+        need = 2000
+        rates = mt5.copy_rates_from_pos(symbol, 1, 0, need)
+        if rates is None or len(rates) < need:
+            continue
+        
+        closes = [float(rates[i][4]) for i in range(len(rates))]
+        tf_closes = [closes[i] for i in range(mul-1, len(closes), mul)]
+        n = len(tf_closes)
+        if n < 35:
+            continue
+        
+        fast = [sum(tf_closes[i:i+10])/10.0 for i in range(n-9)]
+        slow = [sum(tf_closes[i:i+30])/30.0 for i in range(n-29)]
+        
+        cross_buy = fast[-1] > slow[-1] and fast[-2] <= slow[-2]
+        cross_sell = fast[-1] < slow[-1] and fast[-2] >= slow[-2]
+        
+        if cross_buy:
+            signal = 'BUY'
+        elif cross_sell:
+            signal = 'SELL'
+        else:
+            signal = 'WAIT'
+        
+        results.append({
+            'ea': ea, 'symbol': symbol, 'tf': tf_str,
+            'sma10': round(fast[-1], 5), 'sma30': round(slow[-1], 5),
+            'signal': signal
+        })
+    
+    mt5.shutdown()
+    return results
 
 # === API: Analysis ===
 @app.route('/api/analysis')
