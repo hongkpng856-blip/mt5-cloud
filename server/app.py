@@ -434,22 +434,6 @@ def api_ea_library():
                     files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "user", "author": current_user.username})
     return jsonify({"files": files, "count": len(files)})
 
-@app.route('/api/ea-library/<path:filename>')
-def api_ea_download(filename):
-    """下載 EA 檔案（先睇community→用戶→官方）"""
-    # 先睇社群目錄
-    community_path = os.path.join(COMMUNITY_EA_DIR, filename)
-    if os.path.isfile(community_path):
-        return send_from_directory(COMMUNITY_EA_DIR, filename)
-    # 再睇用戶上傳目錄
-    if current_user.is_authenticated:
-        user_dir = os.path.join(UPLOAD_DIR, current_user.username)
-        user_path = os.path.join(user_dir, filename)
-        if os.path.isfile(user_path):
-            return send_from_directory(user_dir, filename)
-    # 最後睇官方目錄
-    return send_from_directory(EA_LIBRARY_DIR, filename)
-
 @app.route('/api/ea-library/dev-upload', methods=['POST'])
 @login_required
 def api_ea_dev_upload():
@@ -495,6 +479,22 @@ def api_ea_upload():
     file.save(filepath)
 
     return jsonify({"success": True, "filename": filename, "size": f"{os.path.getsize(filepath)/1024:.1f} KB"})
+
+@app.route('/api/ea-library/<path:filename>')
+def api_ea_download(filename):
+    """下載 EA 檔案（先睇community→用戶→官方）"""
+    # 先睇社群目錄
+    community_path = os.path.join(COMMUNITY_EA_DIR, filename)
+    if os.path.isfile(community_path):
+        return send_from_directory(COMMUNITY_EA_DIR, filename)
+    # 再睇用戶上傳目錄
+    if current_user.is_authenticated:
+        user_dir = os.path.join(UPLOAD_DIR, current_user.username)
+        user_path = os.path.join(user_dir, filename)
+        if os.path.isfile(user_path):
+            return send_from_directory(user_dir, filename)
+    # 最後睇官方目錄
+    return send_from_directory(EA_LIBRARY_DIR, filename)
 
 @app.route('/api/agent-download')
 def api_agent_download():
