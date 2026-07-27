@@ -181,10 +181,11 @@ def download_and_install(ea_name, url, ea_config=None):
                         metaeditor = prog
                         break
                 if metaeditor and ea_name.endswith('.mq5'):
-                    import subprocess
-                    # capture_output=True breaks metaeditor .ex5 output on Windows
-                    compile_result = subprocess.run([metaeditor, f'/compile:{filepath}', '/s'],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+                    import subprocess, tempfile
+                    # metaeditor NEEDS /log: flag to output .ex5 (just /s doesn't work via subprocess)
+                    log_path = os.path.join(tempfile.gettempdir(), f'mql_compile_{os.getpid()}.log')
+                    subprocess.run([metaeditor, f'/compile:{filepath}', f'/log:{log_path}'],
+                                 timeout=30, capture_output=True)
                     # metaeditor returns 1 even on success; check .ex5 instead
                     ex5_path = filepath.replace('.mq5', '.ex5')
                     if os.path.isfile(ex5_path):
