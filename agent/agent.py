@@ -151,6 +151,71 @@ def on_deploy_ea(data):
     sys.stdout.flush()
     execute_deploy(data)
 
+def attach_ea_to_chart(symbol, timeframe_str, ea_name, magic):
+    """用 pywinauto 自動開 chart + attach EA"""
+    from pywinauto import Application, keyboard
+    import time
+    
+    tf_map = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440}
+    tf_minutes = tf_map.get(timeframe_str, 60)
+    
+    # Find MT5 window
+    try:
+        app = Application(backend='uia').connect(title_re='.*MetaTrader.*|.*MT5.*', timeout=5)
+        mt5_win = app.top_window()
+    except:
+        print('   ⚠️ MT5 window not found')
+        return False
+    
+    # Open symbol chart
+    mt5_win.set_focus()
+    time.sleep(0.5)
+    
+    # Ctrl+W to open symbol dialog
+    keyboard.send_keys('^w')
+    time.sleep(0.5)
+    
+    # Type symbol name and Enter
+    keyboard.send_keys(symbol)
+    time.sleep(0.3)
+    keyboard.send_keys('{ENTER}')
+    time.sleep(1)
+    
+    # Open Navigator
+    keyboard.send_keys('^n')
+    time.sleep(0.5)
+    
+    # Focus Navigator and find EA → this is complex via keyboard
+    # Alternative: right-click chart → Expert Advisors → Attach
+    keyboard.send_keys('{ENTER}')  # Select first result
+    time.sleep(0.3)
+    
+    # Use keyboard to navigate to EA in Navigator
+    # Tab to EA list, search for our EA
+    keyboard.send_keys('^f')  # Focus search
+    time.sleep(0.3)
+    keyboard.send_keys(ea_name)
+    time.sleep(0.5)
+    
+    # Drag EA to chart via Shift+F10 (context menu) → doesn't work well
+    # Simpler: right-click chart → Expert Advisors → Attach
+    # Right click on chart
+    keyboard.send_keys('{APPS}')  # Context menu key
+    time.sleep(0.3)
+    keyboard.send_keys('e')  # Expert Advisors
+    time.sleep(0.3)
+    keyboard.send_keys('a')  # Attach
+    time.sleep(0.3)
+    keyboard.send_keys(ea_name[:5])  # Type first 5 chars to find EA
+    time.sleep(0.5)
+    keyboard.send_keys('{ENTER}')  # Select EA
+    time.sleep(0.5)
+    keyboard.send_keys('{ENTER}')  # OK dialog
+    time.sleep(0.5)
+    
+    return True
+
+
 def download_and_install(ea_name, url, ea_config=None):
     print(f"📥 Installing EA: {ea_name}")
     print(f"   Downloading from: {url}")
@@ -258,6 +323,13 @@ def download_and_install(ea_name, url, ea_config=None):
                     with open(set_path, 'w') as f:
                         f.write(set_content)
                     print(f"📋 Preset: {set_path}")
+                    
+                    # === Auto-attach EA to MT5 chart ===
+                    try:
+                        attach_ea_to_chart(sym, tf, base_name, magic)
+                        print(f"   📈 Chart opened: {sym} {tf}")
+                    except Exception as attach_err:
+                        print(f"   ⚠️  Chart attach: {attach_err}")
 
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
@@ -356,6 +428,8 @@ def run_ea_strategies(ea_config, lot_size):
         mt5.shutdown()
         return
     print(f'   [TRADE] Running strategies for {len(ea_config)} config keys')
+    ea_names = [k for k in ea_config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status')) and isinstance(ea_config[k], str)]
+    print(f'   [TRADE] Active EAs: {ea_names}')
 
     TF_MAP = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}
     active_eas = [k for k in ea_config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status'))
