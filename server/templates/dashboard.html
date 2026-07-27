@@ -104,14 +104,13 @@
             </div>
         </div>
     </div>
-</div>
 
 <!-- Auto-Trade Monitor -->
 <div class="card" id="autoTradePanel" style="display:none">
     <div class="card-title">🤖 Auto-Trade Monitor</div>
     <div class="scroll-box" style="max-height:300px">
         <table class="ea-table" id="autoTradeTable">
-            <thead><tr><th>EA</th><th>品種</th><th>TF</th><th>SMA10</th><th>SMA30</th><th>Signal</th></tr></thead>
+            <thead><tr><th>EA</th><th>品種</th><th>TF</th><th>SMA10</th><th>SMA30</th><th>Signal</th><th>Status</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -756,7 +755,7 @@ function renderAutoTradeTable(data) {
     const tbody = document.querySelector('#autoTradeTable tbody');
     tbody.innerHTML = data.map(function(r) {
         const signalClass = r.signal === 'BUY' ? 'color:#3fb950' : r.signal === 'SELL' ? 'color:#f85149' : 'color:#8b949e';
-        return '<tr><td>'+r.ea+'</td><td>'+r.symbol+'</td><td>'+r.tf+'</td><td>'+r.sma10+'</td><td>'+r.sma30+'</td><td style="'+signalClass+';font-weight:bold">'+r.signal+'</td></tr>';
+        return '<tr><td>'+r.ea+'</td><td>'+r.symbol+'</td><td>'+r.tf+'</td><td>'+r.sma10+'</td><td>'+r.sma30+'</td><td style="'+signalClass+';font-weight:bold">'+r.signal+'</td><td>'+(r.alive?'<span style="color:#3fb950">🟢 Alive</span>':'<span style="color:#f85149">🔴 Down</span>')+'</td></tr>';
     }).join('');
 }
 </script>

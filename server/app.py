@@ -258,7 +258,7 @@ def compute_auto_trade_status(user):
         results.append({
             'ea': ea, 'symbol': symbol, 'tf': tf_str,
             'sma10': round(fast[-1], 5), 'sma30': round(slow[-1], 5),
-            'signal': signal
+            'signal': signal, 'alive': True
         })
     
     mt5.shutdown()
