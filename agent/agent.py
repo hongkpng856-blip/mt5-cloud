@@ -378,7 +378,7 @@ def sync_loop():
         try:
             # Poll deploy queue
             import requests as req
-            poll_url = f"http://localhost:5000/api/agent-poll-deploy?agent_id={AGENT_ID}"
+            poll_url = f"http://localhost:5002/api/agent-poll-deploy?agent_id={AGENT_ID}"
             resp = req.get(poll_url, timeout=5)
             if resp.status_code == 200:
                 deploy_data = resp.json()
