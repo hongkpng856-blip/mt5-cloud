@@ -101,9 +101,12 @@
         </div>
     </div>
 
-    <!-- EA Library - 平台提供 -->
+    <!-- EA Library - 平台提供 + 社群提供 -->
     <div class="card">
-        <div class="card-title">📦 EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span></div>
+        <div class="card-title">📦 EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
+            <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;border-color:#bb8009;margin-left:auto">📤 上傳 EA 去社群庫</button>
+            <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
+        </div>
         <div class="scroll-box" style="max-height:250px">
             <table class="ea-table" id="officialTable">
                 <thead><tr><th>EA 名稱</th><th>大小</th><th></th></tr></thead>
@@ -123,8 +126,6 @@
             <label class="btn" style="cursor:pointer">📤 上傳自己嘅 EA
                 <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
             </label>
-            <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;border-color:#bb8009">📤 上傳 EA 去社群庫</button>
-            <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
             <span style="display:flex;align-items:center;gap:4px;margin-left:auto">
                 <span style="font-size:12px;color:#8b949e">Lots:</span>
                 <input type="number" id="defaultLot" value="1.00" min="0.01" max="100" step="0.01" style="width:55px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 6px;font-size:13px;text-align:center">
