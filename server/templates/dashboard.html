@@ -326,6 +326,7 @@ socket.on('install_result', (data) => {
 let eaMappings = {};
 let allSymbols = [];
 let analysisData = null;
+let heartbeats = {};
 let sortOrder = {};
 
 async function loadEAConfig() {
@@ -396,7 +397,7 @@ async function loadEAConfig() {
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
                 <td style="text-align:center">
-                    <span style="font-size:16px;cursor:pointer" onclick="toggleEA('${name}')" title="${isRunning?'🟢 運行中 — 撳暫停':'🔴 已暫停 — 撳繼續'}">${isRunning?'🟢':'🔴'}</span>
+                    <span style="font-size:14px;cursor:default;${heartbeats&&heartbeats[name]?'color:#3fb950':'color:#484f58'}" title="${heartbeats&&heartbeats[name]?'🟢 Alive — '+new Date(heartbeats[name].last_check*1000).toLocaleTimeString():'🔴 未監控'}">${heartbeats&&heartbeats[name]?'🟢':'🔴'}</span>
                 </td>
                 <td>
                     <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5">🚀</button>
@@ -476,6 +477,7 @@ async function loadDashboard() {
                 document.getElementById('autoTradePanel').style.display = 'block';
                 renderAutoTradeTable(d.auto_trade_status);
             }
+            heartbeats = d.ea_heartbeats || {};
         } else {
             badge.textContent = '🔴 Offline'; badge.className = 'badge badge-red';
             document.getElementById('autoTradeBox').style.display = 'none';

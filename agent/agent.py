@@ -235,6 +235,7 @@ def on_deploy_ea(data):
 
 # === EA 自動交易策略 ===
 ea_config_cache = {}
+ea_heartbeats = {}  # ea_name -> {"last_check": time.time(), "status": "alive"}
 _last_bar_checked = {}  # symbol_tf -> last bar time
 
 def get_ma(symbol, tf, period, method=0):
@@ -326,6 +327,9 @@ def run_ea_strategies(ea_config, lot_size):
         if status != 'running':
             continue
 
+        # Update heartbeat — EA is being actively monitored
+        ea_heartbeats[ea_name] = {"last_check": time.time(), "status": "alive"}
+
         # 每支新 bar 先檢查
         bar_key = f'{symbol}_{tf}'
         rates = mt5.copy_rates_from_pos(symbol, tf, 0, 2)
@@ -392,6 +396,7 @@ def sync_loop():
             if sio.connected and now - last_sync >= 10:
                 data = get_mt5_status()
                 data['agent_id'] = AGENT_ID
+                data['heartbeats'] = dict(ea_heartbeats)  # send per-EA alive status
                 sio.emit('agent_sync', data)
                 last_sync = now
 

@@ -45,6 +45,7 @@ class Agent(db.Model):
     positions = db.Column(db.Text, default='[]')
     deals = db.Column(db.Text, default='[]')
     deploy_queue = db.Column(db.Text, default='')
+    ea_heartbeats = db.Column(db.Text, default='{}')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -200,7 +201,8 @@ def api_dashboard():
         "positions": positions,
         "agent_id": agent.agent_id,
         "auto_trade_ea_count": auto_count,
-        "auto_trade_status": compute_auto_trade_status(current_user)
+        "auto_trade_status": compute_auto_trade_status(current_user),
+        "ea_heartbeats": json.loads(agent.ea_heartbeats or '{}') if agent else {}
     })
 
 
@@ -615,6 +617,7 @@ def handle_sync(data):
         agent.account_info = json.dumps(data.get('account',{}))
         agent.positions = json.dumps(data.get('positions',[]))
         agent.deals = json.dumps(data.get('deals',[]))
+        agent.ea_heartbeats = json.dumps(data.get('heartbeats', {}))
         agent.last_seen = datetime.utcnow()
         agent.status = data.get('status','connected')
         db.session.commit()
