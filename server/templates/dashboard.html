@@ -123,6 +123,8 @@
             <label class="btn" style="cursor:pointer">📤 上傳自己嘅 EA
                 <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
             </label>
+            <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;border-color:#bb8009">📤 上傳 EA 去社群庫</button>
+            <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
             <span style="display:flex;align-items:center;gap:4px;margin-left:auto">
                 <span style="font-size:12px;color:#8b949e">Lots:</span>
                 <input type="number" id="defaultLot" value="1.00" min="0.01" max="100" step="0.01" style="width:55px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 6px;font-size:13px;text-align:center">
@@ -437,6 +439,25 @@ async function loadEALibrary() {
         const offTable = document.querySelector('#officialTable tbody');
         if (offTable) offTable.innerHTML = oHtml || '<tr><td colspan="3" style="text-align:center;padding:20px;color:#8b949e">—</td></tr>';
 
+        // 社群提供嘅 EA（Developer 上傳）
+        const communityFiles = (data.files || []).filter(f => f.type === 'community');
+        if (communityFiles.length > 0) {
+            // 加返落 official table 下面（用分隔線）
+            communityFiles.forEach(f => {
+                const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
+                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string';
+                if (!added) {
+                    addEAToPairing(baseName, f.name, '社群');
+                }
+                oHtml += `<tr style="border-top:${communityFiles.indexOf(f)===0?'2px dashed #bb8009':'none'}">
+                    <td><b>${f.name}</b> <span style="font-size:10px;color:#d29922">🟡 社群提供</span></td>
+                    <td style="font-size:12px;color:#8b949e">${f.size}</td>
+                    <td>${added ? '<span style="color:#3fb950;font-size:11px">✅ 已加入</span>'
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')">➕ 移去配對</button>`}</td>
+                </tr>`;
+            });
+        }
+
         // 用戶上傳嘅 EA 直接放 EA 倉庫下面
         const userFiles = (data.files || []).filter(f => f.type === 'user');
         if (userFiles.length > 0) {
@@ -548,6 +569,38 @@ async function uploadEA() {
     }
     input.value = '';
 }
+
+async function devUploadEA() {
+    const input = document.getElementById('devUploadInput');
+    if (!input.files.length) return;
+    const file = input.files[0];
+    const form = new FormData();
+    form.append('file', file);
+    try {
+        const res = await fetch('/api/ea-library/dev-upload', { method: 'POST', body: form });
+        const data = await res.json();
+        if (data.success) {
+            alert(`✅ 社群 EA 上傳成功：${data.filename}`);
+            loadEALibrary();
+        } else {
+            alert('❌ ' + (data.error || 'Upload failed'));
+        }
+    } catch(e) {
+        alert('❌ Upload error: ' + e.message);
+    }
+    input.value = '';
+}
+
+// 顯示 dev upload button（如果係 dev 帳號）
+(async function() {
+    try {
+        const res = await fetch('/api/dashboard');
+        const d = await res.json();
+        if (d.agent_id === 'DEV00001') {
+            document.getElementById('devUploadBtn').style.display = 'inline-block';
+        }
+    } catch(e) {}
+})();
 </script>
 </body>
 </html>

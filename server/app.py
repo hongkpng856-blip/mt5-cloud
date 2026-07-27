@@ -306,14 +306,16 @@ def api_agent_poll_deploy():
 # === API: EA 庫 ===
 EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'static', 'user_ea')
+COMMUNITY_EA_DIR = os.path.join(os.path.dirname(__file__), 'static', 'community_ea')
 
 # 確保目錄存在
 os.makedirs(EA_LIBRARY_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(COMMUNITY_EA_DIR, exist_ok=True)
 
 @app.route('/api/ea-library')
 def api_ea_library():
-    """返回 EA 庫列表（平台提供 + 用戶上傳）"""
+    """返回 EA 庫列表（平台提供 + 社群提供 + 用戶上傳）"""
     files = []
     # 平台提供嘅 EA
     if os.path.isdir(EA_LIBRARY_DIR):
@@ -322,7 +324,14 @@ def api_ea_library():
                 path = os.path.join(EA_LIBRARY_DIR, f)
                 size = os.path.getsize(path)
                 files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "official", "author": "Platform"})
-    # 用戶上傳嘅 EA
+    # 社群提供嘅 EA（Developer 上傳，所有人都睇到）
+    if os.path.isdir(COMMUNITY_EA_DIR):
+        for f in sorted(os.listdir(COMMUNITY_EA_DIR)):
+            if f.endswith('.mq5'):
+                path = os.path.join(COMMUNITY_EA_DIR, f)
+                size = os.path.getsize(path)
+                files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "community", "author": "Dev"})
+    # 用戶上傳嘅 EA（只有自己睇到）
     if current_user.is_authenticated:
         user_dir = os.path.join(UPLOAD_DIR, current_user.username)
         if os.path.isdir(user_dir):
@@ -335,20 +344,49 @@ def api_ea_library():
 
 @app.route('/api/ea-library/<path:filename>')
 def api_ea_download(filename):
-    """下載 EA 檔案（先睇用戶目錄，再睇官方目錄）"""
-    # 先睇用戶上傳目錄
+    """下載 EA 檔案（先睇community→用戶→官方）"""
+    # 先睇社群目錄
+    community_path = os.path.join(COMMUNITY_EA_DIR, filename)
+    if os.path.isfile(community_path):
+        return send_from_directory(COMMUNITY_EA_DIR, filename)
+    # 再睇用戶上傳目錄
     if current_user.is_authenticated:
         user_dir = os.path.join(UPLOAD_DIR, current_user.username)
         user_path = os.path.join(user_dir, filename)
         if os.path.isfile(user_path):
             return send_from_directory(user_dir, filename)
-    # 再睇官方目錄
+    # 最後睇官方目錄
     return send_from_directory(EA_LIBRARY_DIR, filename)
+
+@app.route('/api/ea-library/dev-upload', methods=['POST'])
+@login_required
+def api_ea_dev_upload():
+    """Developer 上傳 EA 去社群庫（所有人都可以用）"""
+    if current_user.username != 'dev':
+        return jsonify({"error": "Only dev account can upload to community library"}), 403
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+    if not file.filename.endswith('.mq5'):
+        return jsonify({"error": "Only .mq5 files allowed for community EA"}), 400
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(COMMUNITY_EA_DIR, filename)
+    file.save(filepath)
+
+    return jsonify({
+        "success": True,
+        "filename": filename,
+        "size": f"{os.path.getsize(filepath)/1024:.1f} KB",
+        "type": "community"
+    })
 
 @app.route('/api/ea-library/upload', methods=['POST'])
 @login_required
 def api_ea_upload():
-    """用戶上傳自己嘅 EA"""
+    """用戶上傳自己嘅 EA（只有自己睇到）"""
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
     file = request.files['file']
