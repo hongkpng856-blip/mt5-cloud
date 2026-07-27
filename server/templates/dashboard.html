@@ -162,6 +162,130 @@
 </div>
 
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+<!-- EA 診斷報告 Modal -->
+<div id="reportModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto" onclick="if(event.target===this)closeReport()">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;margin:40px auto;max-width:900px;padding:24px;position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h2 id="reportTitle" style="font-size:18px">📊 EA 診斷報告</h2>
+            <button onclick="closeReport()" style="background:none;border:none;color:#8b949e;font-size:24px;cursor:pointer">✕</button>
+        </div>
+        <!-- Summary Stats -->
+        <div class="stat-row" id="reportStats" style="margin-bottom:20px"></div>
+        <!-- Equity Chart (simple CSS bar chart) -->
+        <div class="card" style="margin-bottom:16px">
+            <div class="card-title">📈 Equity Curve</div>
+            <div id="equityChart" style="height:180px;display:flex;align-items:flex-end;gap:2px;padding:10px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#484f58;margin-top:4px">
+                <span id="eqStart"></span>
+                <span id="eqEnd"></span>
+            </div>
+        </div>
+        <!-- Win/Loss Distribution -->
+        <div class="card" style="margin-bottom:16px">
+            <div class="card-title">📊 Win/Loss Distribution</div>
+            <div id="distChart" style="display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0"></div>
+        </div>
+        <!-- Monthly P&L -->
+        <div class="card">
+            <div class="card-title">📅 Monthly P&L</div>
+            <div id="monthlyChart" style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:10px 0;overflow-x:auto"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.modal .stat-row { display:flex;gap:8px;flex-wrap:wrap; }
+.modal .stat-box { background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 14px;flex:1;min-width:90px;text-align:center; }
+.modal .stat-box .label { font-size:10px;color:#8b949e; }
+.modal .stat-box .value { font-size:16px;font-weight:700;margin-top:2px; }
+</style>
+
+<script>
+// === EA 診斷報告 ===
+let currentReport = null;
+
+async function showReport(magic, symbol) {
+    document.getElementById('reportTitle').textContent = `📊 診斷報告 — Magic ${magic} / ${symbol}`;
+    document.getElementById('reportModal').style.display = 'block';
+    document.getElementById('reportStats').innerHTML = '<div class="loading" style="margin:20px auto"></div>';
+    
+    try {
+        const res = await fetch(`/api/ea-report?magic=${magic}&symbol=${symbol}`);
+        const data = await res.json();
+        if (data.error) { alert(data.error); return; }
+        currentReport = data;
+        renderReport(data);
+    } catch(e) {
+        document.getElementById('reportStats').innerHTML = `<span style="color:#f85149">❌ ${e.message}</span>`;
+    }
+}
+
+function closeReport() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+
+function renderReport(data) {
+    // Stats
+    document.getElementById('reportStats').innerHTML = `
+        <div class="stat-box"><div class="label">Trades</div><div class="value">${data.total_trades}</div></div>
+        <div class="stat-box"><div class="label">Win Rate</div><div class="value" style="color:${data.win_rate>=60?'#3fb950':'#d29922'}">${data.win_rate}%</div></div>
+        <div class="stat-box"><div class="label">Profit Factor</div><div class="value">${data.profit_factor===Infinity?'∞':data.profit_factor}</div></div>
+        <div class="stat-box"><div class="label">Total P&L</div><div class="value" style="color:${data.total_profit>=0?'#3fb950':'#f85149'}">${data.total_profit>=0?'+':''}$${data.total_profit.toFixed(2)}</div></div>
+        <div class="stat-box"><div class="label">Avg Win</div><div class="value" style="color:#3fb950">$${data.avg_win.toFixed(2)}</div></div>
+        <div class="stat-box"><div class="label">Avg Loss</div><div class="value" style="color:#f85149">-$${Math.abs(data.avg_loss).toFixed(2)}</div></div>
+        <div class="stat-box"><div class="label">Max DD</div><div class="value" style="color:#f85149">${data.max_drawdown_pct.toFixed(1)}%</div></div>
+    `;
+
+    // Equity curve
+    const eq = data.equity_curve;
+    if (eq.length > 0) {
+        const vals = eq.map(d => d.cumulative);
+        const min = Math.min(...vals);
+        const max = Math.max(...vals);
+        const range = max - min || 1;
+        const chart = document.getElementById('equityChart');
+        // Show every Nth label
+        const step = Math.max(1, Math.floor(eq.length / 20));
+        chart.innerHTML = eq.map((d, i) => {
+            const h = ((d.cumulative - min) / range * 100);
+            const c = d.cumulative >= 0 ? '#3fb950' : '#f85149';
+            return `<div title="${d.time}: $${d.cumulative.toFixed(2)}" style="flex:1;height:${h}%;background:${c};border-radius:2px 2px 0 0;min-height:2px"></div>`;
+        }).join('');
+        document.getElementById('eqStart').textContent = eq[0].time?.substring(0,10) || '';
+        document.getElementById('eqEnd').textContent = eq[eq.length-1].time?.substring(0,10) || '';
+    }
+
+    // Distribution
+    const dist = data.distribution;
+    const maxCount = Math.max(1, ...dist.wins, ...dist.losses);
+    document.getElementById('distChart').innerHTML = dist.bins.map((b, i) => `
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="height:${dist.wins[i]/maxCount*100}%;width:60%;background:#3fb950;border-radius:2px 2px 0 0;min-height:2px" title="Wins: ${dist.wins[i]}"></div>
+            <div style="height:${dist.losses[i]/maxCount*100}%;width:60%;background:#f85149;border-radius:2px 2px 0 0;min-height:2px" title="Losses: ${dist.losses[i]}"></div>
+            <span style="font-size:9px;color:#8b949e">${b}</span>
+        </div>
+    `).join('');
+
+    // Monthly P&L
+    const months = Object.keys(data.monthly_pnl).sort();
+    if (months.length > 0) {
+        const mnVals = months.map(m => data.monthly_pnl[m]);
+        const mnMax = Math.max(...mnVals.map(Math.abs), 1);
+        document.getElementById('monthlyChart').innerHTML = months.map(m => {
+            const v = data.monthly_pnl[m];
+            const h = Math.abs(v) / mnMax * 100;
+            const c = v >= 0 ? '#3fb950' : '#f85149';
+            return `<div style="display:flex;flex-direction:column;align-items:center;flex:1 0 50px">
+                <div title="${m}: ${v>=0?'+':''}$${v.toFixed(2)}" style="height:${h}%;width:80%;background:${c};border-radius:2px 2px 0 0;min-height:2px"></div>
+                <span style="font-size:9px;color:#8b949e;margin-top:2px">${m.substring(5)}</span>
+            </div>`;
+        }).join('');
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReport(); });
+</script>
 <script>
 const socket = io();
 
@@ -260,6 +384,7 @@ async function loadEAConfig() {
                 </td>
                 <td>
                     <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5">🚀</button>
+                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告">📊</button>
                     <button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'⏸️':'▶️'}</button>
                     <button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="剷除 ${name}">🗑️</button>
                 </td>

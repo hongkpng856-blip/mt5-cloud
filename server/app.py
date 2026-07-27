@@ -291,6 +291,98 @@ def api_analysis():
         "correlation_keys": ea_keys
     })
 
+
+@app.route('/api/ea-report')
+@login_required
+def api_ea_report():
+    """EA 診斷報告：equity curve + 詳細 stats"""
+    magic = request.args.get('magic', '')
+    symbol = request.args.get('symbol', '')
+    if not magic or not symbol:
+        return jsonify({"error": "需要 magic + symbol"}), 400
+
+    agent = Agent.query.filter_by(user_id=current_user.id).first()
+    deals_data = json.loads(agent.deals or '[]')
+
+    # 過濾指定 EA
+    ea_deals = [d for d in deals_data
+                if str(d.get('magic', '')) == str(magic)
+                and d.get('symbol', '') == symbol
+                and d.get('profit', 0) != 0]
+
+    # 按時間排序
+    ea_deals.sort(key=lambda x: x.get('time', ''))
+
+    # Equity curve (cumulative P&L)
+    equity = []
+    cum = 0.0
+    for d in ea_deals:
+        cum += d['profit']
+        equity.append({
+            "time": d['time'],
+            "profit": d['profit'],
+            "cumulative": round(cum, 2)
+        })
+
+    # 基本統計
+    wins = [d for d in ea_deals if d['profit'] > 0]
+    losses = [d for d in ea_deals if d['profit'] < 0]
+    total = len(ea_deals)
+    win_rate = round(len(wins) / total * 100, 2) if total > 0 else 0
+    total_profit = round(sum(d['profit'] for d in ea_deals), 2)
+    avg_win = round(sum(d['profit'] for d in wins) / len(wins), 2) if wins else 0
+    avg_loss = round(sum(d['profit'] for d in losses) / len(losses), 2) if losses else 0
+    profit_factor = round(abs(sum(d['profit'] for d in wins) / sum(d['profit'] for d in losses)), 2) if losses else float('inf')
+
+    # Max drawdown
+    peak = -float('inf')
+    max_dd = 0
+    max_dd_pct = 0
+    dd_start = dd_end = None
+    for d in equity:
+        if d['cumulative'] > peak:
+            peak = d['cumulative']
+        dd = peak - d['cumulative']
+        if dd > max_dd:
+            max_dd = round(dd, 2)
+            max_dd_pct = round(dd / peak * 100, 2) if peak > 0 else 0
+
+    # Win/Loss distribution
+    dist = {
+        "bins": ["0-50", "50-100", "100-200", "200-500", "500+"],
+        "wins": [0]*5, "losses": [0]*5
+    }
+    for d in ea_deals:
+        amt = abs(d['profit'])
+        idx = 4 if amt >= 500 else (3 if amt >= 200 else (2 if amt >= 100 else (1 if amt >= 50 else 0)))
+        if d['profit'] > 0: dist['wins'][idx] += 1
+        else: dist['losses'][idx] += 1
+
+    # Monthly P&L
+    monthly = {}
+    for d in ea_deals:
+        ym = str(d.get('time', ''))[:7]
+        monthly[ym] = monthly.get(ym, 0) + round(d['profit'], 2)
+
+    return jsonify({
+        "magic": magic,
+        "symbol": symbol,
+        "total_trades": total,
+        "wins": len(wins),
+        "losses": len(losses),
+        "win_rate": win_rate,
+        "total_profit": total_profit,
+        "avg_win": avg_win,
+        "avg_loss": avg_loss,
+        "profit_factor": profit_factor,
+        "max_drawdown": max_dd,
+        "max_drawdown_pct": max_dd_pct,
+        "equity_curve": equity[-100:],  # last 100 trades
+        "distribution": dist,
+        "monthly_pnl": monthly
+    })
+
+
 @app.route('/api/agent-poll-deploy', methods=['GET'])
 def api_agent_poll_deploy():
     """Agent 每 2 秒 poll 呢個 endpoint，睇下有冇 deploy 指令"""
