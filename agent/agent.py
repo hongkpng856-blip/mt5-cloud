@@ -182,9 +182,14 @@ def download_and_install(ea_name, url, ea_config=None):
                         break
                 if metaeditor and ea_name.endswith('.mq5'):
                     import subprocess
-                    subprocess.run([metaeditor, f'/compile:"{filepath}"', '/s'],
+                    compile_result = subprocess.run([metaeditor, f'/compile:{filepath}', '/s'],
                                  capture_output=True, timeout=30)
-                    print(f"⚙️  Compiled: {ea_name}")
+                    # metaeditor returns 1 even on success; check .ex5 instead
+                    ex5_path = filepath.replace('.mq5', '.ex5')
+                    if os.path.isfile(ex5_path):
+                        print(f"⚙️  Compiled: {ea_name} ✅ {os.path.basename(ex5_path)}")
+                    else:
+                        print(f"⚙️  Compile attempted (checking .ex5): {ea_name}")
 
                 base_name = ea_name.replace('.mq5', '').replace('.ex5', '')
                 if ea_config:
