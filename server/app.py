@@ -187,12 +187,19 @@ def api_dashboard():
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     account = json.loads(agent.account_info or '{}')
     positions = json.loads(agent.positions or '[]')
+    # Count auto-traded EAs
+    try:
+        ea_cfg = json.loads(current_user.ea_config or '{}')
+        auto_count = len([k for k in ea_cfg if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status')) and isinstance(ea_cfg[k], str)])
+    except:
+        auto_count = 0
     return jsonify({
         "status": agent.status,
         "last_seen": agent.last_seen.isoformat() if agent.last_seen else None,
         "account": account,
         "positions": positions,
-        "agent_id": agent.agent_id
+        "agent_id": agent.agent_id,
+        "auto_trade_ea_count": auto_count
     })
 
 # === API: Analysis ===

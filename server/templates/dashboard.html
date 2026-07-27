@@ -98,6 +98,10 @@
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
             <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount">0</div></div>
+            <div class="stat-box" id="autoTradeBox" style="display:none">
+                <div class="label">Auto-Trade</div>
+                <div class="value" id="autoTradeStatus" style="font-size:14px;color:#3fb950">🟢 Active</div>
+            </div>
         </div>
     </div>
 
@@ -454,8 +458,11 @@ async function loadDashboard() {
         const badge = document.getElementById('statusBadge');
         if (d.status === 'connected' || d.status === 'running') {
             badge.textContent = '🟢 Online'; badge.className = 'badge badge-green';
+            document.getElementById('autoTradeBox').style.display = 'block';
+            document.getElementById('autoTradeStatus').textContent = `🟢 ${d.auto_trade_ea_count || 0} EA`;
         } else {
             badge.textContent = '🔴 Offline'; badge.className = 'badge badge-red';
+            document.getElementById('autoTradeBox').style.display = 'none';
         }
 
         document.getElementById('posCount').textContent = (d.positions||[]).length;
