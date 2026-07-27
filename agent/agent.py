@@ -237,24 +237,34 @@ def on_deploy_ea(data):
 ea_config_cache = {}
 _last_bar_checked = {}  # symbol_tf -> last bar time
 
-def get_ma(symbol, tf, period, ma_shift=0, method=0, applied_price=0):
-    """獲取移動平均線數值（0=SMA, 1=EMA, 2=SMMA, 3=LWMA）"""
+def get_ma(symbol, tf, period, method=0):
+    """獲取移動平均線數值（resample M1 to desired TF）
+       0=SMA, 1=EMA"""
     import MetaTrader5 as mt5
     if not mt5.symbol_select(symbol, True):
         return None
-    rates = mt5.copy_rates_from_pos(symbol, tf, 0, period + 5)
-    if rates is None or len(rates) < period + 2:
+    # Convert TF minutes to M1 multiplier
+    S_TF = {1:1, 5:5, 15:15, 30:30, 60:60, 240:240, 1440:1440, 10080:10080, 43200:43200}
+    mul = S_TF.get(tf, 60)
+    # Need enough M1 bars: period * mul + extra for SMA calc
+    need_bars = (period + 2) * mul
+    rates = mt5.copy_rates_from_pos(symbol, 1, 0, need_bars)  # Always M1
+    if rates is None or len(rates) < need_bars:
         return None
-    prices = [r[4] for r in rates]  # close prices
+    # Resample: take close of every 'mul' bar (end of each TF candle)
+    closes = [rates[i][4] for i in range(mul-1, len(rates), mul)]
+    if len(closes) < period + 2:
+        return None
+    
     if method == 0:  # SMA
         vals = []
-        for i in range(len(prices) - period + 1):
-            vals.append(sum(prices[i:i+period]) / period)
+        for i in range(len(closes) - period + 1):
+            vals.append(sum(closes[i:i+period]) / period)
         return vals
     elif method == 1:  # EMA
         k = 2.0 / (period + 1)
-        ema = [sum(prices[:period]) / period]
-        for p in prices[period:]:
+        ema = [sum(closes[:period]) / period]
+        for p in closes[period:]:
             ema.append(p * k + ema[-1] * (1 - k))
         return ema
     return None
