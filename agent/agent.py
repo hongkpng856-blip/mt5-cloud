@@ -174,6 +174,50 @@ def download_and_install(ea_name, url, ea_config=None):
 
             if experts_dir:
                 filepath = os.path.join(experts_dir, ea_name)
+                
+                # === Inject heartbeat code into .mq5 before saving ===
+                if ea_name.endswith('.mq5'):
+                    source = resp.content.decode('utf-8', errors='replace')
+                    hb_name = ea_name.replace('.mq5', '')
+                    hb_code = '   GlobalVariableSet("HB_' + hb_name + '",TimeCurrent());\n'
+                    
+                    # Also inject file-based heartbeat (more reliable for Python detection)
+                    hb_file_code = ('   int hb_fh=FileOpen("hb_' + hb_name + '.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);\n'
+                                    '   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}\n')
+                    hb_code += hb_file_code
+                    
+                    # Inject into OnInit
+                    on_init_pos = -1
+                    for keyword in ['int OnInit()', 'int OnInit(void)']:
+                        idx = source.find(keyword)
+                        if idx >= 0:
+                            # Find the opening brace
+                            brace = source.find('{', idx)
+                            if brace >= 0:
+                                on_init_pos = brace + 1
+                                break
+                    if on_init_pos > 0:
+                        source = source[:on_init_pos] + '\n' + hb_code + source[on_init_pos:]
+                    
+                    # Inject into OnTick
+                    on_tick_pos = -1
+                    for keyword in ['void OnTick()', 'void OnTick(void)']:
+                        idx = source.find(keyword)
+                        if idx >= 0:
+                            brace = source.find('{', idx)
+                            if brace >= 0:
+                                on_tick_pos = brace + 1
+                                break
+                    if on_tick_pos > 0:
+                        source = source[:on_tick_pos] + '\n' + hb_code + source[on_tick_pos:]
+                    
+                    # If no OnInit found, add a heartbeat-only OnInit
+                    if on_init_pos < 0:
+                        source += '\n\n// Auto-injected heartbeat\nint OnInit() {\n' + hb_code + '   return INIT_SUCCEEDED;\n}\n'
+                    
+                    print(f"💓 Heartbeat injected: HB_{hb_name}")
+                    resp._content = source.encode('utf-8')
+                
                 with open(filepath, 'wb') as f:
                     f.write(resp.content)
                 print(f"✅ Installed: {filepath}")
@@ -373,6 +417,58 @@ def run_ea_strategies(ea_config, lot_size):
     mt5.shutdown()
 
 
+def check_ea_heartbeat_files():
+    """檢查 EA 寫出嘅 heartbeat files 嚟確認 EA 真係行緊"""
+    import MetaTrader5 as mt5
+    appdata = os.environ.get('APPDATA', '')
+    terminal_dir = os.path.join(appdata, 'MetaQuotes', 'Terminal')
+    common_files = os.path.join(terminal_dir, 'Common', 'Files')
+    
+    # Also check instance-specific directories
+    candidates = [common_files]
+    if os.path.isdir(terminal_dir):
+        for folder in os.listdir(terminal_dir):
+            ff = os.path.join(terminal_dir, folder, 'Files')
+            if os.path.isdir(ff) and folder != 'Common':
+                candidates.append(ff)
+    
+    now = time.time()
+    found = {}
+    for fb_dir in candidates:
+        if not os.path.isdir(fb_dir):
+            continue
+        for fname in os.listdir(fb_dir):
+            if fname.startswith('hb_') and fname.endswith('.txt'):
+                ea_name = fname[3:-4]  # hb_ADX_Trend.txt -> ADX_Trend
+                fpath = os.path.join(fb_dir, fname)
+                mtime = os.path.getmtime(fpath)
+                age = now - mtime
+                if age < 300:  # Within 5 minutes = alive
+                    found[ea_name] = {"last_check": mtime, "status": "alive", "age_sec": round(age)}
+                else:
+                    found[ea_name] = {"last_check": mtime, "status": "stale", "age_sec": round(age)}
+    return found
+
+
+def check_ea_alive_via_trades():
+    """Fallback: check if EA has recent trades as heartbeat"""
+    import MetaTrader5 as mt5
+    if not mt5.initialize():
+        return {}
+    from datetime import datetime, timedelta
+    since = datetime.now() - timedelta(hours=24)
+    deals = mt5.history_deals_get(since, datetime.now())
+    hb = {}
+    if deals:
+        for d in deals:
+            comment = d.comment or ''
+            if comment.startswith('auto_') or comment.startswith('cloud_'):
+                ea_name = comment.replace('auto_','').replace('cloud_','').split('_')[0]
+                hb[ea_name] = {"last_check": d.time, "status": "alive"}
+    mt5.shutdown()
+    return hb
+
+
 # === Main Loop ===
 def sync_loop():
     """每 2 秒 poll deploy + 每 10 秒 sync + 每 30 秒 auto-trade"""
@@ -396,7 +492,18 @@ def sync_loop():
             if sio.connected and now - last_sync >= 10:
                 data = get_mt5_status()
                 data['agent_id'] = AGENT_ID
-                data['heartbeats'] = dict(ea_heartbeats)  # send per-EA alive status
+                data['heartbeats'] = dict(ea_heartbeats)  # Agent-side monitor status
+                # Merge with real EA heartbeat files + trade-based detection
+                try:
+                    hb_files = check_ea_heartbeat_files()
+                    hb_trades = check_ea_alive_via_trades()
+                    for ea, info in hb_files.items():
+                        data['heartbeats'][ea] = info
+                    for ea, info in hb_trades.items():
+                        if ea not in data['heartbeats']:
+                            data['heartbeats'][ea] = info
+                except Exception as e:
+                    print(f'   [HB] Error: {e}')
                 sio.emit('agent_sync', data)
                 last_sync = now
 
