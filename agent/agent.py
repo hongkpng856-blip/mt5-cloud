@@ -304,10 +304,13 @@ def run_ea_strategies(ea_config, lot_size):
     """執行所有已配對 EA 嘅自動交易策略"""
     import MetaTrader5 as mt5
     if not mt5.initialize():
+        print(f'   [TRADE] MT5 init failed')
         return
     if not ea_config:
+        print(f'   [TRADE] No config')
         mt5.shutdown()
         return
+    print(f'   [TRADE] Running strategies for {len(ea_config)} config keys')
 
     TF_MAP = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}
     active_eas = [k for k in ea_config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status'))
@@ -400,7 +403,9 @@ def sync_loop():
         except ImportError:
             pass
         except Exception as e:
+            import traceback
             print(f"   [SYNC] Error: {e}")
+            traceback.print_exc()
         time.sleep(2)
 
 def execute_deploy(data):
