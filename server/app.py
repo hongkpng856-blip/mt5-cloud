@@ -231,7 +231,7 @@ def compute_auto_trade_status(user):
         mul = MUL.get(tf, 60)
         
         mt5.symbol_select(symbol, True)
-        need = 2000
+        need = max(2000, 40 * mul)
         rates = mt5.copy_rates_from_pos(symbol, 1, 0, need)
         if rates is None or len(rates) < need:
             continue

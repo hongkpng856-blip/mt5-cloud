@@ -99,21 +99,26 @@
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
             <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount">0</div></div>
             <div class="stat-box" id="autoTradeBox" style="display:none">
+                <div class="label">Auto-Trade</div>
                 <div class="value" id="autoTradeStatus" style="font-size:14px;color:#3fb950">🟢 Active</div>
-                </div>
-                </div>
-                </div>
-                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <!-- Auto-Trade Monitor -->
-                <div class="card" id="autoTradePanel" style="display:none">
-                <div class="card-title">🤖 Auto-Trade Monitor</div>
-                <div class="scroll-box" style="max-height:300px"><table class="ea-table" id="autoTradeTable"><thead><tr><th>EA</th><th>品種</th><th>TF</th><th>SMA10</th><th>SMA30</th><th>Signal</th></tr></thead><tbody></tbody></table></div>
-                <div style="padding:8px;text-align:center;font-size:12px;color:#8b949e">⏱ 每 30 秒 Agent 自動 check crossover</div>
-                </div>
-                <!-- END Auto-Trade Monitor -->
+<!-- Auto-Trade Monitor -->
+<div class="card" id="autoTradePanel" style="display:none">
+    <div class="card-title">🤖 Auto-Trade Monitor</div>
+    <div class="scroll-box" style="max-height:300px">
+        <table class="ea-table" id="autoTradeTable">
+            <thead><tr><th>EA</th><th>品種</th><th>TF</th><th>SMA10</th><th>SMA30</th><th>Signal</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div style="padding:8px;text-align:center;font-size:12px;color:#8b949e">⏱ 每 30 秒 Agent 自動 check crossover</div>
+</div>
 
-                <!-- EA Library - 平台提供 + 社群提供 -->
+<!-- EA Library - 平台提供 + 社群提供 -->
                 <div class="card">
                 <div class="card-title">📦 EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
                 <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;border-color:#bb8009;margin-left:auto">📤 上傳 EA 去社群庫</button>
