@@ -122,6 +122,10 @@ def on_install_ea(data):
     ea_list = data.get('ea_list', [])
     url = data.get('download_url', '')
     ea_config = data.get('ea_config', {})
+    if ea_config:
+        global ea_config_cache
+        ea_config_cache.clear()
+        ea_config_cache.update(ea_config)
 
     if ea_name == 'all' and ea_list:
         print(f"📥 Bulk install: {len(ea_list)} EAs (background)")
@@ -229,10 +233,134 @@ def on_deploy_ea(data):
     sys.stdout.flush()
     execute_deploy(data)
 
+# === EA 自動交易策略 ===
+ea_config_cache = {}
+_last_bar_checked = {}  # symbol_tf -> last bar time
+
+def get_ma(symbol, tf, period, ma_shift=0, method=0, applied_price=0):
+    """獲取移動平均線數值（0=SMA, 1=EMA, 2=SMMA, 3=LWMA）"""
+    import MetaTrader5 as mt5
+    if not mt5.symbol_select(symbol, True):
+        return None
+    rates = mt5.copy_rates_from_pos(symbol, tf, 0, period + 5)
+    if rates is None or len(rates) < period + 2:
+        return None
+    prices = [r[4] for r in rates]  # close prices
+    if method == 0:  # SMA
+        vals = []
+        for i in range(len(prices) - period + 1):
+            vals.append(sum(prices[i:i+period]) / period)
+        return vals
+    elif method == 1:  # EMA
+        k = 2.0 / (period + 1)
+        ema = [sum(prices[:period]) / period]
+        for p in prices[period:]:
+            ema.append(p * k + ema[-1] * (1 - k))
+        return ema
+    return None
+
+def check_sma_cross(symbol, tf, fast=10, slow=30):
+    """黃金/死亡交叉檢測"""
+    fast_ma = get_ma(symbol, tf, fast, method=0)
+    slow_ma = get_ma(symbol, tf, slow, method=0)
+    if not fast_ma or not slow_ma or len(fast_ma) < 2 or len(slow_ma) < 2:
+        return None
+    # 最新嘅兩支 K 線
+    f1, f2 = fast_ma[-1], fast_ma[-2]
+    s1, s2 = slow_ma[-1], slow_ma[-2]
+    if f1 > s1 and f2 <= s2:
+        return 'buy'
+    if f1 < s1 and f2 >= s2:
+        return 'sell'
+    return None
+
+def check_macd_cross(symbol, tf, fast=12, slow=26, signal=9):
+    """MACD 交叉檢測"""
+    fast_ema = get_ma(symbol, tf, fast, method=1)
+    slow_ema = get_ma(symbol, tf, slow, method=1)
+    if not fast_ema or not slow_ema or len(fast_ema) < signal + 2 or len(slow_ema) < signal + 2:
+        return None
+    macd = [fast_ema[i] - slow_ema[i] for i in range(min(len(fast_ema), len(slow_ema)))]
+    signal_line = get_ma(symbol, tf, signal, method=1)  # 用 signal period 做 EMA of MACD
+    # Simplified: compare MACD[-1] > MACD[-2]
+    if len(macd) >= 3:
+        if macd[-1] > macd[-2] and macd[-2] <= macd[-3]:
+            return 'buy'
+        if macd[-1] < macd[-2] and macd[-2] >= macd[-3]:
+            return 'sell'
+    return None
+
+def run_ea_strategies(ea_config, lot_size):
+    """執行所有已配對 EA 嘅自動交易策略"""
+    import MetaTrader5 as mt5
+    if not mt5.initialize():
+        return
+    if not ea_config:
+        mt5.shutdown()
+        return
+
+    TF_MAP = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}
+    active_eas = [k for k in ea_config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status'))
+                  and isinstance(ea_config[k], str)]
+
+    for ea_name in active_eas:
+        symbol = ea_config.get(ea_name, 'EURUSD')
+        tf_str = ea_config.get(ea_name + '_tf', 'H1')
+        tf = TF_MAP.get(tf_str, 60)
+        magic = int(ea_config.get(ea_name + '_magic', '240701'))
+        lot = float(ea_config.get(ea_name + '_lot', lot_size))
+        status = ea_config.get(ea_name + '_status', 'running')
+        if status != 'running':
+            continue
+
+        # 每支新 bar 先檢查
+        bar_key = f'{symbol}_{tf}'
+        rates = mt5.copy_rates_from_pos(symbol, tf, 0, 2)
+        if rates is None or len(rates) < 2:
+            continue
+        current_bar = rates[-1]['time']
+        if _last_bar_checked.get(bar_key) == current_bar:
+            continue
+        _last_bar_checked[bar_key] = current_bar
+
+        # 根據 EA 名行對應策略
+        signal = None
+        if ea_name == 'SMA_Cross':
+            signal = check_sma_cross(symbol, tf)
+        elif ea_name == 'MACD_Cross':
+            signal = check_macd_cross(symbol, tf)
+        elif ea_name in ('Trend_Follow','EMA_Cross'):
+            signal = check_sma_cross(symbol, tf, 20, 50)  # slower trend
+        elif ea_name == 'Scalping_M1':
+            signal = check_sma_cross(symbol, 1, 5, 20)  # M1 fast
+
+        if signal:
+            tick = mt5.symbol_info_tick(symbol)
+            if not tick:
+                continue
+            price = tick.ask if signal == 'buy' else tick.bid
+            order_type = mt5.ORDER_TYPE_BUY if signal == 'buy' else mt5.ORDER_TYPE_SELL
+            request = {
+                'action': mt5.TRADE_ACTION_DEAL,
+                'symbol': symbol, 'volume': lot,
+                'type': order_type, 'price': price,
+                'deviation': 20, 'magic': magic,
+                'comment': f'auto_{ea_name}',
+                'type_time': mt5.ORDER_TIME_GTC,
+                'type_filling': mt5.ORDER_FILLING_IOC,
+            }
+            result = mt5.order_send(request)
+            if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                print(f'🤖 {ea_name} {signal.upper()} {symbol} @ {price}')
+
+    mt5.shutdown()
+
+
 # === Main Loop ===
 def sync_loop():
-    """每 2 秒 HTTP poll deploy + 每 10 秒 sync MT5"""
+    """每 2 秒 poll deploy + 每 10 秒 sync + 每 30 秒 auto-trade"""
     last_sync = 0
+    last_trade = 0
     while True:
         try:
             # Poll deploy queue
@@ -253,8 +381,13 @@ def sync_loop():
                 data['agent_id'] = AGENT_ID
                 sio.emit('agent_sync', data)
                 last_sync = now
+
+            # Auto-trade every 30 seconds
+            if now - last_trade >= 30:
+                last_trade = now
+                if ea_config_cache:
+                    run_ea_strategies(ea_config_cache, float(ea_config_cache.get('_default_lot', 1.00)))
         except ImportError:
-            # requests not installed yet
             pass
         except Exception as e:
             print(f"   [SYNC] Error: {e}")
