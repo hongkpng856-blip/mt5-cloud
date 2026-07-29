@@ -157,13 +157,31 @@
 
 ---
 
-### Bug #4: pyautogui double-click Agent 自動化時可能唔觸發（Medium）
+### Bug #4: pyautogui double-click 喺 background Agent 唔 work（Critical）
 
-**現象**：手動 Python console 測試 `pyautogui.doubleClick(tv_rect.top+9)` 成功，但 Agent 背景執行時可能因 window focus / z-order 問題而 click 唔中。
+**現象**：手動 Python console 測試 `pyautogui.doubleClick(tv_rect.top+9)` 成功，但 Agent 背景執行時 pyautogui/SendInput/AHK Click/SendMessage 全部唔 work。`auto_attach.py` 從 terminal tool 直接跑成功，但被 Agent 用 subprocess 調用時 timeout。
+
+**原因**：Agent 背景 process 冇 interactive desktop session。`subprocess.run()` 繼承 parent 嘅 session context，所以子 process 都冇 desktop access。
+
+**已試過嘅方法**：
+- pyautogui.doubleClick() ❌
+- AHK Click via subprocess ❌
+- win32api mouse_event ❌
+- SendInput (MOUSEINPUT) ❌
+- SendMessage WM_LBUTTONDBLCLK ❌
+- PostMessage WM_LBUTTONDBLCLK ❌
+- TVM_SELECTITEM(TVGN_DBLCLICK) ❌
+- subprocess 調用 auto_attach.py ❌（timeout）
+- subprocess + CREATE_NEW_CONSOLE ❌
+
+**唯一成功嘅方法**：
+- Terminal tool 直接行 `python agent/auto_attach.py --ea Bollinger_Band --symbol EURUSD --tf H1` ✅
 
 **建議 Fix**：
-- click 前確保 `win.set_focus()` + `time.sleep(0.5)`
-- 或改用 AHK `Click x y 2`（更底層嘅 mouse event）
+- 方案 A：改 Agent 用 `terminal()` Hermes tool 代替 subprocess 去執行 attach（但 Agent 本身係 Python script，call 唔到 Hermes tool）
+- 方案 B：Agent 將 attach 指令寫入一個 queue file，由 Hermes cron job 或 user 手動執行
+- 方案 C：用 `CreateProcessAsUser` 或 `STARTF_USESHOWWINDOW` 旗標開新 console process
+- 方案 D：用 `wmic` 或 `schtasks` 開一個 scheduled task 行 auto_attach.py
 
 ---
 
@@ -230,9 +248,10 @@
 
 ## 📋 TODO（優先順序）
 
-- [ ] **P0** 修復 Navigator toggle 唔可靠（Bug #1）
-- [ ] **P0** 修復開 chart 後 Navigator 收埋（Bug #2）
-- [ ] **P1** Agent 失敗後唔重啟 MT5（Bug #3）
+- [ ] **P0** ~~修復 Navigator toggle 唔可靠~~ ✅ Bug #1 FIXED: ShowWindow
+- [ ] **P0** ~~修復開 chart 後 Navigator 收埋~~ ✅ Bug #2 FIXED: skip if chart exists
+- [ ] **P1** ~~Agent 失敗後唔重啟 MT5~~ ✅ Bug #3 FIXED: removed restart
+- [ ] **P0** 修復 background Agent double-click 唔 work（Bug #4）
 - [ ] **P1** 完整 E2E Dashboard 測試：Deploy → auto_attach → heartbeat 🟢
 - [ ] **P2** Dashboard Alive 🟢🔴 嵌入 EA card
 - [ ] **P2** 處理已有 EA 嘅 chart（替換確認 dialog）
