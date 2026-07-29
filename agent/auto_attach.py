@@ -303,10 +303,17 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             root = tree_view.roots()[0]
             
             ea_trading_node = None
-            for child in root.children():
-                if 'EA交易' in child.text():
-                    ea_trading_node = child
-                    break
+            # MT5 Navigator language varies: 'EA交易', 'المستشارون المختصون', 'Expert Advisors', etc.
+            # Use position (3rd child = index 2) as primary, text match as fallback
+            children = root.children()
+            if len(children) > 2:
+                ea_trading_node = children[2]  # Always 3rd child = Expert Advisors
+            if not ea_trading_node:
+                for child in children:
+                    t = child.text()
+                    if any(kw in t for kw in ['EA交易', 'Expert Advisors', 'المستشارون المختصون', 'Experts', 'EA']):
+                        ea_trading_node = child
+                        break
             
             if not ea_trading_node:
                 print(f"⚠️ EA交易 node not found (attempt {attempt+1}/{max_retries})")

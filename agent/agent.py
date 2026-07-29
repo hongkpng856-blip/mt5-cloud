@@ -298,9 +298,10 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
     - 開新 chart 後 Navigator panel 會自動收埋
     - 必須先開 chart，再開 Navigator，再 double-click
     
-    流程（AHK 主導）：
-    1. AHK attach_ea.ahk <ea_name> — 全部由 AHK 完成
-    2. Fallback: Python pyautogui double-click scan
+    流程：
+    1. Python: 開 chart + 開 Navigator + select EA + ensure_visible
+    2. AHK attach_ea.ahk: double-click scan TreeView 搵 EA Properties dialog
+    3. Python fallback: pyautogui double-click scan
     """
     import pyautogui
     import ctypes
@@ -308,32 +309,10 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
     
-    # Step 0: Try AHK first (most reliable)
     ahk_script = os.path.join(os.path.dirname(__file__), 'attach_ea.ahk')
     ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-    if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
-        print(f"🤖 Using AHK to attach {ea_name}...")
-        try:
-            result = subprocess.run(
-                [ahk_exe, '/ErrorStdOut', ahk_script, ea_name],
-                timeout=120, capture_output=True, text=True
-            )
-            # Check log
-            log_file = os.path.join(os.path.dirname(__file__), 'attach_log.txt')
-            if os.path.exists(log_file):
-                with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
-                    log = f.read().strip()
-                if 'SUCCESS' in log:
-                    print(f"🎉 AHK attach {ea_name} succeeded!")
-                    return True
-                else:
-                    print(f"⚠️ AHK attach failed: {log[-200:]}")
-        except subprocess.TimeoutExpired:
-            print(f"⚠️ AHK attach timed out")
-        except Exception as e:
-            print(f"⚠️ AHK error: {e}")
+    ahk_nav = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
     
-    # Fallback: Python pyautogui method
     for attempt in range(max_retries):
         try:
             app = Application(backend='win32').connect(process=mt5_pid)
@@ -353,7 +332,6 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         
         # Step 2: Open Navigator panel via AHK (menu click)
         # NOTE: opening new chart auto-hides Navigator!
-        ahk_nav = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
         if os.path.exists(ahk_nav) and os.path.exists(ahk_exe):
             subprocess.run([ahk_exe, '/ErrorStdOut', ahk_nav], timeout=10, capture_output=True)
         else:
@@ -409,10 +387,19 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             root = tree_view.roots()[0]
             
             ea_trading_node = None
-            for child in root.children():
-                if 'EA交易' in child.text():
-                    ea_trading_node = child
-                    break
+            # MT5 Navigator language varies: 'EA交易', 'المستشارون المختصون', 'Expert Advisors', etc.
+            # Use position (3rd child = index 2) as primary, text match as fallback
+            children = root.children()
+            if len(children) > 2:
+                ea_trading_node = children[2]  # Always 3rd child = Expert Advisors
+                print(f"📋 EA node by position: '{ea_trading_node.text()}'")
+            if not ea_trading_node:
+                # Fallback: text match for common languages
+                for child in children:
+                    t = child.text()
+                    if any(kw in t for kw in ['EA交易', 'Expert Advisors', 'المستشارون المختصون', 'Experts', 'EA']):
+                        ea_trading_node = child
+                        break
             
             if not ea_trading_node:
                 print(f"⚠️ EA交易 node not found (attempt {attempt+1}/{max_retries})")
@@ -447,70 +434,107 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                 time.sleep(5)
             continue
         
-        # Step 5: pyautogui double-click scan
+        # Step 5: Double-click the selected EA
+        # KEY INSIGHT: after select() + ensure_visible(), the EA is at the TOP of TreeView
+        # So we only need to double-click at tv_rect.top + ~9 (center of first row)
         found_dialog = False
-        click_x = tv_rect.left + 50  # EA item text area
-        row_height = 18
         
-        for y_step in range(0, tv_rect.bottom - tv_rect.top, row_height):
-            click_y = tv_rect.top + y_step + 9
-            
+        print(f"🖱️ Double-clicking at TreeView top for {ea_name}...")
+        click_x = tv_rect.left + 50  # EA item text area
+        click_y = tv_rect.top + 9    # Center of first visible row (where selected EA is)
+        
+        # Try AHK double-click first
+        if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
+            # Write a one-shot AHK script that clicks at the exact position
+            ahk_cmd = f'''
+#Requires AutoHotkey v2.0
+#NoTrayIcon
+Click {click_x} {click_y} 2
+'''
+            ahk_tmp = os.path.join(os.path.dirname(__file__), '_dblclick.ahk')
+            with open(ahk_tmp, 'w', encoding='utf-8') as f:
+                f.write(ahk_cmd)
+            try:
+                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_tmp], timeout=10, capture_output=True)
+            except:
+                pass
+            try:
+                os.remove(ahk_tmp)
+            except:
+                pass
+        else:
             pyautogui.doubleClick(x=click_x, y=click_y)
+        
+        time.sleep(2)
+        
+        # Check for EA Properties dialog
+        def find_ea_dialog(target_name):
+            results = []
+            pid_buf = ctypes.c_ulong()
+            def cb(hwnd, _):
+                user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid_buf))
+                if pid_buf.value == mt5_pid:
+                    cls = ctypes.create_unicode_buffer(256)
+                    user32.GetClassNameW(hwnd, cls, 256)
+                    if cls.value == '#32770':
+                        title = ctypes.create_unicode_buffer(256)
+                        user32.GetWindowTextW(hwnd, title, 256)
+                        if target_name in title.value:
+                            results.append(title.value)
+                return True
+            CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
+            user32.EnumWindows(CB(cb), 0)
+            return results
+        
+        dialogs = find_ea_dialog(ea_name)
+        if dialogs:
+            print(f"🎉 {ea_name} Properties dialog found!")
+            found_dialog = True
+            
+            # Step 6: Confirm dialog (Enter)
+            send_keys('{ENTER}')
             time.sleep(2)
             
-            # Check for EA Properties dialog (#32770 class with EA name)
-            def find_ea_dialog(target_name):
-                results = []
-                pid_buf = ctypes.c_ulong()
-                def cb(hwnd, _):
-                    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid_buf))
-                    if pid_buf.value == mt5_pid:
-                        cls = ctypes.create_unicode_buffer(256)
-                        user32.GetClassNameW(hwnd, cls, 256)
-                        if cls.value == '#32770':
-                            title = ctypes.create_unicode_buffer(256)
-                            user32.GetWindowTextW(hwnd, title, 256)
-                            if target_name in title.value:
-                                results.append(title.value)
-                    return True
-                # Use c_size_t for 64-bit hwnd in callback
-                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
-                user32.EnumWindows(CB(cb), 0)
-                return results
+            # Step 7: Ensure AutoTrading ON
+            log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
+            auto_trading_on = False
+            if os.path.exists(log_path):
+                with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
+                    log_lines = f.readlines()
+                for line in reversed(log_lines[-20:]):
+                    if 'automated trading' in line.lower():
+                        if 'enabled' in line.lower():
+                            auto_trading_on = True
+                        break
             
-            dialogs = find_ea_dialog(ea_name)
-            if dialogs:
-                print(f"🎉 {ea_name} Properties dialog found at ({click_x}, {click_y})!")
-                found_dialog = True
-                
-                # Step 6: Confirm dialog (Enter)
-                send_keys('{ENTER}')
+            if not auto_trading_on:
+                send_keys('^e')
                 time.sleep(2)
-                
-                # Step 7: Ensure AutoTrading ON
-                log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
-                auto_trading_on = False
-                if os.path.exists(log_path):
-                    with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
-                        log_lines = f.readlines()
-                    for line in reversed(log_lines[-20:]):
-                        if 'automated trading' in line.lower():
-                            if 'enabled' in line.lower():
-                                auto_trading_on = True
-                            break
-                
-                if not auto_trading_on:
-                    send_keys('^e')
-                    time.sleep(2)
-                    print("🔴 AutoTrading OFF → toggled ON")
-                else:
-                    print("🟢 AutoTrading is ON")
-                
-                return True
-            
-            # Close any wrong dialog that appeared
+                print("🔴 AutoTrading OFF → toggled ON")
+            else:
+                print("🟢 AutoTrading is ON")
+        else:
+            # Fallback: scan more positions if first click missed
+            print(f"⚠️ First click didn't find {ea_name} dialog, scanning...")
+            # Close any wrong dialog
             send_keys('{ESC}')
             time.sleep(0.3)
+            
+            for y_offset in [27, 45, 63]:  # Try rows 2-4
+                click_y = tv_rect.top + y_offset
+                pyautogui.doubleClick(x=click_x, y=click_y)
+                time.sleep(2)
+                dialogs = find_ea_dialog(ea_name)
+                if dialogs:
+                    print(f"🎉 {ea_name} dialog found at y_offset={y_offset}!")
+                    found_dialog = True
+                    send_keys('{ENTER}')
+                    time.sleep(2)
+                    send_keys('^e')
+                    time.sleep(1)
+                    break
+                send_keys('{ESC}')
+                time.sleep(0.3)
         
         if not found_dialog:
             print(f"⚠️ {ea_name} dialog not found after full scan (attempt {attempt+1}/{max_retries})")
