@@ -165,8 +165,27 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
             if not mt5_pid:
                 return False
     
-    # Step 3: Attach via Navigator
-    attached = attach_ea_navigator(ea_name, symbol, mt5_pid)
+    # Step 3: Attach via Navigator subprocess
+    # auto_attach.py runs as a separate process with full desktop access
+    auto_attach_path = os.path.join(os.path.dirname(__file__), 'auto_attach.py')
+    cmd = ['python', auto_attach_path, '--ea', ea_name, '--symbol', symbol, '--tf', 'H1']
+    print(f"🚀 Running auto_attach subprocess: {' '.join(cmd)}")
+    try:
+        result = subprocess.run(cmd, timeout=60, capture_output=True, text=True, cwd=os.path.dirname(auto_attach_path))
+        print(f"   Exit code: {result.returncode}")
+        for line in result.stdout.split('\n'):
+            if any(kw in line for kw in ['🎉', '✅', '❌', '🟢', '🔴', '⚠️', '💓']):
+                print(f"   {line}")
+        if result.returncode != 0:
+            print(f"   Stderr: {result.stderr[-300:]}")
+    except subprocess.TimeoutExpired:
+        print(f"⚠️ auto_attach.py timed out")
+        attached = False
+    except Exception as e:
+        print(f"⚠️ auto_attach error: {e}")
+        attached = False
+    else:
+        attached = result.returncode == 0
     
     if not attached:
         print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
