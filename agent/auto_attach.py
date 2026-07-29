@@ -279,13 +279,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         
         if nav_panel:
             hwnd = nav_panel.element_info.handle
-            user32.ShowWindow(hwnd, 5)  # SW_SHOW
+            user32.ShowWindow(ctypes.c_void_p(hwnd), 5)  # SW_SHOW
             time.sleep(1)
             print(f"📋 Navigator panel shown via ShowWindow")
         else:
             # Fallback: WM_COMMAND 32808 (Navigator toggle command ID)
             print(f"📋 Navigator panel not found, trying WM_COMMAND...")
-            user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
+            user32.SendMessageW(ctypes.c_void_p(win.element_info.handle), 0x0111, 32808, 0)
             time.sleep(1.5)
         
         # Step 3: Find SysTreeView32 and verify it's visible
@@ -304,7 +304,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         if not tree_view.is_visible():
             print(f"⚠️ TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
             # Try WM_COMMAND as fallback
-            user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
+            user32.SendMessageW(ctypes.c_void_p(win.element_info.handle), 0x0111, 32808, 0)
             time.sleep(1.5)
             
             for d in win.descendants():

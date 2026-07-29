@@ -193,7 +193,30 @@
 
 ---
 
-## 💡 AgentHelper Bootstrap（未解決 — 需下一位 Agent 接手）
+## 💡 AgentHelper Bootstrap（最終狀態）
+
+### 現狀
+- **AgentHelper.mq5** ✅ 寫好 + compile 成功（agent/AgentHelper.mq5）
+- **AgentHelper.ex5** ✅ 喺 MT5 Experts 目錄
+- **ADX_Trend.mq5**（server source）已加入 bootstrap code（heartbeat + 自動開 AgentHelper）
+- **所有方法都試過，未能自動啟動 AgentHelper**
+
+### 唯一成功嘅 deploy 方法（手動）
+| 方法 | 成功？ | 備註 |
+|------|--------|------|
+| Navigator double-click pyautogui | ❌ | 新 EA 唔 work |
+| Navigator 右鍵 → 附加到圖表 | ❌ | TreeView 唔食 click |
+| Chart 右鍵 → EA交易 → Add | ❌ | Menu navigation 唔可靠 |
+| auto_attach.py（terminal） | ❌ | pyautogui scan 冇 dialog |
+| ADX_Trend bootstrap (OnTick) | ❌ | ChartOpen 唔知點解 fail |
+| **人手拖去 chart** | ✅ | 唯一可靠方法 |
+
+### 建議
+下一位 Agent 最有效嘅做法：**親手拖 AgentHelper 去 EURUSD chart一次**，之後成個系統全自動：
+1. AgentHelper 每 5 秒 check `agent_helper.txt`
+2. Python Agent 收到 Deploy → compile → 寫 command file
+3. AgentHelper call `ChartOpen` + `ChartApplyTemplate`
+4. 完全唔經 Navigator，零 mouse click
 
 ### 現狀
 - **AgentHelper.mq5** ✅ 寫好 + compile 成功（agent/AgentHelper.mq5 + .ex5 in MT5 Experts）
