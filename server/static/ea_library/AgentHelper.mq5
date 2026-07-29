@@ -17,11 +17,11 @@ void OnDeinit(const int reason) {
 }
 
 void OnTimer() {
-   // Check for command file
-   if (!FileIsExist(CMD_FILE)) return;
+   // Check for command file (in Common/Files)
+   if (!FileIsExist(CMD_FILE, FILE_COMMON)) return;
    
    // Read command: "EA_NAME,SYMBOL,TIMEFRAME"
-   int handle = FileOpen(CMD_FILE, FILE_READ|FILE_TXT|FILE_ANSI);
+   int handle = FileOpen(CMD_FILE, FILE_READ|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if (handle == INVALID_HANDLE) return;
    
    string content = FileReadString(handle);
@@ -32,7 +32,7 @@ void OnTimer() {
    int count = StringSplit(content, ',', parts);
    if (count < 3) {
       Print("AgentHelper: invalid command: " + content);
-      FileDelete(CMD_FILE);
+      FileDelete(CMD_FILE, FILE_COMMON);
       return;
    }
    
@@ -75,8 +75,7 @@ void OnTimer() {
       ChartApplyTemplate(chart_id, template_name);
    }
    
-   ChartRedraw(chart_id);
-   FileDelete(CMD_FILE);
+   ChartRedraw(chart_id);\n   FileDelete(CMD_FILE, FILE_COMMON);
    Print("AgentHelper: done - " + ea_name);
 }
 //+------------------------------------------------------------------+
