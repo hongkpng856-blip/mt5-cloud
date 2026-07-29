@@ -336,7 +336,10 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         try:
             app = Application(backend='win32').connect(process=mt5_pid)
             win = app.window(class_name='MetaQuotes::MetaTrader::5.00')
-            win.set_focus()
+            try:
+                win.set_focus()
+            except:
+                pass  # No active desktop (background process)
             time.sleep(0.5)
         except Exception as e:
             print(f"⚠️ win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")

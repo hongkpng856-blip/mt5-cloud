@@ -193,7 +193,36 @@
 
 ---
 
-## 🔑 關鍵發現（下一位 Agent 必讀）
+## 💡 AgentHelper Bootstrap（未解決 — 需下一位 Agent 接手）
+
+### 現狀
+- **AgentHelper.mq5** ✅ 寫好 + compile 成功（agent/AgentHelper.mq5 + .ex5 in MT5 Experts）
+- **ADX_Trend.mq5** 已加入 bootstrap code（OnTick 入面 call ChartOpen + ChartApplyTemplate）
+- **Server source** 已更新（server/static/ea_library/ADX_Trend.mq5 包含 heartbeat + bootstrap）
+- 但 bootstrap code **未成功啟動 AgentHelper**
+
+### 已試過嘅方法
+| 方法 | 結果 |
+|------|------|
+| OnInit 直接 call ChartOpen + ChartApplyTemplate | ❌ ChartOpen 唔 work 喺 OnInit |
+| OnTimer (EventSetTimer 3秒後) | ❌ OnTimer 冇 fire |
+| OnTick call ChartApplyTemplate on current chart | ❌ |
+| OnTick call ChartOpen + ChartApplyTemplate on new chart | ❌ |
+| MetaEditor GUI compile（證明有效） | ✅ .ex5 生成 |
+| 直接命令行 metaeditor64.exe /compile | ❌ 冇 .ex5 產出 |
+
+### 關鍵技術發現
+1. **metaeditor64.exe CLI 唔 work** — 但 MetaEditor GUI compile 成功（0 errors, 0 warnings）
+2. **.ex5 係加密 p-code** — 所有 strings encrypted，binary search 搵唔到
+3. **MT5 file watcher thrashing** — 每次 compile 後 .ex5 變更引發 remove/load 循環
+4. **Terminal log 唔顯示 EA Print 輸出** — Print 只去 Experts tab，唔落 file
+5. **ADX_Trend heartbeat 🟢** — EA 正常運行，OnTick 不斷 fire
+
+### 建議 Fix（下一位 Agent）
+1. 打開 MT5 → Navigator → 手動拖 AgentHelper 去 EURUSD chart（5秒搞掂）
+2. 或者研究點解 ChartOpen 喺 OnTick 唔 work（可能 MT5 build 限制）
+3. 或者用 StartAgentHelper.mq5 script（已寫好喺 ea_library，未 compile）
+4. 或者用 `ChartFirst()` + `ChartNext()` 搵現有 chart 試 apply template
 
 ### Navigator Attach 正確流程
 
