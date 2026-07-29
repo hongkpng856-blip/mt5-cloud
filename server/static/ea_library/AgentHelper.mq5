@@ -8,20 +8,32 @@
 #define CMD_FILE "agent_helper.txt"
 
 int OnInit() {
+   // Heartbeat
+   GlobalVariableSet("HB_AgentHelper",TimeCurrent());
+   int hb_fh=FileOpen("hb_AgentHelper.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);
+   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}
+   
    EventSetTimer(5);
    return(INIT_SUCCEEDED);
 }
 
 void OnDeinit(const int reason) {
+   // Heartbeat cleanup
+   GlobalVariableSet("HB_AgentHelper",0);
+   int hb_fh=FileOpen("hb_AgentHelper.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);
+   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,0);FileClose(hb_fh);}
+   
    EventKillTimer();
 }
 
 void OnTimer() {
-   // Check for command file (in Common/Files)
-   if (!FileIsExist(CMD_FILE, FILE_COMMON)) return;
+   // Heartbeat
+   GlobalVariableSet("HB_AgentHelper",TimeCurrent());
+   int hb_fh=FileOpen("hb_AgentHelper.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);
+   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}
    
-   // Read command: "EA_NAME,SYMBOL,TIMEFRAME"
-   int handle = FileOpen(CMD_FILE, FILE_READ|FILE_TXT|FILE_ANSI|FILE_COMMON);
+   // Try to open command file (FileIsExist doesn't support FILE_COMMON flag in this build)
+   int handle = FileOpen(CMD_FILE, FILE_READ|FILE_TXT|FILE_COMMON);
    if (handle == INVALID_HANDLE) return;
    
    string content = FileReadString(handle);
@@ -62,7 +74,7 @@ void OnTimer() {
    long chart_id = ChartOpen(symbol, tf);
    if (chart_id <= 0) {
       Print("AgentHelper: ChartOpen failed for " + symbol);
-      FileDelete(CMD_FILE);
+      FileDelete(CMD_FILE, FILE_COMMON);
       return;
    }
    Sleep(1000);
@@ -70,12 +82,12 @@ void OnTimer() {
    // Apply template
    string template_name = ea_name + "_" + symbol + "_" + tf_str + ".tpl";
    if (!ChartApplyTemplate(chart_id, template_name)) {
-      // Try without timeframe
       template_name = ea_name + "_" + symbol + ".tpl";
       ChartApplyTemplate(chart_id, template_name);
    }
    
-   ChartRedraw(chart_id);\n   FileDelete(CMD_FILE, FILE_COMMON);
+   ChartRedraw(chart_id);
+   FileDelete(CMD_FILE, FILE_COMMON);
    Print("AgentHelper: done - " + ea_name);
 }
 //+------------------------------------------------------------------+
