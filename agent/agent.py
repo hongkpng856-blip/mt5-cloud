@@ -535,13 +535,16 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             send_keys('{ESC}')
             time.sleep(0.3)
             
-            for y_offset in [27, 45, 63]:  # Try rows 2-4
-                click_y = tv_rect.top + y_offset
-                pyautogui.doubleClick(x=click_x, y=click_y)
-                time.sleep(2)
+            for y_client in [27, 45, 63, 81]:  # Try rows 2-5
+                client_y = y_client
+                lparam = (client_y << 16) | client_x
+                user32.SendMessageW(tv_hwnd, 0x0203, 0x0001, lparam)
+                time.sleep(1.5)
+                user32.SendMessageW(tv_hwnd, 0x0202, 0x0000, lparam)
+                time.sleep(0.5)
                 dialogs = find_ea_dialog(ea_name)
                 if dialogs:
-                    print(f"🎉 {ea_name} dialog found at y_offset={y_offset}!")
+                    print(f"🎉 {ea_name} dialog found at client_y={client_y}!")
                     found_dialog = True
                     send_keys('{ENTER}')
                     time.sleep(2)
