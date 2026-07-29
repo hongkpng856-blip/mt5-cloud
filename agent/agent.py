@@ -453,37 +453,33 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             continue
         
         # Step 5: Double-click the selected EA
-        # KEY INSIGHT: after select() + ensure_visible(), the EA is at the TOP of TreeView
-        # So we only need to double-click at tv_rect.top + ~9 (center of first row)
+        # Use SendMessage (not SendInput) — works without window focus!
         found_dialog = False
         
-        print(f"🖱️ Double-clicking at TreeView top for {ea_name}...")
-        click_x = tv_rect.left + 50  # EA item text area
-        click_y = tv_rect.top + 9    # Center of first visible row (where selected EA is)
+        print(f"🖱️ SendMessage WM_LBUTTONDBLCLK for {ea_name}...")
         
-        # Try AHK double-click first
-        if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
-            # Write a one-shot AHK script that clicks at the exact position
-            ahk_cmd = f'''
-#Requires AutoHotkey v2.0
-#NoTrayIcon
-Click {click_x} {click_y} 2
-'''
-            ahk_tmp = os.path.join(os.path.dirname(__file__), '_dblclick.ahk')
-            with open(ahk_tmp, 'w', encoding='utf-8') as f:
-                f.write(ahk_cmd)
-            try:
-                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_tmp], timeout=10, capture_output=True)
-            except:
-                pass
-            try:
-                os.remove(ahk_tmp)
-            except:
-                pass
-        else:
-            pyautogui.doubleClick(x=click_x, y=click_y)
+        # Get TreeView client area for coordinate calculation
+        tv_hwnd = tree_view.element_info.handle
+        tv_rect = tree_view.rectangle()
         
+        # Client coordinates relative to TreeView
+        # After select() + ensure_visible(), EA is at the first visible row
+        # First row is at client y ≈ 9 (center of ~18px row)
+        client_x = 20  # Left margin with some indent
+        client_y = 9   # Center of first row
+        
+        # WM_LBUTTONDBLCLK = 0x0203
+        # wParam = MK_LBUTTON = 0x0001
+        # lParam = MAKELPARAM(client_x, client_y)
+        lparam = (client_y << 16) | client_x
+        
+        result = user32.SendMessageW(tv_hwnd, 0x0203, 0x0001, lparam)
         time.sleep(2)
+        
+        # Also send WM_LBUTTONUP after
+        # WM_LBUTTONUP = 0x0202
+        user32.SendMessageW(tv_hwnd, 0x0202, 0x0000, lparam)
+        time.sleep(0.5)
         
         # Check for EA Properties dialog
         def find_ea_dialog(target_name):
