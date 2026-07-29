@@ -243,12 +243,14 @@ def download_and_install(ea_name, url, ea_config=None):
                 # === Inject heartbeat code into .mq5 before saving ===
                 if ea_name.endswith('.mq5'):
                     source = resp.content.decode('utf-8', errors='replace')
+                    # Normalize line endings to \r\n (Windows / metaeditor requirement)
+                    source = source.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '\r\n')
                     hb_name = ea_name.replace('.mq5', '')
-                    hb_code = '   GlobalVariableSet("HB_' + hb_name + '",TimeCurrent());\n'
+                    hb_code = '   GlobalVariableSet("HB_' + hb_name + '",TimeCurrent());\r\n'
                     
                     # Also inject file-based heartbeat (more reliable for Python detection)
-                    hb_file_code = ('   int hb_fh=FileOpen("hb_' + hb_name + '.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);\n'
-                                    '   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}\n')
+                    hb_file_code = ('   int hb_fh=FileOpen("hb_' + hb_name + '.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);\r\n'
+                                    '   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}\r\n')
                     hb_code += hb_file_code
                     
                     # Inject into OnInit
@@ -281,11 +283,14 @@ def download_and_install(ea_name, url, ea_config=None):
                         source += '\n\n// Auto-injected heartbeat\nint OnInit() {\n' + hb_code + '   return INIT_SUCCEEDED;\n}\n'
                     
                     print(f"💓 Heartbeat injected: HB_{hb_name}")
-                    resp._content = source.encode('utf-8')
-                
-                with open(filepath, 'wb') as f:
-                    f.write(resp.content)
-                print(f"✅ Installed: {filepath}")
+                    # Write the MODIFIED source (not original resp.content)
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(source)
+                    print(f"✅ Installed: {filepath}")
+                else:
+                    with open(filepath, 'wb') as f:
+                        f.write(resp.content)
+                    print(f"✅ Installed: {filepath}")
 
                 metaeditor = None
                 for prog in ['C:\\Program Files\\MetaTrader 5\\metaeditor64.exe',
@@ -294,17 +299,21 @@ def download_and_install(ea_name, url, ea_config=None):
                         metaeditor = prog
                         break
                 if metaeditor and ea_name.endswith('.mq5'):
-                    import subprocess, tempfile
-                    # metaeditor NEEDS /log: flag to output .ex5 (just /s doesn't work via subprocess)
-                    log_path = os.path.join(tempfile.gettempdir(), f'mql_compile_{os.getpid()}.log')
-                    subprocess.run([metaeditor, f'/compile:{filepath}', f'/log:{log_path}'],
-                                 timeout=30, capture_output=True)
-                    # metaeditor returns 1 even on success; check .ex5 instead
+                    import subprocess, time
+                    # Remove stale .ex5 first
                     ex5_path = filepath.replace('.mq5', '.ex5')
+                    if os.path.isfile(ex5_path): os.remove(ex5_path)
+                    # metaeditor NEEDS /log: flag to output .ex5 (/s alone fails via subprocess)
+                    # Also must NOT use capture_output=True (blocks .ex5 generation)
+                    log_path = os.path.join(os.path.dirname(filepath), f'compile_{os.getpid()}.log')
+                    subprocess.run([metaeditor, f'/compile:{filepath}', f'/log:{log_path}'],
+                                 timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    time.sleep(2)
+                    # metaeditor returns 1 even on success; check .ex5 instead
                     if os.path.isfile(ex5_path):
-                        print(f"⚙️  Compiled: {ea_name} ✅ {os.path.basename(ex5_path)}")
+                        print(f"⚙️  Compiled: {ea_name} ✅ {os.path.basename(ex5_path)} ({os.path.getsize(ex5_path)} bytes)")
                     else:
-                        print(f"⚙️  Compile attempted (checking .ex5): {ea_name}")
+                        print(f"⚙️  Compile FAILED: {ea_name} — no .ex5 generated")
 
                 base_name = ea_name.replace('.mq5', '').replace('.ex5', '')
                 if ea_config:
