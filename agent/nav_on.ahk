@@ -1,67 +1,58 @@
 #Requires AutoHotkey v2.0
 #NoTrayIcon
-; Toggle MT5 Navigator panel ON (ensure visible)
-; Uses keyboard shortcut method: Ctrl+3 or View menu
-; Returns: exit code 0 = success, 1 = failed
+; Reliable MT5 Navigator toggle — v2
+; Checks parent window visibility, not just TreeView style
 
-mt5Win := WinExist("ahk_class MetaQuotes::MetaTrader::5.00")
-if !mt5Win {
+mt5Hwnd := WinExist("ahk_class MetaQuotes::MetaTrader::5.00")
+if !mt5Hwnd {
     ExitApp 1
 }
+WinActivate "ahk_id " mt5Hwnd
+Sleep 300
+WinGetPos &wx, &wy, &ww, &wh, "ahk_id " mt5Hwnd
 
-; Method: Send F10 to activate menu bar, then navigate
-; Actually: Use WinMenuSelectItem or just send keys
-; Most reliable: Click on "View" text in menu bar using accurate position
-
-WinActivate "ahk_id " mt5Win
-WinWaitActive "ahk_id " mt5Win, 3
-Sleep 200
-
-; Get window position
-WinGetPos &wx, &wy, &ww, &wh, "ahk_id " mt5Win
-
-; The menu bar in MT5 has these items at specific positions:
-; File (x≈30) | Edit (x≈70) | View (x≈110) | ...
-; We click View to open the menu, then click Navigator
-; But position depends on language! Let's try multiple x positions for "View"
-
-; Try sending keyboard shortcut: View menu can be activated with Alt+V
-; But this doesn't always work with MT5
-; Alternative: Click at multiple possible "View" positions
-
-viewFound := false
-for xPos in [110, 95, 125, 80, 140] {
-    Click wx + xPos " " wy + 28
-    Sleep 400
-    
-    ; Check if a menu appeared by looking for a menu window
-    ; Actually just check if clicking opened a dropdown
-    ; Move mouse down to see if there's a menu item
-    
-    ; Click "Navigator" — it's about 165px from top in the dropdown
-    Click wx + xPos " " wy + 165
-    Sleep 1000
-    
-    ; Check if TreeView became visible
+IsNavVisible() {
+    ; Check if TreeView has a visible parent by checking its position
+    ; If Navigator is hidden, the TreeView is at a negative/off-screen position
     try {
-        tv := ControlGetHwnd("SysTreeView321", "ahk_id " mt5Win)
-        if tv {
-            ; Check visibility by getting style
-            style := ControlGetStyle("SysTreeView321", "ahk_id " mt5Win)
-            ; WS_VISIBLE = 0x10000000
-            if (style & 0x10000000) {
-                viewFound := true
-                break
-            }
-        }
+        ctrlHwnd := ControlGetHwnd("SysTreeView321", "ahk_class MetaQuotes::MetaTrader::5.00")
+        if !ctrlHwnd
+            return false
+        ; Check if the control is actually visible by getting its window rect
+        ; Use WinGetPos for the control
+        ; A visible TreeView in a maximized MT5 window has rect like (0, 436)-(390, 724)
+        ; A hidden one has very different coordinates
+        ControlGetPos &cx, &cy, &cw, &ch, "SysTreeView321", "ahk_class MetaQuotes::MetaTrader::5.00"
+        ; If the control is visible on screen (positive coordinates within window bounds)
+        return (cx >= 0 && cx < ww && cy > 0 && cy < wh && cw > 10 && ch > 10)
     }
+    return false
 }
 
-if viewFound {
-    ExitApp 0
-} else {
-    ; Last resort: try Ctrl+3 (Navigator shortcut in some MT5 builds)
-    Send "^3"
-    Sleep 1000
-    ExitApp 0
+; Method 1: Click menu bar at View positions
+for x in [85, 95, 105, 115, 125, 135] {
+    Click wx + x " " wy + 20
+    Sleep 300
+    Click wx + x " " wy + 150
+    Sleep 800
+    if IsNavVisible()
+        ExitApp 0
 }
+
+; Method 2: Ctrl+3
+Send "^3"
+Sleep 1000
+if IsNavVisible()
+    ExitApp 0
+
+; Method 3: Alt+V, n, Enter
+Send "!v"
+Sleep 400
+Send "n"
+Sleep 400
+Send "{Enter}"
+Sleep 800
+if IsNavVisible()
+    ExitApp 0
+
+ExitApp 1

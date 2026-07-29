@@ -169,11 +169,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
     attached = attach_ea_navigator(ea_name, symbol, mt5_pid)
     
     if not attached:
-        # Fallback: restart MT5 and try again
-        print("⚠️ Navigator attach failed, restarting MT5...")
-        mt5_pid = do_restart_mt5()
-        if mt5_pid:
-            attached = attach_ea_navigator(ea_name, symbol, mt5_pid)
+        print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
     
     if not attached:
         print("❌ Failed to attach EA")
@@ -313,6 +309,9 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
     ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
     ahk_nav = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
     
+    import ctypes as _ctypes
+    user32 = _ctypes.windll.user32
+    
     for attempt in range(max_retries):
         try:
             app = Application(backend='win32').connect(process=mt5_pid)
@@ -324,23 +323,50 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             time.sleep(5)
             continue
         
-        # Step 1: Open new chart (Ctrl+N → Enter)
-        send_keys('^n')
-        time.sleep(1)
-        send_keys('{ENTER}')
-        time.sleep(3)
+        # Step 1: Open chart only if none exists
+        mdi = None
+        for d in win.descendants():
+            if d.element_info.class_name == 'MDIClient':
+                mdi = d
+                break
+        has_charts = mdi and len(mdi.children()) > 0
         
-        # Step 2: Open Navigator panel via AHK (menu click)
-        # NOTE: opening new chart auto-hides Navigator!
-        if os.path.exists(ahk_nav) and os.path.exists(ahk_exe):
-            subprocess.run([ahk_exe, '/ErrorStdOut', ahk_nav], timeout=10, capture_output=True)
-        else:
-            send_keys('%v')
+        if not has_charts:
+            print("📋 No chart open, opening new one...")
+            send_keys('^n')
             time.sleep(1)
-            send_keys('n')
-            time.sleep(0.5)
             send_keys('{ENTER}')
-        time.sleep(2)
+            time.sleep(3)
+        else:
+            print(f"📋 Chart already open, skipping Ctrl+N...")
+        
+        # Step 2: Open Navigator panel DIRECTLY via ShowWindow
+        # Much more reliable than menu clicks or keyboard shortcuts
+        nav_panel = None
+        for d in win.descendants():
+            c = d.element_info.class_name
+            if 'Afx:ControlBar' in c:
+                r = d.rectangle()
+                # Navigator panel has the SysTreeView32 child
+                tv_child = None
+                for child in d.descendants():
+                    if child.element_info.class_name == 'SysTreeView32':
+                        tv_child = child
+                        break
+                if tv_child:
+                    nav_panel = d
+                    break
+        
+        if nav_panel:
+            hwnd = nav_panel.element_info.handle
+            user32.ShowWindow(hwnd, 5)  # SW_SHOW
+            time.sleep(1)
+            print(f"📋 Navigator panel shown via ShowWindow")
+        else:
+            # Fallback: WM_COMMAND 32808 (Navigator toggle command ID)
+            print(f"📋 Navigator panel not found, trying WM_COMMAND...")
+            result = user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
+            time.sleep(1.5)
         
         # Step 3: Find SysTreeView32 and verify it's visible
         tree_view = None
@@ -356,19 +382,11 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             continue
         
         if not tree_view.is_visible():
-            print(f"⚠️ TreeView not visible after Navigator toggle (attempt {attempt+1}/{max_retries})")
-            # Retry AHK toggle
-            if os.path.exists(ahk_nav) and os.path.exists(ahk_exe):
-                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_nav], timeout=10, capture_output=True)
-            else:
-                send_keys('%v')
-                time.sleep(1)
-                send_keys('n')
-                time.sleep(0.5)
-                send_keys('{ENTER}')
-            time.sleep(2)
+            print(f"⚠️ TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
+            # Try WM_COMMAND as fallback
+            user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
+            time.sleep(1.5)
             
-            # Re-find TreeView
             for d in win.descendants():
                 if d.element_info.class_name == 'SysTreeView32':
                     tree_view = d

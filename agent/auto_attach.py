@@ -239,25 +239,51 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             time.sleep(5)
             continue
         
-        # Step 1: Open new chart (Ctrl+N → Enter)
-        send_keys('^n')
-        time.sleep(1)
-        send_keys('{ENTER}')
-        time.sleep(3)
+        # Step 1: Open chart only if none exists
+        mdi = None
+        for d in win.descendants():
+            if d.element_info.class_name == 'MDIClient':
+                mdi = d
+                break
+        has_charts = mdi and len(mdi.children()) > 0
         
-        # Step 2: Open Navigator panel via AHK (menu click)
-        # NOTE: opening new chart auto-hides Navigator!
-        ahk_script = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
-        ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-        if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
-            subprocess.run([ahk_exe, '/ErrorStdOut', ahk_script], timeout=10, capture_output=True)
-        else:
-            send_keys('%v')
+        if not has_charts:
+            print("📋 No chart open, opening new one...")
+            send_keys('^n')
             time.sleep(1)
-            send_keys('n')
-            time.sleep(0.5)
             send_keys('{ENTER}')
-        time.sleep(2)
+            time.sleep(3)
+        else:
+            print(f"📋 Chart already open, skipping Ctrl+N...")
+        
+        # Step 2: Open Navigator panel DIRECTLY via ShowWindow
+        # Much more reliable than menu clicks or keyboard shortcuts
+        import ctypes as _ctypes
+        user32 = _ctypes.windll.user32
+        
+        nav_panel = None
+        for d in win.descendants():
+            c = d.element_info.class_name
+            if 'Afx:ControlBar' in c:
+                tv_child = None
+                for child in d.descendants():
+                    if child.element_info.class_name == 'SysTreeView32':
+                        tv_child = child
+                        break
+                if tv_child:
+                    nav_panel = d
+                    break
+        
+        if nav_panel:
+            hwnd = nav_panel.element_info.handle
+            user32.ShowWindow(hwnd, 5)  # SW_SHOW
+            time.sleep(1)
+            print(f"📋 Navigator panel shown via ShowWindow")
+        else:
+            # Fallback: WM_COMMAND 32808 (Navigator toggle command ID)
+            print(f"📋 Navigator panel not found, trying WM_COMMAND...")
+            user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
+            time.sleep(1.5)
         
         # Step 3: Find SysTreeView32 and verify it's visible
         tree_view = None
@@ -273,18 +299,11 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             continue
         
         if not tree_view.is_visible():
-            print(f"⚠️ TreeView not visible, re-toggling Navigator")
-            ahk_script = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
-            ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-            if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
-                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_script], timeout=10, capture_output=True)
-            else:
-                send_keys('%v')
-                time.sleep(1)
-                send_keys('n')
-                time.sleep(0.5)
-                send_keys('{ENTER}')
-            time.sleep(2)
+            print(f"⚠️ TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
+            # Try WM_COMMAND as fallback
+            user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
+            time.sleep(1.5)
+            
             for d in win.descendants():
                 if d.element_info.class_name == 'SysTreeView32':
                     tree_view = d
