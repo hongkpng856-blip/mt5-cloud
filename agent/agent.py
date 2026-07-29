@@ -171,13 +171,14 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
     cmd = ['python', auto_attach_path, '--ea', ea_name, '--symbol', symbol, '--tf', 'H1']
     print(f"🚀 Running auto_attach subprocess: {' '.join(cmd)}")
     try:
-        result = subprocess.run(cmd, timeout=60, capture_output=True, text=True, cwd=os.path.dirname(auto_attach_path))
+        result = subprocess.run(cmd, timeout=300, capture_output=True, text=True, cwd=os.path.dirname(auto_attach_path), creationflags=subprocess.CREATE_NEW_CONSOLE)
         print(f"   Exit code: {result.returncode}")
         for line in result.stdout.split('\n'):
-            if any(kw in line for kw in ['🎉', '✅', '❌', '🟢', '🔴', '⚠️', '💓']):
+            if any(kw in line for kw in ['🎉', '✅', '❌', '🟢', '🔴', '⚠️', '💓', '📋']):
                 print(f"   {line}")
         if result.returncode != 0:
-            print(f"   Stderr: {result.stderr[-300:]}")
+            if result.stderr:
+                print(f"   Stderr: {result.stderr[-500:]}")
     except subprocess.TimeoutExpired:
         print(f"⚠️ auto_attach.py timed out")
         attached = False
