@@ -328,13 +328,20 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         send_keys('{ENTER}')
         time.sleep(3)
         
-        # Step 2: Open Navigator panel (Alt+V → n → Enter)
+        # Step 2: Open Navigator panel via AHK (menu click)
         # NOTE: opening new chart auto-hides Navigator!
-        send_keys('%v')
-        time.sleep(1)
-        send_keys('n')
-        time.sleep(0.5)
-        send_keys('{ENTER}')
+        # Alt+V→n→Enter is unreliable, so use AHK to click View→Navigator menu
+        ahk_script = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
+        ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+        if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
+            subprocess.run([ahk_exe, '/ErrorStdOut', ahk_script], timeout=10, capture_output=True)
+        else:
+            # Fallback: keyboard method
+            send_keys('%v')
+            time.sleep(1)
+            send_keys('n')
+            time.sleep(0.5)
+            send_keys('{ENTER}')
         time.sleep(2)
         
         # Step 3: Find SysTreeView32 and verify it's visible
@@ -352,12 +359,17 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         
         if not tree_view.is_visible():
             print(f"⚠️ TreeView not visible after Navigator toggle (attempt {attempt+1}/{max_retries})")
-            # Try toggling again
-            send_keys('%v')
-            time.sleep(1)
-            send_keys('n')
-            time.sleep(0.5)
-            send_keys('{ENTER}')
+            # Retry AHK toggle
+            ahk_script = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
+            ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+            if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
+                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_script], timeout=10, capture_output=True)
+            else:
+                send_keys('%v')
+                time.sleep(1)
+                send_keys('n')
+                time.sleep(0.5)
+                send_keys('{ENTER}')
             time.sleep(2)
             
             # Re-find TreeView
@@ -408,7 +420,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             print(f"🎯 Found {ea_name}, attaching via pyautogui double-click...")
             ea_node.select()
             time.sleep(0.3)
-            ea_node.EnsureVisible()
+            ea_node.ensure_visible()
             time.sleep(0.5)
             
         except Exception as e:
@@ -444,7 +456,8 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                             if target_name in title.value:
                                 results.append(title.value)
                     return True
-                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_long)
+                # Use c_size_t for 64-bit hwnd in callback
+                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
                 user32.EnumWindows(CB(cb), 0)
                 return results
             
