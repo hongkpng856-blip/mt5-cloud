@@ -791,33 +791,19 @@ def execute_deploy(data):
         if result:
             report(f'✅ {ea_name} → {symbol} {tf} 已啟動！🟢', 'ok')
         else:
-            # Fallback: place a market order to register the magic number
+            # Auto-attach failed — check AutoTrading state
             import MetaTrader5 as mt5
             if not mt5.initialize():
                 report('❌ MT5 無法連接', 'error')
                 return
-
-            report('⚠️ Auto-attach failed, placing order as fallback')
-            mt5.symbol_select(mt5_symbol, True)
-            tick = mt5.symbol_info_tick(mt5_symbol)
-            if tick:
-                request = {
-                    "action": mt5.TRADE_ACTION_DEAL,
-                    "symbol": mt5_symbol,
-                    "volume": float(lot),
-                    "type": mt5.ORDER_TYPE_BUY,
-                    "price": tick.ask,
-                    "deviation": 20,
-                    "magic": int(magic),
-                    "comment": f"cloud_{ea_name}",
-                    "type_time": mt5.ORDER_TIME_GTC,
-                    "type_filling": mt5.ORDER_FILLING_IOC,
-                }
-                result = mt5.order_send(request)
-                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-                    report(f'✅ {ea_name} order placed (fallback)', 'ok')
-                else:
-                    report(f'⚠️ Order retcode={result.retcode if result else "none"}', 'info')
+            
+            # Try enabling AutoTrading first
+            report('⚠️ Auto-attach failed, checking AutoTrading...')
+            info = mt5.account_info()
+            if info and not info.trade_allowed:
+                report('🔴 AutoTrading is OFF — 請在 MT5 按 Ctrl+E 開啟', 'error')
+            else:
+                report('⚠️ Auto-attach failed，請重試 Deploy', 'error')
             mt5.shutdown()
 
     except Exception as e:

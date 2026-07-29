@@ -138,7 +138,6 @@
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
             <button class="btn" onclick="loadEAConfig()">🔄 重新整理</button>
-            <button class="btn btn-orange" onclick="saveEAConfig()">💾 儲存配對</button>
             <label class="btn" style="cursor:pointer">📤 上傳自己嘅 EA
                 <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
             </label>
@@ -657,14 +656,18 @@ async function addEAToPairing(baseName, fileName, source) {
     mappings[baseName+'_tf'] = mappings[baseName+'_tf'] || 'H1';
     mappings[baseName+'_lot'] = mappings[baseName+'_lot'] || dl;
 
-    await fetch('/api/ea-config', {
+    const saveRes = await fetch('/api/ea-config', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({mappings})
     });
-    loadEALibrary();
-    loadEAConfig();
-    showLog('✅ ' + fileName + ' 已加入！設定 Magic/Symbol/TF/Lots 後撳 💾 儲存配對', 'log-success');
+    if (saveRes.ok) {
+        loadEALibrary();
+        loadEAConfig();
+        showLog('✅ ' + fileName + ' 已加入配對庫！', 'log-success');
+    } else {
+        showLog('❌ 加入失敗', 'log-error');
+    }
 }
 
 async function deleteEA(eaName) {
@@ -691,13 +694,26 @@ async function toggleEA(eaName) {
 }
 
 async function deployEA(eaName, symbol, tf, magic, lot) {
+    // Step 1: Save config first
+    await saveEAConfig();
+    
+    // Step 2: Check agent status
     const dashRes = await fetch('/api/dashboard');
     const dashData = await dashRes.json();
     if (dashData.status !== 'connected' && dashData.status !== 'running') {
         showLog('❌ Agent 離線，無法部署', 'log-error');
         return;
     }
-    socket.emit('deploy_ea', { agent_id: dashData.agent_id, ea_name: eaName, symbol, tf, magic, lot });
+    
+    // Step 3: Emit deploy command (auto-attach to chart)
+    socket.emit('deploy_ea', {
+        agent_id: dashData.agent_id,
+        ea_name: eaName,
+        symbol: symbol,
+        tf: tf,
+        magic: magic,
+        lot: lot
+    });
     showLog(`🚀 正在部署 ${eaName} → ${symbol} ${tf}...`, 'log-info');
 }
 
