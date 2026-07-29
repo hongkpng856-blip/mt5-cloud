@@ -298,8 +298,34 @@ process action=poll session_id=<agent_proc_id>
 2. 寫 command file → Common/Files/agent_helper.txt
 3. 格式: EA_NAME,SYMBOL,TIMEFRAME（例如: Bollinger_Band,EURUSD,H1）
 4. AgentHelper OnTimer（每5秒）會自動 process
-5. Check heartbeat file 確認 deploy 成功
+5. ⚠️ AgentHelper 會刪除 command file 但唔會 attach EA（ChartApplyTemplate 喺 MQL5 code 唔 work）
+6. 需要用 terminal 行 auto_attach.py 完成部署
 ```
+
+### 完整部署流程（最終推薦）
+
+```
+1. Dashboard Click Deploy
+2. Agent download + save + compile（註冊 EA）
+3. Agent writes agent_helper.txt（通知 AgentHelper）
+4. AgentHelper 處理 command → file 被刪除
+5. ⏳ 用戶或 cron job 用 terminal 行 auto_attach.py
+6. ✅ EA attached + heartbeat 🟢
+```
+
+### Timeline
+1. 確保 AgentHelper 心跳 🟢（如有需要，用 terminal auto_attach）
+2. 寫 command file → Common/Files/agent_helper.txt
+3. 格式: EA_NAME,SYMBOL,TIMEFRAME（例如: Bollinger_Band,EURUSD,H1）
+4. AgentHelper OnTimer（每5秒）會自動 process
+5. ⚠️ AgentHelper 會刪除 command file 但唔會 attach EA（ChartApplyTemplate 喺 MQL5 code 唔 work）
+6. 需要用 terminal 行 auto_attach.py 完成部署
+
+### 已知限制
+- `ChartApplyTemplate` 喺 MQL5 code 唔會 attach EA（只會套用 chart 顏色/indicator 設定）
+- EA 只能經 GUI template apply 或 Navigator double-click 先 attach
+- `ChartOpen` 喺 build 6061 可能 restricted（返回 0）
+- 唯一可靠 attach 方法：terminal `auto_attach.py`（pyautogui double-click）
 
 ### MetaEditor GUI compile 自動化步驟
 

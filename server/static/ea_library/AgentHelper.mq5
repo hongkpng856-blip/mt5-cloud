@@ -70,14 +70,25 @@ void OnTimer() {
    SymbolSelect(symbol, true);
    Sleep(500);
    
-   // Open chart
+   // Try to open chart or use existing one
    long chart_id = ChartOpen(symbol, tf);
    if (chart_id <= 0) {
-      Print("AgentHelper: ChartOpen failed for " + symbol);
+      // ChartOpen failed, scan existing charts for this symbol/tf
+      long cur = ChartFirst();
+      for (int i = 0; i < 100; i++) {
+         if (ChartSymbol(cur) == symbol && ChartPeriod(cur) == tf) {
+            chart_id = cur;
+            break;
+         }
+         cur = ChartNext(cur);
+         if (cur <= 0) break;
+      }
+   }
+   if (chart_id <= 0) {
+      Print("AgentHelper: No chart available for " + symbol);
       FileDelete(CMD_FILE, FILE_COMMON);
       return;
    }
-   Sleep(1000);
    
    // Apply template
    string template_name = ea_name + "_" + symbol + "_" + tf_str + ".tpl";
