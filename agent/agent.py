@@ -288,21 +288,33 @@ def generate_template(ea_name, symbol, timeframe, inputs=None):
 
 
 def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
-    """用 win32 backend + SysTreeView32 attach EA（唔用 uia，uia 會 COM error）
+    """用 win32 backend + pyautogui double-click attach EA
+    
+    關鍵發現：
+    - MT5 Navigator TreeView 的 select() + Enter 不等同 double-click
+    - Enter 只 expand/collapse 節點，不會 attach EA 到 chart
+    - 開新 chart 後 Navigator panel 會自動收埋
+    - 必須先開 chart，再開 Navigator，再 pyautogui double-click
     
     流程：
-    1. win32 connect → 找到 SysTreeView32
-    2. Expand EA交易 → select EA → Enter
-    3. Enter 關閉 Properties dialog
-    4. 確保 AutoTrading ON
+    1. win32 connect → set focus
+    2. 開新 chart (Ctrl+N → Enter)
+    3. 開 Navigator panel (Alt+V → n → Enter)
+    4. Expand EA交易 → select EA → EnsureVisible
+    5. pyautogui double-click 掃描 TreeView 找到 EA
+    6. 確認 Properties dialog → Enter 關閉
+    7. 確保 AutoTrading ON
     """
+    import pyautogui
+    import ctypes
+    user32 = ctypes.windll.user32
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
     
     for attempt in range(max_retries):
         try:
             app = Application(backend='win32').connect(process=mt5_pid)
-            win = app.top_window()
+            win = app.window(class_name='MetaQuotes::MetaTrader::5.00')
             win.set_focus()
             time.sleep(0.5)
         except Exception as e:
@@ -310,13 +322,22 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             time.sleep(5)
             continue
         
-        # Step 0: Open new chart (Ctrl+N → Enter)
+        # Step 1: Open new chart (Ctrl+N → Enter)
         send_keys('^n')
         time.sleep(1)
         send_keys('{ENTER}')
+        time.sleep(3)
+        
+        # Step 2: Open Navigator panel (Alt+V → n → Enter)
+        # NOTE: opening new chart auto-hides Navigator!
+        send_keys('%v')
+        time.sleep(1)
+        send_keys('n')
+        time.sleep(0.5)
+        send_keys('{ENTER}')
         time.sleep(2)
         
-        # Step 1: Find SysTreeView32
+        # Step 3: Find SysTreeView32 and verify it's visible
         tree_view = None
         for d in win.descendants():
             if d.element_info.class_name == 'SysTreeView32':
@@ -329,11 +350,34 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                 time.sleep(5)
             continue
         
-        # Step 2: Navigate tree
-        try:
-            root = tree_view.roots()[0]  # "MetaTrader 5"
+        if not tree_view.is_visible():
+            print(f"⚠️ TreeView not visible after Navigator toggle (attempt {attempt+1}/{max_retries})")
+            # Try toggling again
+            send_keys('%v')
+            time.sleep(1)
+            send_keys('n')
+            time.sleep(0.5)
+            send_keys('{ENTER}')
+            time.sleep(2)
             
-            # Find EA交易 node
+            # Re-find TreeView
+            for d in win.descendants():
+                if d.element_info.class_name == 'SysTreeView32':
+                    tree_view = d
+                    break
+            if not tree_view or not tree_view.is_visible():
+                print(f"⚠️ TreeView still not visible")
+                if attempt < max_retries - 1:
+                    time.sleep(5)
+                continue
+        
+        tv_rect = tree_view.rectangle()
+        print(f"📋 TreeView visible={tree_view.is_visible()} rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
+        
+        # Step 4: Navigate tree → Expand EA交易 → Select + EnsureVisible
+        try:
+            root = tree_view.roots()[0]
+            
             ea_trading_node = None
             for child in root.children():
                 if 'EA交易' in child.text():
@@ -346,14 +390,9 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                     time.sleep(5)
                 continue
             
-            # Expand EA交易
-            try:
-                ea_trading_node.expand()
-            except:
-                pass
+            ea_trading_node.expand()
             time.sleep(2)
             
-            # Find EA node
             ea_node = None
             for ea in ea_trading_node.children():
                 if ea.text() == ea_name:
@@ -366,45 +405,90 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                     time.sleep(5)
                 continue
             
-            # Step 3: Select + Enter to activate
-            print(f"🎯 Found {ea_name}, attaching...")
+            print(f"🎯 Found {ea_name}, attaching via pyautogui double-click...")
             ea_node.select()
+            time.sleep(0.3)
+            ea_node.EnsureVisible()
             time.sleep(0.5)
-            send_keys('{ENTER}')
-            time.sleep(3)
-            
-            # Step 4: Handle Properties dialog — Enter for OK
-            send_keys('{ENTER}')
-            time.sleep(2)
-            
-            # Step 5: Ensure AutoTrading ON
-            log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
-            auto_trading_on = False
-            if os.path.exists(log_path):
-                with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
-                    log_lines = f.readlines()
-                for line in reversed(log_lines[-20:]):
-                    if 'automated trading' in line.lower():
-                        if 'enabled' in line.lower():
-                            auto_trading_on = True
-                        break
-            
-            if not auto_trading_on:
-                send_keys('^e')
-                time.sleep(2)
-                print("🔴 AutoTrading OFF → toggled ON")
-            else:
-                print("🟢 AutoTrading is ON")
-            
-            return True
             
         except Exception as e:
-            print(f"⚠️ Navigator error: {e} (attempt {attempt+1}/{max_retries})")
+            print(f"⚠️ Tree navigation error: {e} (attempt {attempt+1}/{max_retries})")
+            if attempt < max_retries - 1:
+                time.sleep(5)
+            continue
+        
+        # Step 5: pyautogui double-click scan
+        # Scan TreeView area row by row, looking for EA Properties dialog
+        found_dialog = False
+        click_x = tv_rect.left + 50  # EA item text area
+        row_height = 18
+        
+        for y_step in range(0, tv_rect.bottom - tv_rect.top, row_height):
+            click_y = tv_rect.top + y_step + 9
+            
+            pyautogui.doubleClick(x=click_x, y=click_y)
+            time.sleep(2)
+            
+            # Check for EA Properties dialog (#32770 class with EA name)
+            def find_ea_dialog(target_name):
+                results = []
+                pid_buf = ctypes.c_ulong()
+                def cb(hwnd, _):
+                    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid_buf))
+                    if pid_buf.value == mt5_pid:
+                        cls = ctypes.create_unicode_buffer(256)
+                        user32.GetClassNameW(hwnd, cls, 256)
+                        if cls.value == '#32770':
+                            title = ctypes.create_unicode_buffer(256)
+                            user32.GetWindowTextW(hwnd, title, 256)
+                            if target_name in title.value:
+                                results.append(title.value)
+                    return True
+                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_long)
+                user32.EnumWindows(CB(cb), 0)
+                return results
+            
+            dialogs = find_ea_dialog(ea_name)
+            if dialogs:
+                print(f"🎉 {ea_name} Properties dialog found at ({click_x}, {click_y})!")
+                found_dialog = True
+                
+                # Step 6: Confirm dialog (Enter)
+                send_keys('{ENTER}')
+                time.sleep(2)
+                
+                # Step 7: Ensure AutoTrading ON
+                log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
+                auto_trading_on = False
+                if os.path.exists(log_path):
+                    with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
+                        log_lines = f.readlines()
+                    for line in reversed(log_lines[-20:]):
+                        if 'automated trading' in line.lower():
+                            if 'enabled' in line.lower():
+                                auto_trading_on = True
+                            break
+                
+                if not auto_trading_on:
+                    send_keys('^e')
+                    time.sleep(2)
+                    print("🔴 AutoTrading OFF → toggled ON")
+                else:
+                    print("🟢 AutoTrading is ON")
+                
+                return True
+            
+            # Close any wrong dialog that appeared
+            send_keys('{ESC}')
+            time.sleep(0.3)
+        
+        if not found_dialog:
+            print(f"⚠️ {ea_name} dialog not found after full scan (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
     
-    print(f"❌ {ea_name} not found after {max_retries} attempts")
+    print(f"❌ {ea_name} attach failed after {max_retries} attempts")
     return False
 
 
