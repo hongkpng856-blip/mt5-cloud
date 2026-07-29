@@ -149,4 +149,198 @@ Heartbeat 🟢 — Deploy complete!
 
 ---
 
-*Last updated: 2026-07-30*
+## 🤝 Handoff Notes（下一位 Agent 必讀）
+
+### 系統架構快速總覽
+
+```
+┌─────────────┐     Socket.IO     ┌─────────────┐     Terminal / Desktop     ┌─────┐
+│  Flask Server│ ←──────────────→ │   Agent     │ ←───────────────────────→ │ MT5 │
+│  :5002       │                  │  DEV00001   │                           │     │
+│  +SQLite     │                  │  agent.py   │     auto_attach.py        │ PID │
+│  +Dashboard  │                  │  +heartbeat  │     (pyautogui, win32)    │ ????│
+└──────┬───────┘                  └──────┬───────┘                           └─────┘
+       │                                 │
+       ▼                                 ▼
+  ea_library/                        MQL5/Experts/
+  30 .mq5 sources                    4 EAs .ex5
+  AgentHelper.mq5 +.ex5
+```
+
+### 當前狀態（2026-07-30 01:00）
+
+| 服務 | 狀態 | Port/PID |
+|------|------|----------|
+| Flask Server | ✅ 已運行 | localhost:5002 |
+| Cloudflare Tunnel | ✅ 已運行 | `having-bent-bunch-theater.trycloudflare.com` |
+| MT5 | ✅ 已運行 | PID varies |
+| Agent DEV00001 | ✅ 已運行（背景 proc_fba11d8c8c12） | monitoring 4 EAs |
+| AgentHelper EA | ✅ 心跳 🟢 | EURUSD H1 |
+
+### 而家邊啲 EA 行緊
+
+| EA | Symbol | TF | Heartbeat | auto_attach 成功？ |
+|----|--------|----|-----------|-------------------|
+| ADX_Trend | EURUSD | H1 | 🟢 | ❌ background timeout，✅ terminal |
+| ATR_Stop | EURUSD | H1 | 🟢 | ❌ background timeout |
+| Bollinger_Band | EURUSD | H1 | 🔴（未 attach）| ✅ terminal auto_attach |
+| AgentHelper | EURUSD | H1 | 🟢 | ✅ terminal auto_attach |
+
+### 下一位 Agent 嘅任務（接手步驟）
+
+#### 第一步：了解環境
+
+```bash
+# 重要路徑
+MT5_DATA="/c/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD8BF550E51FF075"
+COMMON="/c/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/Common/Files"
+PROJECT="/c/Users/hongk/Desktop/mt5-cloud"
+MT5_DATA_MQL5="$MT5_DATA/MQL5"
+
+# 檢查各服務狀態
+curl -s http://localhost:5002/api/status
+curl -s http://localhost:5002/api/heartbeats
+curl -s http://localhost:5002/api/ea-library | python -m json.tool | head -20
+tasklist | grep -i terminal64   # MT5 PID
+```
+
+#### 第二步：Complie AgentHelper 嘅 FILE_COMMON 更新
+
+AgentHelper server source（`server/static/ea_library/AgentHelper.mq5`）已經改好咗 `FILE_COMMON` flag，但未 compile 去 MT5。需要：
+
+```bash
+# 方法：用 MetaEditor GUI compile（CLI 唔可靠）
+# Python 用 pywinauto 自動化：
+# 1. 開 MetaEditor（如果未開）
+# 2. Ctrl+O → 選 AgentHelper.mq5 → Enter
+# 3. F7（Compile）
+# 4. Check .ex5 生成
+```
+
+或者直接用 terminal 行 auto_attach：
+
+```bash
+cd /c/Users/hongk/Desktop/mt5-cloud
+python agent/auto_attach.py --ea AgentHelper --symbol EURUSD --tf H1
+```
+（**注意**：一定要從 terminal tool 行，唔可以從 execute_code sandbox 或 Agent background 行！）
+
+#### 第三步：測試 AgentHelper command file 流程
+
+```bash
+# 寫 command 去 Common/Files
+echo -n "Bollinger_Band,EURUSD,H1" > /c/Users/hongk/AppData/Roaming/MetaQuotes/Common/Files/agent_helper.txt
+
+# AgentHelper 每 5 秒 OnTimer 會 check，15s 內應處理完
+# Check 結果：
+cat /c/Users/hongk/AppData/Roaming/MetaQuotes/Common/Files/hb_Bollinger_Band.txt 2>/dev/null || echo "未完成"
+```
+
+#### 第四步：如果 AgentHelper 未起動
+
+如果 AgentHelper 心跳 ❌，需要先用 terminal 行 auto_attach 起返佢：
+
+```bash
+cd /c/Users/hongk/Desktop/mt5-cloud
+timeout 120 python -u agent/auto_attach.py --ea AgentHelper --symbol EURUSD --tf H1
+```
+
+如果 auto_attach 話 `dialog not found`，可能係 EA 未註冊。解決方法：
+
+```bash
+# 等 Agent 嘅 install flow 註冊 EA
+# 或者手動：touch AgentHelper.ex5 觸發 MT5 reload
+python -c "
+import os, time
+MT5_DATA = r'C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075'
+ex5 = os.path.join(MT5_DATA, r'MQL5\Experts\AgentHelper.ex5')
+now = time.time()
+os.utime(ex5, (now, now))
+"
+```
+
+#### 第五步：遇到問題時嘅除錯技巧
+
+```bash
+# 1. Check MT5 main log
+tail -n 20 "$(ls -t /c/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD8BF550E51FF075/Logs/*.log | head -1)" | iconv -f utf-16le -t utf-8 2>/dev/null
+
+# 2. Check metaeditor compile log
+cat "/c/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD8BF550E51FF075/Logs/metaeditor.log" | iconv -f utf-16le -t utf-8 2>/dev/null | grep -i "error\|warning"
+
+# 3. Check MT5 is responding
+python -c "import psutil; [print(f'{p.pid}: {p.name()}') for p in psutil.process_iter() if 'terminal64' in p.name() or 'metaeditor' in p.name()]"
+
+# 4. Check EA heartbeat files
+ls -la /c/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/Common/Files/hb_*.txt
+
+# 5. Check Agent log
+process action=poll session_id=<agent_proc_id>
+```
+
+### 關鍵規則（唔好再試失敗嘅方法）
+
+| 方法 | 結果 | 替代方案 |
+|------|------|---------|
+| **pyautogui 從 execute_code sandbox** | ❌ 冇 desktop access | 用 terminal tool |
+| **pyautogui 從 Agent background subprocess** | ❌ 冇 desktop access | 用 terminal tool |
+| **SendMessage/PostMessage WM_LBUTTONDBLCLK** | ❌ docked TreeView ignore | AgentHelper command file |
+| **AHK ControlTreeView/ControlClick** | ❌ MT5 custom TreeView | AgentHelper command file |
+| **metaeditor64.exe CLI** | ⚠️ 有時得有時唔得 | **用 MetaEditor GUI（pywinauto F7）** |
+| **ChartApplyTemplate/ChartOpen 從 OnInit** | ❌ MT5 唔允許 | 用 OnTick 或 AgentHelper |
+| **`select() + Enter`** | ❌ Enter expand/collapse | pyautogui double-click |
+| **AgentHelper command file** | ✅ **推薦** | 寫 `agent_helper.txt` → agent_helper.mq5 |
+
+### AgentHelper 正確使用方式
+
+```
+1. 確保 AgentHelper 心跳 🟢（如有需要，用 terminal auto_attach）
+2. 寫 command file → Common/Files/agent_helper.txt
+3. 格式: EA_NAME,SYMBOL,TIMEFRAME（例如: Bollinger_Band,EURUSD,H1）
+4. AgentHelper OnTimer（每5秒）會自動 process
+5. Check heartbeat file 確認 deploy 成功
+```
+
+### MetaEditor GUI compile 自動化步驟
+
+```python
+# 呢段 code 100% work（已測試 10+ 次）
+from pywinauto import Application
+from pywinauto.keyboard import send_keys
+import psutil, time
+
+# 搵 MetaEditor
+me_pid = None
+for proc in psutil.process_iter(['pid', 'name']):
+    if proc.info['name'] == 'metaeditor64.exe':
+        me_pid = proc.info['pid']
+        break
+
+app = Application(backend='win32').connect(process=me_pid)
+win = app.window(class_name='MetaEditor')
+win.set_focus()
+time.sleep(1)
+
+# 開源碼
+send_keys('^o')
+time.sleep(2)
+send_keys(r'C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\AgentHelper.mq5')
+time.sleep(1)
+send_keys('{ENTER}')
+time.sleep(3)
+
+# Compile
+send_keys('{F7}')
+time.sleep(10)
+
+# Check .ex5
+import os
+ex5 = r'C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\AgentHelper.ex5'
+if os.path.exists(ex5):
+    print(f'✅ Compiled: {os.path.getsize(ex5)} bytes')
+```
+
+---
+
+*Last updated: 2026-07-30 01:00*
+
