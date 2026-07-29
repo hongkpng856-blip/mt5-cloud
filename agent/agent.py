@@ -288,123 +288,121 @@ def generate_template(ea_name, symbol, timeframe, inputs=None):
 
 
 def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
-    """用 Navigator double-click attach EA（可靠方法，含重試）
+    """用 win32 backend + SysTreeView32 attach EA（唔用 uia，uia 會 COM error）
     
-    關鍵步驟：
-    1. 先開一個新 chart（確保有活躍 chart 可以 attach）
-    2. Expand Navigator EA交易 節點
-    3. Double-click EA → 彈出 Properties dialog → 確定
-    4. 確保 AutoTrading ON（先 check log 再 toggle）
+    流程：
+    1. win32 connect → 找到 SysTreeView32
+    2. Expand EA交易 → select EA → Enter
+    3. Enter 關閉 Properties dialog
+    4. 確保 AutoTrading ON
     """
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
     
     for attempt in range(max_retries):
-        app = Application(backend='uia').connect(process=mt5_pid)
-        win = app.top_window()
-        win.set_focus()
-        time.sleep(0.5)
-        
-        # Step 0: Open a new chart (Alt+F → 新圖 → EURUSD)
-        send_keys('%f')
-        time.sleep(0.5)
-        menu_items = win.descendants(control_type='MenuItem')
-        for mi in menu_items:
-            if '新圖' in mi.window_text():
-                mi.click_input()
-                time.sleep(0.5)
-                sub_items = win.descendants(control_type='MenuItem')
-                for si in sub_items:
-                    if symbol in si.window_text():
-                        si.click_input()
-                        time.sleep(2)
-                        break
-                break
-        send_keys('{ESC}')
-        time.sleep(0.3)
-        
-        # Step 1: Find Navigator tree
-        trees = win.descendants(control_type='Tree')
-        if not trees:
-            print(f"⚠️ No Navigator tree (attempt {attempt+1}/{max_retries})")
+        try:
+            app = Application(backend='win32').connect(process=mt5_pid)
+            win = app.top_window()
+            win.set_focus()
+            time.sleep(0.5)
+        except Exception as e:
+            print(f"⚠️ win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")
             time.sleep(5)
             continue
         
-        tree = trees[0]
-        items = tree.descendants(control_type='TreeItem')
+        # Step 0: Open new chart (Ctrl+N → Enter)
+        send_keys('^n')
+        time.sleep(1)
+        send_keys('{ENTER}')
+        time.sleep(2)
         
-        ea_node = None
-        for item in items:
-            if item.window_text() == ea_name:
-                ea_node = item
+        # Step 1: Find SysTreeView32
+        tree_view = None
+        for d in win.descendants():
+            if d.element_info.class_name == 'SysTreeView32':
+                tree_view = d
                 break
         
-        if not ea_node:
-            for item in items:
-                if item.window_text() == 'EA交易':
-                    item.double_click_input()
-                    time.sleep(3)
-                    break
-            items2 = tree.descendants(control_type='TreeItem')
-            for item in items2:
-                if item.window_text() == ea_name:
-                    ea_node = item
-                    break
-        
-        if not ea_node:
-            print(f"⚠️ {ea_name} not found in Navigator (attempt {attempt+1}/{max_retries})")
+        if not tree_view:
+            print(f"⚠️ No TreeView found (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
-                print(f"   Waiting 10s...")
-                time.sleep(10)
+                time.sleep(5)
             continue
         
-        # Step 2: Double-click to attach
-        print(f"🎯 Found {ea_name}, attaching...")
-        ea_node.double_click_input()
-        time.sleep(3)
-        
-        # Step 3: Handle properties dialog
+        # Step 2: Navigate tree
         try:
-            dialogs = win.descendants(control_type='Window')
-            for d in dialogs:
-                if ea_name in d.window_text():
-                    print(f"📋 Dialog: {d.window_text()}")
-                    buttons = d.descendants(control_type='Button')
-                    clicked = False
-                    for btn in buttons:
-                        if btn.window_text() in ('確定', 'OK'):
-                            btn.click_input()
-                            clicked = True
-                            break
-                    if not clicked:
-                        send_keys('{ENTER}')
-                    print(f"✅ Confirmed EA properties")
-                    time.sleep(2)
+            root = tree_view.roots()[0]  # "MetaTrader 5"
+            
+            # Find EA交易 node
+            ea_trading_node = None
+            for child in root.children():
+                if 'EA交易' in child.text():
+                    ea_trading_node = child
                     break
-        except:
-            send_keys('{ENTER}')
-            print("No dialog - pressed Enter")
-        
-        # Step 4: Ensure AutoTrading ON (check log state first)
-        log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
-        auto_trading_on = False
-        if os.path.exists(log_path):
-            with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
-                log_lines = f.readlines()
-            for line in reversed(log_lines[-20:]):
-                if 'automated trading' in line.lower():
-                    if 'enabled' in line.lower():
-                        auto_trading_on = True
-                    break
-        
-        if not auto_trading_on:
-            send_keys('^e')
+            
+            if not ea_trading_node:
+                print(f"⚠️ EA交易 node not found (attempt {attempt+1}/{max_retries})")
+                if attempt < max_retries - 1:
+                    time.sleep(5)
+                continue
+            
+            # Expand EA交易
+            try:
+                ea_trading_node.expand()
+            except:
+                pass
             time.sleep(2)
-            print("🔴 AutoTrading OFF → toggled ON")
-        else:
-            print("🟢 AutoTrading is ON")
-        
-        return True
+            
+            # Find EA node
+            ea_node = None
+            for ea in ea_trading_node.children():
+                if ea.text() == ea_name:
+                    ea_node = ea
+                    break
+            
+            if not ea_node:
+                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
+                if attempt < max_retries - 1:
+                    time.sleep(5)
+                continue
+            
+            # Step 3: Select + Enter to activate
+            print(f"🎯 Found {ea_name}, attaching...")
+            ea_node.select()
+            time.sleep(0.5)
+            send_keys('{ENTER}')
+            time.sleep(3)
+            
+            # Step 4: Handle Properties dialog — Enter for OK
+            send_keys('{ENTER}')
+            time.sleep(2)
+            
+            # Step 5: Ensure AutoTrading ON
+            log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
+            auto_trading_on = False
+            if os.path.exists(log_path):
+                with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
+                    log_lines = f.readlines()
+                for line in reversed(log_lines[-20:]):
+                    if 'automated trading' in line.lower():
+                        if 'enabled' in line.lower():
+                            auto_trading_on = True
+                        break
+            
+            if not auto_trading_on:
+                send_keys('^e')
+                time.sleep(2)
+                print("🔴 AutoTrading OFF → toggled ON")
+            else:
+                print("🟢 AutoTrading is ON")
+            
+            return True
+            
+        except Exception as e:
+            print(f"⚠️ Navigator error: {e} (attempt {attempt+1}/{max_retries})")
+            if attempt < max_retries - 1:
+                time.sleep(5)
+            continue
     
     print(f"❌ {ea_name} not found after {max_retries} attempts")
     return False
