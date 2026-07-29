@@ -1,121 +1,415 @@
-# MT5 Cloud Agent — 安裝喺你部 Windows 機
-# 佢會將你嘅 MT5 連接去 Cloud Server
-#
-# 用法：python agent.py --server https://your-server.com --agent-id YOUR_AGENT_ID
+#!/usr/bin/env python3
+"""
+MT5 Cloud Agent — 可靠嘅 EA 部署 + Auto-Attach
 
+核心改進：
+- auto_attach_ea(): 開 chart + Navigator double-click + AutoTrading check
+- do_restart_mt5(): 重啟 MT5 令 Navigator refresh
+- download_and_install(): inject heartbeat + compile + auto-attach + verify
+- execute_deploy(): 真正 attach EA 到 chart（唔係只下單）
+"""
 import os
 import sys
-import json
 import time
-import argparse
 import threading
-from datetime import datetime
 
-# === Parse args ===
-parser = argparse.ArgumentParser(description='MT5 Cloud Agent')
-parser.add_argument('--server', required=True, help='Cloud server URL (e.g. https://mt5cloud.com)')
-parser.add_argument('--agent-id', required=True, help='Your Agent ID from the website')
-parser.add_argument('--mt5-path', help='Path to MetaTrader 5 terminal (optional)')
-args = parser.parse_args()
+# === Config ===
+SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://having-bent-bunch-theater.trycloudflare.com')
+AGENT_ID = os.environ.get('MT5_CLOUD_AGENT', 'DEV00001')
+MT5_DATA = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
+                         'D0E8209F77C8CF37AD8BF550E51FF075')
+MT5_EXPERTS = os.path.join(MT5_DATA, 'MQL5', 'Experts')
+MT5_COMMON_FILES = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
 
-SERVER_URL = args.server.rstrip('/')
-AGENT_ID = args.agent_id
-
-# === SocketIO client ===
-try:
-    import socketio
-except ImportError:
-    print("❌ Please install: pip install python-socketio[client] requests MetaTrader5")
-    sys.exit(1)
-
-sio = socketio.Client()
-
-@sio.event
-def connect():
-    print(f"🟢 Connected to {SERVER_URL}")
-    sio.emit('agent_register', {"agent_id": AGENT_ID})
-
-@sio.event
-def disconnect():
-    print("🔴 Disconnected from server")
-
-@sio.on('registered')
-def on_registered(data):
-    print(f"✅ Agent registered: {data}")
-
-# === MT5 Bridge ===
+# Check MT5 availability
 mt5_available = False
 try:
     import MetaTrader5 as mt5
     mt5_available = True
 except ImportError:
-    print("⚠️  MetaTrader5 未安裝，只可監控不可交易")
-    print("   裝返：pip install MetaTrader5\n")
+    pass
 
-def connect_mt5():
-    if not mt5_available:
+# === Parse args ===
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--server', default=SERVER_URL, help='Server URL')
+parser.add_argument('--agent', default=AGENT_ID, help='Agent ID')
+args, _ = parser.parse_known_args()
+SERVER_URL = args.server
+AGENT_ID = args.agent
+
+# === SocketIO client ===
+import socketio
+sio = socketio.Client(logger=False, engineio_logger=False)
+ea_config_cache = {}
+ea_heartbeats = {}
+
+def connect():
+    print(f"✅ Connected to {SERVER_URL}")
+
+def disconnect():
+    print("❌ Disconnected")
+
+def on_registered(data):
+    print(f"🆔 Registered: {data}")
+
+sio.on('connect', connect)
+sio.on('disconnect', disconnect)
+sio.on('registered', on_registered)
+
+
+# ================================================================
+#  MT5 Bridge — 重啟 + 等待
+# ================================================================
+
+def find_mt5_pid():
+    """搵 MT5 terminal64.exe PID"""
+    import psutil
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
+            return proc.info['pid']
+    return None
+
+def wait_for_mt5(timeout=90):
+    """等 MT5 啟動完成"""
+    start = time.time()
+    while time.time() - start < timeout:
+        pid = find_mt5_pid()
+        if pid:
+            time.sleep(3)
+            # Verify MT5 is responsive by checking log
+            log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
+            if os.path.exists(log_path):
+                mtime = os.path.getmtime(log_path)
+                if time.time() - mtime < 30:
+                    return pid
+        time.sleep(2)
+    return None
+
+def do_restart_mt5():
+    """重啟 MT5 — 令 Navigator tree refresh"""
+    import subprocess
+    
+    # Kill existing MT5
+    try:
+        subprocess.run(['taskkill', '/F', '/IM', 'terminal64.exe'],
+                        capture_output=True, timeout=10)
+    except:
+        pass
+    
+    time.sleep(3)
+    
+    # MT5 auto-restarts after kill (Windows service behavior)
+    # Wait for ready
+    pid = wait_for_mt5(timeout=90)
+    if pid:
+        # Extra wait for Navigator to fully load + refresh
+        time.sleep(10)
+        print(f"✅ MT5 restarted, PID={pid}")
+        return pid
+    else:
+        print("❌ MT5 failed to restart")
+        # Try launching manually
+        mt5_path = r"C:\Program Files\MetaTrader 5\terminal64.exe"
+        if os.path.exists(mt5_path):
+            subprocess.Popen([mt5_path])
+            pid = wait_for_mt5(timeout=60)
+            if pid:
+                time.sleep(10)
+                print(f"✅ MT5 launched manually, PID={pid}")
+                return pid
+        return None
+
+
+# ================================================================
+#  Auto-Attach EA — 可靠嘅 GUI 自動化
+# ================================================================
+
+def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_restart=False):
+    """完整 auto-attach 流程：
+    1. 生成 .tpl 模板
+    2. (可選) 重啟 MT5
+    3. 開新 chart + Navigator double-click
+    4. 確保 AutoTrading ON
+    5. 驗證 heartbeat
+    
+    Returns: True if EA is alive, False otherwise
+    """
+    from pywinauto import Application
+    from pywinauto.keyboard import send_keys
+    
+    print(f"\n{'='*50}")
+    print(f"  🚀 Auto-Attach: {ea_name} → {symbol} {timeframe}")
+    print(f"{'='*50}")
+    
+    # Step 1: Generate .tpl template
+    tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
+    print(f"📋 Template: {tpl_path} ({os.path.getsize(tpl_path)} bytes)")
+    
+    # Step 2: Get or restart MT5
+    if do_restart:
+        mt5_pid = do_restart_mt5()
+        if not mt5_pid:
+            return False
+    else:
+        mt5_pid = find_mt5_pid()
+        if not mt5_pid:
+            print("❌ MT5 not running")
+            mt5_pid = do_restart_mt5()
+            if not mt5_pid:
+                return False
+    
+    # Step 3: Attach via Navigator
+    attached = attach_ea_navigator(ea_name, symbol, mt5_pid)
+    
+    if not attached:
+        # Fallback: restart MT5 and try again
+        print("⚠️ Navigator attach failed, restarting MT5...")
+        mt5_pid = do_restart_mt5()
+        if mt5_pid:
+            attached = attach_ea_navigator(ea_name, symbol, mt5_pid)
+    
+    if not attached:
+        print("❌ Failed to attach EA")
         return False
-    if not mt5.initialize():
-        print(f"❌ MT5 連接失敗 ({datetime.now().strftime('%H:%M:%S')})")
-        return False
-    print(f"✅ MT5 已連線 ({datetime.now().strftime('%H:%M:%S')})")
-    return True
+    
+    # Step 4: Verify heartbeat
+    hb_path = os.path.join(MT5_COMMON_FILES, f'hb_{ea_name}.txt')
+    print(f"⏳ Waiting for heartbeat...")
+    
+    start = time.time()
+    old_mtime = os.path.getmtime(hb_path) if os.path.exists(hb_path) else 0
+    
+    for _ in range(24):  # 120 seconds
+        time.sleep(5)
+        if os.path.exists(hb_path):
+            new_mtime = os.path.getmtime(hb_path)
+            if new_mtime != old_mtime and time.time() - new_mtime < 300:
+                with open(hb_path, 'rb') as f:
+                    raw = f.read()
+                content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
+                age = time.time() - new_mtime
+                print(f"💓 {ea_name}: {content} ({round(age)}s ago) → 🟢 ALIVE")
+                
+                # Verify EA log
+                mql5_log = os.path.join(MT5_DATA, 'MQL5', 'Logs', time.strftime('%Y%m%d') + '.log')
+                if os.path.exists(mql5_log):
+                    with open(mql5_log, 'r', encoding='utf-16-le', errors='replace') as f:
+                        lines = f.readlines()
+                    for line in reversed(lines[-20:]):
+                        if ea_name in line and ('啟動' in line or 'start' in line.lower()):
+                            print(f"📋 EA log: {line.strip()}")
+                            break
+                
+                return True
+    
+    print(f"❌ No heartbeat after {round(time.time()-start)}s")
+    return False
 
-def get_mt5_status():
-    """同步 MT5 數據去 Server"""
-    if not mt5_available or not mt5.initialize():
-        return {"status": "offline", "account": {}, "positions": [], "deals": []}
 
-    account = mt5.account_info()
-    positions = mt5.positions_get()
+def generate_template(ea_name, symbol, timeframe, inputs=None):
+    """生成 MT5 .tpl 模板檔（UTF-16 LE + BOM）"""
+    TPL_DIR = os.path.join(MT5_DATA, 'Profiles', 'Templates')
+    os.makedirs(TPL_DIR, exist_ok=True)
+    
+    tf_map = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':16385,'H4':16388,'D1':16389,'W1':16390,'MN1':16391}
+    tf_code = tf_map.get(timeframe, 16385)
+    
+    # Build inputs section
+    inputs_section = ""
+    if inputs:
+        for key, val in inputs.items():
+            inputs_section += f"{key}={val}\r\n"
+    
+    lot = inputs.get('LotSize', '1.00') if inputs else '1.00'
+    magic = inputs.get('MagicNumber', '240701') if inputs else '240701'
+    inputs_section += f"LotSize={lot}\r\n"
+    inputs_section += f"MagicNumber={magic}\r\n"
+    
+    tpl_content = (
+        f"\ufeff"  # BOM will be added separately
+        f"<chart>\r\n"
+        f"symbol={symbol}\r\n"
+        f"period={tf_code}\r\n"
+        f"left=100\r\n"
+        f"top=50\r\n"
+        f"right=900\r\n"
+        f"bottom=500\r\n"
+        f"\r\n"
+        f"<expert>\r\n"
+        f"name={ea_name}\r\n"
+        f"flags=7\r\n"
+        f"enabled=1\r\n"
+        f"\r\n"
+        f"<inputs>\r\n"
+        f"{inputs_section}"
+        f"</inputs>\r\n"
+        f"\r\n"
+        f"</expert>\r\n"
+        f"\r\n"
+        f"<window>\r\n"
+        f"height=100\r\n"
+        f"\r\n"
+        f"<indicator>\r\n"
+        f"name=Main\r\n"
+        f"path=\r\n"
+        f"apply=1\r\n"
+        f"show_data=1\r\n"
+        f"scale_inherit=0\r\n"
+        f"scale_line=0\r\n"
+        f"scale_line_percent=50\r\n"
+        f"scale_line_value=0.000000\r\n"
+        f"scale_fix_min=0\r\n"
+        f"scale_fix_min_val=0.000000\r\n"
+        f"scale_fix_max=0\r\n"
+        f"scale_fix_max_val=0.000000\r\n"
+        f"</indicator>\r\n"
+        f"\r\n"
+        f"</window>\r\n"
+        f"\r\n"
+        f"</chart>\r\n"
+    )
+    
+    tpl_name = f"{ea_name}_{symbol}_{timeframe}"
+    tpl_path = os.path.join(TPL_DIR, f"{tpl_name}.tpl")
+    
+    # Write as UTF-16 LE with BOM
+    with open(tpl_path, 'wb') as f:
+        f.write(b'\xff\xfe')  # UTF-16 LE BOM
+        # Remove the \ufeff from content since we add BOM separately
+        content_no_bom = tpl_content.lstrip('\ufeff')
+        f.write(content_no_bom.encode('utf-16-le'))
+    
+    return tpl_path
 
-    data = {
-        "status": "running",
-        "account": {
-            "login": account.login if account else None,
-            "server": account.server if account else None,
-            "balance": round(account.balance, 2) if account else 0,
-            "equity": round(account.equity, 2) if account else 0,
-            "profit": round(account.profit, 2) if account else 0,
-            "margin_free": round(account.margin_free, 2) if account else 0,
-            "leverage": account.leverage if account else 0,
-            "currency": account.currency if account else "",
-            "trade_mode": "DEMO" if (account and account.trade_mode == 0) else "REAL",
-        },
-        "positions": []
-    }
 
-    if positions:
-        for p in positions:
-            data["positions"].append({
-                "ticket": p.ticket, "symbol": p.symbol,
-                "type": "BUY" if p.type == 0 else "SELL",
-                "volume": p.volume, "price_open": p.price_open,
-                "sl": p.sl, "tp": p.tp,
-                "profit": round(p.profit, 2), "swap": round(p.swap, 2),
-                "magic": p.magic, "comment": p.comment
-            })
+def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
+    """用 Navigator double-click attach EA（可靠方法，含重試）
+    
+    關鍵步驟：
+    1. 先開一個新 chart（確保有活躍 chart 可以 attach）
+    2. Expand Navigator EA交易 節點
+    3. Double-click EA → 彈出 Properties dialog → 確定
+    4. 確保 AutoTrading ON（先 check log 再 toggle）
+    """
+    from pywinauto import Application
+    from pywinauto.keyboard import send_keys
+    
+    for attempt in range(max_retries):
+        app = Application(backend='uia').connect(process=mt5_pid)
+        win = app.top_window()
+        win.set_focus()
+        time.sleep(0.5)
+        
+        # Step 0: Open a new chart (Alt+F → 新圖 → EURUSD)
+        send_keys('%f')
+        time.sleep(0.5)
+        menu_items = win.descendants(control_type='MenuItem')
+        for mi in menu_items:
+            if '新圖' in mi.window_text():
+                mi.click_input()
+                time.sleep(0.5)
+                sub_items = win.descendants(control_type='MenuItem')
+                for si in sub_items:
+                    if symbol in si.window_text():
+                        si.click_input()
+                        time.sleep(2)
+                        break
+                break
+        send_keys('{ESC}')
+        time.sleep(0.3)
+        
+        # Step 1: Find Navigator tree
+        trees = win.descendants(control_type='Tree')
+        if not trees:
+            print(f"⚠️ No Navigator tree (attempt {attempt+1}/{max_retries})")
+            time.sleep(5)
+            continue
+        
+        tree = trees[0]
+        items = tree.descendants(control_type='TreeItem')
+        
+        ea_node = None
+        for item in items:
+            if item.window_text() == ea_name:
+                ea_node = item
+                break
+        
+        if not ea_node:
+            for item in items:
+                if item.window_text() == 'EA交易':
+                    item.double_click_input()
+                    time.sleep(3)
+                    break
+            items2 = tree.descendants(control_type='TreeItem')
+            for item in items2:
+                if item.window_text() == ea_name:
+                    ea_node = item
+                    break
+        
+        if not ea_node:
+            print(f"⚠️ {ea_name} not found in Navigator (attempt {attempt+1}/{max_retries})")
+            if attempt < max_retries - 1:
+                print(f"   Waiting 10s...")
+                time.sleep(10)
+            continue
+        
+        # Step 2: Double-click to attach
+        print(f"🎯 Found {ea_name}, attaching...")
+        ea_node.double_click_input()
+        time.sleep(3)
+        
+        # Step 3: Handle properties dialog
+        try:
+            dialogs = win.descendants(control_type='Window')
+            for d in dialogs:
+                if ea_name in d.window_text():
+                    print(f"📋 Dialog: {d.window_text()}")
+                    buttons = d.descendants(control_type='Button')
+                    clicked = False
+                    for btn in buttons:
+                        if btn.window_text() in ('確定', 'OK'):
+                            btn.click_input()
+                            clicked = True
+                            break
+                    if not clicked:
+                        send_keys('{ENTER}')
+                    print(f"✅ Confirmed EA properties")
+                    time.sleep(2)
+                    break
+        except:
+            send_keys('{ENTER}')
+            print("No dialog - pressed Enter")
+        
+        # Step 4: Ensure AutoTrading ON (check log state first)
+        log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
+        auto_trading_on = False
+        if os.path.exists(log_path):
+            with open(log_path, 'r', encoding='utf-16-le', errors='replace') as f:
+                log_lines = f.readlines()
+            for line in reversed(log_lines[-20:]):
+                if 'automated trading' in line.lower():
+                    if 'enabled' in line.lower():
+                        auto_trading_on = True
+                    break
+        
+        if not auto_trading_on:
+            send_keys('^e')
+            time.sleep(2)
+            print("🔴 AutoTrading OFF → toggled ON")
+        else:
+            print("🟢 AutoTrading is ON")
+        
+        return True
+    
+    print(f"❌ {ea_name} not found after {max_retries} attempts")
+    return False
 
-    from datetime import datetime as dt, timedelta
-    since = dt.now() - timedelta(days=365)
-    deals = mt5.history_deals_get(since, dt.now())
-    data["deals"] = []
-    if deals:
-        for d in deals[-200:]:
-            data["deals"].append({
-                "ticket": d.ticket, "symbol": d.symbol,
-                "type": d.type, "volume": d.volume,
-                "price": d.price, "profit": round(d.profit, 2),
-                "commission": round(d.commission, 2), "swap": round(d.swap, 2),
-                "magic": d.magic,
-                "time": str(dt.fromtimestamp(d.time)),
-                "comment": d.comment
-            })
 
-    # Don't shutdown — keep MT5 connected for deploy
-    return data
+# ================================================================
+#  Install EA handler
+# ================================================================
 
-# === Install EA handler ===
 @sio.on('install_ea_command')
 def on_install_ea(data):
     ea_name = data.get('ea_name', '')
@@ -130,7 +424,6 @@ def on_install_ea(data):
     if ea_name == 'all' and ea_list:
         print(f"📥 Bulk install: {len(ea_list)} EAs (background)")
         sys.stdout.flush()
-        # Thread-safe install (唔阻塞 Socket.IO)
         import threading
         def _do_install():
             for name in ea_list:
@@ -144,79 +437,12 @@ def on_install_ea(data):
     download_and_install(ea_name + '.mq5', url + ea_name + '.mq5', ea_config)
 
 
-# === Deploy via Socket.IO (runs directly, install is already bg) ===
-@sio.on('deploy_ea')
-def on_deploy_ea(data):
-    print(f"🚀 [WS] Deploy: {data}")
-    sys.stdout.flush()
-    execute_deploy(data)
-
-def attach_ea_to_chart(symbol, timeframe_str, ea_name, magic):
-    """用 pywinauto 自動開 chart + attach EA"""
-    from pywinauto import Application, keyboard
-    import time
-    
-    tf_map = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440}
-    tf_minutes = tf_map.get(timeframe_str, 60)
-    
-    # Find MT5 window
-    try:
-        app = Application(backend='uia').connect(title_re='.*MetaTrader.*|.*MT5.*', timeout=5)
-        mt5_win = app.top_window()
-    except:
-        print('   ⚠️ MT5 window not found')
-        return False
-    
-    # Open symbol chart
-    mt5_win.set_focus()
-    time.sleep(0.5)
-    
-    # Ctrl+W to open symbol dialog
-    keyboard.send_keys('^w')
-    time.sleep(0.5)
-    
-    # Type symbol name and Enter
-    keyboard.send_keys(symbol)
-    time.sleep(0.3)
-    keyboard.send_keys('{ENTER}')
-    time.sleep(1)
-    
-    # Open Navigator
-    keyboard.send_keys('^n')
-    time.sleep(0.5)
-    
-    # Focus Navigator and find EA → this is complex via keyboard
-    # Alternative: right-click chart → Expert Advisors → Attach
-    keyboard.send_keys('{ENTER}')  # Select first result
-    time.sleep(0.3)
-    
-    # Use keyboard to navigate to EA in Navigator
-    # Tab to EA list, search for our EA
-    keyboard.send_keys('^f')  # Focus search
-    time.sleep(0.3)
-    keyboard.send_keys(ea_name)
-    time.sleep(0.5)
-    
-    # Drag EA to chart via Shift+F10 (context menu) → doesn't work well
-    # Simpler: right-click chart → Expert Advisors → Attach
-    # Right click on chart
-    keyboard.send_keys('{APPS}')  # Context menu key
-    time.sleep(0.3)
-    keyboard.send_keys('e')  # Expert Advisors
-    time.sleep(0.3)
-    keyboard.send_keys('a')  # Attach
-    time.sleep(0.3)
-    keyboard.send_keys(ea_name[:5])  # Type first 5 chars to find EA
-    time.sleep(0.5)
-    keyboard.send_keys('{ENTER}')  # Select EA
-    time.sleep(0.5)
-    keyboard.send_keys('{ENTER}')  # OK dialog
-    time.sleep(0.5)
-    
-    return True
-
+# ================================================================
+#  Download + Install + Compile + Auto-Attach
+# ================================================================
 
 def download_and_install(ea_name, url, ea_config=None):
+    """完整安裝流程：download → heartbeat inject → compile → preset → auto-attach"""
     print(f"📥 Installing EA: {ea_name}")
     print(f"   Downloading from: {url}")
     try:
@@ -238,107 +464,107 @@ def download_and_install(ea_name, url, ea_config=None):
                         experts_dir = common
 
             if experts_dir:
-                filepath = os.path.join(experts_dir, ea_name)
+                base_name = ea_name.replace('.mq5', '')
+                mq5_path = os.path.join(experts_dir, ea_name)
                 
-                # === Inject heartbeat code into .mq5 before saving ===
-                if ea_name.endswith('.mq5'):
-                    source = resp.content.decode('utf-8', errors='replace')
-                    # Normalize line endings to \r\n (Windows / metaeditor requirement)
-                    source = source.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '\r\n')
-                    hb_name = ea_name.replace('.mq5', '')
-                    hb_code = '   GlobalVariableSet("HB_' + hb_name + '",TimeCurrent());\r\n'
-                    
-                    # Also inject file-based heartbeat (more reliable for Python detection)
-                    hb_file_code = ('   int hb_fh=FileOpen("hb_' + hb_name + '.txt",FILE_WRITE|FILE_TXT|FILE_COMMON);\r\n'
-                                    '   if(hb_fh!=INVALID_HANDLE){FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}\r\n')
-                    hb_code += hb_file_code
-                    
-                    # Inject into OnInit
-                    on_init_pos = -1
-                    for keyword in ['int OnInit()', 'int OnInit(void)']:
-                        idx = source.find(keyword)
-                        if idx >= 0:
-                            # Find the opening brace
-                            brace = source.find('{', idx)
-                            if brace >= 0:
-                                on_init_pos = brace + 1
-                                break
-                    if on_init_pos > 0:
-                        source = source[:on_init_pos] + '\n' + hb_code + source[on_init_pos:]
-                    
-                    # Inject into OnTick
-                    on_tick_pos = -1
-                    for keyword in ['void OnTick()', 'void OnTick(void)']:
-                        idx = source.find(keyword)
-                        if idx >= 0:
-                            brace = source.find('{', idx)
-                            if brace >= 0:
-                                on_tick_pos = brace + 1
-                                break
-                    if on_tick_pos > 0:
-                        source = source[:on_tick_pos] + '\n' + hb_code + source[on_tick_pos:]
-                    
-                    # If no OnInit found, add a heartbeat-only OnInit
-                    if on_init_pos < 0:
-                        source += '\n\n// Auto-injected heartbeat\nint OnInit() {\n' + hb_code + '   return INIT_SUCCEEDED;\n}\n'
-                    
-                    print(f"💓 Heartbeat injected: HB_{hb_name}")
-                    # Write the MODIFIED source (not original resp.content)
-                    with open(filepath, 'w', encoding='utf-8') as f:
-                        f.write(source)
-                    print(f"✅ Installed: {filepath}")
+                # Write source with normalized line endings
+                content = resp.text.replace('\r\n', '\n').replace('\n', '\r\n')
+                
+                # === Inject heartbeat code ===
+                base = base_name
+                hb_var = f"HB_{base}"
+                hb_file = f"hb_{base}.txt"
+                
+                oninit_inject = (
+                    f"   GlobalVariableSet(\"{hb_var}\",TimeCurrent());\r\n"
+                    f"   int hb_fh=FileOpen(\"{hb_file}\",FILE_WRITE|FILE_TXT|FILE_COMMON);\r\n"
+                    f"   if(hb_fh!=INVALID_HANDLE){{FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}}\r\n"
+                )
+                ontick_inject = (
+                    f"   GlobalVariableSet(\"{hb_var}\",TimeCurrent());\r\n"
+                    f"   int hb_fh=FileOpen(\"{hb_file}\",FILE_WRITE|FILE_TXT|FILE_COMMON);\r\n"
+                    f"   if(hb_fh!=INVALID_HANDLE){{FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}}\r\n"
+                )
+                
+                # Find OnInit { and inject after it
+                import re
+                m = re.search(r'(int\s+OnInit\s*\(\s*\)\s*\{)', content)
+                if m and hb_var not in content:
+                    idx = m.end()
+                    content = content[:idx] + '\r\n' + oninit_inject + content[idx:]
+                    print(f"   💉 Heartbeat injected (OnInit)")
+                
+                # Find OnTick { and inject after it
+                m2 = re.search(r'(void\s+OnTick\s*\(\s*\)\s*\{)', content)
+                if m2 and f'GlobalVariableSet("{hb_var}"' not in content.split('OnTick')[1] if 'OnTick' in content else '':
+                    # Only inject if not already in OnTick section
+                    if content.count(f'GlobalVariableSet("{hb_var}"') < 2:
+                        idx2 = m2.end()
+                        content = content[:idx2] + '\r\n' + ontick_inject + content[idx2:]
+                        print(f"   💉 Heartbeat injected (OnTick)")
+                
+                with open(mq5_path, 'w', encoding='utf-8', newline='\r\n') as f:
+                    f.write(content)
+                print(f"   💾 Saved: {mq5_path}")
+                
+                # === Compile ===
+                import subprocess
+                metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
+                log_file = os.path.join(experts_dir, f'{base_name}_compile.log')
+                
+                result = subprocess.run([
+                    metaeditor, '/compile', mq5_path,
+                    f'/log:{log_file}'
+                ], capture_output=True, timeout=60)
+                
+                # Check .ex5
+                ex5_path = os.path.join(experts_dir, base_name + '.ex5')
+                if os.path.exists(ex5_path):
+                    print(f"   ✅ Compiled: {base_name}.ex5 ({os.path.getsize(ex5_path)} bytes)")
                 else:
-                    with open(filepath, 'wb') as f:
-                        f.write(resp.content)
-                    print(f"✅ Installed: {filepath}")
-
-                metaeditor = None
-                for prog in ['C:\\Program Files\\MetaTrader 5\\metaeditor64.exe',
-                             'C:\\Program Files (x86)\\MetaTrader 5\\metaeditor64.exe']:
-                    if os.path.isfile(prog):
-                        metaeditor = prog
-                        break
-                if metaeditor and ea_name.endswith('.mq5'):
-                    import subprocess, time
-                    # Remove stale .ex5 first
-                    ex5_path = filepath.replace('.mq5', '.ex5')
-                    if os.path.isfile(ex5_path): os.remove(ex5_path)
-                    # metaeditor NEEDS /log: flag to output .ex5 (/s alone fails via subprocess)
-                    # Also must NOT use capture_output=True (blocks .ex5 generation)
-                    log_path = os.path.join(os.path.dirname(filepath), f'compile_{os.getpid()}.log')
-                    subprocess.run([metaeditor, f'/compile:{filepath}', f'/log:{log_path}'],
-                                 timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    time.sleep(2)
-                    # metaeditor returns 1 even on success; check .ex5 instead
-                    if os.path.isfile(ex5_path):
-                        print(f"⚙️  Compiled: {ea_name} ✅ {os.path.basename(ex5_path)} ({os.path.getsize(ex5_path)} bytes)")
-                    else:
-                        print(f"⚙️  Compile FAILED: {ea_name} — no .ex5 generated")
-
-                base_name = ea_name.replace('.mq5', '').replace('.ex5', '')
-                if ea_config:
-                    sym = ea_config.get(base_name, 'EURUSD')
-                    magic = str(ea_config.get(base_name + '_magic', '240701'))
-                    lot = str(ea_config.get(base_name + '_lot', '1.00'))
-                    tf = ea_config.get(base_name + '_tf', 'H1')
-                    presets_dir = os.path.join(os.path.dirname(experts_dir), 'Presets')
+                    print(f"   ❌ Compile failed (no .ex5)")
+                    # Try reading compile log for errors
+                    if os.path.exists(log_file):
+                        try:
+                            with open(log_file, 'r', encoding='utf-16-le', errors='replace') as f:
+                                log_content = f.read()
+                            if 'error' in log_content.lower():
+                                for line in log_content.split('\n'):
+                                    if 'error' in line.lower():
+                                        print(f"      {line.strip()}")
+                        except:
+                            pass
+                
+                # === Create preset ===
+                if ea_config and base_name in ea_config:
+                    cfg = ea_config[base_name]
+                    sym = cfg.get('symbol', 'EURUSD')
+                    tf = cfg.get('timeframe', 'H1')
+                    lot = cfg.get('lot', '1.00')
+                    magic = str(cfg.get('magic', '240701'))
+                    
+                    presets_dir = os.path.join(experts_dir, 'Presets')
                     os.makedirs(presets_dir, exist_ok=True)
-                    set_content = '; MT5 Cloud Preset for ' + base_name + '\n'
-                    set_content += '; Symbol=' + sym + '  Magic=' + magic + '  Lot=' + lot + '  TF=' + tf + '\n'
-                    set_content += '[Common]\n[Inputs]\n'
-                    set_content += 'MagicNumber=' + magic + '\n'
-                    set_content += 'LotSize=' + lot + '\n'
+                    
+                    set_content = f'; {base_name} preset\r\n'
+                    set_content += f'MagicNumber={magic}\r\n'
+                    set_content += f'LotSize={lot}\r\n'
                     set_path = os.path.join(presets_dir, base_name + '.set')
                     with open(set_path, 'w') as f:
                         f.write(set_content)
-                    print(f"📋 Preset: {set_path}")
+                    print(f"   📋 Preset: {set_path}")
                     
                     # === Auto-attach EA to MT5 chart ===
                     try:
-                        attach_ea_to_chart(sym, tf, base_name, magic)
-                        print(f"   📈 Chart opened: {sym} {tf}")
+                        inputs = {'LotSize': lot, 'MagicNumber': magic}
+                        result = auto_attach_ea(base_name, symbol=sym, 
+                                                timeframe=tf, inputs=inputs)
+                        if result:
+                            print(f"   🎉 {base_name} → {sym} {tf} 🟢 ALIVE")
+                        else:
+                            print(f"   ⚠️  Auto-attach failed for {base_name}")
                     except Exception as attach_err:
-                        print(f"   ⚠️  Chart attach: {attach_err}")
+                        print(f"   ⚠️  Auto-attach error: {attach_err}")
 
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
@@ -351,43 +577,43 @@ def download_and_install(ea_name, url, ea_config=None):
         print(f"❌ Install error: {e}")
         sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
 
-# === Deploy via Socket.IO (instead of polling) ===
+
+# ================================================================
+#  Deploy via Socket.IO
+# ================================================================
+
 @sio.on('deploy_ea')
 def on_deploy_ea(data):
-    print(f"🚀 [WS] Deploy command: {data}")
+    print(f"🚀 [WS] Deploy: {data}")
     sys.stdout.flush()
     execute_deploy(data)
 
-# === EA 自動交易策略 ===
-ea_config_cache = {}
-ea_heartbeats = {}  # ea_name -> {"last_check": time.time(), "status": "alive"}
-_last_bar_checked = {}  # symbol_tf -> last bar time
+
+# ================================================================
+#  EA 自動交易策略
+# ================================================================
 
 def get_ma(symbol, tf, period, method=0):
-    """獲取移動平均線數值（resample M1 to desired TF）
-       0=SMA, 1=EMA"""
+    """獲取移動平均線數值"""
     import MetaTrader5 as mt5
     if not mt5.symbol_select(symbol, True):
         return None
-    # Convert TF minutes to M1 multiplier
     S_TF = {1:1, 5:5, 15:15, 30:30, 60:60, 240:240, 1440:1440, 10080:10080, 43200:43200}
     mul = S_TF.get(tf, 60)
-    # Need enough M1 bars: period * mul + extra for SMA calc
     need_bars = (period + 2) * mul
-    rates = mt5.copy_rates_from_pos(symbol, 1, 0, need_bars)  # Always M1
+    rates = mt5.copy_rates_from_pos(symbol, 1, 0, need_bars)
     if rates is None or len(rates) < need_bars:
         return None
-    # Resample: take close of every 'mul' bar (end of each TF candle)
     closes = [rates[i][4] for i in range(mul-1, len(rates), mul)]
     if len(closes) < period + 2:
         return None
     
-    if method == 0:  # SMA
+    if method == 0:
         vals = []
         for i in range(len(closes) - period + 1):
             vals.append(sum(closes[i:i+period]) / period)
         return vals
-    elif method == 1:  # EMA
+    elif method == 1:
         k = 2.0 / (period + 1)
         ema = [sum(closes[:period]) / period]
         for p in closes[period:]:
@@ -396,12 +622,10 @@ def get_ma(symbol, tf, period, method=0):
     return None
 
 def check_sma_cross(symbol, tf, fast=10, slow=30):
-    """黃金/死亡交叉檢測"""
     fast_ma = get_ma(symbol, tf, fast, method=0)
     slow_ma = get_ma(symbol, tf, slow, method=0)
     if not fast_ma or not slow_ma or len(fast_ma) < 2 or len(slow_ma) < 2:
         return None
-    # 最新嘅兩支 K 線
     f1, f2 = fast_ma[-1], fast_ma[-2]
     s1, s2 = slow_ma[-1], slow_ma[-2]
     if f1 > s1 and f2 <= s2:
@@ -411,103 +635,87 @@ def check_sma_cross(symbol, tf, fast=10, slow=30):
     return None
 
 def check_macd_cross(symbol, tf, fast=12, slow=26, signal=9):
-    """MACD 交叉檢測"""
-    fast_ema = get_ma(symbol, tf, fast, method=1)
-    slow_ema = get_ma(symbol, tf, slow, method=1)
-    if not fast_ema or not slow_ema or len(fast_ema) < signal + 2 or len(slow_ema) < signal + 2:
+    fast_ma = get_ma(symbol, tf, fast, method=1)
+    slow_ma = get_ma(symbol, tf, slow, method=1)
+    if not fast_ma or not slow_ma or len(fast_ma) < signal + 1 or len(slow_ma) < signal + 1:
         return None
-    macd = [fast_ema[i] - slow_ema[i] for i in range(min(len(fast_ema), len(slow_ema)))]
-    signal_line = get_ma(symbol, tf, signal, method=1)  # 用 signal period 做 EMA of MACD
-    # Simplified: compare MACD[-1] > MACD[-2]
-    if len(macd) >= 3:
-        if macd[-1] > macd[-2] and macd[-2] <= macd[-3]:
-            return 'buy'
-        if macd[-1] < macd[-2] and macd[-2] >= macd[-3]:
-            return 'sell'
+    macd_line = [f - s for f, s in zip(fast_ma[-signal-1:], slow_ma[-signal-1:])]
+    signal_line = sum(macd_line[:signal]) / signal
+    if macd_line[-1] > signal_line and macd_line[-2] <= signal_line:
+        return 'buy'
+    if macd_line[-1] < signal_line and macd_line[-2] >= signal_line:
+        return 'sell'
     return None
 
 def run_ea_strategies(ea_config, lot_size):
-    """執行所有已配對 EA 嘅自動交易策略"""
+    """執行 EA 策略 — 根據 config 嘅 EA 名決定用邊個策略"""
     import MetaTrader5 as mt5
     if not mt5.initialize():
-        print(f'   [TRADE] MT5 init failed')
         return
-    if not ea_config:
-        print(f'   [TRADE] No config')
-        mt5.shutdown()
-        return
-    print(f'   [TRADE] Running strategies for {len(ea_config)} config keys')
-    ea_names = [k for k in ea_config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status')) and isinstance(ea_config[k], str)]
-    print(f'   [TRADE] Active EAs: {ea_names}')
-
-    TF_MAP = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}
-    active_eas = [k for k in ea_config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status'))
-                  and isinstance(ea_config[k], str)]
-
-    for ea_name in active_eas:
-        symbol = ea_config.get(ea_name, 'EURUSD')
-        tf_str = ea_config.get(ea_name + '_tf', 'H1')
-        tf = TF_MAP.get(tf_str, 60)
-        magic = int(ea_config.get(ea_name + '_magic', '240701'))
-        lot = float(ea_config.get(ea_name + '_lot', lot_size))
-        status = ea_config.get(ea_name + '_status', 'running')
-        if status != 'running':
+    
+    for ea_name, cfg in ea_config.items():
+        if ea_name.startswith('_'):
             continue
-
-        # Update heartbeat — EA is being actively monitored
-        ea_heartbeats[ea_name] = {"last_check": time.time(), "status": "alive"}
-
-        # 每支新 bar 先檢查
-        bar_key = f'{symbol}_{tf}'
-        rates = mt5.copy_rates_from_pos(symbol, tf, 0, 2)
-        if rates is None or len(rates) < 2:
-            continue
-        current_bar = rates[-1]['time']
-        if _last_bar_checked.get(bar_key) == current_bar:
-            continue
-        _last_bar_checked[bar_key] = current_bar
-
-        # 根據 EA 名行對應策略
+        symbol = cfg.get('symbol', 'EURUSD')
+        tf_map = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440}
+        tf = tf_map.get(cfg.get('timeframe', 'H1'), 60)
+        magic = int(cfg.get('magic', 240701))
+        
         signal = None
-        if ea_name == 'SMA_Cross':
+        if 'SMA' in ea_name.upper() or 'MA_Cross' in ea_name:
             signal = check_sma_cross(symbol, tf)
-        elif ea_name == 'MACD_Cross':
+        elif 'MACD' in ea_name.upper():
             signal = check_macd_cross(symbol, tf)
-        elif ea_name in ('Trend_Follow','EMA_Cross'):
-            signal = check_sma_cross(symbol, tf, 20, 50)  # slower trend
-        elif ea_name == 'Scalping_M1':
-            signal = check_sma_cross(symbol, 1, 5, 20)  # M1 fast
-
+        elif 'ADX' in ea_name.upper():
+            # ADX trend following — 用 SMA cross 作為輔助
+            signal = check_sma_cross(symbol, tf, fast=14, slow=28)
+        else:
+            # Default: SMA cross
+            signal = check_sma_cross(symbol, tf)
+        
         if signal:
+            mt5.symbol_select(symbol, True)
             tick = mt5.symbol_info_tick(symbol)
             if not tick:
                 continue
-            price = tick.ask if signal == 'buy' else tick.bid
+            
             order_type = mt5.ORDER_TYPE_BUY if signal == 'buy' else mt5.ORDER_TYPE_SELL
+            price = tick.ask if signal == 'buy' else tick.bid
+            
             request = {
-                'action': mt5.TRADE_ACTION_DEAL,
-                'symbol': symbol, 'volume': lot,
-                'type': order_type, 'price': price,
-                'deviation': 20, 'magic': magic,
-                'comment': f'auto_{ea_name}',
-                'type_time': mt5.ORDER_TIME_GTC,
-                'type_filling': mt5.ORDER_FILLING_IOC,
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lot_size,
+                "type": order_type,
+                "price": price,
+                "deviation": 20,
+                "magic": magic,
+                "comment": f"cloud_{ea_name}",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_IOC,
             }
+            
             result = mt5.order_send(request)
             if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-                print(f'🤖 {ea_name} {signal.upper()} {symbol} @ {price}')
-
+                print(f"📈 {ea_name}: {signal.upper()} {symbol} @ {price}")
+            elif result:
+                print(f"⚠️ {ea_name}: retcode={result.retcode}")
+            else:
+                print(f"⚠️ {ea_name}: order failed")
+    
     mt5.shutdown()
 
 
+# ================================================================
+#  Heartbeat check
+# ================================================================
+
 def check_ea_heartbeat_files():
-    """檢查 EA 寫出嘅 heartbeat files 嚟確認 EA 真係行緊"""
-    import MetaTrader5 as mt5
+    """檢查 EA 寫出嘅 heartbeat files"""
     appdata = os.environ.get('APPDATA', '')
     terminal_dir = os.path.join(appdata, 'MetaQuotes', 'Terminal')
     common_files = os.path.join(terminal_dir, 'Common', 'Files')
     
-    # Also check instance-specific directories
     candidates = [common_files]
     if os.path.isdir(terminal_dir):
         for folder in os.listdir(terminal_dir):
@@ -522,11 +730,11 @@ def check_ea_heartbeat_files():
             continue
         for fname in os.listdir(fb_dir):
             if fname.startswith('hb_') and fname.endswith('.txt'):
-                ea_name = fname[3:-4]  # hb_ADX_Trend.txt -> ADX_Trend
+                ea_name = fname[3:-4]
                 fpath = os.path.join(fb_dir, fname)
                 mtime = os.path.getmtime(fpath)
                 age = now - mtime
-                if age < 300:  # Within 5 minutes = alive
+                if age < 300:
                     found[ea_name] = {"last_check": mtime, "status": "alive", "age_sec": round(age)}
                 else:
                     found[ea_name] = {"last_check": mtime, "status": "stale", "age_sec": round(age)}
@@ -534,7 +742,7 @@ def check_ea_heartbeat_files():
 
 
 def check_ea_alive_via_trades():
-    """Fallback: check if EA has recent trades as heartbeat"""
+    """Fallback: check recent trades"""
     import MetaTrader5 as mt5
     if not mt5.initialize():
         return {}
@@ -552,7 +760,74 @@ def check_ea_alive_via_trades():
     return hb
 
 
-# === Main Loop ===
+# ================================================================
+#  Execute Deploy — 真正 attach EA 到 chart
+# ================================================================
+
+def execute_deploy(data):
+    ea_name = data.get('ea_name', '')
+    symbol = data.get('symbol', 'EURUSD')
+    tf = data.get('tf', 'H1')
+    magic = str(data.get('magic', '240701'))
+    lot = str(data.get('lot', '1.00'))
+
+    SYMBOL_MAP = {
+        'DAX40': 'DE40',
+        'SP500': 'US500',
+    }
+    mt5_symbol = SYMBOL_MAP.get(symbol, symbol)
+
+    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} ({mt5_symbol}) {tf}")
+
+    def report(msg, status='info'):
+        print(f"   {msg}")
+        sio.emit('install_result', {"status": status, "ea": ea_name, "msg": msg})
+
+    try:
+        # Use auto_attach_ea for reliable deployment
+        inputs = {'LotSize': lot, 'MagicNumber': magic}
+        result = auto_attach_ea(ea_name, symbol=mt5_symbol, timeframe=tf, inputs=inputs)
+        
+        if result:
+            report(f'✅ {ea_name} → {symbol} {tf} 已啟動！🟢', 'ok')
+        else:
+            # Fallback: place a market order to register the magic number
+            import MetaTrader5 as mt5
+            if not mt5.initialize():
+                report('❌ MT5 無法連接', 'error')
+                return
+
+            report('⚠️ Auto-attach failed, placing order as fallback')
+            mt5.symbol_select(mt5_symbol, True)
+            tick = mt5.symbol_info_tick(mt5_symbol)
+            if tick:
+                request = {
+                    "action": mt5.TRADE_ACTION_DEAL,
+                    "symbol": mt5_symbol,
+                    "volume": float(lot),
+                    "type": mt5.ORDER_TYPE_BUY,
+                    "price": tick.ask,
+                    "deviation": 20,
+                    "magic": int(magic),
+                    "comment": f"cloud_{ea_name}",
+                    "type_time": mt5.ORDER_TIME_GTC,
+                    "type_filling": mt5.ORDER_FILLING_IOC,
+                }
+                result = mt5.order_send(request)
+                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                    report(f'✅ {ea_name} order placed (fallback)', 'ok')
+                else:
+                    report(f'⚠️ Order retcode={result.retcode if result else "none"}', 'info')
+            mt5.shutdown()
+
+    except Exception as e:
+        report(f'❌ {str(e)[:80]}', 'error')
+
+
+# ================================================================
+#  Main Sync Loop
+# ================================================================
+
 def sync_loop():
     """每 2 秒 poll deploy + 每 10 秒 sync + 每 30 秒 auto-trade"""
     last_sync = 0
@@ -575,8 +850,7 @@ def sync_loop():
             if sio.connected and now - last_sync >= 10:
                 data = get_mt5_status()
                 data['agent_id'] = AGENT_ID
-                data['heartbeats'] = dict(ea_heartbeats)  # Agent-side monitor status
-                # Merge with real EA heartbeat files + trade-based detection
+                data['heartbeats'] = dict(ea_heartbeats)
                 try:
                     hb_files = check_ea_heartbeat_files()
                     hb_trades = check_ea_alive_via_trades()
@@ -603,77 +877,34 @@ def sync_loop():
             traceback.print_exc()
         time.sleep(2)
 
-def execute_deploy(data):
-    ea_name = data.get('ea_name', '')
-    symbol = data.get('symbol', 'EURUSD')
-    tf = data.get('tf', 'H1')
-    magic = str(data.get('magic', '240701'))
-    lot = str(data.get('lot', '1.00'))
 
-    # Broker symbol mapping (IC Markets 用嘅名)
-    SYMBOL_MAP = {
-        'DAX40': 'DE40',
-        'SP500': 'US500',
+def connect_mt5():
+    import MetaTrader5 as mt5
+    if not mt5.initialize():
+        return False
+    return True
+
+def get_mt5_status():
+    import MetaTrader5 as mt5
+    if not mt5.initialize():
+        return {"error": "MT5 not available"}
+    
+    account = mt5.account_info()
+    status = {
+        "login": account.login if account else 0,
+        "balance": account.balance if account else 0,
+        "equity": account.equity if account else 0,
+        "margin": account.margin if account else 0,
+        "server": account.server if account else "",
+        "positions": len(mt5.positions_get() or []),
     }
-    mt5_symbol = SYMBOL_MAP.get(symbol, symbol)
+    mt5.shutdown()
+    return status
 
-    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} ({mt5_symbol}) {tf}")
 
-    def report(msg, status='info'):
-        print(f"   {msg}")
-        sio.emit('install_result', {"status": status, "ea": ea_name, "msg": msg})
-
-    try:
-        import MetaTrader5 as mt5
-        if not mt5.initialize():
-            report('❌ MT5 無法連接', 'error')
-            return
-
-        report('🖥️ MT5 已連接')
-
-        # Add symbol to Market Watch
-        mt5.symbol_select(mt5_symbol, True)
-
-        # Get account info
-        account = mt5.account_info()
-        if account:
-            report(f'💰 Account: {account.login}')
-
-        # Place a limit order with the EA's magic number
-        # Far from market price = won't fill, just registers the magic
-        tick = mt5.symbol_info_tick(mt5_symbol)
-        if not tick:
-            report(f'❌ {mt5_symbol} not available', 'error')
-            mt5.shutdown()
-            return
-
-        # Get symbol info for digits
-        info = mt5.symbol_info(mt5_symbol)
-        request = {
-            "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": mt5_symbol,
-            "volume": float(lot),
-            "type": mt5.ORDER_TYPE_BUY,
-            "price": tick.ask,
-            "deviation": 20,
-            "magic": int(magic),
-            "comment": f"cloud_{ea_name}",
-            "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_IOC,
-        }
-
-        result = mt5.order_send(request)
-        if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-            report(f'✅ {ea_name} → {symbol} ({mt5_symbol}) {tf} 已啟動！', 'ok')
-        elif result:
-            report(f'⚠️ retcode={result.retcode}', 'info')
-        else:
-            report(f'⚠️ {mt5.last_error()}', 'info')
-
-        mt5.shutdown()
-
-    except Exception as e:
-        report(f'❌ {str(e)[:80]}', 'error')
+# ================================================================
+#  Startup
+# ================================================================
 
 print()
 print("=" * 56)
