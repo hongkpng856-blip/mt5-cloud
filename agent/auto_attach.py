@@ -364,13 +364,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 results = []
                 pid_buf = ctypes.c_ulong()
                 def cb(hwnd, _):
-                    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid_buf))
+                    user32.GetWindowThreadProcessId(ctypes.c_void_p(hwnd), ctypes.byref(pid_buf))
                     if pid_buf.value == mt5_pid:
                         cls = ctypes.create_unicode_buffer(256)
-                        user32.GetClassNameW(hwnd, cls, 256)
+                        user32.GetClassNameW(ctypes.c_void_p(hwnd), cls, 256)
                         if cls.value == '#32770':
                             title = ctypes.create_unicode_buffer(256)
-                            user32.GetWindowTextW(hwnd, title, 256)
+                            user32.GetWindowTextW(ctypes.c_void_p(hwnd), title, 256)
                             if target_name in title.value:
                                 results.append(title.value)
                     return True
