@@ -46,12 +46,16 @@ ea_heartbeats = {}
 
 def connect():
     print(f"✅ Connected to {SERVER_URL}")
+    # Register with server → join agent room for deploy commands
+    sio.emit('agent_register', {'agent_id': AGENT_ID})
+    print(f"   Registering as {AGENT_ID}...")
 
 def disconnect():
     print("❌ Disconnected")
 
 def on_registered(data):
     print(f"🆔 Registered: {data}")
+    # Server auto-pushes install_ea_command on register
 
 sio.on('connect', connect)
 sio.on('disconnect', disconnect)
@@ -507,15 +511,24 @@ def download_and_install(ea_name, url, ea_config=None):
                     f.write(content)
                 print(f"   💾 Saved: {mq5_path}")
                 
-                # === Compile ===
-                import subprocess
-                metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
-                log_file = os.path.join(experts_dir, f'{base_name}_compile.log')
-                
-                result = subprocess.run([
-                    metaeditor, '/compile', mq5_path,
-                    f'/log:{log_file}'
-                ], capture_output=True, timeout=60)
+                # === Compile (skip if .ex5 already exists and fresh) ===
+                ex5_path = os.path.join(experts_dir, base_name + '.ex5')
+                if os.path.exists(ex5_path) and os.path.getmtime(ex5_path) > os.path.getmtime(mq5_path):
+                    print(f"   ⏩ Skip compile: {base_name}.ex5 already exists")
+                else:
+                    import subprocess
+                    metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
+                    log_file = os.path.join(experts_dir, f'{base_name}_compile.log')
+                    
+                    try:
+                        result = subprocess.run([
+                            metaeditor, '/compile', mq5_path,
+                            f'/log:{log_file}'
+                        ], capture_output=True, timeout=120)
+                    except subprocess.TimeoutExpired:
+                        print(f"   ⚠️ Compile timeout (120s), but .ex5 may exist")
+                        if os.path.exists(ex5_path):
+                            print(f"   ✅ .ex5 found despite timeout: {os.path.getsize(ex5_path)} bytes")
                 
                 # Check .ex5
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
@@ -538,6 +551,11 @@ def download_and_install(ea_name, url, ea_config=None):
                 # === Create preset ===
                 if ea_config and base_name in ea_config:
                     cfg = ea_config[base_name]
+                    # Handle old format (cfg=str) and new format (cfg=dict)
+                    if isinstance(cfg, str):
+                        cfg = {'symbol': cfg, 'timeframe': ea_config.get(base_name+'_tf', 'H1'),
+                               'lot': ea_config.get(base_name+'_lot', '1.00'),
+                               'magic': ea_config.get(base_name+'_magic', '240701')}
                     sym = cfg.get('symbol', 'EURUSD')
                     tf = cfg.get('timeframe', 'H1')
                     lot = cfg.get('lot', '1.00')
@@ -654,8 +672,13 @@ def run_ea_strategies(ea_config, lot_size):
         return
     
     for ea_name, cfg in ea_config.items():
-        if ea_name.startswith('_'):
+        if ea_name.startswith('_') or ea_name.endswith(('_tf','_lot','_magic','_status','_source')):
             continue
+        # Handle both old format (cfg=str) and new format (cfg=dict)
+        if isinstance(cfg, str):
+            cfg = {'symbol': cfg, 'timeframe': ea_config.get(ea_name+'_tf', 'H1'),
+                   'lot': float(ea_config.get(ea_name+'_lot', str(lot_size))),
+                   'magic': int(ea_config.get(ea_name+'_magic', '240701'))}
         symbol = cfg.get('symbol', 'EURUSD')
         tf_map = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440}
         tf = tf_map.get(cfg.get('timeframe', 'H1'), 60)
@@ -845,8 +868,13 @@ def sync_loop():
                     for ea, info in hb_trades.items():
                         if ea not in data['heartbeats']:
                             data['heartbeats'][ea] = info
+                    if hb_files:
+                        print(f"💓 Heartbeats: {hb_files}")
+                        sys.stdout.flush()
                 except Exception as e:
                     print(f'   [HB] Error: {e}')
+                    import traceback
+                    traceback.print_exc()
                 sio.emit('agent_sync', data)
                 last_sync = now
 
