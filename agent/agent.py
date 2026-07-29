@@ -11,6 +11,8 @@ MT5 Cloud Agent — 可靠嘅 EA 部署 + Auto-Attach
 import os
 import sys
 import time
+import struct
+import subprocess
 import threading
 
 # === Config ===
@@ -288,22 +290,17 @@ def generate_template(ea_name, symbol, timeframe, inputs=None):
 
 
 def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
-    """用 win32 backend + pyautogui double-click attach EA
+    """用 AHK + pyautogui double-click attach EA
     
     關鍵發現：
     - MT5 Navigator TreeView 的 select() + Enter 不等同 double-click
     - Enter 只 expand/collapse 節點，不會 attach EA 到 chart
     - 開新 chart 後 Navigator panel 會自動收埋
-    - 必須先開 chart，再開 Navigator，再 pyautogui double-click
+    - 必須先開 chart，再開 Navigator，再 double-click
     
-    流程：
-    1. win32 connect → set focus
-    2. 開新 chart (Ctrl+N → Enter)
-    3. 開 Navigator panel (Alt+V → n → Enter)
-    4. Expand EA交易 → select EA → EnsureVisible
-    5. pyautogui double-click 掃描 TreeView 找到 EA
-    6. 確認 Properties dialog → Enter 關閉
-    7. 確保 AutoTrading ON
+    流程（AHK 主導）：
+    1. AHK attach_ea.ahk <ea_name> — 全部由 AHK 完成
+    2. Fallback: Python pyautogui double-click scan
     """
     import pyautogui
     import ctypes
@@ -311,6 +308,32 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
     
+    # Step 0: Try AHK first (most reliable)
+    ahk_script = os.path.join(os.path.dirname(__file__), 'attach_ea.ahk')
+    ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+    if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
+        print(f"🤖 Using AHK to attach {ea_name}...")
+        try:
+            result = subprocess.run(
+                [ahk_exe, '/ErrorStdOut', ahk_script, ea_name],
+                timeout=120, capture_output=True, text=True
+            )
+            # Check log
+            log_file = os.path.join(os.path.dirname(__file__), 'attach_log.txt')
+            if os.path.exists(log_file):
+                with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
+                    log = f.read().strip()
+                if 'SUCCESS' in log:
+                    print(f"🎉 AHK attach {ea_name} succeeded!")
+                    return True
+                else:
+                    print(f"⚠️ AHK attach failed: {log[-200:]}")
+        except subprocess.TimeoutExpired:
+            print(f"⚠️ AHK attach timed out")
+        except Exception as e:
+            print(f"⚠️ AHK error: {e}")
+    
+    # Fallback: Python pyautogui method
     for attempt in range(max_retries):
         try:
             app = Application(backend='win32').connect(process=mt5_pid)
@@ -330,13 +353,10 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         
         # Step 2: Open Navigator panel via AHK (menu click)
         # NOTE: opening new chart auto-hides Navigator!
-        # Alt+V→n→Enter is unreliable, so use AHK to click View→Navigator menu
-        ahk_script = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
-        ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-        if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
-            subprocess.run([ahk_exe, '/ErrorStdOut', ahk_script], timeout=10, capture_output=True)
+        ahk_nav = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
+        if os.path.exists(ahk_nav) and os.path.exists(ahk_exe):
+            subprocess.run([ahk_exe, '/ErrorStdOut', ahk_nav], timeout=10, capture_output=True)
         else:
-            # Fallback: keyboard method
             send_keys('%v')
             time.sleep(1)
             send_keys('n')
@@ -360,10 +380,8 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         if not tree_view.is_visible():
             print(f"⚠️ TreeView not visible after Navigator toggle (attempt {attempt+1}/{max_retries})")
             # Retry AHK toggle
-            ahk_script = os.path.join(os.path.dirname(__file__), 'nav_on.ahk')
-            ahk_exe = r'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-            if os.path.exists(ahk_script) and os.path.exists(ahk_exe):
-                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_script], timeout=10, capture_output=True)
+            if os.path.exists(ahk_nav) and os.path.exists(ahk_exe):
+                subprocess.run([ahk_exe, '/ErrorStdOut', ahk_nav], timeout=10, capture_output=True)
             else:
                 send_keys('%v')
                 time.sleep(1)
@@ -386,7 +404,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         tv_rect = tree_view.rectangle()
         print(f"📋 TreeView visible={tree_view.is_visible()} rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
         
-        # Step 4: Navigate tree → Expand EA交易 → Select + EnsureVisible
+        # Step 4: Navigate tree → Expand EA交易 → Select + ensure_visible
         try:
             root = tree_view.roots()[0]
             
@@ -430,7 +448,6 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             continue
         
         # Step 5: pyautogui double-click scan
-        # Scan TreeView area row by row, looking for EA Properties dialog
         found_dialog = False
         click_x = tv_rect.left + 50  # EA item text area
         row_height = 18
