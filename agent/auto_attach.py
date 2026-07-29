@@ -583,11 +583,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
     # Step 3: Attach EA via Navigator
     success = attach_ea_navigator(ea_name, mt5_pid)
     if not success:
-        # Restart MT5 and retry (Navigator might not have refreshed)
-        print("⚠️ Navigator attach failed, restarting MT5...")
-        mt5_pid = do_restart_mt5()
-        if mt5_pid:
-            success = attach_ea_navigator(ea_name, mt5_pid)
+        print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
     
     if not success:
         print("❌ Failed to attach EA")
