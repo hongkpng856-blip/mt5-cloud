@@ -165,13 +165,17 @@ def scan_ea_inventory():
             if os.path.isdir(exp):
                 experts_dirs.append(exp)
 
-    # 掃描 .ex5 文件（⚠️ 2026-08：掃埋子 folder — MT5Cloud_EA — web 配對集中 folder）
+    # 掃描 .ex5 文件（⚠️ 2026-08：只掃根目錄 + MT5Cloud_EA folder — 唔掃 MT5 內建 folder
+    # （Free Robots/Examples/Advisors — 樣本 EA 唔應該顯示）
     eas = {}
     for exp_dir in experts_dirs:
-        for dirpath, dirnames, filenames in os.walk(exp_dir):
-            for f in filenames:
+        scan_dirs = [exp_dir, os.path.join(exp_dir, 'MT5Cloud_EA')]
+        for scan_dir in scan_dirs:
+            if not os.path.isdir(scan_dir):
+                continue
+            for f in os.listdir(scan_dir):
                 if f.lower().endswith('.ex5'):
-                    path = os.path.join(dirpath, f)
+                    path = os.path.join(scan_dir, f)
                     try:
                         stat = os.stat(path)
                     except Exception:

@@ -310,7 +310,10 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         # ⚠️ 要掃所有 top-level（浮動 Navigator MiniFrame）— 唔可以淨掃主視窗 descendants
         # ⚠️ 2026-08 驗證 rect：之前揀到錯 tree（rect (8,131) 但實際 Navigator 喺 (201,139)）
         # → scan click 全部落桌面（double-click 開咗 TestAItest 記事本 ×3！）+ MT5 crash
+        # ⚠️ 2026-08-06 修：MT5 有兩個 tree（docked 細 + 浮動大）— 揀「最大」嗰個（浮動/主要 Navigator）
         tree_view = None
+        _best_tree = None
+        _best_area = 0
         for d in _all_windows:
             try:
                 for child in d.descendants():
@@ -322,14 +325,15 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                                 _cx = _tr.left + _tr.width() // 2
                                 _cy = _tr.top + _tr.height() // 2
                                 if _window_pid_at(_cx, _cy) == mt5_pid:
-                                    tree_view = child
-                                    break
+                                    _area = _tr.width() * _tr.height()
+                                    if _area > _best_area:
+                                        _best_area = _area
+                                        _best_tree = child
                         except Exception:
                             pass
             except Exception:
                 pass
-            if tree_view:
-                break
+        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator — 有 MT5Cloud_EA folder）
         
         if not tree_view:
             print(f"⚠️ 搵唔到有效 TreeView（rect 驗證失敗 — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")

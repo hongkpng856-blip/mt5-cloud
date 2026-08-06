@@ -31,7 +31,8 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.2** | 2026-08-06 | MT5Cloud_EA folder 集中管理（配對自動入 folder + 全鏈路支援：detector 掃描/watcher 監控/auto_attach 尋找/remove-local 剷除 — os.walk 掃子 folder）|
+| **v0.9.3** | 2026-08-06 | MT5Cloud_EA folder 定位實測成功（auto_attach 入 folder 搵 EA）+ 掃描過濾（只掃根目錄+MT5Cloud_EA — 唔掃內建樣本）+ Tree 揀最大（雙 tree 問題）|
+| **v0.9.2** | 2026-08-06 | MT5Cloud_EA folder 集中管理（配對自動入 folder + 全鏈路支援：detector 掃描/watcher 監控/auto_attach 尋找/remove-local 剷除）|
 | **v0.9.1** | 2026-08-06 | Navigator 統一位置（操作前最大+固定）+ 圖表自動平鋪（Alt+R — 有圖表就平鋪網格）|
 | **v0.9.0** | 2026-08-06 | 控制層 + Controller 系統中樞 + 心跳狀態（❤/●/◇）+ 手動 1 秒部署（watcher 自動撳確定）+ GBK decode 修復（watcher 穩定）+ 移去平台/剷除功能實測穩定 |
 
@@ -60,12 +61,17 @@
 
 **MT5Cloud_EA folder 集中管理（用戶要求 — 08-06）**：
 - ✅ 配對（install-local）→ 自動建立/使用 `MQL5\Experts\MT5Cloud_EA\` folder + EA 入 folder + compile_cmd 指向 folder
-- ✅ **全鏈路支援（os.walk 掃子 folder）**：
-  - detector（:5003）掃描 → 網頁配對庫顯示（之前只掃頂層 → SMA_Cross 唔顯示 — 已修）
-  - watcher 監控（get_experts_snapshot — os.walk）→ folder 內變化自動 refresh
+- ✅ **全鏈路支援**：
+  - detector（:5003）掃描 → 網頁配對庫顯示（只掃根目錄 + MT5Cloud_EA — ⚠️ 唔掃 MT5 內建 folder：Free Robots/Examples/Advisors 樣本 EA 唔顯示）
+  - watcher 監控（get_experts_snapshot — 只掃根目錄 + MT5Cloud_EA）
   - auto_attach 尋找（EA交易 → MT5Cloud_EA folder 入去搵）
   - remove-local 剷除（搵埋 folder）
-- ✅ 實測：配對 SMA_Cross → 入 folder + compile（22342 bytes）+ detector 顯示（43 EA）
+- ✅ **定位實測成功**：auto_attach 入 MT5Cloud_EA folder 搵到 EA（🎯 Found Bollinger_Band）
+- ⚠️ **教訓**：之前 SMA_Cross 定位失敗係因為檔案被刪（唔係 code 問題）— 定位功能本身 work
+
+**雙 Tree 問題（08-06 修）**：
+- ⚠️ MT5 有兩個 SysTreeView32（docked 細 + 浮動大）— auto_attach 揀錯 tree（(8,131) 332 闊 — 冇 MT5Cloud_EA 內容？）
+- ✅ 修：掃描所有 tree — 揀「最大面積」嗰個（浮動/主要 Navigator）
 
 **重要背景（08-05 14:57 — MT5 自動更新 6061 → 6093）**：
 - ⚠️ **MT5 build 6093 對 auto_attach 自動化操作 crash**（pyautogui/SendMessage double-click 都唔彈 Properties — 只有真實滑鼠 work；完整 auto_attach 流程 15+ 次全部 crash MT5）
