@@ -31,6 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.9.4** | 2026-08-06 | double-click 輸入驗證：彈咗「窗口」dialog（證明輸入 work — MT5 冇防自動化 — 用戶確認）— 真正問題係位置（Navigator 一時左一時右 / item 高度 12px vs 15px）— AHK 4 方法試過（ControlClick/模擬/SendMode Play/掃描）|
 | **v0.9.3** | 2026-08-06 | MT5Cloud_EA folder 定位實測成功（auto_attach 入 folder 搵 EA）+ 掃描過濾（只掃根目錄+MT5Cloud_EA — 唔掃內建樣本）+ Tree 揀最大（雙 tree 問題）|
 | **v0.9.2** | 2026-08-06 | MT5Cloud_EA folder 集中管理（配對自動入 folder + 全鏈路支援：detector 掃描/watcher 監控/auto_attach 尋找/remove-local 剷除）|
 | **v0.9.1** | 2026-08-06 | Navigator 統一位置（操作前最大+固定）+ 圖表自動平鋪（Alt+R — 有圖表就平鋪網格）|
@@ -72,6 +73,13 @@
 **雙 Tree 問題（08-06 修）**：
 - ⚠️ MT5 有兩個 SysTreeView32（docked 細 + 浮動大）— auto_attach 揀錯 tree（(8,131) 332 闊 — 冇 MT5Cloud_EA 內容？）
 - ✅ 修：掃描所有 tree — 揀「最大面積」嗰個（浮動/主要 Navigator）
+
+**double-click 輸入驗證（08-06 — 重大發現）**：
+- ✅ **double-click 有彈 dialog**（「窗口」dialog）— **證明程式化輸入 work — MT5 冇防自動化**（用戶確認 — 我嘅「Raw Input 防自動化」假設錯）
+- ⚠️ 真正問題：**位置**（double-click 彈咗「窗口」dialog — 唔係 Bollinger_Band Properties — 位置差）
+- ⚠️ Navigator 位置不斷變（一時 (8,131) 一時 (997,77) 右邊）— item 高度 12px（統一後）vs 15px（其他狀態）
+- AHK 試咗 4 方法（ControlClick 後台 / 模擬 click / SendMode Play / 掃描）— 全部唔彈（但係係位置問題 — 唔係輸入）
+- 📸 截圖對位中（用戶確認 Bollinger_Band 實際位置）— 修正後 double-click 應該 work
 
 **重要背景（08-05 14:57 — MT5 自動更新 6061 → 6093）**：
 - ⚠️ **MT5 build 6093 對 auto_attach 自動化操作 crash**（pyautogui/SendMessage double-click 都唔彈 Properties — 只有真實滑鼠 work；完整 auto_attach 流程 15+ 次全部 crash MT5）
