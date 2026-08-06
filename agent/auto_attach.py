@@ -1067,6 +1067,133 @@ def ensure_navigator_unified(mt5_pid):
     return False
 
 
+def load_hotkey_map():
+    """讀熱鍵 mapping（EA 名 → pywinauto 快捷鍵格式）— 讀 MT5 hotkeys.ini（權威來源）
+    hotkeys.ini: [experts] "Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+1"
+    Ctrl+1 → ^1, Ctrl+Alt+1 → ^!1"""
+    import json as _json
+    result = {}
+    # 1. 讀 hotkeys.ini（MT5 權威）
+    try:
+        data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        if os.path.isdir(data_dir):
+            for d in os.listdir(data_dir):
+                hp = os.path.join(data_dir, d, 'config', 'hotkeys.ini')
+                if not os.path.isfile(hp):
+                    continue
+                try:
+                    with open(hp, 'rb') as f:
+                        raw = f.read()
+                    text = raw.decode('utf-16')
+                except Exception:
+                    continue
+                section = None
+                for line in text.splitlines():
+                    ls = line.strip()
+                    if ls.endswith(chr(13)):
+                        ls = ls[:-1]
+                    if ls.startswith('[') and ls.endswith(']'):
+                        section = ls[1:-1]
+                    elif '=' in ls and section == 'experts':
+                        k, v = ls.split('=', 1)
+                        ea = os.path.basename(k).replace('.ex5', '')
+                        combo = v
+                        if 'Ctrl+' in combo:
+                            combo = combo.replace('Ctrl+', '^')
+                        if 'Alt+' in combo:
+                            combo = combo.replace('Alt+', '!')
+                        result[ea] = combo
+                break
+    except Exception:
+        pass
+    # 2. fallback：hotkeys.json（舊 mapping）
+    if not result:
+        try:
+            fp = os.path.join(os.path.dirname(__file__), 'hotkeys.json')
+            with open(fp, 'r', encoding='utf-8') as f:
+                result = _json.load(f)
+        except Exception:
+            pass
+    return result
+
+
+def attach_ea_hotkey(ea_name, mt5_pid):
+    """🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
+    每隻 EA 喺「導航熱鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
+    唔使 double-click Navigator（6093 對 double-click 唔 work）"""
+    try:
+        import ctypes as _ct
+        from pywinauto import Application as _App
+        from pywinauto.keyboard import send_keys as _sk
+        hotkeys = load_hotkey_map()
+        combo = hotkeys.get(ea_name)
+        if not combo:
+            print(f"⚠️ {ea_name} 未有熱鍵設定（agent/hotkeys.json）")
+            return False
+        print(f"🎯 用熱鍵 {combo} 附加 {ea_name}...")
+        _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+        # 主視窗帶最前（快捷鍵要 active window）
+        try:
+            win = _app.window(class_name='MetaQuotes::MetaTrader::5.00')
+            win.set_focus()
+            time.sleep(1)
+        except Exception:
+            pass
+        # send 快捷鍵
+        _sk(combo)
+        time.sleep(3)
+        # 檢查 dialog（代替確認 → 是；Properties → 確定）
+        handled = False
+        for _ in range(6):
+            for _w in _app.windows():
+                try:
+                    if _w.class_name() == '#32770':
+                        _t = _w.window_text()
+                        # 代替確認（圖表已有 EA）
+                        if '代替' in _t or 'replace' in _t.lower():
+                            _dw = _app.window(handle=int(_w.element_info.handle))
+                            for _b in _dw.children(class_name='Button'):
+                                try:
+                                    if '是' in _b.window_text() or 'Yes' in _b.window_text():
+                                        _b.click()
+                                        print("✅ 已撳「是」（代替確認）")
+                                        handled = True
+                                        break
+                                except Exception:
+                                    pass
+                            if handled:
+                                break
+                        # Properties dialog（EA 名 + 確定）
+                        elif ea_name in _t and ('確定' in _t or 'OK' in _t or True):
+                            _dw = _app.window(handle=int(_w.element_info.handle))
+                            for _b in _dw.children(class_name='Button'):
+                                try:
+                                    if '確定' in _b.window_text() or 'OK' in _b.window_text():
+                                        _b.click()
+                                        print("✅ 已撳「確定」（Properties）")
+                                        handled = True
+                                        break
+                                except Exception:
+                                    pass
+                            if handled:
+                                break
+                except Exception:
+                    pass
+            if handled:
+                break
+            time.sleep(1)
+        # 心跳驗證
+        hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
+        if os.path.isfile(hb):
+            print(f"✅ {ea_name} 附加成功（心跳存在）")
+            return True
+        print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
+        return True
+    except Exception as e:
+        print(f"⚠️ 熱鍵附加失敗: {e}")
+        return False
+
+
 def verify_heartbeat(ea_name, timeout=60):
     """驗證 EA heartbeat file 存在且新鮮"""
     hb_file = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
@@ -1176,8 +1303,20 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # 2026-08 還原：今日下午加 pin_deskin_away 之後 crash — 暫時唔用（穩定版冇呢個）
         check_abort()
         
-        # Step 3: Attach EA via Navigator
-        success = attach_ea_navigator(ea_name, mt5_pid)
+        # Step 3: Attach EA（🎯 熱鍵優先 — 2026-08：6093 double-click 唔 work）
+        # 有熱鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
+        hotkeys = load_hotkey_map()
+        if ea_name in hotkeys:
+            success = attach_ea_hotkey(ea_name, mt5_pid)
+        else:
+            success = attach_ea_navigator(ea_name, mt5_pid)
+        if not success:
+            # fallback：另一種方法
+            print(f"⚠️ 第一種方法失敗 — 試另一種...")
+            if ea_name in hotkeys:
+                success = attach_ea_navigator(ea_name, mt5_pid)
+            else:
+                success = attach_ea_hotkey(ea_name, mt5_pid)
         if not success:
             print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
         

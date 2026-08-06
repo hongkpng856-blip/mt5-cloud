@@ -31,6 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|
 | **v0.9.4** | 2026-08-06 | double-click 輸入驗證：彈咗「窗口」dialog（證明輸入 work — MT5 冇防自動化 — 用戶確認）— 真正問題係位置（Navigator 一時左一時右 / item 高度 12px vs 15px）— AHK 4 方法試過（ControlClick/模擬/SendMode Play/掃描）|
 | **v0.9.3** | 2026-08-06 | MT5Cloud_EA folder 定位實測成功（auto_attach 入 folder 搵 EA）+ 掃描過濾（只掃根目錄+MT5Cloud_EA — 唔掃內建樣本）+ Tree 揀最大（雙 tree 問題）|
@@ -87,8 +88,15 @@
 - ✅ **每隻 EA 可以設個別熱鍵**（例如 Ctrl+1 = Bollinger_Band）
 - ✅ **實測成功**：send Ctrl+1 → 觸發附加 Bollinger_Band（彈「代替」確認 → 撳「是」）→ **附加成功 + 心跳 running**（MT5 冇 crash！）
 - ✅ **解決 6093 double-click 問題**：唔使 double-click Navigator — 用鍵盤快捷鍵！
-- ⚠️ 熱鍵設定存檔未搵到（hotkeys.ini 2 bytes 未變 — 可能 MT5 內部記憶/其他 .dat）
-- 📋 下一步：每隻 EA set 熱鍵（Ctrl+1/2/3...）+ auto_attach 改用熱鍵方案（send Ctrl+N + 代替確認處理）
+
+**🎯 熱鍵管理完整實現（08-06 — v0.9.6）**：
+- ✅ **設定檔搵到**：`<Terminal>\config\hotkeys.ini`（UTF-16 LE）— 格式 `[experts]` section：`Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+N`
+- ✅ **配對 → assign_hotkey**（自動分配下一個可用熱鍵 Ctrl+1..9/Ctrl+0/Ctrl+Alt+N — 唔重複 — 直接寫 hotkeys.ini）
+- ✅ **剷除 → release_hotkey**（移除熱鍵 + 位置釋放）
+- ✅ **auto_attach 讀 hotkeys.ini**（權威來源 — Ctrl+1 → ^1 格式轉換 — fallback hotkeys.json）
+- ✅ **驗證**：重啟 MT5 後 Ctrl+1 照 work（Bollinger Properties 彈出 — hotkeys.ini 直接寫入生效）
+- ⚠️ 教訓：直接寫 hotkeys.ini 要小心讀取 code 嘅 \r 處理（escape bug 會覆寫清走其他熱鍵）
+- 📋 備註：SMA_Cross 熱鍵有 mapping 但係 .ex5 唔存在（之前剷除測試刪咗）— 再配對自動恢復
 
 **重要背景（08-05 14:57 — MT5 自動更新 6061 → 6093）**：
 - ⚠️ **MT5 build 6093 對 auto_attach 自動化操作 crash**（pyautogui/SendMessage double-click 都唔彈 Properties — 只有真實滑鼠 work；完整 auto_attach 流程 15+ 次全部 crash MT5）
