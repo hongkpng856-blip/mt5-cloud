@@ -3,72 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — MT5 Cloud</title>
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
     <style>
+        /* ─── Design System ─── */
+        :root {
+            --bg: #09090b;
+            --bg-card: #18181b;
+            --bg-sidebar: #18181b;
+            --bg-muted: #27272a;
+            --bg-subtle: #1a1a1e;
+            --bg-input: #09090b;
+            --border: #27272a;
+            --border-hover: #3f3f46;
+            --text: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #10b981;
+            --accent-hover: #34d399;
+            --accent-orange: #f59e0b;
+            --accent-orange-hover: #fbbf24;
+            --danger: #ef4444;
+            --success: #10b981;
+            --info: #3b82f6;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI',sans-serif; background:#0d1117; color:#e6edf3; display:flex; min-height:100vh; }
-        .sidebar { width:200px; background:#161b22; border-right:1px solid #30363d; padding:24px; display:flex; flex-direction:column; }
-        .sidebar h2 { font-size:15px; margin-bottom:24px; }
-        .sidebar a { display:block; padding:8px 12px; border-radius:6px; color:#8b949e; text-decoration:none; font-size:13px; margin-bottom:2px; }
-        .sidebar a:hover, .sidebar a.active { background:#1c2128; color:#58a6ff; }
-        .sidebar .logout { margin-top:auto; color:#f85149; }
-        .main { flex:1; padding:32px; overflow-y:auto; }
 
-        .card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:24px; margin-bottom:20px; }
-        .card-title { font-size:16px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-        .badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:12px; font-weight:500; }
-        .badge-green { background:#1a3a2a; color:#3fb950; }
-        .badge-red { background:#3a1a1a; color:#f85149; }
-        .badge-gray { background:#21262d; color:#8b949e; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
 
-        .stat-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
-        .stat-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:12px; flex:1; min-width:100px; text-align:center; }
-        .stat-box .label { font-size:11px; color:#8b949e; }
-        .stat-box .value { font-size:20px; font-weight:700; margin-top:4px; }
+        /* ─── Scrollbar ─── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
-        .btn { padding:8px 16px; border:1px solid #30363d; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; background:#21262d; color:#e6edf3; }
-        .btn:hover { background:#30363d; }
-        .btn-orange { background:#9e6a03; border-color:#bb8009; }
-        .btn-orange:hover { background:#bb8009; }
+        /* ─── Sidebar ─── */
+        .sidebar {
+            width: 220px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 24px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
 
-        .ea-table { width:100%; border-collapse:collapse; font-size:13px; }
-        .ea-table th { text-align:left; font-size:11px; color:#8b949e; padding:8px; border-bottom:1px solid #30363d; cursor:pointer; }
-        .ea-table td { padding:6px 8px; border-bottom:1px solid #21262d; }
-        .ea-table tr:hover td { background:#1c2128; }
-        .ea-table select, .ea-table input { background:#0d1117; border:1px solid #30363d; border-radius:4px; color:#e6edf3; padding:3px 4px; font-size:12px; }
-        .ea-table select { max-width:110px; cursor:pointer; }
-        .ea-table input { width:55px; text-align:center; }
+        .sidebar h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.02em;
+        }
 
-        .scroll-box { max-height:450px; overflow-y:auto; }
-        .scroll-box::-webkit-scrollbar { width:6px; }
-        .scroll-box::-webkit-scrollbar-thumb { background:#30363d; border-radius:3px; }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
 
-        .corr-table { font-size:11px; }
-        .corr-table th, .corr-table td { padding:4px 8px; text-align:center; }
-        .corr-table th { min-width:50px; }
+        .sidebar a:hover {
+            background: var(--bg-muted);
+            color: var(--text);
+        }
 
-        /* === 手機 Responsive === */
+        .sidebar a.active {
+            background: var(--bg-muted);
+            color: var(--text);
+        }
+
+        .sidebar a i { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar .spacer { flex: 1; }
+
+        .sidebar .logout { color: var(--danger); }
+        .sidebar .logout:hover { background: rgba(239,68,68,0.1); }
+
+        /* ─── Main ─── */
+        .main {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        /* ─── Card ─── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: border-color 0.15s;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        /* ─── Badge ─── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .badge-gray { background: var(--bg-muted); color: var(--text-secondary); }
+        .badge-blue { background: rgba(59,130,246,0.15); color: var(--info); }
+
+        /* ─── Stats ─── */
+        .stat-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+
+        .stat-box .value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+        }
+
+        /* ─── Buttons ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: var(--font);
+            cursor: pointer;
+            background: var(--bg-muted);
+            color: var(--text);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #3f3f46;
+            border-color: var(--border-hover);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .btn-orange {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+            color: #fff;
+        }
+
+        .btn-orange:hover {
+            background: var(--accent-orange-hover);
+            border-color: var(--accent-orange-hover);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-secondary);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-muted);
+            color: var(--text);
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            padding: 6px;
+            min-width: 32px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ─── Table ─── */
+        .ea-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .ea-table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ea-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--bg-muted);
+            vertical-align: middle;
+        }
+
+        .ea-table tr:hover td {
+            background: var(--bg-subtle);
+        }
+
+        .ea-table select,
+        .ea-table input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            padding: 4px 6px;
+            font-size: 12px;
+            font-family: var(--font);
+        }
+
+        .ea-table select {
+            max-width: 110px;
+            cursor: pointer;
+        }
+
+        .ea-table select:focus,
+        .ea-table input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-ring);
+            outline: none;
+        }
+
+        .ea-table input { width: 55px; text-align: center; }
+
+        /* ─── Scroll ─── */
+        .scroll-box {
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .scroll-box::-webkit-scrollbar { width: 6px; }
+        .scroll-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .scroll-box::-webkit-scrollbar-track { background: transparent; }
+
+        /* ─── Correlation ─── */
+        .corr-table { font-size: 11px; }
+        .corr-table th, .corr-table td { padding: 4px 8px; text-align: center; }
+        .corr-table th { min-width: 50px; }
+
+        /* ─── Log ─── */
+        .log-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 12px;
+            display: none;
+        }
+        .log-box.show { display: block; }
+        .log-success { color: var(--success); }
+        .log-error { color: var(--danger); }
+        .log-info { color: var(--info); }
+        .log-warn { color: var(--accent-orange); }
+
+        .loading {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* AI 控制警告視窗（同 MT5 端 control_guard 一致風格 — zinc/emerald shadcn） */
+        #aiControlModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        #aiControlModal.show { display: flex; }
+        .ai-control-box {
+            background: var(--bg-muted);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 360px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .ai-control-accent { height: 4px; background: var(--accent); }
+        .ai-control-body { padding: 22px 24px; text-align: center; }
+        .ai-control-title { color: #fafafa; font-size: 16px; font-weight: 700; margin: 10px 0 4px; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .ai-control-prog { color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .ai-control-desc { color: #a1a1aa; font-size: 12px; margin-bottom: 16px; min-height: 18px; }
+        .ai-control-stop {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 0;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .ai-control-stop:hover { background: #b91c1c; }
+        .ai-control-stop:disabled { background: #7f1d1d; cursor: wait; }
+
+        /* ─── Responsive ─── */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            .sidebar { width:100%; padding:12px 16px; flex-direction:row; align-items:center; gap:12px; border-right:none; border-bottom:1px solid #30363d; overflow-x:auto; }
-            .sidebar h2 { font-size:14px; margin-bottom:0; white-space:nowrap; }
-            .sidebar a { font-size:12px; padding:6px 10px; white-space:nowrap; }
-            .sidebar .logout { margin-top:0; margin-left:auto; }
-            .main { padding:16px; }
-            .card { padding:16px; }
-            .card-title { font-size:14px; }
-            .stat-box { min-width:calc(50% - 8px); flex:1 1 calc(50% - 8px); }
-            .stat-box .value { font-size:16px; }
-            .btn { font-size:12px; padding:6px 12px; }
-            .ea-table { font-size:11px; }
-            .ea-table th { font-size:10px; padding:4px; }
-            .ea-table td { padding:4px; }
-            .ea-table select { max-width:80px; font-size:10px; padding:2px; }
-            .ea-table input { width:40px; font-size:10px; padding:2px; }
-            .scroll-box { max-height:300px; }
-            .ea-table { min-width:600px; }
-            .scroll-box { overflow-x:auto; }
-            [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
+            .sidebar {
+                width: 100%;
+                padding: 12px 16px;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                overflow-x: auto;
+            }
+            .sidebar h2 { font-size: 14px; margin-bottom: 0; white-space: nowrap; }
+            .sidebar a { font-size: 12px; padding: 6px 10px; white-space: nowrap; }
+            .sidebar a i { font-size: 14px; width: 16px; }
+            .sidebar .spacer { display: none; }
+            .sidebar .logout { margin-left: auto; }
+            .main { padding: 16px; }
+            .card { padding: 16px; }
+            .card-title { font-size: 14px; }
+            .stat-box { min-width: calc(50% - 8px); flex: 1 1 calc(50% - 8px); }
+            .stat-box .value { font-size: 18px; }
+            .btn { font-size: 12px; padding: 6px 12px; }
+            .ea-table { font-size: 11px; min-width: 600px; }
+            .ea-table th { font-size: 10px; padding: 6px 4px; }
+            .ea-table td { padding: 4px; }
+            .ea-table select { max-width: 80px; font-size: 10px; }
+            .ea-table input { width: 40px; font-size: 10px; }
+            .scroll-box { max-height: 300px; overflow-x: auto; }
         }
         .log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:12px; display:none; }
         .log-box.show { display:block; }
@@ -78,89 +431,130 @@
         .log-warn { color:#d29922; }
         .loading { display:inline-block; width:14px; height:14px; border:2px solid #30363d; border-top-color:#58a6ff; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; }
         @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* Toast 通知 */
+        #toastContainer {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px; max-width: 340px;
+        }
+        .toast-item {
+            background: var(--card); border: 1px solid var(--border);
+            border-left: 4px solid var(--accent); border-radius: 8px;
+            padding: 12px 16px; font-size: 13px; color: var(--text);
+            box-shadow: 0 4px 20px rgba(0,0,0,.5);
+            display: flex; align-items: center; gap: 10px;
+            animation: toastIn .3s ease;
+        }
+        .toast-item.deleted { border-left-color: var(--danger); }
+        .toast-item.added { border-left-color: var(--success); }
+        .toast-item.modified { border-left-color: var(--accent-orange); }
+        .toast-item .toast-time { font-size: 11px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+        @keyframes toastIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 <div class="sidebar">
-    <h2>☁️ MT5 Cloud</h2>
-    <a href="/dashboard" class="active">📊 Dashboard</a>
-    <a href="/logout" class="logout">🚪 Logout</a>
+    <h2><i class="icon-chart-candlestick" style="color:var(--accent)"></i> MT5 Cloud</h2>
+    <a href="/dashboard" class="active"><i class="icon-layout-dashboard"></i> Dashboard</a>
+    <a href="/analysis"><i class="icon-bar-chart-3"></i> Analysis</a>
+    <div class="spacer"></div>
+    <a href="/logout" class="logout"><i class="icon-log-out"></i> Logout</a>
 </div>
 
 <div class="main">
-    <h1 style="margin-bottom:20px">📊 Dashboard</h1>
+<!-- AI 控制警告視窗（網站版 — 同 MT5 端 control_guard 一致，Lucide icons 0 emoji） -->
+<div id="aiControlModal">
+    <div class="ai-control-box">
+        <div class="ai-control-accent"></div>
+        <div class="ai-control-body">
+            <i class="icon-bot" style="font-size:36px;color:var(--accent)"></i>
+            <div class="ai-control-title">AI 控制中</div>
+            <div class="ai-control-prog" id="aiControlProg">正在處理</div>
+            <div class="ai-control-desc" id="aiControlDesc">請勿移動滑鼠或按鍵盤！</div>
+            <button class="ai-control-stop" id="aiControlStopBtn" onclick="emergencyStop()">
+                <i class="icon-alert-octagon"></i> 緊急停止
+            </button>
+            <button class="ai-control-close" id="aiControlCloseBtn" onclick="manualDismiss()" style="display:none;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer">
+                關閉視窗
+            </button>
+        </div>
+    </div>
+</div>
+<div id="toastContainer"></div>
+    <h1 style="margin-bottom:20px;font-size:18px;font-weight:600;letter-spacing:-0.02em">Dashboard</h1>
 
     <!-- Agent Status -->
     <div class="card">
-        <div class="card-title">📡 Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></div>
+        <div class="card-title"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></div>
         <div class="stat-row">
             <div class="stat-box"><div class="label">Agent ID</div><div class="value" id="agentId" style="font-size:14px">—</div></div>
+            <div class="stat-box"><div class="label">Account</div><div class="value" id="accountLogin" style="font-size:14px">—</div></div>
+            <div class="stat-box"><div class="label">Server</div><div class="value" id="accountServer" style="font-size:14px">—</div></div>
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
+            <div class="stat-box"><div class="label">Binding</div><div class="value" id="bindingStatus">— <button id="bindBtn" onclick="toggleBind()" style="font-size:11px;padding:2px 8px;margin-left:4px;cursor:pointer"><i class="icon-link"></i> 綁定</button></div></div>
             <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount">0</div></div>
-            <div class="stat-box" id="autoTradeBox" style="display:none">
-                <div class="label">Auto-Trade</div>
-                <div class="value" id="autoTradeStatus" style="font-size:14px;color:#3fb950">🟢 Active</div>
-            </div>
         </div>
     </div>
 
-<!-- Auto-Trade Monitor -->
-<div class="card" id="autoTradePanel" style="display:none">
-    <div class="card-title">🤖 Auto-Trade Monitor</div>
-    <div class="scroll-box" style="max-height:300px">
-        <table class="ea-table" id="autoTradeTable">
-            <thead><tr><th>EA</th><th>品種</th><th>TF</th><th>SMA10</th><th>SMA30</th><th>Signal</th><th>Status</th></tr></thead>
-            <tbody></tbody>
+<!-- 活動記錄（持久化 — refresh 後依然存在） -->
+<div class="card">
+    <div class="card-title"><i class="icon-history" style="color:var(--accent)"></i> 活動記錄 <span class="badge badge-gray" id="activityCount">0</span>
+        <label style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);cursor:pointer" title="顯示/隱藏「已更新資料庫」恆常記錄">
+            <input type="checkbox" id="showDbUpdates" style="accent-color:#10b981" onchange="toggleDbUpdates()"> 顯示資料庫更新
+        </label>
+        <button class="btn btn-sm" onclick="fetchActivity()" title="重新整理"><i class="icon-refresh-cw"></i></button>
+    </div>
+    <div class="scroll-box" style="max-height:280px">
+        <table class="ea-table" id="activityTable">
+            <thead><tr><th><i class="icon-clock" style="font-size:11px"></i> 時間</th><th>動作</th><th>詳情</th></tr></thead>
+            <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody>
         </table>
     </div>
-    <div style="padding:8px;text-align:center;font-size:12px;color:#8b949e">⏱ 每 30 秒 Agent 自動 check crossover</div>
 </div>
 
 <!-- EA Library - 平台提供 + 社群提供 -->
                 <div class="card">
-                <div class="card-title">📦 EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
-                <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;border-color:#bb8009;margin-left:auto">📤 上傳 EA 去社群庫</button>
+                <div class="card-title"><i class="icon-package" style="color:var(--accent)"></i> EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
+                <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;margin-left:auto"><i class="icon-upload"></i> 上傳 EA 去社群庫</button>
                 <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
                 </div>
                 <div class="scroll-box" style="max-height:250px">
             <table class="ea-table" id="officialTable">
                 <thead><tr><th>EA 名稱</th><th>大小</th><th></th></tr></thead>
-                <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:#8b949e">Loading...</td></tr></tbody>
+                <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
 
     <!-- 我的配對庫（=我的倉庫） -->
     <div class="card">
-        <div class="card-title">📋 我的配對庫 <span id="eaCount" class="badge">0</span>
-            <span style="font-size:11px;color:#8b949e;font-weight:normal">— 可以上傳自己嘅 EA</span>
+        <div class="card-title"><i class="icon-clipboard-list" style="color:var(--accent)"></i> 我的配對庫 <span id="eaCount" class="badge">0</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:normal">— 可以上傳自己嘅 EA</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <button class="btn" onclick="loadEAConfig()">🔄 重新整理</button>
-            <label class="btn" style="cursor:pointer">📤 上傳自己嘅 EA
+            <button class="btn" onclick="loadEAConfig()"><i class="icon-refresh-cw"></i> 重新整理</button>
+            <label class="btn" style="cursor:pointer"><i class="icon-upload"></i> 上傳自己嘅 EA
                 <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
             </label>
             <span style="display:flex;align-items:center;gap:4px;margin-left:auto">
-                <span style="font-size:12px;color:#8b949e">Lots:</span>
-                <input type="number" id="defaultLot" value="1.00" min="0.01" max="100" step="0.01" style="width:55px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 6px;font-size:13px;text-align:center">
-                <button class="btn" onclick="applyAllLots()" style="padding:4px 10px;font-size:12px">📋 全部</button>
+                <span style="font-size:12px;color:var(--text-muted)">Lots:</span>
+                <input type="number" id="defaultLot" value="1.00" min="0.01" max="100" step="0.01" style="width:55px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:13px;text-align:center">
+                <button class="btn" onclick="applyAllLots()" style="padding:4px 10px;font-size:12px"><i class="icon-copy"></i> 全部</button>
             </span>
         </div>
-        <div id="logBox" class="log-box"></div>
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th>Magic</th><th>Symbol</th><th>TF</th><th style="cursor:pointer" onclick="sortEA('trades')">Trades 📊</th><th style="cursor:pointer" onclick="sortEA('winrate')">Win 🏆</th><th style="cursor:pointer" onclick="sortEA('profit')">P&L 💰</th><th>Lots ✏️</th><th>狀態</th><th></th>
+                    <th>EA</th><th>來源</th><th><i class="icon-activity" style="font-size:11px"></i> 狀態</th><th>Magic</th><th>Symbol</th><th>TF</th><th><i class="icon-activity" style="font-size:11px"></i> Signal</th><th>SMA10</th><th>SMA30</th><th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades</th><th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win</th><th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L</th><th><i class="icon-pencil" style="font-size:11px"></i> Lots</th><th></th>
                 </tr></thead>
-                <tbody id="eaTableBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#8b949e">Loading...</td></tr></tbody>
+                <tbody id="eaTableBody"><tr><td colspan="14" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
-
     <!-- Analysis -->
     <div class="card">
-        <div class="card-title">📊 Performance</div>
+        <div class="card-title"><i class="icon-bar-chart-3" style="color:var(--accent)"></i> Performance</div>
         <div class="stat-row" id="summaryStats">
             <div class="stat-box"><div class="label">Trades</div><div class="value" id="anTrades">—</div></div>
             <div class="stat-box"><div class="label">Win Rate</div><div class="value" id="anWinRate" style="color:#3fb950">—</div></div>
@@ -171,7 +565,7 @@
 
     <!-- Correlation -->
     <div class="card">
-        <div class="card-title">🔗 Correlation Matrix</div>
+        <div class="card-title"><i class="icon-network" style="color:var(--accent)"></i> Correlation Matrix</div>
         <div style="overflow-x:auto"><table class="ea-table corr-table" id="corrTable"></table></div>
     </div>
 </div>
@@ -181,14 +575,14 @@
 <div id="reportModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto" onclick="if(event.target===this)closeReport()">
     <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;margin:40px auto;max-width:900px;padding:24px;position:relative">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <h2 id="reportTitle" style="font-size:18px">📊 EA 診斷報告</h2>
-            <button onclick="closeReport()" style="background:none;border:none;color:#8b949e;font-size:24px;cursor:pointer">✕</button>
+            <h2 id="reportTitle" style="font-size:18px;font-weight:600"><i class="icon-file-chart-column" style="color:var(--accent)"></i> EA 診斷報告</h2>
+            <button onclick="closeReport()" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer"><i class="icon-x"></i></button>
         </div>
         <!-- Summary Stats -->
         <div class="stat-row" id="reportStats" style="margin-bottom:20px"></div>
         <!-- Equity Chart (simple CSS bar chart) -->
         <div class="card" style="margin-bottom:16px">
-            <div class="card-title">📈 Equity Curve</div>
+            <div class="card-title"><i class="icon-trending-up" style="color:var(--accent)"></i> Equity Curve</div>
             <div id="equityChart" style="height:180px;display:flex;align-items:flex-end;gap:2px;padding:10px 0"></div>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:#484f58;margin-top:4px">
                 <span id="eqStart"></span>
@@ -197,12 +591,12 @@
         </div>
         <!-- Win/Loss Distribution -->
         <div class="card" style="margin-bottom:16px">
-            <div class="card-title">📊 Win/Loss Distribution</div>
+            <div class="card-title"><i class="icon-pie-chart" style="color:var(--accent)"></i> Win/Loss Distribution</div>
             <div id="distChart" style="display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0"></div>
         </div>
         <!-- Monthly P&L -->
         <div class="card">
-            <div class="card-title">📅 Monthly P&L</div>
+            <div class="card-title"><i class="icon-calendar" style="color:var(--accent)"></i> Monthly P&amp;L</div>
             <div id="monthlyChart" style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:10px 0;overflow-x:auto"></div>
         </div>
     </div>
@@ -220,7 +614,7 @@
 let currentReport = null;
 
 async function showReport(magic, symbol) {
-    document.getElementById('reportTitle').textContent = `📊 診斷報告 — Magic ${magic} / ${symbol}`;
+    document.getElementById('reportTitle').innerHTML = '<i class="icon-file-chart-column" style="color:var(--accent)"></i> 診斷報告 — Magic ' + magic + ' / ' + symbol;
     document.getElementById('reportModal').style.display = 'block';
     document.getElementById('reportStats').innerHTML = '<div class="loading" style="margin:20px auto"></div>';
     
@@ -231,7 +625,7 @@ async function showReport(magic, symbol) {
         currentReport = data;
         renderReport(data);
     } catch(e) {
-        document.getElementById('reportStats').innerHTML = `<span style="color:#f85149">❌ ${e.message}</span>`;
+        document.getElementById('reportStats').innerHTML = '<span style="color:var(--danger)"><i class="icon-circle-x"></i> ' + e.message + '</span>';
     }
 }
 
@@ -323,16 +717,58 @@ socket.on('install_result', (data) => {
 
 // === EA Config ===
 let eaMappings = {};
+let runtimeStatus = {};  // ⚠️ 控制層心跳狀態（running/stopped/unknown）
 let allSymbols = [];
 let analysisData = null;
 let heartbeats = {};
 let sortOrder = {};
+let detectorSignals = {};  // detector :5003 嘅信號資料
+let eaDeployStatus = {};   // EA -> 部署狀態（running/stopped）
+
+function getSignalHtml(name, sym, tf) {
+    const s = detectorSignals[name];
+    if (!s) return '<span style="color:var(--text-dim)">—</span>';
+    if (s.signal === 'BUY') return '<span style="color:var(--success)"><i class="icon-trending-up" style="font-size:11px"></i> BUY</span>';
+    if (s.signal === 'SELL') return '<span style="color:var(--danger)"><i class="icon-trending-down" style="font-size:11px"></i> SELL</span>';
+    if (s.signal === 'PAUSED') return '<span style="color:var(--accent-orange)"><i class="icon-pause-circle" style="font-size:11px"></i> 暫停</span>';
+    return '<span style="color:var(--text-muted)"><i class="icon-hourglass" style="font-size:11px"></i> WAIT</span>';
+}
+
+async function fetchEAInventory() {
+    try {
+        const res = await fetch('/static/detector/ea_inventory.json?t=' + Date.now(), {
+            signal: AbortSignal.timeout(8000)
+        });
+        const d = await res.json();
+        if (d.error) throw new Error(d.error);
+
+        // 存部署狀態：EA名 -> running/stopped
+        eaDeployStatus = {};
+        d.eas.forEach(ea => {
+            eaDeployStatus[ea.name] = {
+                deployed: ea.deployed,
+                configured: ea.configured,
+                config_status: ea.config_status
+            };
+        });
+
+        // 重新渲染 EA 倉庫表格（加狀態列）
+        if (typeof loadEALibrary === 'function') loadEALibrary();
+        // 重新渲染配對庫（狀態列）
+        if (typeof loadEAConfig === 'function') loadEAConfig();
+    } catch(e) {
+        // Detector offline — 標記全部停止
+        eaDeployStatus = {};
+        if (typeof loadEALibrary === 'function') loadEALibrary();
+    }
+}
 
 async function loadEAConfig() {
     try {
         const res = await fetch('/api/ea-config');
         const data = await res.json();
         eaMappings = data.mappings || {};
+        runtimeStatus = data.runtime_status || {};  // ⚠️ 控制層心跳狀態（running/stopped/unknown）
         allSymbols = data.all_symbols || ['EURUSD','GBPUSD','USDJPY','XAUUSD'];
 
         // 搵出已配對嘅 EA（config 入邊有 symbol 嘅就係）
@@ -344,23 +780,37 @@ async function loadEAConfig() {
         const dl = eaMappings['_default_lot'] || 1.00;
         document.getElementById('defaultLot').value = dl;
 
-        // 已剷除嘅 EA
+        // 已刪除嘅 EA
         const removed = eaMappings['_removed'] || [];
 
-        // 過濾：只要未剷除嘅
-        const activeEAs = pairedEAs.filter(name => !removed.includes(name));
+        // 過濾：只要未刪除嘅 + 本機有檔案（detector inventory）— MT5 剷除咗就自動消失
+        const activeEAs = pairedEAs.filter(name => !removed.includes(name) && eaDeployStatus[name]);
+
+        // 本機 MT5 已安裝嘅 EA（detector）— 未配對都顯示
+        const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n));
+        const allEAs = [...new Set([...activeEAs, ...localEA])];
+
+        // 排序：🟢 運行中喺上面，⚪ 停止中喺下面；已配對優先
+        allEAs.sort((a, b) => {
+            const da = (eaDeployStatus[a] && eaDeployStatus[a].deployed) ? 1 : 0;
+            const db = (eaDeployStatus[b] && eaDeployStatus[b].deployed) ? 1 : 0;
+            if (da !== db) return db - da;
+            const pa = eaMappings[a] ? 1 : 0;
+            const pb = eaMappings[b] ? 1 : 0;
+            return pb - pa;
+        });
 
         // 用 analysis data 嘅 magic+symbol 組合自動分配俾 EA
         const combos = analysisData && analysisData.per_ea_by_magic_symbol ? Object.keys(analysisData.per_ea_by_magic_symbol) : [];
         let comboIndex = 0;
 
         let html = '';
-        if (activeEAs.length === 0) {
-            html = `<tr><td colspan="11" style="text-align:center;padding:30px;color:#8b949e">
-                仲未加入任何 EA<br><span style="font-size:12px">去 📦 EA 倉庫 㩒「➕ 移去配對」開始</span>
+        if (allEAs.length === 0) {
+            html = `<tr><td colspan="14" style="text-align:center;padding:30px;color:var(--text-muted)">
+                仲未加入任何 EA<br><span style="font-size:12px">去 EA 倉庫 㩒「<i class="icon-plus-circle"></i> 移去配對」開始</span>
             </td></tr>`;
         } else {
-            activeEAs.forEach(name => {
+            allEAs.forEach(name => {
             let sym = eaMappings[name] || allSymbols[0];
             let magic = eaMappings[name+'_magic'] || '240701';
 
@@ -377,6 +827,8 @@ async function loadEAConfig() {
             const status = eaMappings[name+'_status'] || 'running';
             const isRunning = status === 'running';
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
+            // ⚠️ 系統檔案（Controller — 網頁控制中樞 — 唔可以剷除/暫停）
+            const isSystem = name === 'Controller';
 
             // 從 analysis 攞 data（match by magic+symbol）
             const msKey = magic + '_' + sym;
@@ -387,23 +839,28 @@ async function loadEAConfig() {
 
             html += `<tr>
                 <td><b>${name}</b></td>
-                <td><span style="font-size:10px;${isOfficial?'color:#3fb950':'color:#8b949e'}">${isOfficial?'🟢 平台提供':'⬜ 你上傳'}</span></td>
-                <td><select class="ea-magic" data-ea="${name}" style="width:85px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;padding:3px 4px;font-size:12px">${(analysisData&&analysisData.all_magics||['240701']).map(m => `<option ${m===magic?'selected':''} value="${m}">Magic ${m}</option>`).join('')}</select></td>
+                <td><span style="font-size:10px" class="${isSystem?'badge badge-blue':isOfficial?'badge badge-green':'badge badge-gray'}">${isSystem?'系統':isOfficial?'官方':(eaMappings[name]?'自訂':'本機')}</span></td>
+                <td style="text-align:center;white-space:nowrap">
+                    <div style="font-size:14px;${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'color:var(--success)':'color:var(--text-dim)'}" title="${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':'停止中'}">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'<i class="icon-circle" style="color:var(--success);font-size:10px"></i>':'<i class="icon-circle" style="color:var(--text-dim);font-size:10px"></i>'}</div>
+                    <div style="font-size:9px;color:#8b949e;margin-top:1px">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':'停止中'}</div>
+                    ${runtimeStatus[name]?`<div style="font-size:9px;color:${runtimeStatus[name]==='running'?'var(--success)':runtimeStatus[name]==='stopped'?'var(--text-dim)':'#d29922'};margin-top:1px" title="控制層心跳">${runtimeStatus[name]==='running'?'❤ 心跳運行':runtimeStatus[name]==='stopped'?'● 已停止':'◇ 無心跳'}</div>`:''}
+                </td>
+                <td><select class="ea-magic" data-ea="${name}" style="width:85px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 4px;font-size:12px">${(analysisData&&analysisData.all_magics||['240701']).map(m => `<option ${m===magic?'selected':''} value="${m}">Magic ${m}</option>`).join('')}</select></td>
                 <td><select class="ea-sym" data-ea="${name}">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select></td>
                 <td><select class="ea-tf" data-ea="${name}">${['M1','M5','M15','M30','H1','H4','D1','W1','MN1'].map(t => `<option ${t===tf?'selected':''}>${t}</option>`).join('')}</select></td>
+                <td style="text-align:center;font-weight:600">${getSignalHtml(name, sym, tf)}</td>
+                <td style="text-align:center;color:var(--text-muted);font-size:12px">${detectorSignals[name]?detectorSignals[name].sma10:'—'}</td>
+                <td style="text-align:center;color:var(--text-muted);font-size:12px">${detectorSignals[name]?detectorSignals[name].sma30:'—'}</td>
                 <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
-                <td style="text-align:center;white-space:nowrap">
-                    <div style="font-size:14px;${heartbeats&&heartbeats[name]?'color:#3fb950':'color:#484f58'}" title="${heartbeats&&heartbeats[name]?'🟢 最後檢查: '+new Date(heartbeats[name].last_check*1000).toLocaleTimeString():'🔴 未監控'}">${heartbeats&&heartbeats[name]?'🟢':'🔴'}</div>
-                    <div style="font-size:9px;color:#8b949e;margin-top:1px">${heartbeats&&heartbeats[name]?new Date(heartbeats[name].last_check*1000).toLocaleTimeString():'—'}</div>
-                </td>
                 <td>
-                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5">🚀</button>
-                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告">📊</button>
-                    <button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'⏸️':'▶️'}</button>
-                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="剷除 ${name}">🗑️</button>
+                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i></button>`:''}
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i>':'<i class="icon-play" style="font-size:11px"></i>'}</button>`:''}
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i></button>`:''}
+                    ${isSystem?'<span style="font-size:10px;color:#58a6ff;margin-left:2px" title="系統控制中樞 — 自動運行"><i class="icon-shield-check" style="font-size:11px"></i></span>':''}
                 </td>
             </tr>`;
         });
@@ -411,7 +868,7 @@ async function loadEAConfig() {
         } // end else
 
         document.getElementById('eaTableBody').innerHTML = html;
-        document.getElementById('eaCount').textContent = activeEAs.length;
+        document.getElementById('eaCount').textContent = allEAs.length;
     } catch(e) { console.error(e); }
 }
 
@@ -465,26 +922,62 @@ async function loadDashboard() {
         const res = await fetch('/api/dashboard');
         const d = await res.json();
         document.getElementById('agentId').textContent = d.agent_id || '—';
-        document.getElementById('balance').textContent = d.account ? '$'+d.account.balance?.toLocaleString() : '—';
-        document.getElementById('equity').textContent = d.account ? '$'+d.account.equity?.toLocaleString() : '—';
+        document.getElementById('accountLogin').textContent = d.account?.login || '—';
+        document.getElementById('accountServer').textContent = d.account?.server || '—';
+        document.getElementById('balance').textContent = d.account ? '$'+Number(d.account.balance).toLocaleString() : '—';
+        document.getElementById('equity').textContent = d.account ? '$'+Number(d.account.equity).toLocaleString() : '—';
+
+        // Binding status
+        const bindEl = document.getElementById('bindingStatus');
+        const bindBtn = document.getElementById('bindBtn');
+        if (d.bound_account) {
+            if (d.account_matched) {
+                bindEl.innerHTML = '<i class="icon-check-circle" style="color:var(--success)"></i> ' + d.bound_account + ' <button onclick="toggleBind()" style="font-size:11px;padding:2px 8px;cursor:pointer">解除</button>';
+                bindBtn.style.display = 'none';
+            } else {
+                bindEl.innerHTML = '<i class="icon-alert-triangle" style="color:var(--accent-orange)"></i> 綁定: ' + d.bound_account + ' (當前: ' + (d.account?.login||'無') + ')';
+                bindBtn.style.display = 'inline';
+            }
+        } else {
+            bindEl.innerHTML = '— <button onclick="toggleBind()" style="font-size:11px;padding:2px 8px;margin-left:4px;cursor:pointer"><i class="icon-link"></i> 綁定</button>';
+        }
 
         const badge = document.getElementById('statusBadge');
         if (d.status === 'connected' || d.status === 'running') {
-            badge.textContent = '🟢 Online'; badge.className = 'badge badge-green';
-            document.getElementById('autoTradeBox').style.display = 'block';
-            document.getElementById('autoTradeStatus').textContent = `🟢 ${d.auto_trade_ea_count || 0} EA`;
-            if (d.auto_trade_status && d.auto_trade_status.length > 0) {
-                document.getElementById('autoTradePanel').style.display = 'block';
-                renderAutoTradeTable(d.auto_trade_status);
-            }
+            badge.textContent = 'Online'; badge.className = 'badge badge-green';
             heartbeats = d.ea_heartbeats || {};
         } else {
-            badge.textContent = '🔴 Offline'; badge.className = 'badge badge-red';
-            document.getElementById('autoTradeBox').style.display = 'none';
+            badge.textContent = 'Offline'; badge.className = 'badge badge-red';
         }
 
         document.getElementById('posCount').textContent = (d.positions||[]).length;
     } catch(e) {}
+
+    // === Auto-Trade Detector (獨立進程 :5003 — 唯一 detect 來源) ===
+    fetchAutoTradeStatus();
+}
+
+async function fetchAutoTradeStatus() {
+    try {
+        const res = await fetch('/static/detector/auto_trade_status.json?t=' + Date.now(), {
+            signal: AbortSignal.timeout(5000)
+        });
+        const d = await res.json();
+
+        // 將信號資料存起嚟，俾配對庫表格用
+        detectorSignals = {};
+        if (d.results) {
+            d.results.forEach(r => {
+                detectorSignals[r.ea] = {signal: r.signal, sma10: r.sma10, sma30: r.sma30};
+            });
+        }
+        // 重新渲染配對庫表格（SMA/Signal 欄位）
+        loadEAConfig();
+    } catch(e) {
+        // Detector offline — 清空信號
+        detectorSignals = {};
+        loadEAConfig();
+    }
 }
 
 // === Analysis ===
@@ -558,14 +1051,182 @@ function _updateEAData() {
     });
 }
 
+// === 通知系統（MT5 目錄變化 → toast + 即時更新）===
+let seenNotifIds = new Set();
+
+function showToast(message, type, timestamp) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = 'toast-item ' + (type || '');
+    const icon = type === 'deleted' ? '<i class="icon-trash-2" style="color:var(--danger)"></i>'
+        : type === 'added' ? '<i class="icon-plus-circle" style="color:var(--success)"></i>'
+        : '<i class="icon-refresh-cw" style="color:var(--accent-orange)"></i>';
+    const timeStr = timestamp ? new Date(timestamp * 1000).toLocaleTimeString() : '';
+    el.innerHTML = icon + '<span>' + message + '</span><span class="toast-time">' + timeStr + '</span>';
+    container.appendChild(el);
+    // 5 秒後自動消失
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .5s'; setTimeout(() => el.remove(), 500); }, 5000);
+    // 最多同時顯示 5 個
+    while (container.children.length > 5) container.firstChild.remove();
+}
+
+async function fetchNotifications() {
+    try {
+        const res = await fetch('/static/detector/notifications.json?t=' + Date.now(), {
+            signal: AbortSignal.timeout(5000)
+        });
+        const d = await res.json();
+        if (!d.notifications) return;
+        let newShown = false;
+        d.notifications.forEach(n => {
+            if (!seenNotifIds.has(n.id)) {
+                seenNotifIds.add(n.id);
+                showToast(n.message, n.type, n.time);
+                newShown = true;
+            }
+        });
+        // 有新通知 → 即時重新載入 EA 列表（detector 可能未 update static inventory）
+        if (newShown) {
+            setTimeout(() => { fetchEAInventory(); loadEAConfig(); }, 1500);
+        }
+    } catch(e) { /* 冇通知檔案就靜默 */ }
+}
+
+// === AI 控制警告視窗（網站版）===
+let aiControlVisible = false;  // 追蹤視窗狀態（避免重複 show/hide 閃爍）
+let minShowUntil = 0;  // 最少顯示時間（防「彈一下」就消失）
+let manualDeployActive = false;  // ⚠️ 手動部署鎖定：pollAiControl 唔可以關閉（完成先關）
+function showControlModal(actionDesc, detailMsg) {
+    const modal = document.getElementById('aiControlModal');
+    const prog = document.getElementById('aiControlProg');
+    const desc = document.getElementById('aiControlDesc');
+    if (prog) prog.textContent = actionDesc || '正在處理';
+    if (desc) desc.textContent = detailMsg || '請勿移動滑鼠或按鍵盤！';
+    if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
+    // 動作開始：最少顯示 3 秒（等 watcher 後續動作接手，唔會「彈一下」）
+    minShowUntil = Date.now() + 3000;
+}
+function hideControlModal() {
+    const modal = document.getElementById('aiControlModal');
+    if (modal && aiControlVisible) { modal.classList.remove('show'); aiControlVisible = false; }
+}
+
+// Poll AI 控制狀態（watcher/agent 操控電腦時 → 網站都彈警告視窗；完成 → 關）
+// 網站動作完成後唔即刻 hide — 由呢度統一控制（動作真正做完先消失）
+async function pollAiControl() {
+    try {
+        const res = await fetch('/static/detector/ai_control.json?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) {
+            // 404 / 冇狀態檔 = 冇 AI 操控緊 → 關視窗（Bug #68：之前 catch 咗唔 hide → 卡死）
+            if (Date.now() >= minShowUntil && !manualDeployActive) hideControlModal();
+            return;
+        }
+        const d = await res.json();
+        // ⚠️ 防護（2026-08）：active 但係好舊（>120 秒）→ 當殘留 — 唔彈警告 modal
+        // （auto_attach 被 timeout 殺 → 冇 release → ai_control.json 殘留 active → 網頁一直彈）
+        const stale = d.time && (Date.now() / 1000 - d.time) > 120;
+        if (d.active && !stale) {
+            showControlModal(d.program || 'AI 操控中');
+        } else if (Date.now() >= minShowUntil && !manualDeployActive) {
+            hideControlModal();
+        }
+    } catch(e) {
+        // 網絡錯誤 / 冇狀態檔 = 冇 AI 操控緊 → 關視窗（唔可以卡死）
+        if (Date.now() >= minShowUntil && !manualDeployActive) hideControlModal();
+    }
+}
+
+async function manualDismiss() {
+    // 手動關閉警告視窗（手動部署 mode — 完成咗/取消咗可以自己關）
+    manualDeployActive = false;
+    hideControlModal();
+}
+function emergencyStop() {
+    const btn = document.getElementById('aiControlStopBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="icon-loader-2"></i> 停止中...'; }
+    (async () => {
+        try {
+            const res = await fetch('/api/control-guard/stop', { method: 'POST' });
+            const d = await res.json();
+            showToast((d.success ? '🛑 緊急停止已觸發！AI 操作會即刻中止' : '❌ 緊急停止失敗: ' + (d.error || '')), 'deleted');
+        } catch(e) {
+            showToast('❌ 緊急停止失敗: ' + e.message, 'deleted');
+        }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="icon-alert-octagon"></i> 緊急停止'; }
+    })();
+}
+
+// === 活動記錄（持久化 activity log）===
+const activityIconMap = {
+    'deploy': '<i class="icon-rocket" style="color:var(--accent)"></i>',
+    'ea_delete': '<i class="icon-trash-2" style="color:var(--danger)"></i>',
+    'ea_toggle': '<i class="icon-pause-circle" style="color:#d29922"></i>',
+    'added': '<i class="icon-plus-circle" style="color:var(--success)"></i>',
+    'deleted': '<i class="icon-trash-2" style="color:var(--danger)"></i>',
+    'modified': '<i class="icon-refresh-cw" style="color:#d29922"></i>',
+    'login': '<i class="icon-log-in" style="color:var(--info)"></i>',
+    'db_update': '<i class="icon-database" style="color:var(--text-muted)"></i>',
+};
+const activityActionLabel = {
+    'deploy': '部署', 'ea_delete': '刪除', 'ea_toggle': '暫停/恢復',
+    'added': '新增', 'deleted': '刪除', 'modified': '更新', 'login': '登入',
+    'db_update': '資料庫更新',
+};
+
+// 顯示/隱藏「已更新資料庫」恆常記錄
+function toggleDbUpdates() {
+    const show = document.getElementById('showDbUpdates').checked;
+    localStorage.setItem('showDbUpdates', show ? '1' : '0');
+    fetchActivity();
+}
+
+async function fetchActivity() {
+    try {
+        const showDb = localStorage.getItem('showDbUpdates') === '1';
+        const cb = document.getElementById('showDbUpdates');
+        if (cb) cb.checked = showDb;
+        const includeDb = showDb ? '&include_db=1' : '';
+        const res = await fetch('/api/activity?t=' + Date.now() + includeDb, { signal: AbortSignal.timeout(5000) });
+        const d = await res.json();
+        const rows = d.activities || [];
+        const tbody = document.querySelector('#activityTable tbody');
+        const count = document.getElementById('activityCount');
+        if (count) count.textContent = rows.length;
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">暫無活動記錄</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rows.map(a => {
+            const icon = activityIconMap[a.action] || '<i class="icon-activity" style="color:var(--text-muted)"></i>';
+            const label = activityActionLabel[a.action] || a.action;
+            const t = new Date(a.time * 1000);
+            const timeStr = t.toLocaleDateString() + ' ' + t.toLocaleTimeString();
+            return `<tr>
+                <td style="white-space:nowrap;font-size:12px;color:var(--text-muted)">${timeStr}</td>
+                <td><span class="badge" style="background:var(--bg-muted);color:var(--text-muted)">${icon} ${label}</span></td>
+                <td>${a.message || ''}</td>
+            </tr>`;
+        }).join('');
+    } catch (e) { /* server 未支援就靜默 */ }
+}
+
 // Init
 loadDashboard();
 loadEAConfig();
 loadAnalysis();
 loadEALibrary();
+fetchEAInventory();
+fetchNotifications();
+fetchActivity();
 setInterval(loadDashboard, 5000);
+setInterval(loadEAConfig, 10000);  // 配對庫列表+數量自己 poll（唔靠 fetchEAInventory）
 setInterval(loadAnalysis, 10000);
 setInterval(loadEALibrary, 30000);
+setInterval(fetchEAInventory, 10000);
+setInterval(fetchNotifications, 5000);
+setInterval(fetchActivity, 10000);
+setInterval(pollAiControl, 2000);  // 網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
 
 // === EA Library ===
 async function loadEALibrary() {
@@ -579,52 +1240,81 @@ async function loadEALibrary() {
         let oHtml = '';
         official.forEach(f => {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-            const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string';
+            // 已加入 = config 有配對設定 + 本機有檔案（同配對庫一致 — Bug #65：本機冇但 config 殘留會誤顯示「已加入」）
+            const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string' && !!eaDeployStatus[baseName];
             oHtml += `<tr>
-                <td><b>${f.name}</b> <span style="font-size:10px;color:#3fb950">平台提供</span></td>
+                <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">平台提供</span></td>
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
-                <td>${added ? '<span style="color:#3fb950;font-size:11px">✅ 已加入</span>'
-                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')">➕ 移去配對</button>`}</td>
+                <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
+                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
             </tr>`;
         });
         const offTable = document.querySelector('#officialTable tbody');
-        if (offTable) offTable.innerHTML = oHtml || '<tr><td colspan="3" style="text-align:center;padding:20px;color:#8b949e">—</td></tr>';
+        if (offTable) offTable.innerHTML = oHtml || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">—</td></tr>';
 
-        // 社群提供嘅 EA（Developer 上傳）
+        // 社群提供嘅 EA（Developer 上傳）— 只顯示，唔會自動加入（自動加入會令刪除咗嘅 EA 復活）
         const communityFiles = (data.files || []).filter(f => f.type === 'community');
         if (communityFiles.length > 0) {
             // 加返落 official table 下面（用分隔線）
             communityFiles.forEach(f => {
                 const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string';
-                if (!added) {
-                    addEAToPairing(baseName, f.name, '社群');
-                }
+                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string' && !!eaDeployStatus[baseName];
                 oHtml += `<tr style="border-top:${communityFiles.indexOf(f)===0?'2px dashed #bb8009':'none'}">
-                    <td><b>${f.name}</b> <span style="font-size:10px;color:#d29922">🟡 社群提供</span></td>
+                    <td><b>${f.name}</b> <span class="badge badge-blue" style="font-size:10px">社群提供</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
-                    <td>${added ? '<span style="color:#3fb950;font-size:11px">✅ 已加入</span>'
-                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')">➕ 移去配對</button>`}</td>
+                    <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
                 </tr>`;
             });
         }
 
-        // 用戶上傳嘅 EA 直接放 EA 倉庫下面
+        // 用戶上傳嘅 EA 直接放 EA 倉庫下面 — 只顯示，唔會自動加入（Bug #62：自動加入令刪除咗嘅 EA 復活）
         const userFiles = (data.files || []).filter(f => f.type === 'user');
         if (userFiles.length > 0) {
             userFiles.forEach(f => {
                 const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string';
-                if (!added) {
-                    // 自動加入配對庫
-                    addEAToPairing(baseName, f.name, '用戶');
-                }
+                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string' && !!eaDeployStatus[baseName];
+                oHtml += `<tr style="border-top:2px dashed #3fb950">
+                    <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">用戶上傳</span></td>
+                    <td style="font-size:12px;color:#8b949e">${f.size}</td>
+                    <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','用戶')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
+                </tr>`;
             });
         }
     } catch(e) {}
 }
 
 async function addEAToPairing(baseName, fileName, source) {
+    // 顯示 AI 控制警告視窗（網站版 — 處理緊通知 + 緊急停止）
+    showControlModal('正在配對 ' + baseName + '，請稍候...');
+    // Step 1: 安裝 EA 落本機 MT5 Experts 目錄（配對庫顯示本機已安裝 EA）
+    //         server 會等 compile 完成先返回（double-check — 唔會假成功）
+    let installData = null;
+    try {
+        const installRes = await fetch('/api/ea-library/install-local/' + encodeURIComponent(fileName), {
+            method: 'POST'
+        });
+        installData = await installRes.json();
+        if (!installData.success) {
+            showLog('❌ 安裝失敗: ' + (installData.error || 'unknown'), 'log-error');
+            return;
+        }
+    } catch(e) {
+        showLog('❌ 安裝失敗: ' + e.message, 'log-error');
+        return;
+    }
+
+    // Double-check 結果：compile 失敗要警告用戶 + 提供重試
+    if (installData.compile_ok === false) {
+        showLog('⚠️ ' + fileName + ' 已複製至本機，但編譯失敗 — MT5 可能未顯示！', 'log-warn');
+        if (confirm('⚠️ ' + fileName + ' 編譯失敗（MT5 可能未顯示）\n\n要立即重試編譯嗎？')) {
+            retryCompile(baseName);
+        }
+        return;
+    }
+
+    // Step 2: 寫 config（symbol/magic/tf/lot）
     const res = await fetch('/api/ea-config');
     const data = await res.json();
     let mappings = data.mappings || {};
@@ -664,22 +1354,59 @@ async function addEAToPairing(baseName, fileName, source) {
     if (saveRes.ok) {
         loadEALibrary();
         loadEAConfig();
-        showLog('✅ ' + fileName + ' 已加入配對庫！', 'log-success');
+        fetchEAInventory();
+        showLog('✅ ' + fileName + ' 已安裝到本機 + 加入配對庫！', 'log-success');
     } else {
         showLog('❌ 加入失敗', 'log-error');
     }
+    // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
+}
+
+// 重試 compile（之前 compile 失敗之後手動再觸發）
+async function retryCompile(baseName) {
+    // 重試編譯會操控 MetaEditor（電腦）→ 彈警告視窗
+    showControlModal('正在重試編譯 ' + baseName + '，請稍候...');
+    try {
+        const res = await fetch('/api/ea-library/retry-compile/' + encodeURIComponent(baseName), {
+            method: 'POST'
+        });
+        const data = await res.json();
+        if (data.compile_ok) {
+            showLog('✅ ' + baseName + ' 重試 compile 成功！', 'log-success');
+            loadEALibrary();
+            loadEAConfig();
+            fetchEAInventory();
+            setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 2000);
+        } else {
+            showLog('❌ ' + baseName + ' 重試 compile 失敗: ' + (data.message || '未知錯誤'), 'log-error');
+        }
+    } catch(e) {
+        showLog('❌ 重試失敗: ' + e.message, 'log-error');
+    }
+    // 唔即刻 hide — 由 pollAiControl 控制
 }
 
 async function deleteEA(eaName) {
-    if (!confirm(`確定要剷除 ${eaName} 嗎？`)) return;
+    if (!confirm(`確定要刪除 ${eaName} 嗎？\n會刪除本機 MT5 檔案及配對設定`)) return;
+    showControlModal('正在刪除 ' + eaName + '，請稍候...');
     try {
+        // 1. 刪除本機 MQL5/Experts 檔案
+        const delRes = await fetch(`/api/ea-library/remove-local/${eaName}`, { method: 'POST' });
+        if (!delRes.ok && delRes.status !== 404) {
+            const d = await delRes.json().catch(() => ({}));
+            showLog(`❌ 刪除檔案失敗: ${d.error || delRes.status}`, 'log-error');
+        }
+        // 2. 移除 DB config
         const res = await fetch(`/api/ea-config/${eaName}`, { method: 'DELETE' });
         if (res.ok) {
-            showLog(`🗑️ ${eaName} 已剷除`, 'log-error');
+            showLog(`🗑️ ${eaName} 已刪除（檔案+設定）`, 'log-error');
+            // 先等 config 更新（eaMappings）再渲染 EA 倉庫 — 唔可以並行（會用舊值顯示「已加入」）
+            await loadEAConfig();
             loadEALibrary();
-            loadEAConfig();
+            fetchEAInventory();
         }
     } catch(e) { console.error(e); }
+    // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
 }
 
 async function toggleEA(eaName) {
@@ -694,6 +1421,7 @@ async function toggleEA(eaName) {
 }
 
 async function deployEA(eaName, symbol, tf, magic, lot) {
+    showControlModal('正在部署 ' + eaName + ' 至 MT5，請稍候...');
     // Step 1: Save config first
     await saveEAConfig();
     
@@ -702,19 +1430,101 @@ async function deployEA(eaName, symbol, tf, magic, lot) {
     const dashData = await dashRes.json();
     if (dashData.status !== 'connected' && dashData.status !== 'running') {
         showLog('❌ Agent 離線，無法部署', 'log-error');
+        hideControlModal();
         return;
     }
     
-    // Step 3: Emit deploy command (auto-attach to chart)
-    socket.emit('deploy_ea', {
-        agent_id: dashData.agent_id,
-        ea_name: eaName,
-        symbol: symbol,
-        tf: tf,
-        magic: magic,
-        lot: lot
+    // Step 3: HTTP API deploy (更可靠，唔靠 Socket.IO)
+    try {
+        const deployRes = await fetch('/api/deploy', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                ea_name: eaName,
+                symbol: symbol,
+                tf: tf,
+                magic: magic,
+                lot: lot
+            })
+        });
+        const deployData = await deployRes.json();
+        if (deployData.success) {
+            // ⚠️ 手動首次部署（Controller）：警告視窗彈出（含指引 + 緊急停止）→
+            // 用戶手動 double-click → 心跳出現 → 警告視窗自動關閉
+            if (deployData.manual_action) {
+                manualDeployActive = true;  // 鎖定 — pollAiControl 唔可以關閉
+                const closeBtn = document.getElementById('aiControlCloseBtn');
+                if (closeBtn) closeBtn.style.display = 'block';  // 顯示「關閉視窗」（完成/取消可以自己關）
+                showControlModal('請手動完成首次部署（1 秒）', 'MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！');
+                showLog('📌 ' + deployData.message, 'log-info');
+                // 心跳 poll：每 2 秒檢查 Controller 心跳 — running → 完成 + 關閉
+                const manualStart = Date.now();
+                const manualPoll = setInterval(async () => {
+                    try {
+                        const r = await fetch('/api/ea-config?t=' + Date.now());
+                        const d = await r.json();
+                        const st = (d.runtime_status || {})['Controller'];
+                        if (st === 'running') {
+                            clearInterval(manualPoll);
+                            manualDeployActive = false;
+                            showToast('✅ Controller 已運行 — 全自動化已啟動！', 'added');
+                            hideControlModal();
+                        } else if (Date.now() - manualStart > 300000) {
+                            clearInterval(manualPoll);
+                            manualDeployActive = false;
+                            showToast('⏰ 5 分鐘未完成 — 請檢查 MT5 或再試', 'deleted');
+                            hideControlModal();
+                        }
+                    } catch(e) { /* 網絡抖動 — 下個 tick 再試 */ }
+                }, 2000);
+                return;
+            }
+            showLog(`🚀 ${deployData.message}`, 'log-info');
+            // 警告視窗要保持到部署真正完成（watcher auto_attach 完成先關）
+            await waitDeployDone(eaName);
+        } else {
+            showLog('❌ 部署失敗: ' + (deployData.error || 'Unknown'), 'log-error');
+        }
+    } catch(e) {
+        showLog('❌ 部署錯誤: ' + e.message, 'log-error');
+    }
+    // 唔即刻 hide — 由 pollAiControl 控制
+}
+
+// 等部署完成（poll activity log 睇 deploy_result 記錄）— 警告視窗做完動作先消失
+async function waitDeployDone(eaName, maxWaitMs = 120000) {
+    const start = Date.now();
+    const deadline = start + maxWaitMs;
+    while (Date.now() < deadline) {
+        try {
+            const res = await fetch('/api/activity?t=' + Date.now(), { signal: AbortSignal.timeout(5000) });
+            const d = await res.json();
+            const recent = (d.activities || []).slice(0, 15);
+            const done = recent.find(a => a.action === 'deploy_result' && a.ea === eaName);
+            if (done) {
+                showLog(done.message.includes('成功') ? '✅ ' + done.message : '❌ ' + done.message,
+                    done.message.includes('成功') ? 'log-success' : 'log-error');
+                break;
+            }
+        } catch(e) { /* poll 失敗就繼續等 */ }
+        await new Promise(r => setTimeout(r, 3000));
+    }
+    hideControlModal();
+}
+
+async function toggleBind() {
+    const res = await fetch('/api/bind-account', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'bind'})
     });
-    showLog(`🚀 正在部署 ${eaName} → ${symbol} ${tf}...`, 'log-info');
+    const d = await res.json();
+    if (d.success) {
+        showLog('✅ 已綁定 Account: ' + d.bound_account, 'log-success');
+    } else {
+        showLog('❌ ' + (d.error || '綁定失敗'), 'log-error');
+    }
+    loadDashboard();
 }
 
 async function uploadEA() {
@@ -723,18 +1533,33 @@ async function uploadEA() {
     const file = input.files[0];
     const form = new FormData();
     form.append('file', file);
+    showControlModal('正在上傳 ' + file.name + '，請稍候...');
     try {
         const res = await fetch('/api/ea-library/upload', { method: 'POST', body: form });
         const data = await res.json();
         if (data.success) {
-            alert('✅ ' + data.filename + ' 上傳成功！');
+            // Double-check：compile 結果要話俾用戶知（唔可以假成功）
+            if (data.compile_ok === false) {
+                const shouldRetry = confirm('⚠️ ' + data.filename + ' 已上傳，但編譯失敗！\nMT5 可能未顯示 — 要立即重試編譯嗎？');
+                if (shouldRetry) {
+                    retryCompile(data.filename.replace(/\.(mq5|ex5)$/i, ''));
+                }
+            } else {
+                alert('✅ ' + data.filename + ' 上傳成功！' + (data.installed_local ? '\n已自動安裝到本機 MT5 配對庫（已編譯 ✅）' : ''));
+            }
             loadEALibrary();
+            loadEAConfig();
+            fetchEAInventory();
+            if (data.installed_local) {
+                setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 2000);
+            }
         } else {
             alert('❌ ' + (data.error || 'Upload failed'));
         }
     } catch(e) {
         alert('❌ Upload error: ' + e.message);
     }
+    // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
     input.value = '';
 }
 
@@ -769,14 +1594,6 @@ async function devUploadEA() {
         }
     } catch(e) {}
 })();
-
-function renderAutoTradeTable(data) {
-    const tbody = document.querySelector('#autoTradeTable tbody');
-    tbody.innerHTML = data.map(function(r) {
-        const signalClass = r.signal === 'BUY' ? 'color:#3fb950' : r.signal === 'SELL' ? 'color:#f85149' : 'color:#8b949e';
-        return '<tr><td>'+r.ea+'</td><td>'+r.symbol+'</td><td>'+r.tf+'</td><td>'+r.sma10+'</td><td>'+r.sma30+'</td><td style="'+signalClass+';font-weight:bold">'+r.signal+'</td><td>'+(r.alive?'<span style="color:#3fb950">🟢 Alive</span>':'<span style="color:#f85149">🔴 Down</span>')+'</td></tr>';
-    }).join('');
-}
 </script>
 </body>
 </html>
