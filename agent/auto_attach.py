@@ -1092,7 +1092,7 @@ def load_hotkey_map():
                     ls = line.strip()
                     if ls.endswith(chr(13)):
                         ls = ls[:-1]
-                    if ls.startswith('[') and ls.endswith(']'):
+                    if (ls.startswith('[') and ls.endswith(']')) or (ls.startswith('<') and ls.endswith('>')):
                         section = ls[1:-1]
                     elif '=' in ls and section == 'experts':
                         k, v = ls.split('=', 1)
@@ -1142,46 +1142,68 @@ def attach_ea_hotkey(ea_name, mt5_pid):
         # send 快捷鍵
         _sk(combo)
         time.sleep(3)
-        # 檢查 dialog（代替確認 → 是；Properties → 確定）
-        handled = False
-        for _ in range(6):
+        def _bm_click(_btn):
+            """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
+            try:
+                import ctypes as _c2
+                _c2.windll.user32.SendMessageW(ctypes.c_void_p(int(_btn.element_info.handle)), 0x00F5, 0, 0)
+                return True
+            except Exception:
+                try:
+                    _btn.click()
+                    return True
+                except Exception:
+                    return False
+
+        # 檢查 dialog（循環處理所有 — Properties 確定 → 代替確認「是」→ 可能有多個）
+        for _ in range(8):
+            acted = False
             for _w in _app.windows():
                 try:
                     if _w.class_name() == '#32770':
                         _t = _w.window_text()
-                        # 代替確認（圖表已有 EA）
-                        if '代替' in _t or 'replace' in _t.lower():
+                        # 代替確認（圖表已有 EA — 文字喺 Static 內容，標題係「MetaTrader 5」）
+                        _is_replace = '代替' in _t or 'replace' in _t.lower()
+                        if not _is_replace:
+                            try:
+                                _dw0 = _app.window(handle=int(_w.element_info.handle))
+                                for _s in _dw0.children(class_name='Static'):
+                                    _st = _s.window_text()
+                                    if '代替' in _st or 'replace' in _st.lower():
+                                        _is_replace = True
+                                        break
+                            except Exception:
+                                pass
+                        if _is_replace:
                             _dw = _app.window(handle=int(_w.element_info.handle))
                             for _b in _dw.children(class_name='Button'):
                                 try:
                                     if '是' in _b.window_text() or 'Yes' in _b.window_text():
-                                        _b.click()
-                                        print("✅ 已撳「是」（代替確認）")
-                                        handled = True
+                                        if _bm_click(_b):
+                                            print("✅ 已撳「是」（代替確認）")
+                                        acted = True
                                         break
                                 except Exception:
                                     pass
-                            if handled:
-                                break
-                        # Properties dialog（EA 名 + 確定）
-                        elif ea_name in _t and ('確定' in _t or 'OK' in _t or True):
+                        elif ea_name in _t:
                             _dw = _app.window(handle=int(_w.element_info.handle))
                             for _b in _dw.children(class_name='Button'):
                                 try:
                                     if '確定' in _b.window_text() or 'OK' in _b.window_text():
-                                        _b.click()
-                                        print("✅ 已撳「確定」（Properties）")
-                                        handled = True
+                                        if _bm_click(_b):
+                                            print("✅ 已撳「確定」（Properties）")
+                                        acted = True
                                         break
                                 except Exception:
                                     pass
-                            if handled:
-                                break
                 except Exception:
                     pass
-            if handled:
+            if not acted:
+                time.sleep(1)
+                # 兩 round 冇動作 → 完成
                 break
-            time.sleep(1)
+            time.sleep(1.5)
+
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
         if os.path.isfile(hb):

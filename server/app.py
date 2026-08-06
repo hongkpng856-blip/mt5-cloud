@@ -883,6 +883,8 @@ def api_ea_dev_upload():
         "type": "community"
     })
 
+
+
 @app.route('/api/ea-library/<path:filename>')
 def api_ea_download(filename):
     """下載 EA 檔案（先睇community→用戶→官方）"""
@@ -949,147 +951,6 @@ def api_ea_remove_local(filename):
         log_activity('ea_delete', f'{filename} 已於網頁刪除（本機檔案已刪除）', ea=filename)
         return jsonify({"success": True, "removed": removed})
     return jsonify({"success": False, "error": "EA not found in local Experts dir"}), 404
-
-@app.route('/api/ea-library/install-local/<filename>', methods=['POST'])
-@login_required
-# ═══════════════════════════════════════════════════════════
-# 🎯 熱鍵管理（2026-08-06 用戶設計 — 配對 set / 剷除移除 / 唔重複）
-# MT5 熱鍵設定檔: <Terminal>\config\hotkeys.ini（UTF-16 LE）
-#   格式: [experts] section — "Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+N"
-# ═══════════════════════════════════════════════════════════
-
-def _mt5_hotkeys_ini():
-    """搵 hotkeys.ini 路徑"""
-    data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-    if os.path.isdir(data_dir):
-        for d in os.listdir(data_dir):
-            p = os.path.join(data_dir, d, 'config', 'hotkeys.ini')
-            if os.path.isfile(p):
-                return p
-    return None
-
-
-def _read_hotkeys_ini():
-    """讀 hotkeys.ini → (experts dict, indicators dict, raw lines)"""
-    p = _mt5_hotkeys_ini()
-    if not p:
-        return {}, {}, []
-    try:
-        with open(p, 'rb') as f:
-            raw = f.read()
-        text = raw.decode('utf-16')
-    except Exception:
-        try:
-            with open(p, 'r', encoding='utf-8') as f:
-                text = f.read()
-        except Exception:
-            return {}, {}, []
-    experts = {}
-    indicators = {}
-    section = None
-    lines = text.splitlines()
-    for line in lines:
-        ls = line.strip().replace('\r', '')
-        if ls.startswith('[') and ls.endswith(']'):
-            section = ls[1:-1]
-        elif '=' in ls and section:
-            k, v = ls.split('=', 1)
-            if section == 'experts':
-                experts[k] = v
-            elif section == 'indicators':
-                indicators[k] = v
-    return experts, indicators, lines
-
-
-def _write_hotkeys_ini(experts, indicators):
-    """寫回 hotkeys.ini（UTF-16 LE — 保留 indicators）"""
-    p = _mt5_hotkeys_ini()
-    if not p:
-        return False
-    lines = []
-    lines.append('<indicators>')
-    for k, v in indicators.items():
-        lines.append(f'{k}={v}')
-    lines.append('</indicators>')
-    lines.append('')
-    lines.append('<experts>')
-    for k, v in experts.items():
-        lines.append(f'{k}={v}')
-    lines.append('</experts>')
-    text = '\r\n'.join(lines) + '\r\n'
-    try:
-        with open(p, 'wb') as f:
-            f.write(text.encode('utf-16'))
-        print(f"[hotkeys] 已寫入 {p}")
-        return True
-    except Exception as e:
-        print(f"[hotkeys] 寫入失敗: {e}")
-        return False
-
-
-def _alloc_hotkey(experts):
-    """分配下一個可用熱鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）"""
-    used = set(experts.values())
-    candidates = [f'Ctrl+{i}' for i in range(1, 10)] + ['Ctrl+0'] + \
-                 [f'Ctrl+Alt+{i}' for i in range(1, 10)] + ['Ctrl+Alt+0']
-    for c in candidates:
-        if c not in used:
-            return c
-    return None
-
-
-def assign_hotkey(ea_name):
-    """配對時分配熱鍵 + 寫入 hotkeys.ini（MT5 立即認得 — 唔使 GUI）"""
-    try:
-        experts, indicators, _ = _read_hotkeys_ini()
-        # 已存在就保留（唔重複分配）
-        for k, v in experts.items():
-            if ea_name in k:
-                return v
-        combo = _alloc_hotkey(experts)
-        if not combo:
-            print(f"[hotkeys] 冇可用熱鍵（太多 EA）")
-            return None
-        # 路徑：Experts\MT5Cloud_EA\<EA>.ex5
-        experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
-        if _write_hotkeys_ini(experts, indicators):
-            print(f"[hotkeys] {ea_name} → {combo}")
-            return combo
-        return None
-    except Exception as e:
-        print(f"[hotkeys] assign 失敗: {e}")
-        return None
-
-
-def release_hotkey(ea_name):
-    """剷除時移除熱鍵（釋放位置）"""
-    try:
-        experts, indicators, _ = _read_hotkeys_ini()
-        removed = False
-        for k in list(experts.keys()):
-            if ea_name in k:
-                del experts[k]
-                removed = True
-        if removed:
-            _write_hotkeys_ini(experts, indicators)
-            print(f"[hotkeys] {ea_name} 熱鍵已移除（位置釋放）")
-        return removed
-    except Exception as e:
-        print(f"[hotkeys] release 失敗: {e}")
-        return False
-
-
-def get_hotkey(ea_name):
-    """攞 EA 嘅熱鍵（auto_attach 用 — 讀 hotkeys.ini 權威來源）"""
-    try:
-        experts, _, _ = _read_hotkeys_ini()
-        for k, v in experts.items():
-            if ea_name in k:
-                return v
-    except Exception:
-        pass
-    return None
-
 
 @app.route('/api/ea-library/install-local/<filename>', methods=['POST'])
 @login_required
@@ -1214,15 +1075,23 @@ def api_ea_install_local(filename):
         compile_ok = False
         exp_dir = experts_dirs[0] if experts_dirs else None
         if exp_dir:
-            ex5_target = os.path.join(exp_dir, os.path.splitext(filename)[0] + '.ex5')
+            # ⚠️ 2026-08：EA 喺 MT5Cloud_EA folder — 檢查 folder（+ 根目錄 fallback）
+            ex5_target = None
+            for _d in (os.path.join(exp_dir, 'MT5Cloud_EA'), exp_dir):
+                _p = os.path.join(_d, os.path.splitext(filename)[0] + '.ex5')
+                if os.path.isfile(_p):
+                    ex5_target = _p
+                    break
+            if ex5_target is None:
+                ex5_target = os.path.join(exp_dir, 'MT5Cloud_EA', os.path.splitext(filename)[0] + '.ex5')
             deadline = time.time() + 45
             while time.time() < deadline:
                 # 檢查 compile_cmd 仲喺唔喺（watcher 處理完會刪）
                 cmd_left = glob.glob(os.path.join(
                     os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files',
                     f'compile_cmd_{os.path.splitext(filename)[0]}_*.json'))
-                if os.path.exists(ex5_target) and os.path.getmtime(ex5_target) >= os.path.getmtime(
-                        os.path.join(exp_dir, filename)):
+                _mq5_src = os.path.join(os.path.dirname(ex5_target), filename)
+                if os.path.exists(ex5_target) and os.path.getmtime(ex5_target) >= os.path.getmtime(_mq5_src):
                     compile_ok = True
                     break
                 if not cmd_left and not os.path.exists(ex5_target):
@@ -1251,6 +1120,189 @@ def api_ea_install_local(filename):
         "message": f"{filename} 已安裝到本機 MT5" + (
             '（已編譯 ✅）' if compile_ok else '（⚠️ compile 失敗，MT5 可能未顯示 — 檢查 MetaEditor）' if compile_ok is False and filename.lower().endswith('.mq5') else '')
     })
+
+def _mt5_hotkeys_ini():
+    """搵 hotkeys.ini 路徑"""
+    data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+    if os.path.isdir(data_dir):
+        for d in os.listdir(data_dir):
+            p = os.path.join(data_dir, d, 'config', 'hotkeys.ini')
+            if os.path.isfile(p):
+                return p
+    return None
+
+
+def _read_hotkeys_ini():
+    """讀 hotkeys.ini → (experts dict, indicators dict, raw lines)"""
+    p = _mt5_hotkeys_ini()
+    if not p:
+        return {}, {}, []
+    try:
+        with open(p, 'rb') as f:
+            raw = f.read()
+        text = raw.decode('utf-16')
+    except Exception:
+        try:
+            with open(p, 'r', encoding='utf-8') as f:
+                text = f.read()
+        except Exception:
+            return {}, {}, []
+    experts = {}
+    indicators = {}
+    section = None
+    lines = text.splitlines()
+    for line in lines:
+        ls = line.strip().replace(chr(13), '')
+        # ⚠️ hotkeys.ini 用尖括號 <experts>（唔係方括號）— 2026-08-06 bug 修復
+        if (ls.startswith('[') and ls.endswith(']')) or (ls.startswith('<') and ls.endswith('>')):
+            section = ls[1:-1]
+        elif '=' in ls and section:
+            k, v = ls.split('=', 1)
+            if section == 'experts':
+                experts[k] = v
+            elif section == 'indicators':
+                indicators[k] = v
+    return experts, indicators, lines
+
+
+def _write_hotkeys_ini(experts, indicators):
+    """寫回 hotkeys.ini（UTF-16 LE — 用戶實測格式 2026-08-06：
+    只有 <experts> section（冇 <indicators>）+ 乾淨 CRLF — MT5 先 load）"""
+    p = _mt5_hotkeys_ini()
+    if not p:
+        return False
+    lines = []
+    if indicators:
+        lines.append('<indicators>')
+        for k, v in indicators.items():
+            lines.append(f'{k}={v}')
+        lines.append('</indicators>')
+        lines.append('')
+    lines.append('<experts>')
+    for k, v in experts.items():
+        lines.append(f'{k}={v}')
+    lines.append('</experts>')
+    text = '\r\n'.join(lines) + '\r\n'
+    try:
+        with open(p, 'wb') as f:
+            f.write(text.encode('utf-16'))
+        print(f"[hotkeys] 已寫入 {p}")
+        return True
+    except Exception as e:
+        print(f"[hotkeys] 寫入失敗: {e}")
+        return False
+
+
+def _alloc_hotkey(experts):
+    """分配下一個可用熱鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）"""
+    used = set(experts.values())
+    candidates = [f'Ctrl+{i}' for i in range(1, 10)] + ['Ctrl+0'] + \
+                 [f'Ctrl+Alt+{i}' for i in range(1, 10)] + ['Ctrl+Alt+0']
+    for c in candidates:
+        if c not in used:
+            return c
+    return None
+
+
+def assign_hotkey(ea_name):
+    """配對時分配熱鍵 + 寫入 hotkeys.ini（MT5 立即認得 — 唔使 GUI）"""
+    try:
+        experts, indicators, _ = _read_hotkeys_ini()
+        # 已存在就保留（唔重複分配）
+        for k, v in experts.items():
+            if ea_name in k:
+                return v
+        combo = _alloc_hotkey(experts)
+        if not combo:
+            print(f"[hotkeys] 冇可用熱鍵（太多 EA）")
+            return None
+        # 路徑：Experts\MT5Cloud_EA\<EA>.ex5
+        experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
+        if _write_hotkeys_ini(experts, indicators):
+            print(f"[hotkeys] {ea_name} → {combo}")
+            return combo
+        return None
+    except Exception as e:
+        print(f"[hotkeys] assign 失敗: {e}")
+        return None
+
+
+def release_hotkey(ea_name):
+    """剷除時移除熱鍵（釋放位置）"""
+    try:
+        experts, indicators, _ = _read_hotkeys_ini()
+        removed = False
+        for k in list(experts.keys()):
+            if ea_name in k:
+                del experts[k]
+                removed = True
+        if removed:
+            _write_hotkeys_ini(experts, indicators)
+            print(f"[hotkeys] {ea_name} 熱鍵已移除（位置釋放）")
+        return removed
+    except Exception as e:
+        print(f"[hotkeys] release 失敗: {e}")
+        return False
+
+
+def get_hotkey(ea_name):
+    """攞 EA 嘅熱鍵（auto_attach 用 — 讀 hotkeys.ini 權威來源）"""
+    try:
+        experts, _, _ = _read_hotkeys_ini()
+        for k, v in experts.items():
+            if ea_name in k:
+                return v
+    except Exception:
+        pass
+    return None
+
+
+def _mt5_start_time():
+    """MT5 進程啟動時間（epoch）— 用 wmic"""
+    import subprocess as _sp
+    try:
+        out = _sp.run('wmic process where "name=terminal64.exe" get CreationDate /value',
+                      shell=True, capture_output=True)
+        for line in out.stdout.decode('utf-8', errors='replace').splitlines():
+            if 'CreationDate' in line:
+                v = line.split('=')[1].strip()
+                # YYYYMMDDHHMMSS.mmmmmm+000
+                import datetime as _dt
+                return _dt.datetime.strptime(v[:14], '%Y%m%d%H%M%S').timestamp()
+    except Exception:
+        pass
+    return 0
+
+
+def _hotkeys_need_reload():
+    """hotkeys.ini 有冇新過 MT5 啟動（有 = 熱鍵未 load — 要重啟 MT5）"""
+    try:
+        p = _mt5_hotkeys_ini()
+        if not p or not os.path.isfile(p):
+            return False
+        ini_mtime = os.path.getmtime(p)
+        mt5_start = _mt5_start_time()
+        # MT5 未開 → 唔需要 reload（開嗰陣會 load）
+        if mt5_start == 0:
+            return False
+        return ini_mtime > mt5_start + 5
+    except Exception:
+        return False
+
+
+def _restart_mt5():
+    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 用戶實測：熱鍵要重啟先 load"""
+    try:
+        import subprocess as _sp
+        _sp.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+        time.sleep(3)
+        mt5_exe = os.environ.get('MT5_EXE_PATH', r'C:\Program Files\MetaTrader 5\terminal64.exe')
+        _sp.Popen([mt5_exe])
+        print("[hotkeys] MT5 已重啟（reload 熱鍵）")
+        return True
+    except Exception as e:
+        print(f"[hotkeys] 重啟 MT5 失敗: {e}")
+        return False
 
 
 @app.route('/api/ea-library/retry-compile/<name>', methods=['POST'])
@@ -1605,6 +1657,15 @@ def api_deploy():
             "manual_action": True,
             "message": "請手動完成首次部署（1 秒）：MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！"
         })
+
+    # 🎯 熱鍵 reload 檢查（2026-08：配對後 hotkeys.ini 有變 → 重啟 MT5 先 load → 部署先 work）
+    try:
+        if _hotkeys_need_reload():
+            print(f"[deploy] hotkeys.ini 有變（未 load）— 重啟 MT5")
+            _restart_mt5()
+            time.sleep(50)
+    except Exception:
+        pass
 
     # Write deploy command file (watcher will pick it up)
     import time as _wt

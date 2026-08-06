@@ -51,9 +51,10 @@ def is_auto_attach_running():
         try:
             with open(AUTO_ATTACH_LOCK, 'r') as f:
                 pid = int(f.read().strip())
-            # Check if process is still alive
-            import psutil
-            if psutil.pid_exists(pid):
+            # Check if process is still alive（⚠️ 2026-08：lock 可能係 watcher 自己（deploy worker 用 os.getpid 寫）— 自己唔算）
+            import psutil as _ps
+            _self_pid = os.getpid()
+            if _ps.pid_exists(pid) and pid != _self_pid:
                 return True
         except:
             pass
