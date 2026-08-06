@@ -424,8 +424,24 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     ea_node = ea
                     break
             
+            # ⚠️ 2026-08：web 配對嘅 EA 集中喺 MT5Cloud_EA folder — 要入 folder 搵
             if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
+                for sub in ea_trading_node.children():
+                    try:
+                        st = sub.text()
+                        if 'MT5Cloud' in st or 'Cloud' in st:
+                            sub.expand()
+                            time.sleep(1)
+                            for ea in sub.children():
+                                if ea.text() == ea_name:
+                                    ea_node = ea
+                                    break
+                            break
+                    except Exception:
+                        pass
+            
+            if not ea_node:
+                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue

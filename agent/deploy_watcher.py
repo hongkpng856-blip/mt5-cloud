@@ -295,18 +295,22 @@ _refresh_cooldown = 3  # 秒 — 防連環觸發（3 秒內唔重複）
 
 
 def get_experts_snapshot():
-    """攞 Experts 目錄檔案清單（name + size + mtime）做 fingerprint"""
+    """攞 Experts 目錄檔案清單（name + size + mtime）做 fingerprint
+    ⚠️ 2026-08：掃埋子 folder（MT5Cloud_EA — web 配對集中 folder）— os.walk"""
     try:
         if not os.path.isdir(MT5_EXPERTS_DIR):
             return None
         snap = {}
-        for f in os.listdir(MT5_EXPERTS_DIR):
-            p = os.path.join(MT5_EXPERTS_DIR, f)
-            try:
-                st = os.stat(p)
-                snap[f] = (st.st_size, int(st.st_mtime))
-            except Exception:
-                continue
+        for dirpath, dirnames, filenames in os.walk(MT5_EXPERTS_DIR):
+            for f in filenames:
+                if f.endswith(('.mq5', '.ex5')):
+                    p = os.path.join(dirpath, f)
+                    try:
+                        st = os.stat(p)
+                        rel = os.path.relpath(p, MT5_EXPERTS_DIR).replace('\\', '/')
+                        snap[rel] = (st.st_size, int(st.st_mtime))
+                    except Exception:
+                        continue
         return snap
     except Exception:
         return None

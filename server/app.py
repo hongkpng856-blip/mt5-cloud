@@ -919,14 +919,17 @@ def api_ea_remove_local(filename):
 
     removed = []
     for exp_dir in experts_dirs:
-        for ext in ('.ex5', '.mq5'):
-            target = os.path.join(exp_dir, filename + ext)
-            if os.path.isfile(target):
-                try:
-                    os.remove(target)
-                    removed.append(target)
-                except Exception as e:
-                    return jsonify({"success": False, "error": str(e)}), 500
+        # ⚠️ 2026-08：EA 喺 MT5Cloud_EA folder（web 配對）— 兩邊都搵（根目錄 + folder）
+        search_dirs = [exp_dir, os.path.join(exp_dir, 'MT5Cloud_EA')]
+        for search_dir in search_dirs:
+            for ext in ('.ex5', '.mq5'):
+                target = os.path.join(search_dir, filename + ext)
+                if os.path.isfile(target):
+                    try:
+                        os.remove(target)
+                        removed.append(target)
+                    except Exception as e:
+                        return jsonify({"success": False, "error": str(e)}), 500
 
     if removed:
         # 寫「網頁剷除」標記 → watcher 偵測到刪除時知道來源（唔會誤判做電腦剷除）
@@ -988,14 +991,19 @@ def api_ea_install_local(filename):
     if not experts_dirs:
         return jsonify({"success": False, "error": "搵唔到本機 MT5 Experts 目錄"}), 500
 
-    # 3. 複製去第一個 Experts 目錄
+    # 3. 複製去 MT5Cloud_EA folder（2026-08 用戶要求：所有 web 配對嘅 EA 集中一個 folder）
     installed = []
     compiled = False
     # ⚠️ 用 src_path 嘅 basename（保留副檔名）— filename 可能冇 .mq5（前端傳 baseName）
     # 唔可以淨用 filename — 會複製錯名 + 唔會寫 compile_cmd（endswith('.mq5') False）
     dest_name = os.path.basename(src_path)
     for exp_dir in experts_dirs:
-        target = os.path.join(exp_dir, dest_name)
+        ea_folder = os.path.join(exp_dir, 'MT5Cloud_EA')
+        try:
+            os.makedirs(ea_folder, exist_ok=True)
+        except Exception:
+            pass
+        target = os.path.join(ea_folder, dest_name)
         if os.path.abspath(target) == os.path.abspath(src_path):
             continue  # 已經喺度
         try:
@@ -1008,7 +1016,7 @@ def api_ea_install_local(filename):
         if dest_name.lower().endswith('.mq5'):
             try:
                 base = os.path.splitext(dest_name)[0]
-                ex5_target = os.path.join(exp_dir, base + '.ex5')
+                ex5_target = os.path.join(ea_folder, base + '.ex5')
                 mq5_target = target
                 if not os.path.exists(ex5_target) or os.path.getmtime(ex5_target) < os.path.getmtime(mq5_target):
                     # 寫 compile_cmd 俾 deploy_watcher（MetaEditor 需要 desktop access）
