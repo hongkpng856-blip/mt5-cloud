@@ -1307,6 +1307,34 @@ def _restart_mt5():
 
 @app.route('/api/ea-library/retry-compile/<name>', methods=['POST'])
 @login_required
+
+def ensure_hotkey_for_ea(ea_name):
+    """部署前確保 EA 有熱鍵（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 設定嘅新 EA 熱鍵會冇）
+    冇熱鍵 → 分配 + 關 MT5 → 寫 → 開（reload）→ 返回 True（已就緒）"""
+    try:
+        experts, indicators, _ = _read_hotkeys_ini()
+        # 已有熱鍵
+        for k, v in experts.items():
+            if ea_name in k:
+                return True
+        # 冇 → 分配 + 重啟 MT5
+        combo = _alloc_hotkey(experts)
+        if not combo:
+            return False
+        experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
+        if _write_hotkeys_ini(experts, indicators):
+            print(f"[hotkeys] {ea_name} → {combo}（部署前補熱鍵）")
+            _restart_mt5()
+            import time as _t
+            _t.sleep(50)  # 等 MT5 開 + load 熱鍵
+            return True
+        return False
+    except Exception as e:
+        print(f"[hotkeys] ensure 失敗: {e}")
+        return False
+
+
+
 def api_ea_retry_compile(name):
     """重試編譯（MetaEditor GUI compile — watcher 有 desktop access）
     手動重試 compile：檢查 .mq5 喺本機 → 重新寫 compile_cmd → 等 compile 完成（double-check）
@@ -1658,12 +1686,10 @@ def api_deploy():
             "message": "請手動完成首次部署（1 秒）：MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！"
         })
 
-    # 🎯 熱鍵 reload 檢查（2026-08：配對後 hotkeys.ini 有變 → 重啟 MT5 先 load → 部署先 work）
+    # 🎯 熱鍵確保（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 嘅熱鍵會冇）
+    # 部署前檢查 EA 有冇熱鍵 — 冇就分配 + 重啟 MT5 reload
     try:
-        if _hotkeys_need_reload():
-            print(f"[deploy] hotkeys.ini 有變（未 load）— 重啟 MT5")
-            _restart_mt5()
-            time.sleep(50)
+        ensure_hotkey_for_ea(ea_name)
     except Exception:
         pass
 

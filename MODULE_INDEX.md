@@ -130,15 +130,19 @@
 1. `control_guard.acquire()` — 彈警告視窗 + 寫 lock
 2. generate_template（.tpl）
 3. 開/搵 MT5 + Navigator 統一 + 圖表平鋪（Alt+R）
-4. **熱鍵優先**：`attach_ea_hotkey()`（send 熱鍵 → dialog 循環處理）— fallback `attach_ea_navigator()`
-5. ensure_auto_trading_on
-6. verify（heartbeat + EA log）
-7. `control_guard.release()` — 關視窗 + 清 lock
+4. **開新圖表**（Ctrl+N → Enter — 2026-08：每個 EA 一個圖表 — 唔代替）
+5. **熱鍵優先**：`attach_ea_hotkey()`（send 熱鍵 → dialog 循環處理）— fallback `attach_ea_navigator()`
+6. ensure_auto_trading_on
+7. verify（heartbeat + EA log）
+8. `control_guard.release()` — 關視窗 + 清 lock
 
 **⚠️ 注意：**
 - ⚠️ **watcher 鎖**：deploy worker 寫 `.auto_attach_running` 用 os.getpid（watcher 自己）— `is_auto_attach_running()` 要 skip 自己 PID（2026-08 修 — 唔係會永遠 queuing）
-- ⚠️ deploy_cmd 積壓會卡死 watcher — 積壓時要清 + 重啟
+- ⚠️ deploy_cmd 積壓會卡死 watcher — 積壓時要清 + 重啟（**刪除已搬入 finally — 防 Tcl crash 漏刪**）
 - ⚠️ 6093 對 Navigator double-click 免疫（pyautogui/SendMessage/AHK 全試過）— 熱鍵係唯一可靠
+- ⚠️ **開新圖表**：Ctrl+N 要跟 Enter（接受默認品種）— 淨 send Ctrl+N 會彈 dialog 冇接受
+- ⚠️ **部署前確保熱鍵**（`ensure_hotkey_for_ea()`）：MT5 重啟會覆寫 hotkeys.ini（未經 GUI 設定嘅新 EA 熱鍵會冇）→ 部署前檢查 + 冇就分配 + 關 MT5 → 寫 → 開（reload）
+- ⚠️ **Watchdog**（2026-08）：`agent/watchdog.py`（+ ~/.hermes/scripts/mt5_watchdog.py）+ Hermes cron 每分鐘 — watcher/server/detector 死咗自動重啟
 
 **⚠️ 重要（Bug #50）：**
 - ⚠️ **refresh_navigator 一定要 in-process call**（`importlib` + `mod.refresh_navigator()`）— spawn subprocess 冇 desktop access 會 pyautogui 卡死 timeout

@@ -268,17 +268,20 @@ def process_deploy(filepath):
                 os.remove(AUTO_ATTACH_LOCK)
         except:
             pass
+        # 🚨 2026-08：刪 deploy_cmd 搬入 finally（防 Tcl crash 漏刪 — 重複處理卡死）
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                print(f"   🗑️ Deleted command file: {os.path.basename(filepath)}")
+        except Exception:
+            pass
     
     # Report to server
-    report_to_server(ea_name, success, 
-                     f"{ea_name} {'attached ✅' if success else 'attach failed ❌'}")
-    
-    # Delete command file
     try:
-        os.remove(filepath)
-        print(f"   🗑️ Deleted command file: {os.path.basename(filepath)}")
-    except Exception as e:
-        print(f"   ⚠️ Cannot delete {filepath}: {e}")
+        report_to_server(ea_name, success, 
+                         f"{ea_name} {'attached ✅' if success else 'attach failed ❌'}")
+    except Exception:
+        pass
     
     # Brief pause before next command
     time.sleep(2)

@@ -1125,6 +1125,11 @@ def attach_ea_hotkey(ea_name, mt5_pid):
         import ctypes as _ct
         from pywinauto import Application as _App
         from pywinauto.keyboard import send_keys as _sk
+        # 🚨 緊急停止支援（2026-08-06：之前 dialog 循環冇 check — 緊急停止冇效）
+        try:
+            from control_guard import check_abort as _chk_abort
+        except Exception:
+            _chk_abort = lambda: None
         hotkeys = load_hotkey_map()
         combo = hotkeys.get(ea_name)
         if not combo:
@@ -1137,6 +1142,15 @@ def attach_ea_hotkey(ea_name, mt5_pid):
             win = _app.window(class_name='MetaQuotes::MetaTrader::5.00')
             win.set_focus()
             time.sleep(1)
+        except Exception:
+            pass
+        # 🆕 開新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — Ctrl+N → Enter 接受默認）
+        try:
+            _sk('^n')
+            time.sleep(1.5)
+            _sk('{ENTER}')
+            time.sleep(3)
+            print("📋 已開新圖表（唔代替）")
         except Exception:
             pass
         # send 快捷鍵
@@ -1156,8 +1170,11 @@ def attach_ea_hotkey(ea_name, mt5_pid):
                     return False
 
         # 檢查 dialog（循環處理所有 — Properties 確定 → 代替確認「是」→ 可能有多個）
+        _last_dlg_count = 0
         for _ in range(8):
+            _chk_abort()  # 🚨 每 round 檢查緊急停止
             acted = False
+            _dlg_count = 0
             for _w in _app.windows():
                 try:
                     if _w.class_name() == '#32770':
@@ -1203,6 +1220,18 @@ def attach_ea_hotkey(ea_name, mt5_pid):
                 # 兩 round 冇動作 → 完成
                 break
             time.sleep(1.5)
+            # 🚨 防亂按：dialog 數量冇減少（撳咗但冇關）→ 停止（唔好無限撳）
+            _chk_abort()
+            _now_dlg = 0
+            for _w2 in _app.windows():
+                try:
+                    if _w2.class_name() == '#32770':
+                        _now_dlg += 1
+                except Exception:
+                    pass
+            if _now_dlg >= _dlg_count and _ > 2:
+                print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
+                break
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
