@@ -65,6 +65,34 @@ def wait_for_mt5(timeout=30):
 def do_restart_mt5():
     """重啟 MT5（確保 Navigator refresh）"""
     import psutil
+    import ctypes as _ct
+    
+    # 🚨 2026-08-08：先關閉全部圖表（MT5 關機記住圖表 → 開機 restore — 圖表會累積）
+    # 關閉圖表先 → MT5 開機乾淨（冇 restore）→ 部署開新圖表唔會累積
+    try:
+        import subprocess as _sp
+        _out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+        for _line in _out.stdout.decode('utf-8', errors='replace').splitlines():
+            _parts = [p.strip().strip('"') for p in _line.split(',')]
+            if len(_parts) >= 2 and _parts[0] == 'terminal64.exe' and _parts[1].isdigit():
+                _pid = int(_parts[1])
+                break
+        else:
+            _pid = None
+        if _pid:
+            from pywinauto import Application as _App2
+            _app2 = _App2(backend='win32').connect(process=_pid, timeout=8)
+            _WM_CLOSE = 0x0010
+            for _w in _app2.windows():
+                try:
+                    if 'AfxFrameOrView' in _w.class_name():
+                        _ct.windll.user32.PostMessageW(ctypes.c_void_p(int(_w.element_info.handle)), _WM_CLOSE, 0, 0)
+                except Exception:
+                    pass
+            time.sleep(2)
+            print("📋 已關閉全部圖表（開機唔 restore）")
+    except Exception:
+        pass
     
     # Kill existing MT5
     for proc in psutil.process_iter(['pid', 'name']):
@@ -1259,7 +1287,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
             print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
-        # 🚨 收埋市場報價（2026-08-07：Alt+F menu 操作可能令市場報價彈出 — 唔遮頁面）
+        # 🚨 收埋市場報價（2026-08-08：直接 ShowWindow minimize — 唔好用 Ctrl+M（toggle 會開返））
         try:
             import ctypes as _ct2
             for _w3 in _app.windows():
