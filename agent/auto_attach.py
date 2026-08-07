@@ -1190,6 +1190,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             _sk('{ENTER}')
             time.sleep(3)
             print(f"📋 已開新圖表（Alt+F → Enter → Down×{_down_n} → Enter — {(symbol or 'EURUSD').upper()}）")
+            # 🚨 確保新圖表 active（click 主視窗圖表區中央 — 新圖表疊加喺度）
+            try:
+                import pyautogui as _pg2
+                _pg2.FAILSAFE = False
+                _wr = win.rectangle()
+                _pg2.click((_wr.left + _wr.right) // 2, (_wr.top + _wr.bottom) // 2)
+                time.sleep(1)
+            except Exception:
+                pass
         except Exception:
             pass
         # send 快捷鍵

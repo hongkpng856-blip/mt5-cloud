@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.11** | 2026-08-08 | 🎯 多 EA 同時部署驗證（4 EA × 4 品種 — 心跳 ❤ running）+ 市場報價收埋（部署後 ShowWindow minimize — 唔用 Ctrl+M toggle 反效果）+ 圖表 restore 修復（do_restart_mt5 重啟前關閉全部圖表 — 唔累積）+ 熱鍵覆寫修復（MT5 覆寫新 EA 熱鍵 — 部署前補）|
+| **v0.9.12** | 2026-08-08 | 🎯 **ADX reason=7 根治**（原版 AgentHelper bootstrap ChartApplyTemplate 套用模板 → 觸發 EA OnDeinit REASON_TEMPLATE → 附加後 1 秒移除；移除 bootstrap + 修復文件頭壞 comment `/\n/|`→`//|` → compile 成功 12690 → 穩定運行）+ 真實驗證（心跳新鮮度 <120 秒 — 唔係淨 check status — 舊檔誤判根治）+ click 確保 active（開圖表後 — 熱鍵附加去正確圖表）+ 警告視窗字眼（alert_worker 每次 poll 讀 flag — 連續操作唔顯示舊名）+ 圖表 Ctrl+W 關閉方法（WM_CLOSE 冇效）+ 剷除所有 EA 檔案（網頁配對庫=MT5Cloud_EA folder）+ OnDeinit reason Print（debug）|
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|
