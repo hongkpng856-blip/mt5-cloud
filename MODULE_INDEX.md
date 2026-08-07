@@ -140,9 +140,9 @@
 - ⚠️ **watcher 鎖**：deploy worker 寫 `.auto_attach_running` 用 os.getpid（watcher 自己）— `is_auto_attach_running()` 要 skip 自己 PID（2026-08 修 — 唔係會永遠 queuing）
 - ⚠️ deploy_cmd 積壓會卡死 watcher — 積壓時要清 + 重啟（**刪除已搬入 finally — 防 Tcl crash 漏刪**）
 - ⚠️ 6093 對 Navigator double-click 免疫（pyautogui/SendMessage/AHK 全試過）— 熱鍵係唯一可靠
-- ⚠️ **開新圖表**：**Alt+F → Enter → Enter**（2026-08-07 用戶發現 — 文件 menu 第一項=新圖表 → 默認 EURUSD）— ⚠️ Ctrl+N 係**導航開關**（唔係開圖表！）；Alt+F+'n'/ArrowDown 都唔得
+- ⚠️ **開新圖表**：**Alt+F → Enter → Down×N 揀 symbol → Enter**（2026-08-08 — 用戶提供位置表：1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD）— ⚠️ Ctrl+N 係**導航開關**（唔係開圖表！）；⚠️ menu 第一項可能係「市場」— 彈市場視窗（部署後自動收埋市場報價）
 - ⚠️ **熱鍵需要 active 圖表**（冇圖表 → send 熱鍵冇反應 — 靜默）— 部署前一定要有圖表
-- ⚠️ **品種選擇**（2026-08-07）：前端部署彈 modal 揀品種（EURUSD/USDJPY/GBPUSD...）— 圖表用 OpenChart（ChartOpen 讀 open_chart_cmd.json 指定 symbol — EA 版 OnInit+ExpertRemove）
+- ⚠️ **品種選擇**（2026-08-07）：前端部署彈 modal 揀品種（EURUSD/USDJPY/GBPUSD...）— auto_attach 用 Down×N 揀所選品種圖表
 - ⚠️ **部署前確保熱鍵**（`ensure_hotkey_for_ea()`）：MT5 重啟會覆寫 hotkeys.ini（未經 GUI 設定嘅新 EA 熱鍵會冇）→ 部署前檢查 + 冇就分配 + 關 MT5 → 寫 → 開（reload）
 - ⚠️ **Watchdog**（2026-08）：`agent/watchdog.py`（+ ~/.hermes/scripts/mt5_watchdog.py）+ Hermes cron 每分鐘 — watcher/server/detector 死咗自動重啟
 

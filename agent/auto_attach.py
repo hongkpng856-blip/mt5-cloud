@@ -1117,7 +1117,7 @@ def load_hotkey_map():
     return result
 
 
-def attach_ea_hotkey(ea_name, mt5_pid):
+def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
     """🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航熱鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
     唔使 double-click Navigator（6093 對 double-click 唔 work）"""
@@ -1144,17 +1144,24 @@ def attach_ea_hotkey(ea_name, mt5_pid):
             time.sleep(1)
         except Exception:
             pass
-        # 🆕 開新圖表（2026-08：唔代替 — 每個 EA 一個圖表）
-        # ✅ 正確方法（用戶發現）：Alt+F → Enter → Enter（文件 menu 第一項=新圖表 → 默認 EURUSD）
-        # ⚠️ Ctrl+N 係「導航開關」唔係開圖表！Alt+F+'n' / ArrowDown 都唔得
+        # 🆕 開新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
+        # ✅ 正確方法（用戶發現）：Alt+F → Enter → 新圖表 dialog → Down×N 揀 symbol → Enter
+        # ⚠️ Ctrl+N 係「導航開關」唔係開圖表！symbol 位置（用戶提供）：
+        #    1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
+        _SYM_DOWN = {'EURUSD': 0, 'GBPUSD': 1, 'USDCHF': 2, 'USDJPY': 3,
+                     'USDCNH': 4, 'AUDUSD': 5, 'NZDUSD': 6, 'USDCAD': 7}
         try:
             _sk('%f')
             time.sleep(1.5)
             _sk('{ENTER}')
             time.sleep(1.5)
+            _down_n = _SYM_DOWN.get((symbol or 'EURUSD').upper(), 0)
+            if _down_n > 0:
+                _sk('{DOWN}' * _down_n)
+                time.sleep(1.5)
             _sk('{ENTER}')
             time.sleep(3)
-            print("📋 已開新圖表（Alt+F → Enter → Enter — 唔代替）")
+            print(f"📋 已開新圖表（Alt+F → Enter → Down×{_down_n} → Enter — {(symbol or 'EURUSD').upper()}）")
         except Exception:
             pass
         # send 快捷鍵
@@ -1175,6 +1182,7 @@ def attach_ea_hotkey(ea_name, mt5_pid):
 
         # 檢查 dialog（循環處理所有 — Properties 確定 → 代替確認「是」→ 可能有多個）
         _last_dlg_count = 0
+        _clicked_once = set()  # 🚨 防卡死：撳過冇效果嘅 dialog 唔再撳（2026-08-07）
         for _ in range(8):
             _chk_abort()  # 🚨 每 round 檢查緊急停止
             acted = False
@@ -1182,12 +1190,16 @@ def attach_ea_hotkey(ea_name, mt5_pid):
             for _w in _app.windows():
                 try:
                     if _w.class_name() == '#32770':
+                        _dlg_count += 1
+                        _h = int(_w.element_info.handle)
+                        if _h in _clicked_once:
+                            continue  # 撳過冇效果 — 唔再撳（防死循環卡死）
                         _t = _w.window_text()
                         # 代替確認（圖表已有 EA — 文字喺 Static 內容，標題係「MetaTrader 5」）
                         _is_replace = '代替' in _t or 'replace' in _t.lower()
                         if not _is_replace:
                             try:
-                                _dw0 = _app.window(handle=int(_w.element_info.handle))
+                                _dw0 = _app.window(handle=_h)
                                 for _s in _dw0.children(class_name='Static'):
                                     _st = _s.window_text()
                                     if '代替' in _st or 'replace' in _st.lower():
@@ -1196,27 +1208,31 @@ def attach_ea_hotkey(ea_name, mt5_pid):
                             except Exception:
                                 pass
                         if _is_replace:
-                            _dw = _app.window(handle=int(_w.element_info.handle))
+                            _dw = _app.window(handle=_h)
                             for _b in _dw.children(class_name='Button'):
                                 try:
                                     if '是' in _b.window_text() or 'Yes' in _b.window_text():
                                         if _bm_click(_b):
                                             print("✅ 已撳「是」（代替確認）")
                                         acted = True
+                                        _clicked_once.add(_h)
                                         break
                                 except Exception:
                                     pass
-                        elif ea_name in _t:
-                            _dw = _app.window(handle=int(_w.element_info.handle))
+                        elif any(_k in _t for _k in (ea_name, '1.00', '2.00', '3.00', '.ex5')):
+                            _dw = _app.window(handle=_h)
                             for _b in _dw.children(class_name='Button'):
                                 try:
                                     if '確定' in _b.window_text() or 'OK' in _b.window_text():
                                         if _bm_click(_b):
                                             print("✅ 已撳「確定」（Properties）")
                                         acted = True
+                                        _clicked_once.add(_h)
                                         break
                                 except Exception:
                                     pass
+                        if acted:
+                            break  # 🚨 每輪只處理一個 dialog（防卡死）
                 except Exception:
                     pass
             if not acted:
@@ -1241,8 +1257,20 @@ def attach_ea_hotkey(ea_name, mt5_pid):
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
         if os.path.isfile(hb):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
-            return True
-        print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
+        else:
+            print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
+        # 🚨 收埋市場報價（2026-08-07：Alt+F menu 操作可能令市場報價彈出 — 唔遮頁面）
+        try:
+            import ctypes as _ct2
+            for _w3 in _app.windows():
+                try:
+                    if '市場報價' in _w3.window_text() or 'Market Watch' in _w3.window_text():
+                        _ct2.windll.user32.ShowWindow(ctypes.c_void_p(int(_w3.element_info.handle)), 6)  # SW_MINIMIZE
+                        break
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return True
     except Exception as e:
         print(f"⚠️ 熱鍵附加失敗: {e}")
@@ -1362,7 +1390,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # 有熱鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
         hotkeys = load_hotkey_map()
         if ea_name in hotkeys:
-            success = attach_ea_hotkey(ea_name, mt5_pid)
+            success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         else:
             success = attach_ea_navigator(ea_name, mt5_pid)
         if not success:
@@ -1371,7 +1399,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             if ea_name in hotkeys:
                 success = attach_ea_navigator(ea_name, mt5_pid)
             else:
-                success = attach_ea_hotkey(ea_name, mt5_pid)
+                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         if not success:
             print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
         
