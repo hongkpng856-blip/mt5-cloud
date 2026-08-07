@@ -480,6 +480,19 @@
         </div>
     </div>
 </div>
+<div id="symbolPickerModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1100;align-items:center;justify-content:center" onclick="if(event.target===this)closeSymbolPicker()">
+    <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#fafafa"><i class="icon-rocket" style="color:var(--accent);margin-right:6px"></i>部署到 MT5</div>
+        <div id="symbolPickerTitle" style="font-size:12px;color:#a1a1aa;margin-bottom:16px"></div>
+        <label style="font-size:11px;color:#a1a1aa;display:block;margin-bottom:6px">選擇交易品種</label>
+        <select id="symbolPickerSelect" style="width:100%;padding:8px 10px;background:#27272a;color:#fafafa;border:1px solid #3f3f46;border-radius:8px;font-size:13px;margin-bottom:16px;outline:none">
+        </select>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button onclick="closeSymbolPicker()" style="padding:8px 14px;background:transparent;border:1px solid #3f3f46;color:#a1a1aa;border-radius:8px;font-size:12px;cursor:pointer">取消</button>
+            <button onclick="confirmSymbolPick()" style="padding:8px 18px;background:#10b981;border:none;color:#fff;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer"><i class="icon-rocket" style="margin-right:4px"></i>確認部署</button>
+        </div>
+    </div>
+</div>
 <div id="toastContainer"></div>
     <h1 style="margin-bottom:20px;font-size:18px;font-weight:600;letter-spacing:-0.02em">Dashboard</h1>
 
@@ -1420,9 +1433,47 @@ async function toggleEA(eaName) {
     } catch(e) { console.error(e); }
 }
 
+// ═══ 品種選擇 modal（2026-08-07：部署前揀交易品種）═══
+let _pendingDeploy = null;
+const SYMBOL_OPTIONS = ['EURUSD', 'USDJPY', 'GBPUSD', 'XAUUSD', 'EURGBP', 'EURJPY', 'USDCHF', 'USDCAD', 'AUDUSD', 'NZDUSD', 'GBPJPY'];
+
+function showSymbolPicker(eaName, tf, magic, lot, defaultSym) {
+    _pendingDeploy = { eaName, tf, magic, lot };
+    document.getElementById('symbolPickerTitle').innerHTML = '<i class="icon-robot" style="color:var(--accent)"></i> ' + eaName + ' → <span style="color:var(--text-dim)">' + (tf || 'H1') + '</span>';
+    const sel = document.getElementById('symbolPickerSelect');
+    sel.innerHTML = '';
+    const syms = [...new Set([...(allSymbols || []), ...SYMBOL_OPTIONS])];
+    syms.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        if (s === defaultSym) opt.selected = true;
+        sel.appendChild(opt);
+    });
+    document.getElementById('symbolPickerModal').style.display = 'flex';
+}
+
+function closeSymbolPicker() {
+    document.getElementById('symbolPickerModal').style.display = 'none';
+    _pendingDeploy = null;
+}
+
+function confirmSymbolPick() {
+    const sym = document.getElementById('symbolPickerSelect').value;
+    const d = _pendingDeploy;
+    closeSymbolPicker();
+    if (d && sym) {
+        doDeployEA(d.eaName, sym, d.tf, d.magic, d.lot);
+    }
+}
+
 async function deployEA(eaName, symbol, tf, magic, lot) {
-    showControlModal('正在部署 ' + eaName + ' 至 MT5，請稍候...');
-    // Step 1: Save config first
+    showSymbolPicker(eaName, tf, magic, lot, symbol);
+}
+
+async function doDeployEA(eaName, symbol, tf, magic, lot) {
+    showControlModal('正在部署 ' + eaName + '，請稍候...');
+    // Step 3: HTTP API deploy (更可靠，唔靠 Socket.IO)
     await saveEAConfig();
     
     // Step 2: Check agent status

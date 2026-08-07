@@ -1144,13 +1144,17 @@ def attach_ea_hotkey(ea_name, mt5_pid):
             time.sleep(1)
         except Exception:
             pass
-        # 🆕 開新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — Ctrl+N → Enter 接受默認）
+        # 🆕 開新圖表（2026-08：唔代替 — 每個 EA 一個圖表）
+        # ✅ 正確方法（用戶發現）：Alt+F → Enter → Enter（文件 menu 第一項=新圖表 → 默認 EURUSD）
+        # ⚠️ Ctrl+N 係「導航開關」唔係開圖表！Alt+F+'n' / ArrowDown 都唔得
         try:
-            _sk('^n')
+            _sk('%f')
+            time.sleep(1.5)
+            _sk('{ENTER}')
             time.sleep(1.5)
             _sk('{ENTER}')
             time.sleep(3)
-            print("📋 已開新圖表（唔代替）")
+            print("📋 已開新圖表（Alt+F → Enter → Enter — 唔代替）")
         except Exception:
             pass
         # send 快捷鍵
