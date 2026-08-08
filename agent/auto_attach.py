@@ -1296,6 +1296,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
             print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
+        # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
+        try:
+            _sk('%r')
+            time.sleep(2)
+        except Exception:
+            pass
         # 🚨 收埋市場報價（2026-08-08：直接 ShowWindow minimize — 唔好用 Ctrl+M（toggle 會開返））
         try:
             import ctypes as _ct2
