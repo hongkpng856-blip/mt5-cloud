@@ -1183,16 +1183,27 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             time.sleep(1.5)
             _sk('{ENTER}')
             time.sleep(1.5)
-            _down_n = _SYM_DOWN.get((symbol or 'EURUSD').upper(), 0)
-            if _down_n > 0:
-                _sk('{DOWN}' * _down_n)
-                time.sleep(1.5)
-            _sk('{ENTER}')
+            # 🚨 2026-08-10 根治（v3）：打字揀 symbol（取代 Down×N — 位置唔可靠/active 問題）
+            # 方法二實測成功：Ctrl+A 全選 → 打字 symbol → Enter（揀中）→ Enter（開圖表）
+            # → 圖表一定係目標 symbol → 開完自動 active → 熱鍵附加正確
+            _sym = (symbol or 'EURUSD').upper()
+            try:
+                _sk('^a')
+                time.sleep(0.5)
+                _sk(_sym)
+                time.sleep(1)
+                _sk('{ENTER}')
+                time.sleep(2)
+                _sk('{ENTER}')
+            except Exception:
+                # fallback：打字失敗 → 用 Down×N（舊方法）
+                _down_n = _SYM_DOWN.get(_sym, 0)
+                if _down_n > 0:
+                    _sk('{DOWN}' * _down_n)
+                    time.sleep(1.5)
+                _sk('{ENTER}')
             time.sleep(3)
-            print(f"📋 已開新圖表（Alt+F → Enter → Down×{_down_n} → Enter — {(symbol or 'EURUSD').upper()}）")
-            # 🚨 2026-08-10 根治：移除「click 確保 active」— click 會撳到舊圖表（多 EA 部署圖表多）
-            # → 熱鍵附加去錯圖表（Heikin_Ashi 去咗 USDCNH 案例）
-            # → 信任 MT5 開新圖表後自動 active 新圖表（唔 click — 唔會撳錯）
+            print(f"📋 已開新圖表（打字揀 symbol — {_sym}）")
         except Exception:
             pass
         # send 快捷鍵
