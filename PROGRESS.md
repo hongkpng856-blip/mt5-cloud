@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.13** | 2026-08-08 | 🎯 圖表平鋪（部署完成後自動 Alt+R — 圖表整齊排列並排/網格 — 大小均勻）+ 壓力測試流程記錄（skill: mt5-stress-test — 用戶講「壓力測試」自動執行：剷除全部 → 添加唔同數量 → 唔同品種 → 部署 → 真實驗證 → 重複）+ ADX reason=7 完整驗證（Swing+ADX 穩定運行）|
+| **v0.9.14** | 2026-08-10 | 🎯 網頁剷除 EA 修復（remove-local 唔接受 .mq5 → Invalid filename → 檔案冇刪配對庫仲顯示；正則放寬 + base_only + 前端傳淨名 + 防半刪除狀態 — remove-local 失敗唔刪 config）+ Watchdog 加 MT5 自動開（冇開自動開啟 — 閒置唔會失效 — 每分鐘檢查 Watcher/Server/Detector/MT5）+ 壓力測試流程更新（平鋪 Alt+R + 截圖 cap 圖俾用戶 — skill mt5-stress-test）|
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|

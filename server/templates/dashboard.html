@@ -872,7 +872,7 @@ async function loadEAConfig() {
                     <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i></button>`:''}
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i>':'<i class="icon-play" style="font-size:11px"></i>'}</button>`:''}
-                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name}')" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i></button>`:''}
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name.split('.')[0]}')" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i></button>`:''}
                     ${isSystem?'<span style="font-size:10px;color:#58a6ff;margin-left:2px" title="系統控制中樞 — 自動運行"><i class="icon-shield-check" style="font-size:11px"></i></span>':''}
                 </td>
             </tr>`;
@@ -1405,9 +1405,12 @@ async function deleteEA(eaName) {
     try {
         // 1. 刪除本機 MQL5/Experts 檔案
         const delRes = await fetch(`/api/ea-library/remove-local/${eaName}`, { method: 'POST' });
-        if (!delRes.ok && delRes.status !== 404) {
-            const d = await delRes.json().catch(() => ({}));
-            showLog(`❌ 刪除檔案失敗: ${d.error || delRes.status}`, 'log-error');
+        const delData = await delRes.json().catch(() => ({}));
+        // 🚨 2026-08-08：remove-local 一定要成功先刪 config（防半刪除狀態 — 檔案喺 config 冇）
+        if (!delRes.ok || !delData.success) {
+            showLog(`❌ 刪除檔案失敗: ${delData.error || delRes.status}（檔案未刪除 — 保留配對設定）`, 'log-error');
+            hideControlModal();
+            return;
         }
         // 2. 移除 DB config
         const res = await fetch(`/api/ea-config/${eaName}`, { method: 'DELETE' });

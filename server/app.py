@@ -912,8 +912,9 @@ def api_ea_remove_local(filename):
     # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
     # 安全檢查：檔名只可以係字母數字底線（防 path traversal）
+    # 🚨 2026-08-08：接受帶 .mq5/.ex5 副檔名（前端可能傳帶副檔名嘅名）
     import re as _re
-    if not _re.fullmatch(r'[A-Za-z0-9_]+', filename):
+    if not _re.fullmatch(r'[A-Za-z0-9_]+(\.[A-Za-z0-9]+)?', filename):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
 
     experts_dirs = []
@@ -930,7 +931,8 @@ def api_ea_remove_local(filename):
         search_dirs = [exp_dir, os.path.join(exp_dir, 'MT5Cloud_EA')]
         for search_dir in search_dirs:
             for ext in ('.ex5', '.mq5'):
-                target = os.path.join(search_dir, filename + ext)
+                # 🚨 2026-08-08：用 base_only（filename 可能帶 .mq5 — 唔可以 filename+ext）
+                target = os.path.join(search_dir, base_only + ext)
                 if os.path.isfile(target):
                     try:
                         os.remove(target)

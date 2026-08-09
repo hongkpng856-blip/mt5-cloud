@@ -2,9 +2,20 @@
 用嚟配合 Hermes cron 每分鐘跑一次"""
 import os
 import sys
+import time
 import subprocess
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mt5_watchdog.log')
+
+
+def _log(msg):
+    try:
+        with open(LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] {msg}\n')
+    except Exception:
+        pass
+
 
 def _find_project():
     """向上搵 mt5-cloud 目錄（agent/deploy_watcher.py 存在）"""
@@ -17,11 +28,12 @@ def _find_project():
             return None
         d = parent
 
+
 PROJECT = _find_project() or BASE
 
 
 def _py_cmdlines():
-    """攞所有 python process 嘅 cmdline（wmic CSV — 正確格式）"""
+    """攞所有 python process 嘅 cmdline（wmic CSV）"""
     procs = []
     try:
         out = subprocess.run(
@@ -31,7 +43,6 @@ def _py_cmdlines():
             line = line.strip()
             if not line or line.startswith('Node'):
                 continue
-            # 格式: Node,CommandLine,ProcessId — cmdline 可能有逗號，由最後一個逗號分開 PID
             idx = line.rfind(',')
             if idx <= 0:
                 continue
@@ -39,8 +50,8 @@ def _py_cmdlines():
             pid = line[idx + 1:].strip()
             if cmd and pid.isdigit():
                 procs.append((int(pid), cmd))
-    except Exception:
-        pass
+    except Exception as e:
+        _log(f'wmic error: {e}')
     return procs
 
 
@@ -51,9 +62,11 @@ def _is_running(procs, keyword):
 def _start(cmd_list, name):
     try:
         subprocess.Popen(cmd_list, cwd=PROJECT, creationflags=subprocess.CREATE_NO_WINDOW)
+        _log(f'✅ {name} 已啟動（缺失自動重啟）')
         print(f'✅ {name} 已啟動')
         return True
     except Exception as e:
+        _log(f'❌ {name} 啟動失敗: {e}')
         print(f'❌ {name} 啟動失敗: {e}')
         return False
 
@@ -61,23 +74,32 @@ def _start(cmd_list, name):
 def main():
     quiet = '--verbose' not in sys.argv
     procs = _py_cmdlines()
+    status = {}
+    for name, kw in [('watcher', 'deploy_watcher'), ('server', 'server/app.py'), ('detector', 'auto_trade_detector')]:
+        if _is_running(procs, kw):
+            status[name] = 'OK'
+        else:
+            status[name] = 'MISSING'
+    _log(f'檢查: {status}（python 進程 {len(procs)} 個）')
     if not quiet:
-        print(f'python process: {len(procs)} 個')
-    # 1. Watcher
-    if not _is_running(procs, 'deploy_watcher'):
+        print(status)
+    # 重啟缺失
+    if status['watcher'] == 'MISSING':
         _start([sys.executable, '-u', 'agent/deploy_watcher.py'], 'watcher')
-    elif not quiet:
-        print('watcher OK')
-    # 2. Server（:5001 — app.py）
-    if not _is_running(procs, 'server/app.py'):
+    if status['server'] == 'MISSING':
         _start([sys.executable, '-u', 'server/app.py'], 'server')
-    elif not quiet:
-        print('server OK')
-    # 3. Detector（:5003）
-    if not _is_running(procs, 'auto_trade_detector'):
+    if status['detector'] == 'MISSING':
         _start([sys.executable, '-u', 'agent/auto_trade_detector.py'], 'detector')
-    elif not quiet:
-        print('detector OK')
+    # 🚨 2026-08-10：MT5 檢查 — 冇開就自動開（確保 EA 一直行 — 閒置唔會失效）
+    try:
+        mt5 = subprocess.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH',
+                             shell=True, capture_output=True, timeout=10)
+        if 'terminal64' not in mt5.stdout.decode('utf-8', errors='replace'):
+            subprocess.Popen([r'C:\Program Files\MetaTrader 5\terminal64.exe'])
+            _log('✅ MT5 已啟動（缺失自動開啟）')
+            print('✅ MT5 已啟動')
+    except Exception as e:
+        _log(f'MT5 檢查失敗: {e}')
 
 
 if __name__ == '__main__':
