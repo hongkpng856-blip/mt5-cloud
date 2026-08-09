@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.17** | 2026-08-10 | 🎯 開圖表打字揀 symbol（新圖表 dialog Ctrl+A → 打字 symbol → Enter — 取代 Down×N — 圖表 symbol 100% 準確 — EMA_Cross→GBPUSD 實測成功；Down×N 位置雖固定（10/10 實測）但 active 圖表問題（熱鍵附加去錯圖表）— 打字方法根治：圖表一定啱 + 開完自動 active）+ 壓力測試 script 驗證加強（部署驗證加 MT5 log「已啟動」檢查 + 心跳 log 後備 — Divergence 假成功案例修復）+ 已知未解決：熱鍵附加有時 OnInit 冇行（Support_Resist log 冇啟動 — 要查熱鍵/dialog）|
+| **v0.9.18** | 2026-08-10 | 🎯 熱鍵附加驗證 + 自動重試（send 熱鍵後驗證 Properties 有冇彈出 — 冇彈（時機問題）→ 自動重試 ×2 → 都冇 → 明確失敗 — 根治「附加成功但 OnInit 冇行」誤判（心跳舊檔）；實測 Support_Resist→GBPUSD + EMA_Cross→AUDUSD 都成功）|
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|

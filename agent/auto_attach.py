@@ -1207,6 +1207,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
         except Exception:
             pass
         # send 快捷鍵
+        _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 唔好誤判成功）
         _sk(combo)
         time.sleep(3)
         def _bm_click(_btn):
@@ -1262,6 +1263,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                                 except Exception:
                                     pass
                         elif any(_k in _t for _k in (ea_name, '1.00', '2.00', '3.00', '.ex5')):
+                            _saw_props = True  # 🚨 Properties 彈出過（熱鍵有效）
                             _dw = _app.window(handle=_h)
                             for _b in _dw.children(class_name='Button'):
                                 try:
@@ -1294,6 +1296,44 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             if _now_dlg >= _dlg_count and _ > 2:
                 print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
                 break
+
+        # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 重試熱鍵 ×2）
+        if not _saw_props:
+            print(f"⚠️ 熱鍵 {combo} 冇彈出 Properties（重試中）...")
+            for _rt in range(2):
+                _chk_abort()
+                _sk(combo)
+                time.sleep(3)
+                # 檢查 dialog（簡單 — 有 EA 名/版本號 = Properties）
+                _props_now = False
+                for _w in _app.windows():
+                    try:
+                        if _w.class_name() == '#32770' and any(_k in _w.window_text() for _k in (ea_name, '1.00', '2.00', '3.00')):
+                            _props_now = True
+                            _saw_props = True
+                            break
+                    except Exception:
+                        pass
+                if _props_now:
+                    # 撳確定
+                    for _w in _app.windows():
+                        try:
+                            if _w.class_name() == '#32770':
+                                _dw = _app.window(handle=int(_w.element_info.handle))
+                                for _b in _dw.children(class_name='Button'):
+                                    try:
+                                        if '確定' in _b.window_text() or 'OK' in _b.window_text():
+                                            if _bm_click(_b):
+                                                print(f"✅ 重試 {_rt+1}: 已撳「確定」")
+                                            break
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+                    break
+                time.sleep(2)
+            if not _saw_props:
+                print(f"❌ 熱鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（熱鍵可能未 load）")
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
