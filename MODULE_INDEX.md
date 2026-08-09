@@ -142,6 +142,7 @@
 - ⚠️ 6093 對 Navigator double-click 免疫（pyautogui/SendMessage/AHK 全試過）— 熱鍵係唯一可靠
 - ⚠️ **開新圖表**：**Alt+F → Enter → Down×N 揀 symbol → Enter**（2026-08-08 — 用戶提供位置表：1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD）— ⚠️ Ctrl+N 係**導航開關**（唔係開圖表！）；⚠️ menu 第一項可能係「市場」— 彈市場視窗（部署後自動收埋市場報價）
 - ⚠️ **熱鍵需要 active 圖表**（冇圖表 → send 熱鍵冇反應 — 靜默）— 部署前一定要有圖表
+- ⚠️ **active 圖表**（2026-08-10 根治）：**開圖表後唔好 click 確保 active**（click 撳到舊圖表 → 熱鍵附加去錯圖表 — Heikin_Ashi 去 USDCNH 案例）— 信任 MT5 自動 active 新圖表（實測 2 EA 都去啱）；Down×N 位置固定（實測 10/10）
 - ⚠️ **EA 附加後即刻「已停止」**（2026-08-08）：查 MT5 log「已停止 (reason=7)」= REASON_TEMPLATE — **EA 原版 OnTick 有 ChartApplyTemplate（套用模板）→ 觸發移除** — 移除 bootstrap 即可（ADX_Trend 實測 — AgentHelper bootstrap 原版自帶）
 - ⚠️ **真實驗證**（2026-08-08）：心跳要 check 新鮮度（mtime <120 秒）— 唔可以淨 check status=running（舊檔誤判！）；市場收市冇 tick → 心跳停（唔代表 EA 冇運行 — 睇 MT5 log「已啟動」）
 - ⚠️ **圖表平鋪**（2026-08-08）：部署完成後自動 Alt+R（圖表整齊排列 — 並排/網格 — 大小均勻）；部署後清理空圖表（圖表累積問題）

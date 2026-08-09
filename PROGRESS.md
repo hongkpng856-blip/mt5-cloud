@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.15** | 2026-08-10 | 🎯 **Watcher 掛起根治**（deploy_notify.py 用 tkinter — thread 開 Tk → Tcl_AsyncDelete crash → deploy worker thread 死 → queue 有 deploy_cmd 冇人處理 → 部署冇反應；移除 tkinter no-op + worker thread 自動重生 + deploy_cmd 處理前刪除（防中斷殘留重複）+ queue put 唔阻塞 timeout + size 50）+ 三問題修復（配對庫 symbol 欄位改顯示唔選擇 + 品種選擇只限確定位置 8 個 + 網頁部署冇反應）+ verify_heartbeat MT5 log 後備（市場收市冇 tick 心跳停 — log「已啟動」確認 — 唔誤判失敗）+ 壓力測試新流程（網頁 API 操作模擬用戶 + 驗證 watcher 處理 — skill 更新）|
+| **v0.9.16** | 2026-08-10 | 🎯 active 圖表根治（移除「click 確保 active」— click 會撳到舊圖表（多 EA 部署）→ 熱鍵附加去錯圖表（Heikin_Ashi 去 USDCNH 案例）— 信任 MT5 自動 active 新圖表 — 實測 2 EA 都去啱圖表）+ Down×N 位置固定確認（實測 10/10 AUDUSD — 用戶啱）+ 壓力測試 ×5 成功（網頁 API 流程 + 心跳新鮮度驗證 — Heikin_Ashi 假成功案例修復）|
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|

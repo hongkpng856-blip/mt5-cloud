@@ -1190,15 +1190,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             _sk('{ENTER}')
             time.sleep(3)
             print(f"📋 已開新圖表（Alt+F → Enter → Down×{_down_n} → Enter — {(symbol or 'EURUSD').upper()}）")
-            # 🚨 確保新圖表 active（click 主視窗圖表區中央 — 新圖表疊加喺度）
-            try:
-                import pyautogui as _pg2
-                _pg2.FAILSAFE = False
-                _wr = win.rectangle()
-                _pg2.click((_wr.left + _wr.right) // 2, (_wr.top + _wr.bottom) // 2)
-                time.sleep(1)
-            except Exception:
-                pass
+            # 🚨 2026-08-10 根治：移除「click 確保 active」— click 會撳到舊圖表（多 EA 部署圖表多）
+            # → 熱鍵附加去錯圖表（Heikin_Ashi 去咗 USDCNH 案例）
+            # → 信任 MT5 開新圖表後自動 active 新圖表（唔 click — 唔會撳錯）
         except Exception:
             pass
         # send 快捷鍵

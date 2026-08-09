@@ -20,10 +20,13 @@ EXPERT_DIR = os.path.join(os.environ['APPDATA'], 'MetaQuotes', 'Terminal',
                           'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Experts', 'MT5Cloud_EA')
 MT5 = r'C:\Program Files\MetaTrader 5\terminal64.exe'
 
-# 輪 1：1 個 EA（EURUSD）；輪 2：2 個 EA（USDJPY + GBPUSD）
+# 壓力測試 ×5：每輪唔同數量 EA + 唔同品種（網頁 API 操作）
 ROUNDS = [
     [('Support_Resist', 'EURUSD')],
     [('Stochastic', 'USDJPY'), ('RSI_Over', 'GBPUSD')],
+    [('Momentum', 'AUDUSD')],
+    [('EMA_Cross', 'USDCHF'), ('Divergence', 'EURUSD')],
+    [('Bollinger_Band', 'USDJPY'), ('MACD_Cross', 'GBPUSD'), ('Heikin_Ashi', 'AUDUSD')],
 ]
 
 
@@ -99,9 +102,13 @@ def restart_mt5():
 
 
 def heartbeat(ea):
+    """🚨 2026-08-10：心跳要 check 新鮮度（mtime <120 秒 — 唔可以淨 status — 舊檔誤判假成功）"""
     sf = os.path.join(CF, f'state_{ea}.json')
     if not os.path.isfile(sf):
         return None
+    # 新鮮度檢查（舊檔 = 唔當 running）
+    if time.time() - os.path.getmtime(sf) > 120:
+        return 'stale'
     with open(sf, 'rb') as f:
         raw = f.read()
     try:
@@ -224,7 +231,7 @@ def main():
         time.sleep(10)
         for ea, _ in round_eas:
             hb = heartbeat(ea)
-            row['heartbeat'].append(hb == 'running')
+            row['heartbeat'].append(hb == 'running')  # stale 唔算 running
             print(f'  心跳 {ea}: {"✅ running" if hb == "running" else f"❌ {hb}"}')
         all_ok = row['delete_all'] and all(row['add']) and all(row['deploy']) and all(row['heartbeat'])
         print(f'  >>> 輪 {ri} 結果: {"✅ 全部成功" if all_ok else "❌ 有問題"}')
