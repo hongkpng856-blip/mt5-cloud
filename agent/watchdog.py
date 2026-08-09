@@ -61,7 +61,14 @@ def _is_running(procs, keyword):
 
 def _start(cmd_list, name):
     try:
-        subprocess.Popen(cmd_list, cwd=PROJECT, creationflags=subprocess.CREATE_NO_WINDOW)
+        # 🚨 2026-08-10：watcher 輸出寫 log 檔（死前有記錄 — 查死因）
+        log_f = None
+        if name == 'watcher':
+            log_f = open(os.path.join(PROJECT, 'agent', 'deploy_watcher.log'), 'a', encoding='utf-8')
+            log_f.write(f'\n===== [{time.strftime("%Y-%m-%d %H:%M:%S")}] watcher 啟動 =====\n')
+            log_f.flush()
+        subprocess.Popen(cmd_list, cwd=PROJECT, creationflags=subprocess.CREATE_NO_WINDOW,
+                         stdout=log_f, stderr=log_f)
         _log(f'✅ {name} 已啟動（缺失自動重啟）')
         print(f'✅ {name} 已啟動')
         return True

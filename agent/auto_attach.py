@@ -1321,7 +1321,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
 
 
 def verify_heartbeat(ea_name, timeout=60):
-    """驗證 EA heartbeat file 存在且新鮮"""
+    """驗證 EA heartbeat file 存在且新鮮（+ MT5 log 後備 — 2026-08-10：市場收市冇 tick 心跳唔寫）"""
     hb_file = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
     start = time.time()
     
@@ -1337,6 +1337,32 @@ def verify_heartbeat(ea_name, timeout=60):
                 print(f"💓 {ea_name} heartbeat: {content} ({round(age)}s ago)")
                 return True
         time.sleep(3)
+    
+    # 🚨 2026-08-10：心跳冇 → 睇 MT5 log「已啟動」（市場收市冇 tick — EA 其實啟動咗）
+    try:
+        log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        import glob as _g
+        latest = None
+        for d in os.listdir(log_dir):
+            lg = os.path.join(log_dir, d, 'MQL5', 'Logs')
+            if os.path.isdir(lg):
+                for f in _g.glob(os.path.join(lg, '*.log')):
+                    if latest is None or os.path.getmtime(f) > os.path.getmtime(latest):
+                        latest = f
+        if latest and time.time() - os.path.getmtime(latest) < 300:
+            with open(latest, 'rb') as f:
+                raw = f.read()
+            for enc in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
+                try:
+                    text = raw.decode(enc)
+                    break
+                except Exception:
+                    continue
+            if ea_name in text and ('已启动' in text or '已啟動' in text or 'started' in text.lower()):
+                print(f"✅ {ea_name} MT5 log 顯示已啟動（市場收市冇 tick — 心跳後備確認）")
+                return True
+    except Exception:
+        pass
     
     print(f"❌ {ea_name} heartbeat not detected within {timeout}s")
     return False

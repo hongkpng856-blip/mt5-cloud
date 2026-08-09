@@ -222,6 +222,13 @@ def process_deploy(filepath):
     cmd_data = read_command(filepath)
     if not cmd_data:
         return
+    # 🚨 2026-08-10：讀完即刻刪 deploy_cmd（防 watcher 中斷殘留 — 重複處理 — 排隊永遠等唔到）
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            print(f"   🗑️ 已刪 command file（處理前 — 防中斷殘留）: {os.path.basename(filepath)}")
+    except Exception:
+        pass
     
     ea_name = cmd_data.get('ea_name', 'unknown')
     
@@ -854,7 +861,7 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
 
 # ─── Main Loop ───
 
-_deploy_queue = queue.Queue(maxsize=10)  # deploy 指令 queue（single worker 順序處理）
+_deploy_queue = queue.Queue(maxsize=50)  # deploy 指令 queue（single worker 順序處理）— 🚨 2026-08-10：10→50（防滿阻塞）
 
 
 def _deploy_worker_loop():
@@ -867,6 +874,27 @@ def _deploy_worker_loop():
         try:
             print(f"\n📥 [WATCHER] Deploy worker: {os.path.basename(fp)}")
             sys.stdout.flush()
+            # 🚨 2026-08-10：處理前檢查 .ex5 存在（唔存在 skip + 刪 — 唔好 auto_attach 失敗循環）
+            try:
+                with open(fp, 'r', encoding='utf-8') as f:
+                    _dd = json.load(f)
+                _ea = _dd.get('ea_name', '')
+                _exp_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                _found = False
+                for _d in os.listdir(_exp_dir):
+                    _ex5 = os.path.join(_exp_dir, _d, 'MQL5', 'Experts', 'MT5Cloud_EA', _ea + '.ex5')
+                    if os.path.isfile(_ex5):
+                        _found = True
+                        break
+                if not _found:
+                    print(f"   ⚠️ {_ea}.ex5 唔存在（skip — 防止失敗循環）")
+                    try:
+                        os.remove(fp)
+                    except Exception:
+                        pass
+                    continue
+            except Exception:
+                pass
             process_deploy(fp)
         except Exception as e:
             print(f"   ⚠️ deploy worker error: {e}")
@@ -979,8 +1007,23 @@ def main():
     
     processed = set()  # Avoid re-processing same file
     
+    # 🚨 2026-08-10：deploy worker thread 監察（死咗自動重生 — 根治 watcher 掛起）
+    _worker_thread = None
+    
+    def _ensure_worker():
+        nonlocal _worker_thread
+        try:
+            if _worker_thread is None or not _worker_thread.is_alive():
+                _worker_thread = threading.Thread(target=_deploy_worker_loop, daemon=True)
+                _worker_thread.start()
+                print("🔄 [WATCHER] deploy worker 已重生（死咗自動開返）")
+                sys.stdout.flush()
+        except Exception as e:
+            print(f"   ⚠️ worker 重生失敗: {e}")
+    
     while True:
         try:
+            _ensure_worker()
             cmds = find_deploy_commands()
             for fp in cmds:
                 if fp in processed:
@@ -988,7 +1031,12 @@ def main():
                 processed.add(fp)
                 print(f"\n📥 [WATCHER] New deploy command: {os.path.basename(fp)}")
                 sys.stdout.flush()
-                _deploy_queue.put(fp)  # 交俾 deploy worker（唔 block 主 loop）
+                # 🚨 2026-08-10：put 唔可以阻塞（queue 滿 → 主 loop 卡死 → 新 deploy_cmd 唔處理 — 部署冇反應）
+                try:
+                    _deploy_queue.put(fp, timeout=2)
+                except queue.Full:
+                    print(f"   ⚠️ deploy queue 滿 — 留低下次再試（唔阻塞主 loop）")
+                    processed.discard(fp)
 
             # ─── Compile 指令（.mq5 → .ex5，用 watcher 嘅 desktop access）───
             compile_cmds = find_compile_commands()

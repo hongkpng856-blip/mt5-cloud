@@ -859,7 +859,10 @@ async function loadEAConfig() {
                     ${runtimeStatus[name]?`<div style="font-size:9px;color:${runtimeStatus[name]==='running'?'var(--success)':runtimeStatus[name]==='stopped'?'var(--text-dim)':'#d29922'};margin-top:1px" title="控制層心跳">${runtimeStatus[name]==='running'?'❤ 心跳運行':runtimeStatus[name]==='stopped'?'● 已停止':'◇ 無心跳'}</div>`:''}
                 </td>
                 <td><select class="ea-magic" data-ea="${name}" style="width:85px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 4px;font-size:12px">${(analysisData&&analysisData.all_magics||['240701']).map(m => `<option ${m===magic?'selected':''} value="${m}">Magic ${m}</option>`).join('')}</select></td>
-                <td><select class="ea-sym" data-ea="${name}">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select></td>
+                <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
+                    <span>${sym||'—'}</span>
+                    <select class="ea-sym" data-ea="${name}" style="display:none">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select>
+                </td>
                 <td><select class="ea-tf" data-ea="${name}">${['M1','M5','M15','M30','H1','H4','D1','W1','MN1'].map(t => `<option ${t===tf?'selected':''}>${t}</option>`).join('')}</select></td>
                 <td style="text-align:center;font-weight:600">${getSignalHtml(name, sym, tf)}</td>
                 <td style="text-align:center;color:var(--text-muted);font-size:12px">${detectorSignals[name]?detectorSignals[name].sma10:'—'}</td>
@@ -1438,15 +1441,17 @@ async function toggleEA(eaName) {
 
 // ═══ 品種選擇 modal（2026-08-07：部署前揀交易品種）═══
 let _pendingDeploy = null;
-const SYMBOL_OPTIONS = ['EURUSD', 'USDJPY', 'GBPUSD', 'XAUUSD', 'EURGBP', 'EURJPY', 'USDCHF', 'USDCAD', 'AUDUSD', 'NZDUSD', 'GBPJPY'];
+// 🚨 2026-08-10：只限「確定位置」嘅 symbol（auto_attach _SYM_DOWN 有 Down×N 位置）
+// 1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD 7.NZDUSD 8.USDCAD
+const SYMBOL_OPTIONS = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH', 'AUDUSD', 'NZDUSD', 'USDCAD'];
 
 function showSymbolPicker(eaName, tf, magic, lot, defaultSym) {
     _pendingDeploy = { eaName, tf, magic, lot };
     document.getElementById('symbolPickerTitle').innerHTML = '<i class="icon-robot" style="color:var(--accent)"></i> ' + eaName + ' → <span style="color:var(--text-dim)">' + (tf || 'H1') + '</span>';
     const sel = document.getElementById('symbolPickerSelect');
     sel.innerHTML = '';
-    const syms = [...new Set([...(allSymbols || []), ...SYMBOL_OPTIONS])];
-    syms.forEach(s => {
+    // 🚨 2026-08-10：只顯示確定位置嘅 symbol（唔好 allSymbols 全部 — 揀咗部署唔到）
+    SYMBOL_OPTIONS.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s;
         opt.textContent = s;
@@ -1476,6 +1481,9 @@ async function deployEA(eaName, symbol, tf, magic, lot) {
 
 async function doDeployEA(eaName, symbol, tf, magic, lot) {
     showControlModal('正在部署 ' + eaName + '，請稍候...');
+    // 🚨 2026-08-10：更新配對庫 hidden select（保存部署揀咗嘅 symbol — 之後顯示返）
+    const symSel = document.querySelector(`.ea-sym[data-ea="${eaName}"]`);
+    if (symSel) symSel.value = symbol;
     // Step 3: HTTP API deploy (更可靠，唔靠 Socket.IO)
     await saveEAConfig();
     

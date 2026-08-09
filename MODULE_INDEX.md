@@ -151,7 +151,9 @@
 - ⚠️ **品種選擇**（2026-08-07）：前端部署彈 modal 揀品種（EURUSD/USDJPY/GBPUSD...）— auto_attach 用 Down×N 揀所選品種圖表
 - ⚠️ **部署前確保熱鍵**（`ensure_hotkey_for_ea()`）：MT5 重啟會覆寫 hotkeys.ini（未經 GUI 設定嘅新 EA 熱鍵會冇）→ 部署前檢查 + 冇就分配 + 關 MT5 → 寫 → 開（reload）
 - ⚠️ **網頁剷除 EA**（2026-08-10）：remove-local 唔接受帶 .mq5 名（Invalid filename）→ 正則放寬 + base_only 搵檔；前端傳淨名 + remove-local 失敗唔刪 config（防半刪除狀態）
-- ⚠️ **Watchdog**（2026-08-10）：每分鐘檢查 Watcher/Server/Detector/**MT5（冇開自動開）** — log: ~/AppData/Local/hermes/scripts/mt5_watchdog.log（agent/ 版寫 agent/mt5_watchdog.log）— 閒置唔會失效
+- ⚠️ **Watcher 掛起**（2026-08-10 根治）：**deploy_notify.py 用 tkinter（thread 開 Tk → Tcl_AsyncDelete crash → worker thread 死 → deploy_cmd 冇人處理 → 部署冇反應）** — 已改 no-op（唔開 tkinter）+ worker thread 自動重生 + deploy_cmd 處理前刪除 + queue put timeout 唔阻塞
+- ⚠️ **心跳驗證後備**（2026-08-10）：市場收市冇 tick → 心跳唔寫 → verify_heartbeat 加 MT5 log「已啟動」後備（唔誤判失敗）；心跳檔 mtime <120 秒先當新鮮
+- ⚠️ **Watchdog**（2026-08-10）：每分鐘檢查 Watcher/Server/Detector/**MT5（冇開自動開）** — log: ~/AppData/Local/hermes/scripts/mt5_watchdog.log（agent/ 版寫 agent/mt5_watchdog.log）— 閒置唔會失效；watcher 輸出 redirect deploy_watcher.log（死因可查）
 
 **⚠️ 重要（Bug #50）：**
 - ⚠️ **refresh_navigator 一定要 in-process call**（`importlib` + `mod.refresh_navigator()`）— spawn subprocess 冇 desktop access 會 pyautogui 卡死 timeout
