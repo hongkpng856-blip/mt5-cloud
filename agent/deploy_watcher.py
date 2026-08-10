@@ -667,16 +667,31 @@ def process_compile_cmd(fp):
             except Exception:
                 pass
         else:
-            retries += 1
-            if retries >= 3:
-                print(f"   ❌ Compile failed: {base}.ex5 未生成（已試 3 次，放棄 — 檢查源碼或 MetaEditor）")
-                os.remove(fp)  # 3 次都失敗 → 清理 + 等用戶手動重試
-            else:
-                # 保留 compile_cmd + 更新 retries → 下一個 loop 自動再試
-                data['retries'] = retries
-                with open(fp, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, ensure_ascii=False)
-                print(f"   🔄 保留 compile cmd，稍後自動重試（{retries}/3）")
+            # 🚨 2026-08-10：失敗 → 唔自動重試（用戶要求 — 失敗應該停 + 彈視窗「編譯失敗」+ 確定/緊急停止 — 用戶決定）
+            print(f"   ❌ Compile failed: {base}.ex5 未生成（停止重試 — 檢查源碼或手動重試）")
+            try:
+                import json as _jcf
+                _adir_cf = os.path.dirname(os.path.abspath(__file__))
+                _sf_cf = os.path.join(_adir_cf, '.ai_control.steps')
+                _old_cf = []
+                try:
+                    if os.path.isfile(_sf_cf):
+                        _old_cf = _jcf.load(open(_sf_cf, 'r', encoding='utf-8'))
+                        if not isinstance(_old_cf, list):
+                            _old_cf = []
+                except Exception:
+                    _old_cf = []
+                # 更新「編譯」步驟 → 失敗
+                for _s in _old_cf:
+                    if isinstance(_s, dict) and '編譯' in _s.get('text', ''):
+                        _s['status'] = 'done'
+                if not any('編譯失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _old_cf):
+                    _old_cf.append({'text': '編譯失敗', 'status': 'done'})
+                with open(_sf_cf, 'w', encoding='utf-8') as _f:
+                    _jcf.dump(_old_cf, _f, ensure_ascii=False)
+            except Exception:
+                pass
+            os.remove(fp)  # 失敗 → 清理（唔重試 — 用戶手動決定）
         sys.stdout.flush()
     except Exception as e:
         print(f"   ⚠️ compile cmd 處理失敗: {e}")

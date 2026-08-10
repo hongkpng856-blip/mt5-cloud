@@ -1012,6 +1012,19 @@ def api_ea_install_local(filename):
     # 0. 寫「處理中」log — 用戶想知系統有冇處理緊
     _base0 = os.path.splitext(filename)[0]
     log_activity('ea_install', f'{_base0} 配對處理中...', ea=_base0)
+    # 🚨 2026-08-10：配對（install-local）警告視窗流程（同部署/剷除一致 — MODULE_INDEX 規範）
+    try:
+        import json as _jin
+        _adir_in = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+        with open(os.path.join(_adir_in, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+            _f.write(f'配對 {_base0}')
+        with open(os.path.join(_adir_in, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+            _jin.dump([
+                {'text': f'配對 {_base0} 進行中…', 'status': 'doing'},
+                {'text': '完成配對', 'status': 'pending'},
+            ], _f2, ensure_ascii=False)
+    except Exception:
+        pass
 
     # 1. 搵檔案喺邊個目錄（社群 → 用戶 → 官方）
     # ⚠️ filename 可能冇副檔名（前端傳 baseName）→ 自動試 .mq5 / .ex5
@@ -1150,6 +1163,24 @@ def api_ea_install_local(filename):
         _hk = assign_hotkey(os.path.splitext(filename)[0])
         if _hk:
             print(f"[install-local] {os.path.splitext(filename)[0]} 熱鍵: {_hk}")
+    except Exception:
+        pass
+    # 🚨 2026-08-10：配對完成 → steps（檢查 compile_ok — 失敗唔好話成功 — 用戶投訴）
+    try:
+        import json as _jin2
+        _adir_in2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+        _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
+        if os.path.isfile(_sf_in):
+            _done_txt = '配對失敗（compile 失敗）' if compile_ok is False else '完成配對'
+            with open(_sf_in, 'w', encoding='utf-8') as _f:
+                _jin2.dump([
+                    {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
+                    {'text': _done_txt, 'status': 'done'},
+                ], _f, ensure_ascii=False)
+        # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
+        _sf_show = os.path.join(_adir_in2, '.ai_control.show')
+        if os.path.exists(_sf_show):
+            os.remove(_sf_show)
     except Exception:
         pass
     return jsonify({

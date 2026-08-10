@@ -95,6 +95,20 @@ def render_steps(steps):
         if not data:
             return
         all_done = bool(data) and all(s.get('status') == 'done' for s in data)
+        # 🚨 2026-08-10：新任務開始（有 doing 步驟）→ 重置按鈕狀態（唔好殘留上一個任務嘅確定/緊急停止 — 用戶投訴）
+        has_doing = any(s.get('status') == 'doing' for s in data if isinstance(s, dict))
+        if has_doing and _all_done_shown:
+            _all_done_shown = False
+            try:
+                if _done_btn is not None:
+                    _done_btn.pack_forget()
+            except Exception:
+                pass
+            try:
+                if _stop_btn is not None:
+                    _stop_btn.pack(side="left", padx=4)
+            except Exception:
+                pass
         if all_done:
             # 🚨 2026-08-10：唔用 emoji（用戶要求）— 純文字「已完成」；prog 完成先顯示（平時隱藏 — 併入步驟）
             window._prog_label.config(text='已完成')
@@ -106,10 +120,14 @@ def render_steps(steps):
             if not _all_done_shown:
                 _all_done_shown = True
                 # 🚨 2026-08-10：完成 → 顯示「確定」按鈕（用戶撳先關 — 唔自動消失）
-                # 🚨 2026-08-10：完成後緊急停止消失（用戶要求 — 操作完成唔使再強制終止 — 只留確定）
+                # 🚨 2026-08-10：成功 → 緊急停止消失；失敗（steps 有「失敗」）→ 保留（用戶可以再強制終止 — 用戶投訴）
+                _has_fail = any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in data)
                 if _stop_btn is not None:
                     try:
-                        _stop_btn.pack_forget()
+                        if _has_fail:
+                            _stop_btn.pack(side="left", padx=4)
+                        else:
+                            _stop_btn.pack_forget()
                     except Exception:
                         pass
                 if _btn_frame is not None and not _btn_frame.winfo_ismapped():

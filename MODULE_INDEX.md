@@ -141,7 +141,7 @@
 - ⚠️ deploy_cmd 積壓會卡死 watcher — 積壓時要清 + 重啟（**刪除已搬入 finally — 防 Tcl crash 漏刪**）
 - ⚠️ 6093 對 Navigator double-click 免疫（pyautogui/SendMessage/AHK 全試過）— 熱鍵係唯一可靠
 - ⚠️ **開新圖表**：**Alt+F → Enter → Down×N 揀 symbol → Enter**（2026-08-10 用戶要求用返 Down×N — 打字方法每次開錯 AMD 圖表 — Down×N 位置固定 10/10 實測）；位置表：1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD（Down：0/1/2/3/4/5）；⚠️ Ctrl+N 係**導航開關**（唔係開圖表！）
-- ⚠️ **警告視窗**（2026-08-10 升級）：完成後「確定」按鈕（撳先關閉 — 唔自動關閉）+ 緊急停止操作期間顯示完成後消失 + 步驟累積（同任務內 — 唔同任務入口清）+ 操作名整合步驟第一條 + 文字標記 [完成]/[進行中]/[等待]（冇 emoji）+ 自訂 icon + 固定高度（唔抽搐）+ pause_window no-op + refresh_navigator 唔彈視窗（背景）+ release 唔清 steps + 網頁 delete 即時更新 steps（remove-local 寫入 — 唔殘留上一個）
+- ⚠️ **警告視窗**（2026-08-10 升級）：完成後「確定」按鈕（撳先關閉 — 唔自動關閉）+ 緊急停止操作期間顯示（失敗保留 / 成功完成後消失）+ 步驟累積（同任務內 — 唔同任務入口清）+ 操作名整合步驟第一條 + 文字標記 [完成]/[進行中]/[等待]（冇 emoji）+ 自訂 icon + 固定高度（唔抽搐）+ pause_window no-op + refresh_navigator 唔彈視窗（背景）+ release 唔清 steps + 網頁 delete 即時更新 steps（remove-local 寫入 — 唔殘留上一個）+ 配對（install-local）都寫 steps（配對進行中 → 完成配對/配對失敗 — 檢查 compile_ok — 唔假成功）+ 新任務開始重置按鈕狀態（唔殘留上一個任務）+ compile 失敗唔自動重試（停 + 視窗「編譯失敗」+ 確定/緊急停止）
 - ⚠️ **熱鍵附加驗證**（2026-08-10）：send 熱鍵後要驗證 Properties 有冇彈出（冇彈 = 熱鍵未 load/時機）— 自動重試 ×2 — 都冇 → 明確失敗（唔好「附加成功」誤判 — 心跳舊檔）
 - ⚠️ **熱鍵需要 active 圖表**（冇圖表 → send 熱鍵冇反應 — 靜默）— 部署前一定要有圖表
 - ⚠️ **active 圖表**（2026-08-10 根治）：**開圖表後唔好 click 確保 active**（click 撳到舊圖表 → 熱鍵附加去錯圖表 — Heikin_Ashi 去 USDCNH 案例）— 信任 MT5 自動 active 新圖表（實測 2 EA 都去啱）；Down×N 位置固定（實測 10/10）
