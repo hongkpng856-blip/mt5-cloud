@@ -82,7 +82,8 @@ def main():
     quiet = '--verbose' not in sys.argv
     procs = _py_cmdlines()
     status = {}
-    for name, kw in [('watcher', 'deploy_watcher'), ('server', 'server/app.py'), ('detector', 'auto_trade_detector')]:
+    for name, kw in [('watcher', 'deploy_watcher'), ('server', 'server/app.py'), ('detector', 'auto_trade_detector'),
+                     ('alert_worker', 'alert_worker')]:  # 🚨 2026-08-10：加警告視窗 process（死咗自動重啟 — 唔使手動）
         if _is_running(procs, kw):
             status[name] = 'OK'
         else:
@@ -97,6 +98,8 @@ def main():
         _start([sys.executable, '-u', 'server/app.py'], 'server')
     if status['detector'] == 'MISSING':
         _start([sys.executable, '-u', 'agent/auto_trade_detector.py'], 'detector')
+    if status['alert_worker'] == 'MISSING':
+        _start([sys.executable, '-u', 'agent/alert_worker.py'], 'alert_worker')
     # 🚨 2026-08-10：MT5 檢查 — 冇開就自動開（確保 EA 一直行 — 閒置唔會失效）
     try:
         mt5 = subprocess.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH',

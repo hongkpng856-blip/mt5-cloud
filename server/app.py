@@ -48,6 +48,21 @@ def log_activity(action, message, ea='', source='server'):
         pass
 
 
+@app.route('/api/control-steps', methods=['GET'])
+@login_required
+def api_control_steps():
+    """🚨 2026-08-10：攞操作步驟（警告視窗顯示 — 一排排）"""
+    try:
+        agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+        steps_file = os.path.join(agent_dir, '.ai_control.steps')
+        if os.path.isfile(steps_file):
+            with open(steps_file, 'r', encoding='utf-8') as f:
+                return Response(f.read(), mimetype='application/json')
+        return jsonify([])
+    except Exception:
+        return jsonify([])
+
+
 @app.route('/api/control-guard/stop', methods=['POST'])
 @login_required
 def api_control_guard_stop():
@@ -1293,13 +1308,36 @@ def _hotkeys_need_reload():
 
 
 def _restart_mt5():
-    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 用戶實測：熱鍵要重啟先 load"""
+    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 用戶實測：熱鍵要重啟先 load
+    🚨 2026-08-10：重啟期間顯示警告視窗（MT5 關閉都有 — 用戶要知道操作緊）"""
     try:
         import subprocess as _sp
+        import json as _j
+        # 警告視窗（電腦版 — 寫 flag）
+        try:
+            _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            with open(os.path.join(_ad, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                _f.write('🔄 重啟 MT5 中（載入熱鍵）— 請稍候約 1 分鐘')
+            with open(os.path.join(_ad, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+                _j.dump([{"text": "關閉 MT5", "status": "doing"},
+                         {"text": "載入熱鍵設定", "status": "pending"},
+                         {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
+        except Exception:
+            pass
         _sp.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
         time.sleep(3)
         mt5_exe = os.environ.get('MT5_EXE_PATH', r'C:\Program Files\MetaTrader 5\terminal64.exe')
         _sp.Popen([mt5_exe])
+        time.sleep(55)
+        # 完成 → 清警告
+        try:
+            _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            for _fn in ('.ai_control.show', '.ai_control.steps'):
+                _fp = os.path.join(_ad, _fn)
+                if os.path.exists(_fp):
+                    os.remove(_fp)
+        except Exception:
+            pass
         print("[hotkeys] MT5 已重啟（reload 熱鍵）")
         return True
     except Exception as e:

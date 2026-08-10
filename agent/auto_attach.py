@@ -64,6 +64,22 @@ def wait_for_mt5(timeout=30):
 
 def do_restart_mt5():
     """重啟 MT5（確保 Navigator refresh）"""
+    # 🚨 2026-08-10：重啟期間顯示警告視窗（用戶要知道操作緊 — 55 秒）
+    try:
+        _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
+        with open(_rf, 'w', encoding='utf-8') as _f:
+            _f.write('🔄 重啟 MT5 中（熱鍵載入）— 請稍候約 1 分鐘')
+        _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+        try:
+            import json as _j2
+            with open(_sf, 'w', encoding='utf-8') as _f2:
+                _j2.dump([{"text": "關閉 MT5", "status": "doing"},
+                          {"text": "載入熱鍵設定", "status": "pending"},
+                          {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
+        except Exception:
+            pass
+    except Exception:
+        pass
     import psutil
     import ctypes as _ct
     
@@ -109,6 +125,16 @@ def do_restart_mt5():
     if pid:
         # Extra wait for Navigator to fully load + refresh
         time.sleep(10)
+        # 🚨 2026-08-10：重啟完成 → 清警告 flag（視窗關閉）
+        try:
+            _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
+            if os.path.exists(_rf):
+                os.remove(_rf)
+            _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+            if os.path.exists(_sf):
+                os.remove(_sf)
+        except Exception:
+            pass
         print(f"✅ MT5 restarted, PID={pid}")
         return pid
     else:
@@ -731,6 +757,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         pass
     
     print(f"❌ {ea_name} attach failed after {max_retries} attempts")
+    _clear_steps()
     return False
 
 
@@ -1145,6 +1172,25 @@ def load_hotkey_map():
     return result
 
 
+
+def _update_steps(steps):
+    """🚨 2026-08-10：更新警告視窗步驟（一排排 — ✅/⏳/⬜）"""
+    try:
+        import json as _j
+        _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+        with open(_f, 'w', encoding='utf-8') as _fh:
+            _j.dump(steps, _fh, ensure_ascii=False)
+    except Exception:
+        pass
+
+def _clear_steps():
+    try:
+        _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+        if os.path.exists(_f):
+            os.remove(_f)
+    except Exception:
+        pass
+
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
     """🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航熱鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
@@ -1204,8 +1250,54 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                 _sk('{ENTER}')
             time.sleep(3)
             print(f"📋 已開新圖表（打字揀 symbol — {_sym}）")
+            # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
+            # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
+            try:
+                import ctypes as _c9
+                _u9 = _c9.windll.user32
+                _chart_title = ''
+                @_c9.WINFUNCTYPE(_c9.c_bool, _c9.c_size_t, _c9.c_size_t)
+                def _cb9(hwnd, _):
+                    nonlocal _chart_title
+                    _cls = _c9.create_unicode_buffer(80)
+                    _u9.GetClassNameW(_c9.c_void_p(hwnd), _cls, 80)
+                    if 'Chart' in _cls.value or 'MetaTrader' in _cls.value:
+                        _buf = _c9.create_unicode_buffer(120)
+                        _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, 120)
+                        _tt = _buf.value
+                        if _tt and _sym[:3] in _tt:
+                            _chart_title = _tt
+                            return False  # 停
+                    return True
+                for _w in _app.windows():
+                    try:
+                        _u9.EnumChildWindows(_c9.c_void_p(int(_w.element_info.handle)), _cb9, 0)
+                    except Exception:
+                        pass
+                    if _chart_title:
+                        break
+                if _chart_title:
+                    print(f"   ✅ 圖表標題驗證: {_chart_title[:40]}")
+                else:
+                    print(f"   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）")
+            except Exception:
+                pass
+            try:
+                _steps[0]['status'] = 'done'
+                _steps[1]['status'] = 'doing'
+                _update_steps(_steps)
+            except Exception:
+                pass
         except Exception:
             pass
+        # 🚨 2026-08-10：警告視窗步驟（一排排）
+        _steps = [
+            {"text": f"開新圖表（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
+            {"text": f"附加 {ea_name}（熱鍵 {combo}）", "status": "pending"},
+            {"text": "確認 Properties", "status": "pending"},
+            {"text": "驗證心跳/MT5 log", "status": "pending"},
+        ]
+        _update_steps(_steps)
         # send 快捷鍵
         _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 唔好誤判成功）
         _sk(combo)
@@ -1270,7 +1362,13 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                                     if '確定' in _b.window_text() or 'OK' in _b.window_text():
                                         if _bm_click(_b):
                                             print("✅ 已撳「確定」（Properties）")
-                                        acted = True
+                                            try:
+                                                _steps[1]['status'] = 'done'
+                                                _steps[2]['status'] = 'doing'
+                                                _update_steps(_steps)
+                                            except Exception:
+                                                pass
+                                            acted = True
                                         _clicked_once.add(_h)
                                         break
                                 except Exception:
@@ -1357,6 +1455,39 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                         break
                 except Exception:
                     pass
+        except Exception:
+            pass
+        # 🚨 2026-08-10：log 驗證 symbol（打字方法可能開錯圖表 — AMD 案例）
+        try:
+            import glob as _g4
+            _lg = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            _latest = None
+            for _d in os.listdir(_lg):
+                _lgd = os.path.join(_lg, _d, 'MQL5', 'Logs')
+                if os.path.isdir(_lgd):
+                    for _f in _g4.glob(os.path.join(_lgd, '*.log')):
+                        if _latest is None or os.path.getmtime(_f) > os.path.getmtime(_latest):
+                            _latest = _f
+            if _latest:
+                with open(_latest, 'rb') as _f2:
+                    _raw = _f2.read()
+                for _enc in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
+                    try:
+                        _txt = _raw.decode(_enc); break
+                    except Exception:
+                        continue
+                _target_sym = (symbol or 'EURUSD').upper()
+                _ok_sym = False
+                for _line in _txt.splitlines():
+                    if ea_name in _line and _target_sym in _line and ('已启动' in _line or '已啟動' in _line):
+                        _ok_sym = True
+                        break
+                if _ok_sym:
+                    print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（正確圖表）")
+                else:
+                    print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 返回失敗）")
+                    _clear_steps()
+                    return False
         except Exception:
             pass
         return True

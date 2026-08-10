@@ -141,6 +141,7 @@
 - ⚠️ deploy_cmd 積壓會卡死 watcher — 積壓時要清 + 重啟（**刪除已搬入 finally — 防 Tcl crash 漏刪**）
 - ⚠️ 6093 對 Navigator double-click 免疫（pyautogui/SendMessage/AHK 全試過）— 熱鍵係唯一可靠
 - ⚠️ **開新圖表**：**Alt+F → Enter → 打字揀 symbol（Ctrl+A → 打字 → Enter×2）**（2026-08-10 打字方法取代 Down×N — 圖表 symbol 100% 準確）；舊方法：Down×N 揀 symbol（位置表 1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD — 位置固定 10/10 實測但 active 圖表問題）；⚠️ Ctrl+N 係**導航開關**（唔係開圖表！）
+- ⚠️ **警告視窗**（2026-08-10 升級）：步驟一排排（✅⏳⬜）+ 全部完成「✅ 已完成」+ 完成後「確定」按鈕（用戶撳先關閉 — 唔自動消失）；MT5 重啟期間都有警告視窗（server _restart_mt5 + auto_attach do_restart_mt5 寫 flag）；網頁 modal 同步步驟（/api/control-steps）
 - ⚠️ **熱鍵附加驗證**（2026-08-10）：send 熱鍵後要驗證 Properties 有冇彈出（冇彈 = 熱鍵未 load/時機）— 自動重試 ×2 — 都冇 → 明確失敗（唔好「附加成功」誤判 — 心跳舊檔）
 - ⚠️ **熱鍵需要 active 圖表**（冇圖表 → send 熱鍵冇反應 — 靜默）— 部署前一定要有圖表
 - ⚠️ **active 圖表**（2026-08-10 根治）：**開圖表後唔好 click 確保 active**（click 撳到舊圖表 → 熱鍵附加去錯圖表 — Heikin_Ashi 去 USDCNH 案例）— 信任 MT5 自動 active 新圖表（實測 2 EA 都去啱）；Down×N 位置固定（實測 10/10）

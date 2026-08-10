@@ -471,6 +471,8 @@
             <div class="ai-control-title">AI 控制中</div>
             <div class="ai-control-prog" id="aiControlProg">正在處理</div>
             <div class="ai-control-desc" id="aiControlDesc">請勿移動滑鼠或按鍵盤！</div>
+            <!-- 🚨 2026-08-10：操作步驟（一排排 — ✅ 完成 / ⏳ 操作中 / ⬜ 等待）-->
+            <div class="ai-control-steps" id="aiControlSteps" style="margin-top:10px;text-align:left;font-size:12px;color:var(--text-dim);min-height:18px;"></div>
             <button class="ai-control-stop" id="aiControlStopBtn" onclick="emergencyStop()">
                 <i class="icon-alert-octagon"></i> 緊急停止
             </button>
@@ -1132,6 +1134,25 @@ function hideControlModal() {
 // 網站動作完成後唔即刻 hide — 由呢度統一控制（動作真正做完先消失）
 async function pollAiControl() {
     try {
+        // 🚨 2026-08-10：操作步驟（一排排 — 完成 ✅ / 操作中 ⏳ / 等待 ⬜）
+        try {
+            const sr = await fetch('/api/control-steps?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
+            if (sr.ok) {
+                const steps = await sr.json();
+                const sc = document.getElementById('aiControlSteps');
+                if (sc) {
+                    if (steps && steps.length) {
+                        sc.innerHTML = steps.map(s => {
+                            const ic = s.status === 'done' ? '✅' : (s.status === 'doing' ? '⏳' : '⬜');
+                            const col = s.status === 'done' ? '#34d399' : (s.status === 'doing' ? '#fbbf24' : '#71717a');
+                            return `<div style="color:${col};padding:1px 0;">${ic} ${s.text || ''}</div>`;
+                        }).join('');
+                    } else if (sc.innerHTML) {
+                        sc.innerHTML = '';
+                    }
+                }
+            }
+        } catch (e) {}
         const res = await fetch('/static/detector/ai_control.json?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
         if (!res.ok) {
             // 404 / 冇狀態檔 = 冇 AI 操控緊 → 關視窗（Bug #68：之前 catch 咗唔 hide → 卡死）

@@ -67,9 +67,12 @@ def list_paired(opener):
 
 
 def close_all_charts():
-    """WM_CLOSE 關閉全部圖表（PostMessage — 唔撳 — 唔亂撳）"""
+    """🚨 2026-08-10 修：Ctrl+W 關閉全部圖表（WM_CLOSE 對圖表無效 — 實測！）"""
     try:
+        import pyautogui as pg
+        pg.FAILSAFE = False
         from pywinauto import Application as App
+        import ctypes as _ct
         out = subprocess.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
         pid = None
         for line in out.stdout.decode('utf-8', errors='replace').splitlines():
@@ -79,14 +82,36 @@ def close_all_charts():
         if not pid:
             return 0
         app = App(backend='win32').connect(process=pid, timeout=8)
+        win = app.window(class_name='MetaQuotes::MetaTrader::5.00')
+        user32 = _ct.windll.user32
+
+        def count_charts():
+            c = 0
+            @_ct.WINFUNCTYPE(_ct.c_bool, _ct.c_size_t, _ct.c_size_t)
+            def cb(hwnd, _):
+                nonlocal c
+                cls = _ct.create_unicode_buffer(60)
+                user32.GetClassNameW(_ct.c_void_p(hwnd), cls, 60)
+                if 'AfxFrameOrView' in cls.value:
+                    c += 1
+                return True
+            for w in app.windows():
+                try:
+                    user32.EnumChildWindows(_ct.c_void_p(int(w.element_info.handle)), cb, 0)
+                except Exception:
+                    pass
+            return c
+
+        total = count_charts()
         n = 0
-        for w in app.windows():
+        for _ in range(min(total, 30)):
             try:
-                if 'AfxFrameOrView' in w.class_name():
-                    ctypes.windll.user32.PostMessageW(ctypes.c_void_p(int(w.element_info.handle)), 0x0010, 0, 0)
-                    n += 1
+                win.set_focus()
+                pg.hotkey('ctrl', 'w')
+                time.sleep(0.6)
+                n += 1
             except Exception:
-                pass
+                break
         time.sleep(2)
         return n
     except Exception:

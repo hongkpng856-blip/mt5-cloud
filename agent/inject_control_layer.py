@@ -84,6 +84,13 @@ def inject_control_layer(mq5_path):
             print(f"   ⏩ {os.path.basename(mq5_path)} 已注入控制層，skip")
             return True
 
+        # 1.5 🚨 2026-08-10：移除 AgentHelper bootstrap（ChartApplyTemplate 套用模板 → reason=7 移除 EA）
+        #     ADX_Trend 案例：配對用原版 .mq5（有 bootstrap）→ 啟動 1 秒被移除
+        bootstrap_pat = re.compile(r'\n\s*// One-shot bootstrap.*?\n\s*if\(!g_bootstrapDone\)\{.*?\n\s*\}\n', re.S)
+        if bootstrap_pat.search(src):
+            src = bootstrap_pat.sub('\n', src)
+            print(f"   🗑️ [注入器] {os.path.basename(mq5_path)} 已移除 AgentHelper bootstrap")
+
         # 2. 搵 OnTick 函數（EA 必有 — 控制層靠 tick 驅動）
         m = re.search(r'void\s+OnTick\s*\([^)]*\)\s*\{', src)
         if not m:
