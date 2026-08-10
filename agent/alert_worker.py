@@ -68,8 +68,7 @@ def build_window():
     _stop_btn = tk.Button(_btn_frame, text="緊急停止", bg="#dc2626", fg="#fff",
              font=("Microsoft JhengHei UI", 12, "bold"), relief="flat", width=10,
              command=_emergency_stop)
-    _done_btn.pack(side="left", padx=4)
-    _stop_btn.pack(side="left", padx=4)
+    # 初始唔 pack（操作期間先顯示 — 二選一）
     root.withdraw()  # 初始隱藏
     # 放右下角（🚨 2026-08-10：固定高度 380 — 唔好每次 resize — 抽搐根治）
     sw = root.winfo_screenwidth()
@@ -106,45 +105,61 @@ def render_steps(steps):
                 pass
             try:
                 if _stop_btn is not None:
-                    _stop_btn.pack(side="left", padx=4)
+                    _stop_btn.pack(pady=2)
             except Exception:
                 pass
         if all_done:
-            # 🚨 2026-08-10：唔用 emoji（用戶要求）— 純文字「已完成」；prog 完成先顯示（平時隱藏 — 併入步驟）
-            window._prog_label.config(text='已完成')
+            # 🚨 2026-08-10：成功 → 「已完成」；失敗（steps 有「失敗」）→ 「失敗」+ 紅色（用戶要求）
+            _has_fail = any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in data)
+            window._prog_label.config(text='失敗' if _has_fail else '已完成')
             try:
+                window._prog_label.config(fg='#f87171' if _has_fail else '#fafafa')
                 if not window._prog_label.winfo_ismapped():
                     window._prog_label.pack(pady=(12, 4))
             except Exception:
                 pass
             if not _all_done_shown:
                 _all_done_shown = True
-                # 🚨 2026-08-10：完成 → 顯示「確定」按鈕（用戶撳先關 — 唔自動消失）
-                # 🚨 2026-08-10：成功 → 緊急停止消失；失敗（steps 有「失敗」）→ 保留（用戶可以再強制終止 — 用戶投訴）
-                _has_fail = any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in data)
-                if _stop_btn is not None:
+                # 🚨 2026-08-10：二選一（用戶要求）— 成功 → 只有確定；失敗 → 只有緊急停止
+                if _has_fail:
                     try:
-                        if _has_fail:
-                            _stop_btn.pack(side="left", padx=4)
-                        else:
+                        if _done_btn is not None:
+                            _done_btn.pack_forget()
+                    except Exception:
+                        pass
+                    try:
+                        if _stop_btn is not None:
+                            _stop_btn.pack(pady=2)
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        if _stop_btn is not None:
                             _stop_btn.pack_forget()
+                    except Exception:
+                        pass
+                    try:
+                        if _done_btn is not None:
+                            _done_btn.pack(pady=2)
                     except Exception:
                         pass
                 if _btn_frame is not None and not _btn_frame.winfo_ismapped():
                     _btn_frame.pack(pady=(0, 8))
-                if _done_btn is not None and not _done_btn.winfo_ismapped():
-                    _done_btn.pack(side="left", padx=4)
-        for s in data:
-            st = s.get('status', 'pending')
-            # 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
-            if st == 'done':
-                mark, color = '完成', '#34d399'
-            elif st == 'doing':
-                mark, color = '進行中', '#fbbf24'
-            else:
-                mark, color = '等待', '#71717a'
-            tk.Label(_steps_frame, text=f"[{mark}] {text}", bg="#18181b", fg=color,
-                     font=("Microsoft JhengHei UI", 11), anchor="w").pack(fill="x")
+                for s in data:
+                    text = s.get('text', '')
+                    st = s.get('status', 'pending')
+                    # 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
+                    # 🚨 2026-08-10：失敗步驟 → 紅色（文字有「失敗」— 唔理 status — 用戶要求）
+                    if '失敗' in text:
+                        mark, color = '失敗', '#f87171'
+                    elif st == 'done':
+                        mark, color = '完成', '#34d399'
+                    elif st == 'doing':
+                        mark, color = '進行中', '#fbbf24'
+                    else:
+                        mark, color = '等待', '#71717a'
+                    tk.Label(_steps_frame, text=f"[{mark}] {text}", bg="#18181b", fg=color,
+                             font=("Microsoft JhengHei UI", 11), anchor="w").pack(fill="x")
         # 🚨 2026-08-10：移除「高度自動」— 固定高度 380（每次 resize → 視窗抽搐 — 用戶投訴）
     except Exception:
         pass
@@ -212,4 +227,14 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # 🚨 2026-08-10：crash log（alert_worker 成日死 exit 1 → 抽搐 — 記錄死因）
+    try:
+        main()
+    except Exception as _e:
+        try:
+            import traceback as _tb
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'alert_worker.log'), 'a', encoding='utf-8') as _f:
+                _f.write(f"[{time.strftime('%H:%M:%S')}] CRASH: {_e}\n{_tb.format_exc()}\n")
+        except Exception:
+            pass
+        raise

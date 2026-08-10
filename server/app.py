@@ -1166,23 +1166,24 @@ def api_ea_install_local(filename):
     except Exception:
         pass
     # 🚨 2026-08-10：配對完成 → steps（檢查 compile_ok — 失敗唔好話成功 — 用戶投訴）
-    try:
-        import json as _jin2
-        _adir_in2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-        _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
-        if os.path.isfile(_sf_in):
-            _done_txt = '配對失敗（compile 失敗）' if compile_ok is False else '完成配對'
-            with open(_sf_in, 'w', encoding='utf-8') as _f:
-                _jin2.dump([
-                    {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
-                    {'text': _done_txt, 'status': 'done'},
-                ], _f, ensure_ascii=False)
-        # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
-        _sf_show = os.path.join(_adir_in2, '.ai_control.show')
-        if os.path.exists(_sf_show):
-            os.remove(_sf_show)
-    except Exception:
-        pass
+    # 🚨 2026-08-10 修：compile_ok null（compile_cmd 已寫 — watcher 處理緊）→ 唔即刻寫「完成」— 等 watcher（唔好「假完成」→ 網頁兩個按鈕）
+    if compile_ok is False:
+        try:
+            import json as _jin2
+            _adir_in2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
+            if os.path.isfile(_sf_in):
+                with open(_sf_in, 'w', encoding='utf-8') as _f:
+                    _jin2.dump([
+                        {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
+                        {'text': '配對失敗（compile 失敗）', 'status': 'done'},
+                    ], _f, ensure_ascii=False)
+            # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
+            _sf_show = os.path.join(_adir_in2, '.ai_control.show')
+            if os.path.exists(_sf_show):
+                os.remove(_sf_show)
+        except Exception:
+            pass
     return jsonify({
         "success": True,
         "filename": filename,

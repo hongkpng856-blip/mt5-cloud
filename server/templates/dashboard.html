@@ -388,6 +388,10 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         .ai-control-stop:hover { background: #b91c1c; }
         .ai-control-stop:disabled { background: #7f1d1d; cursor: wait; }
@@ -1151,24 +1155,46 @@ async function pollAiControl() {
                             const sbtn = document.getElementById('aiControlStopBtn');
                             if (sbtn) sbtn.style.display = 'inline-flex';
                         }
+                        // 🚨 2026-08-10：強制二選一（每次 render — 唔靠殘留 — 用戶投訴兩個按鈕）
+                        const hasDoing2 = steps.some(s => s.status === 'doing');
+                        const hasFail2 = steps.some(s => String(s.text || '').indexOf('失敗') >= 0);
+                        const sbtn2 = document.getElementById('aiControlStopBtn');
+                        const cbtn2 = document.getElementById('aiControlCloseBtn');
+                        if (sbtn2 && cbtn2) {
+                            if (hasDoing2 || hasFail2) {
+                                sbtn2.style.display = 'inline-flex';
+                                cbtn2.style.display = 'none';
+                            } else {
+                                sbtn2.style.display = 'none';
+                                cbtn2.style.display = 'inline-block';
+                            }
+                        }
                         sc.innerHTML = steps.map(s => {
                             // 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
+                            // 🚨 2026-08-10：失敗步驟 → 紅色（文字有「失敗」— 唔理 status — 用戶要求）
                             const st2 = s.status || 'pending';
-                            const mk = st2 === 'done' ? '完成' : (st2 === 'doing' ? '進行中' : '等待');
-                            const col = st2 === 'done' ? '#34d399' : (st2 === 'doing' ? '#fbbf24' : '#71717a');
-                            return `<div style="color:${col};padding:1px 0;">[${mk}] ${s.text || ''}</div>`;
+                            const txt = s.text || '';
+                            let mk, col;
+                            if (txt.indexOf('失敗') >= 0) { mk = '失敗'; col = '#f87171'; }
+                            else if (st2 === 'done') { mk = '完成'; col = '#34d399'; }
+                            else if (st2 === 'doing') { mk = '進行中'; col = '#fbbf24'; }
+                            else { mk = '等待'; col = '#71717a'; }
+                            return `<div style="color:${col};padding:1px 0;">[${mk}] ${txt}</div>`;
                         }).join('');
-                        // 🚨 2026-08-10：全部完成 → 顯示「確定」按鈕（用戶撳先關閉 — 同電腦版一致）
-                        // 🚨 2026-08-10：成功 → 緊急停止消失；失敗（steps 有「失敗」）→ 保留（用戶可以強制終止 — 用戶要求）
+                        // 🚨 2026-08-10：全部完成（成功 → 確定；失敗 → 緊急停止 — 二選一 — 用戶要求）
                         if (steps.every(s => s.status === 'done')) {
-                            const btn = document.getElementById('aiControlCloseBtn');
-                            if (btn) { btn.style.display = 'inline-block'; btn.style.margin = '8px auto 0'; }
                             const hasFail = steps.some(s => String(s.text || '').indexOf('失敗') >= 0);
+                            const btn = document.getElementById('aiControlCloseBtn');
                             const stop = document.getElementById('aiControlStopBtn');
+                            if (btn) btn.style.display = hasFail ? 'none' : 'inline-block';
                             if (stop) stop.style.display = hasFail ? 'inline-flex' : 'none';
-                            // 🚨 同電腦版一致：標題改「已完成」（冇 emoji — prog 完成先顯示）
+                            // 🚨 同電腦版一致：標題「已完成」/「失敗」（失敗紅色）
                             const pg = document.getElementById('aiControlProg');
-                            if (pg) { pg.textContent = '已完成'; pg.style.display = 'block'; }
+                            if (pg) {
+                                pg.textContent = hasFail ? '失敗' : '已完成';
+                                pg.style.display = 'block';
+                                pg.style.color = hasFail ? '#f87171' : 'inherit';
+                            }
                         }
                     } else if (sc.innerHTML) {
                         sc.innerHTML = '';
@@ -1384,9 +1410,8 @@ async function addEAToPairing(baseName, fileName, source) {
     // Double-check 結果：compile 失敗要警告用戶 + 提供重試
     if (installData.compile_ok === false) {
         showLog('⚠️ ' + fileName + ' 已複製至本機，但編譯失敗 — MT5 可能未顯示！', 'log-warn');
-        if (confirm('⚠️ ' + fileName + ' 編譯失敗（MT5 可能未顯示）\n\n要立即重試編譯嗎？')) {
-            retryCompile(baseName);
-        }
+        // 🚨 2026-08-10：移除原生 confirm（撳取消後狀態混亂 → 兩個按鈕 + 抽搐 — 用戶投訴）
+        // 直接失敗流程（警告視窗顯示「編譯失敗」+ 緊急停止 — 用戶自己決定）
         return;
     }
 

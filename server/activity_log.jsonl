@@ -21637,3 +21637,175 @@
 {"time": 1786366187.0644398, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
 {"time": 1786366189.7570424, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
 {"time": 1786366214.3263602, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366244.3666682, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366274.4079087, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366304.4462273, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366334.489081, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366364.5329187, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366394.5777078, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366424.6214056, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366454.6611955, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366484.7031724, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366514.740905, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366544.780331, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366574.818391, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366604.8574777, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366634.898922, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366664.9394386, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366670.5831225, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786366694.9835622, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366715.67804, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786366718.2098842, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786366725.029544, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366755.0704663, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366785.1118991, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366815.1590972, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366845.2037904, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366875.2434433, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366905.2837515, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366935.3285534, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366965.3715246, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786366995.4179926, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367025.475009, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367046.602885, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786367055.5179708, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367085.5616734, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367091.6618636, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786367096.2393954, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786367115.600468, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367145.6393728, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367175.68029, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367205.7221882, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367235.7628474, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367265.8090017, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367295.851496, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367325.8938968, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367355.9301138, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367385.9697556, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367416.008317, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367446.0483356, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367476.0872905, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367506.134527, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367515.441996, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786367536.1757221, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367560.5269566, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786367564.5072198, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786367566.21329, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367576.1785178, "action": "emergency_stop", "ea": "", "message": "網站緊急停止已觸發（AI 操作會即刻中止）", "source": "server"}
+{"time": 1786367596.2554479, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367626.2958112, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367636.2975438, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786367636.6630213, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786367636.6690168, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5", "source": "server"}
+{"time": 1786367656.3375213, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367686.3809488, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367687.2115726, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786367716.4191587, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367746.4608166, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367776.5014186, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367806.5387928, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367836.5844765, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367866.6244493, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367896.66665, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367926.7071326, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367956.7458572, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786367986.7881193, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368016.8285046, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368046.8705678, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368076.9114337, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368106.963991, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368137.0057728, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368167.045939, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368197.0878038, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368227.1295774, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368257.1791923, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368287.2232916, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368296.070439, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786368317.2670724, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368341.1318789, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786368345.1427739, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786368347.3087091, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368377.348869, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368407.385929, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368437.4272866, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368467.4653924, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368497.5091536, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368527.5588913, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368557.6018763, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368587.6412117, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368617.6799767, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368627.5682845, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786368647.7299433, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368672.6661227, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786368675.1101067, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786368677.7688723, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368707.8179445, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368737.859901, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368767.9094074, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368797.9627166, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368828.0045483, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368846.457983, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786368858.053761, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368888.0972762, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368918.1365411, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368948.1831853, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786368978.224841, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369005.1207838, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786369008.2692714, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369038.316772, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369050.188517, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786369053.200377, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786369068.3580697, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369098.3986373, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369124.5506842, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786369124.9386115, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786369124.9441257, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5", "source": "server"}
+{"time": 1786369128.4424706, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369158.4918516, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369173.047799, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786369185.1864278, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786369185.1919308, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5", "source": "server"}
+{"time": 1786369188.5349715, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369218.575684, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369235.4748344, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786369248.6159565, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369278.654996, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369308.6998622, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369338.742468, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369368.7850878, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369398.828627, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369409.319678, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786369428.8694346, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369454.4074938, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786369457.1599836, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786369458.9244447, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369488.9655294, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369519.0036845, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369549.041453, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369579.0809526, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369590.274367, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786369609.1263752, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369635.335986, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786369639.164515, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369639.7972324, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786369669.2068298, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369699.2509599, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369729.301199, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369759.3429658, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369789.3846917, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369819.4278622, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369849.471195, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369879.5113568, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369909.5494897, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369939.594406, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369969.6340907, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786369999.672959, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786370029.7161229, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786370051.3807404, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786370059.7572148, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786370089.8009043, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786370096.4432933, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786370099.013094, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786370119.8416977, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786370149.8828845, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786370179.9255645, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

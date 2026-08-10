@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.21** | 2026-08-10 | 🎯 失敗流程完善（配對（install-local）警告視窗補返 — 跟 MODULE_INDEX + 配對失敗 →「配對失敗（compile 失敗）」唔好假成功（檢查 compile_ok）+ 配對完成清 show flag（唔會不停彈）+ 失敗 → 緊急停止保留（成功先消失）+ compile 失敗 → 唔自動重試（停 + 視窗「編譯失敗」+ 確定/緊急停止 — 用戶決定）+ 網頁版失敗 → 緊急停止 + 確定都顯示 + 新任務開始 → 重置按鈕狀態（唔殘留上一個任務嘅確定/緊急停止）+ ADX_Trend 留做「失敗測試」EA（唔修復 — 每次用嚟測失敗流程）|
+| **v0.9.22** | 2026-08-10 | 🎯 網頁版警告視窗修復（配對唔「假完成」（compile_ok null → 等 watcher — 唔即刻寫「完成配對」）+ 移除原生 confirm「重唔重新編譯」（撳取消後狀態混亂）+ 網頁版強制二選一（每次 render：doing/失敗 → 只有緊急停止；成功 → 只有確定 — 唔靠殘留）+ 網頁版失敗步驟紅色（字眼有「失敗」→ 紅色）+ alert_worker crash log（死因記錄）+ alert_worker 新任務重置按鈕狀態）⚠️ 已知未解決：網頁版「兩個按鈕 + 抽搐」用戶實測仲有（要下次根治 — 可能 alert_worker 成日死/重啟 + 前端時序）|
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|
