@@ -57,7 +57,8 @@ def api_control_steps():
         steps_file = os.path.join(agent_dir, '.ai_control.steps')
         if os.path.isfile(steps_file):
             with open(steps_file, 'r', encoding='utf-8') as f:
-                return Response(f.read(), mimetype='application/json')
+                # 🚨 2026-08-10 修：唔用 Response（未 import → NameError → 返回 []）— 用 jsonify
+                return jsonify(json.load(f))
         return jsonify([])
     except Exception:
         return jsonify([])
@@ -926,6 +927,19 @@ def api_ea_remove_local(filename):
         return jsonify({"success": False, "error": "系統檔案（Controller）唔可以剷除"}), 403
     # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
+    # 🚨 2026-08-10：網頁 delete 唔經 watcher → 要喺呢度寫 steps（唔會殘留上一個操作字眼 — 用戶投訴）
+    try:
+        import json as _jdel
+        _adir_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+        with open(os.path.join(_adir_del, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+            _f.write(f'剷除 {base_only}')
+        with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+            _jdel.dump([
+                {'text': f'移除 {base_only} 進行中…', 'status': 'doing'},
+                {'text': '完成剷除', 'status': 'pending'},
+            ], _f2, ensure_ascii=False)
+    except Exception:
+        pass
     # 安全檢查：檔名只可以係字母數字底線（防 path traversal）
     # 🚨 2026-08-08：接受帶 .mq5/.ex5 副檔名（前端可能傳帶副檔名嘅名）
     import re as _re
@@ -956,6 +970,18 @@ def api_ea_remove_local(filename):
                         return jsonify({"success": False, "error": str(e)}), 500
 
     if removed:
+        # 🚨 2026-08-10：網頁 delete 完成 → steps 全部 done（警告視窗顯示「完成剷除」+ 確定）
+        try:
+            import json as _jdel2
+            _sf_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent', '.ai_control.steps')
+            if os.path.isfile(_sf_del):
+                with open(_sf_del, 'w', encoding='utf-8') as _f:
+                    _jdel2.dump([
+                        {'text': f'移除 {base_only} 進行中…', 'status': 'done'},
+                        {'text': '完成剷除', 'status': 'done'},
+                    ], _f, ensure_ascii=False)
+        except Exception:
+            pass
         # 寫「網頁剷除」標記 → watcher 偵測到刪除時知道來源（唔會誤判做電腦剷除）
         try:
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
@@ -1357,16 +1383,13 @@ def ensure_hotkey_for_ea(ea_name):
         for k, v in experts.items():
             if ea_name in k:
                 return True
-        # 冇 → 分配 + 重啟 MT5
+        # 冇 → 分配（🚨 2026-08-10 優化：唔同步 reload — 改「部署前一次過 reload」（watcher/auto_attach 檢查 mtime — 唔好每次部署卡 105 秒））
         combo = _alloc_hotkey(experts)
         if not combo:
             return False
         experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
         if _write_hotkeys_ini(experts, indicators):
-            print(f"[hotkeys] {ea_name} → {combo}（部署前補熱鍵）")
-            _restart_mt5()
-            import time as _t
-            _t.sleep(50)  # 等 MT5 開 + load 熱鍵
+            print(f"[hotkeys] {ea_name} → {combo}（已分配 — 部署時 reload）")
             return True
         return False
     except Exception as e:

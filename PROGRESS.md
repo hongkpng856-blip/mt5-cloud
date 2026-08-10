@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.19** | 2026-08-10 | 🎯 警告視窗全面升級（步驟一排排 ✅⏳⬜ + 全部完成「✅ 已完成」+ 完成後「確定」按鈕 — 用戶撳先關閉唔自動消失 + MT5 重啟期間警告視窗（server _restart_mt5 + auto_attach do_restart_mt5 — 關 MT5 都有顯示）+ 網頁 modal 同步步驟（/api/control-steps + poll）+ log 驗證 symbol（打字開錯圖表 → 判失敗 — AMD 案例）+ ADX bootstrap 根治（injector 自動移除 AgentHelper bootstrap — 一勞永逸）+ watchdog 加 alert_worker 檢查（死咗自動重啟）+ 已知待修：部署穩定性（熱鍵 reload 每次部署關 MT5 55秒阻塞 — 要優化一次過 + 非阻塞）|
+| **v0.9.20** | 2026-08-10 | 🎯 警告視窗全面升級（完成後「確定」按鈕 — 撳先關閉 + 唔自動關閉 + 緊急停止操作期間顯示完成後消失 + 步驟累積（同任務內）+ 操作名整合步驟第一條 + 文字標記 [完成]/[進行中]/[等待] 冇 emoji + 自訂 icon + 確定/緊急停止大細一致 + 固定高度唔抽搐 + pause_window no-op（唔彈吓彈下）+ refresh_navigator 唔彈視窗（背景）+ release 唔清 steps（完成後字句保留）+ 網頁 delete 即時更新 steps（唔殘留）+ watcher 穩定性（restart_all 起返 watcher/alert_worker — 誤殺根治）+ 熱鍵 reload 唔同步（API 即刻返回 + 一次過 reload）+ log 驗證等 4 秒（唔誤判）+ Down×N 取代打字（AMD 問題）+ Symbol 只 6 個 + watchdog 單實例保護 + /api/control-steps 修（Response→jsonify）+ ADX bootstrap 根治（injector 自動移除）|
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|

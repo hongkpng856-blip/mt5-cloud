@@ -596,6 +596,20 @@ def process_compile_cmd(fp):
 
         print(f"   🔨 Compiling {base}.mq5 → .ex5（GUI 方式）{'（重試 ' + str(retries + 1) + '/3）' if retries > 0 else ''}...")
         sys.stdout.flush()
+        # 🚨 2026-08-10：配對（compile）警告視窗流程（編譯進行中 → 完成 — 用戶要求）
+        # 編譯係「新任務」→ 清舊任務步驟（同任務內累積 — 用戶要求）
+        try:
+            import json as _jc
+            _adir = os.path.dirname(os.path.abspath(__file__))
+            with open(os.path.join(_adir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                _f.write(f'編譯 {base}')
+            _sf = os.path.join(_adir, '.ai_control.steps')
+            _old = [{'text': f'開始編譯 {base} 進行中…', 'status': 'doing'},
+                    {'text': '完成編譯', 'status': 'pending'}]
+            with open(_sf, 'w', encoding='utf-8') as _f2:
+                _jc.dump(_old, _f2, ensure_ascii=False)
+        except Exception:
+            pass
         # ⚠️ 控制層注入（網頁操控 EA — CONTROL_LAYER_DESIGN.md）：
         # compile 前自動注入控制層（tick 檢查 ctrl_ 檔 + 心跳寫 state_ 檔）
         # 失敗（冇 OnTick）→ 用原版 compile（唔阻塞部署）
@@ -626,6 +640,25 @@ def process_compile_cmd(fp):
             return
         if ok:
             print(f"   ✅ Compiled: {base}.ex5 ({os.path.getsize(ex5_path)} bytes)")
+            # 🚨 配對完成 → 步驟全部 done（累積更新 — 唔覆蓋 — 用戶要求）
+            try:
+                import json as _jc2
+                _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                _old2 = []
+                try:
+                    if os.path.isfile(_sf2):
+                        _old2 = _jc2.load(open(_sf2, 'r', encoding='utf-8'))
+                        if not isinstance(_old2, list):
+                            _old2 = []
+                except Exception:
+                    _old2 = []
+                for _s in _old2:
+                    if isinstance(_s, dict) and '編譯' in _s.get('text', ''):
+                        _s['status'] = 'done'
+                with open(_sf2, 'w', encoding='utf-8') as _f:
+                    _jc2.dump(_old2, _f, ensure_ascii=False)
+            except Exception:
+                pass
             os.remove(fp)  # 成功 → 清理指令
             # 即刻 queue refresh（唔等 3 秒 poll）— compile 生成 .ex5 後 Navigator 要即刻更新，
             # 令 compile → refresh 動作連續，警告視窗唔會「彈出 → 關 → 又彈出」（Bug #70）
@@ -913,6 +946,19 @@ def process_pause_cmd(fp):
             return
         print(f"⏸️ [WATCHER] 暫停 {ea_name}（移除圖表 EA）...")
         sys.stdout.flush()
+        # 🚨 2026-08-10：剷除警告視窗流程（剷除係「新任務」→ 清舊步驟 — 同任務內累積）
+        try:
+            import json as _jp
+            _adir = os.path.dirname(os.path.abspath(__file__))
+            with open(os.path.join(_adir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                _f.write(f'剷除 {ea_name}')
+            _sf = os.path.join(_adir, '.ai_control.steps')
+            _old = [{'text': f'移除 {ea_name} 進行中…', 'status': 'doing'},
+                    {'text': '完成剷除', 'status': 'pending'}]
+            with open(_sf, 'w', encoding='utf-8') as _f2:
+                _jp.dump(_old, _f2, ensure_ascii=False)
+        except Exception:
+            pass
         try:
             result = subprocess.run(
                 [sys.executable, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
@@ -930,6 +976,25 @@ def process_pause_cmd(fp):
         try:
             _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
                                   'message': f'{ea_name} 已暫停（EA 已從圖表移除）', 'source': 'watcher'})
+        except Exception:
+            pass
+        # 🚨 2026-08-10：剷除完成 → 步驟全部 done（累積更新）
+        try:
+            import json as _jp2
+            _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+            _old2 = []
+            try:
+                if os.path.isfile(_sf2):
+                    _old2 = _jp2.load(open(_sf2, 'r', encoding='utf-8'))
+                    if not isinstance(_old2, list):
+                        _old2 = []
+            except Exception:
+                _old2 = []
+            for _s in _old2:
+                if isinstance(_s, dict) and ('剷除' in _s.get('text', '') or '移除' in _s.get('text', '')):
+                    _s['status'] = 'done'
+            with open(_sf2, 'w', encoding='utf-8') as _f:
+                _jp2.dump(_old2, _f, ensure_ascii=False)
         except Exception:
             pass
         os.remove(fp)

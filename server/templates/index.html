@@ -4,83 +4,238 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MT5 Cloud</title>
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
     <style>
+        :root {
+            --bg: #09090b;
+            --bg-card: #18181b;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --text-dim: #71717a;
+            --accent: #10b981;
+            --accent-hover: #34d399;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            padding: 20px;
         }
-        .hero { text-align: center; max-width: 600px; padding: 40px; }
-        .hero h1 {
-            font-size: 48px;
-            background: linear-gradient(135deg, #58a6ff, #3fb950);
+
+        .container {
+            max-width: 640px;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: var(--accent);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            color: #fff;
+            font-size: 32px;
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #34d399, #10b981);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
+            background-clip: text;
         }
-        .hero p { color: #8b949e; font-size: 18px; margin-bottom: 32px; }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 32px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 48px;
+        }
+
         .btn {
-            display: inline-block; padding: 12px 32px; border-radius: 8px;
-            font-size: 16px; font-weight: 600; text-decoration: none;
-            transition: all 0.15s; margin: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: var(--font);
+            text-decoration: none;
+            transition: all 0.15s;
         }
-        .btn-primary { background: #238636; color: #fff; border: 1px solid #2ea043; }
-        .btn-primary:hover { background: #2ea043; }
-        .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
-        .btn-secondary:hover { background: #30363d; }
-        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 48px; text-align: left; }
-        .feature { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; }
-        .feature h3 { font-size: 14px; margin-bottom: 6px; }
-        .feature p { font-size: 12px; color: #8b949e; }
-        .status-bar {
-            margin-top: 48px; padding: 16px; background: #161b22;
-            border: 1px solid #30363d; border-radius: 12px;
-            text-align: center; font-size: 13px; color: #8b949e;
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #27272a;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 48px;
+            text-align: left;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            transition: border-color 0.15s;
+        }
+
+        .card:hover {
+            border-color: #3f3f46;
+        }
+
+        .card i {
+            font-size: 20px;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 28px; }
+            .subtitle { font-size: 14px; }
+            .grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; align-items: stretch; }
+            .btn { padding: 14px; }
         }
     </style>
 </head>
 <body>
-    <div class="hero">
-        <h1>☁️ MT5 Cloud</h1>
-        <p>Connect your MetaTrader 5 to the cloud.<br>
-        Manage EAs, automate trading, analyze performance — all from your browser.</p>
+    <div class="container">
+        <div class="logo"><i class="icon-chart-candlestick"></i></div>
+        <h1>MT5 Cloud</h1>
+        <p class="subtitle">
+            Connect your MetaTrader 5 to the cloud.<br>
+            Manage EAs, automate trading, analyze performance — all from your browser.
+        </p>
 
-        <a href="/login" class="btn btn-primary">Login</a>
-        <a href="/register" class="btn btn-secondary">Register</a>
+        <div class="actions">
+            <a href="/login" class="btn btn-primary">
+                <i class="icon-log-in"></i>
+                Sign In
+            </a>
+            <a href="/register" class="btn btn-secondary">
+                <i class="icon-user-plus"></i>
+                Create Account
+            </a>
+        </div>
 
-        <div class="features">
-            <div class="feature">
-                <h3>🔌 Windows Agent</h3>
-                <p>Install a tiny app on your PC that bridges MT5 to the cloud.</p>
+        <div class="grid">
+            <div class="card">
+                <i class="icon-monitor"></i>
+                <h3>Desktop Agent</h3>
+                <p>A lightweight agent runs on your PC, bridging MT5 to the cloud securely.</p>
             </div>
-            <div class="feature">
-                <h3>📊 EA Analysis</h3>
-                <p>Per-EA performance, win rate, profit factor, correlation matrix.</p>
+            <div class="card">
+                <i class="icon-bar-chart-3"></i>
+                <h3>EA Analysis</h3>
+                <p>Per-EA performance metrics, win rate, profit factor, and correlation matrix.</p>
             </div>
-            <div class="feature">
-                <h3>⚡ Auto Trading</h3>
-                <p>Deploy strategies from browser. Agent executes on your MT5.</p>
+            <div class="card">
+                <i class="icon-play"></i>
+                <h3>Auto Trading</h3>
+                <p>Deploy strategies from your browser. The agent executes them on your MT5.</p>
             </div>
-            <div class="feature">
-                <h3>📈 Live Dashboard</h3>
-                <p>Real-time positions, P&L, account status from anywhere.</p>
+            <div class="card">
+                <i class="icon-gauge"></i>
+                <h3>Live Dashboard</h3>
+                <p>Real-time positions, P&amp;L, and account status accessible from anywhere.</p>
             </div>
         </div>
 
-        <div class="status-bar">
-            🟢 Server: Online &nbsp;·&nbsp; 📡 Agents: <span id="agentCount">0</span> connected
+        <div class="status">
+            <span class="dot"></span>
+            Server Online
+            <span style="color:var(--text-dim)">·</span>
+            <i class="icon-wifi" style="font-size:14px"></i>
+            <span id="agentCount">0</span> agents connected
         </div>
     </div>
 
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
     <script>
         const socket = io();
-        socket.on('connect', () => console.log('🟢 Connected to server'));
+        socket.on('connect', () => console.log('Connected'));
         socket.on('agent_count', (data) => {
             document.getElementById('agentCount').textContent = data.count || 0;
         });

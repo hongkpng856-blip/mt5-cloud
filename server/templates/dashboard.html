@@ -476,8 +476,8 @@
             <button class="ai-control-stop" id="aiControlStopBtn" onclick="emergencyStop()">
                 <i class="icon-alert-octagon"></i> 緊急停止
             </button>
-            <button class="ai-control-close" id="aiControlCloseBtn" onclick="manualDismiss()" style="display:none;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer">
-                關閉視窗
+            <button class="ai-control-close" id="aiControlCloseBtn" onclick="manualDismiss()" style="display:none;margin-top:8px;background:var(--accent);border:none;color:#fff;padding:10px 0;width:100%;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">
+                確定
             </button>
         </div>
     </div>
@@ -1119,7 +1119,8 @@ function showControlModal(actionDesc, detailMsg) {
     const modal = document.getElementById('aiControlModal');
     const prog = document.getElementById('aiControlProg');
     const desc = document.getElementById('aiControlDesc');
-    if (prog) prog.textContent = actionDesc || '正在處理';
+    // 🚨 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表 — 同電腦版一致）
+    if (prog) { prog.style.display = 'none'; prog.textContent = actionDesc || '正在處理'; }
     if (desc) desc.textContent = detailMsg || '請勿移動滑鼠或按鍵盤！';
     if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
     // 動作開始：最少顯示 3 秒（等 watcher 後續動作接手，唔會「彈一下」）
@@ -1143,10 +1144,23 @@ async function pollAiControl() {
                 if (sc) {
                     if (steps && steps.length) {
                         sc.innerHTML = steps.map(s => {
-                            const ic = s.status === 'done' ? '✅' : (s.status === 'doing' ? '⏳' : '⬜');
-                            const col = s.status === 'done' ? '#34d399' : (s.status === 'doing' ? '#fbbf24' : '#71717a');
-                            return `<div style="color:${col};padding:1px 0;">${ic} ${s.text || ''}</div>`;
+                            // 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
+                            const st2 = s.status || 'pending';
+                            const mk = st2 === 'done' ? '完成' : (st2 === 'doing' ? '進行中' : '等待');
+                            const col = st2 === 'done' ? '#34d399' : (st2 === 'doing' ? '#fbbf24' : '#71717a');
+                            return `<div style="color:${col};padding:1px 0;">[${mk}] ${s.text || ''}</div>`;
                         }).join('');
+                        // 🚨 2026-08-10：全部完成 → 顯示「確定」按鈕（用戶撳先關閉 — 同電腦版一致）
+                        // 🚨 2026-08-10：完成後緊急停止消失（用戶要求 — 操作完成唔使再強制終止 — 只留確定）
+                        if (steps.every(s => s.status === 'done')) {
+                            const btn = document.getElementById('aiControlCloseBtn');
+                            if (btn) { btn.style.display = 'inline-block'; btn.style.margin = '8px auto 0'; }
+                            const stop = document.getElementById('aiControlStopBtn');
+                            if (stop) stop.style.display = 'none';
+                            // 🚨 同電腦版一致：標題改「已完成」（冇 emoji — prog 完成先顯示）
+                            const pg = document.getElementById('aiControlProg');
+                            if (pg) { pg.textContent = '已完成'; pg.style.display = 'block'; }
+                        }
                     } else if (sc.innerHTML) {
                         sc.innerHTML = '';
                     }
@@ -1155,8 +1169,14 @@ async function pollAiControl() {
         } catch (e) {}
         const res = await fetch('/static/detector/ai_control.json?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
         if (!res.ok) {
-            // 404 / 冇狀態檔 = 冇 AI 操控緊 → 關視窗（Bug #68：之前 catch 咗唔 hide → 卡死）
-            if (Date.now() >= minShowUntil && !manualDeployActive) hideControlModal();
+            // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
+            // 404 / 冇狀態檔 = 冇 AI 操控緊 → 唔自動關（一直顯示 — 確定撳先關）
+            const doneBtn = document.getElementById('aiControlCloseBtn');
+            if (doneBtn) { doneBtn.style.display = 'inline-block'; doneBtn.style.margin = '8px auto 0'; }
+            if (aiControlVisible && Date.now() >= minShowUntil) {
+                const pg = document.getElementById('aiControlProg');
+                if (pg) { pg.textContent = '已完成'; pg.style.display = 'block'; }
+            }
             return;
         }
         const d = await res.json();
@@ -1165,12 +1185,22 @@ async function pollAiControl() {
         const stale = d.time && (Date.now() / 1000 - d.time) > 120;
         if (d.active && !stale) {
             showControlModal(d.program || 'AI 操控中');
-        } else if (Date.now() >= minShowUntil && !manualDeployActive) {
-            hideControlModal();
+        } else if (aiControlVisible && Date.now() >= minShowUntil) {
+            // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
+            // active false / stale → 唔自動 hide — 一直顯示（確定撳先關）
+            const doneBtn2 = document.getElementById('aiControlCloseBtn');
+            if (doneBtn2) { doneBtn2.style.display = 'inline-block'; doneBtn2.style.margin = '8px auto 0'; }
+            const pg2 = document.getElementById('aiControlProg');
+            if (pg2) { pg2.textContent = '已完成'; pg2.style.display = 'block'; }
         }
     } catch(e) {
-        // 網絡錯誤 / 冇狀態檔 = 冇 AI 操控緊 → 關視窗（唔可以卡死）
-        if (Date.now() >= minShowUntil && !manualDeployActive) hideControlModal();
+        // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 網絡錯誤都唔自動關 — 確定撳先關
+        if (aiControlVisible && Date.now() >= minShowUntil) {
+            const doneBtn3 = document.getElementById('aiControlCloseBtn');
+            if (doneBtn3) { doneBtn3.style.display = 'inline-block'; doneBtn3.style.margin = '8px auto 0'; }
+            const pg3 = document.getElementById('aiControlProg');
+            if (pg3) { pg3.textContent = '已完成'; pg3.style.display = 'block'; }
+        }
     }
 }
 
@@ -1462,9 +1492,9 @@ async function toggleEA(eaName) {
 
 // ═══ 品種選擇 modal（2026-08-07：部署前揀交易品種）═══
 let _pendingDeploy = null;
-// 🚨 2026-08-10：只限「確定位置」嘅 symbol（auto_attach _SYM_DOWN 有 Down×N 位置）
-// 1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD 7.NZDUSD 8.USDCAD
-const SYMBOL_OPTIONS = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH', 'AUDUSD', 'NZDUSD', 'USDCAD'];
+// 🚨 2026-08-10：只限「確定位置」嘅 symbol（auto_attach _SYM_DOWN 有 Down×N 位置 — 用戶重新確認）
+// 1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
+const SYMBOL_OPTIONS = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH', 'AUDUSD'];
 
 function showSymbolPicker(eaName, tf, magic, lot, defaultSym) {
     _pendingDeploy = { eaName, tf, magic, lot };

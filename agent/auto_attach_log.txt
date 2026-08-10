@@ -1,0 +1,349 @@
+=== Auto-Attach Log ===
+Started: 2026-07-30
+[2026-07-30 15:59:02] APPLIED: ADX_Trend
+[2026-07-30 16:00:13] APPLIED: ATR_Stop
+[2026-07-30 16:01:25] APPLIED: Bollinger_Band
+[2026-07-30 16:02:36] APPLIED: Breakout
+[2026-07-30 16:03:47] APPLIED: Correlation
+[2026-07-30 16:04:58] APPLIED: Divergence
+[2026-07-30 16:06:10] APPLIED: EMA_Cross
+[2026-07-30 16:07:21] APPLIED: Fibonacci
+[2026-07-30 16:11:23] SUCCESS: Grid_Trading
+[2026-07-30 16:11:30] SUCCESS: Hedge_Fund
+[2026-07-30 16:11:37] SUCCESS: Heikin_Ashi
+[2026-07-30 16:11:44] SUCCESS: Ichimoku
+[2026-07-30 16:11:51] SUCCESS: MACD_Cross
+[2026-07-30 16:11:58] SUCCESS: Machine_Learn
+[2026-07-30 16:12:04] SUCCESS: Martingale
+[2026-07-30 16:12:11] SUCCESS: Mean_Reversion
+[2026-07-30 16:12:18] SUCCESS: Momentum
+[2026-07-30 16:12:25] SUCCESS: Multi_TimeFrame
+[2026-07-30 16:12:32] SUCCESS: News_Trader
+[2026-07-30 16:12:39] SUCCESS: Parabolic_SAR
+[2026-07-30 16:12:46] SUCCESS: Price_Action
+[2026-07-30 16:12:53] SUCCESS: RSI_Over
+[2026-07-30 16:12:59] SUCCESS: SMA_Cross
+[2026-07-30 16:13:06] SUCCESS: Scalping_M1
+[2026-07-30 16:13:13] SUCCESS: Seasonal
+[2026-07-30 16:13:20] SUCCESS: Stochastic
+[2026-07-30 16:13:27] SUCCESS: Support_Resist
+[2026-07-30 16:13:34] SUCCESS: Swing_Trader
+[2026-07-30 16:13:41] SUCCESS: Trend_Follow
+[2026-07-30 16:13:47] SUCCESS: Volume_Spike
+[2026-07-30 16:13:48] SUMMARY: 22 success, 0 failed, total=22
+[2026-07-30 18:53:06] SUCCESS: ADX_Trend (no heartbeat file)
+[2026-07-30 18:54:51] SUCCESS: ATR_Stop (no heartbeat file)
+[2026-07-30 18:56:29] SUCCESS: ADX_Trend (no heartbeat file)
+[2026-07-30 18:56:34] SUCCESS: Bollinger_Band (no heartbeat file)
+[2026-07-30 18:56:34] FAILED: Breakout
+[2026-07-30 18:56:34] FAILED: Correlation
+[2026-07-30 18:56:34] FAILED: Divergence
+[2026-07-30 18:56:34] FAILED: EMA_Cross
+[2026-07-30 18:56:34] FAILED: Fibonacci
+[2026-07-30 18:56:34] FAILED: Grid_Trading
+[2026-07-30 18:56:34] FAILED: Hedge_Fund
+[2026-07-30 18:56:34] FAILED: Heikin_Ashi
+[2026-07-30 18:56:34] FAILED: Ichimoku
+[2026-07-30 18:56:34] FAILED: MACD_Cross
+[2026-07-30 18:56:34] FAILED: Machine_Learn
+[2026-07-30 18:56:34] FAILED: Martingale
+[2026-07-30 18:56:34] FAILED: Mean_Reversion
+[2026-07-30 18:56:34] FAILED: Momentum
+[2026-07-30 18:56:34] FAILED: Multi_TimeFrame
+[2026-07-30 18:56:34] FAILED: News_Trader
+[2026-07-30 18:56:34] FAILED: Parabolic_SAR
+[2026-07-30 18:56:34] FAILED: Price_Action
+[2026-07-30 18:56:34] FAILED: RSI_Over
+[2026-07-30 18:56:34] FAILED: SMA_Cross
+[2026-07-30 18:56:34] FAILED: Scalping_M1
+[2026-07-30 18:56:34] FAILED: Seasonal
+[2026-07-30 18:56:34] FAILED: Stochastic
+[2026-07-30 18:56:35] FAILED: Support_Resist
+[2026-07-30 18:56:35] FAILED: Swing_Trader
+[2026-07-30 18:56:35] FAILED: Trend_Follow
+[2026-07-30 18:56:35] FAILED: Volume_Spike
+[2026-07-30 18:56:35] SUMMARY: 3 success, 27 failed, total=30
+[2026-07-30 18:57:19] SUCCESS: ATR_Stop (no heartbeat file)
+[2026-07-30 18:58:42] FAILED: Bollinger_Band
+[2026-07-30 18:59:28] SUCCESS: Breakout (no heartbeat file)
+[2026-07-30 19:00:19] SUCCESS: Correlation (no heartbeat file)
+[2026-07-30 19:01:43] FAILED: Divergence
+[2026-07-30 19:08:11] SUCCESS: ADX_Trend (no heartbeat file)
+[2026-07-30 19:15:12] FAILED: ADX_Trend
+[2026-07-30 19:15:15] FAILED: ATR_Stop
+[2026-07-30 19:15:18] FAILED: Bollinger_Band
+[2026-07-30 19:15:21] FAILED: Breakout
+[2026-07-30 19:15:24] FAILED: Correlation
+[2026-07-30 19:15:27] FAILED: Divergence
+[2026-07-30 19:15:30] FAILED: EMA_Cross
+[2026-07-30 19:17:02] FAILED: Fibonacci
+[2026-07-30 19:17:05] FAILED: Grid_Trading
+[2026-07-30 19:17:06] FAILED: ADX_Trend
+[2026-07-30 19:17:08] FAILED: Hedge_Fund
+[2026-07-30 19:17:11] FAILED: Heikin_Ashi
+[2026-07-30 19:17:14] FAILED: Ichimoku
+[2026-07-30 19:17:17] FAILED: MACD_Cross
+[2026-07-30 19:17:20] FAILED: Machine_Learn
+[2026-07-30 19:17:23] FAILED: Martingale
+[2026-07-30 19:17:26] FAILED: Mean_Reversion
+[2026-07-30 19:17:29] FAILED: Momentum
+[2026-07-30 19:17:32] FAILED: Multi_TimeFrame
+[2026-07-30 19:17:35] FAILED: News_Trader
+[2026-07-30 19:17:38] FAILED: Parabolic_SAR
+[2026-07-30 19:17:41] FAILED: Price_Action
+[2026-07-30 19:17:45] FAILED: RSI_Over
+[2026-07-30 19:17:48] FAILED: SMA_Cross
+[2026-07-30 19:17:51] FAILED: Scalping_M1
+[2026-07-30 19:17:54] FAILED: Seasonal
+[2026-07-30 19:17:57] FAILED: Stochastic
+[2026-07-30 19:18:00] FAILED: Support_Resist
+[2026-07-30 19:18:00] SUCCESS: ATR_Stop (no heartbeat file)
+[2026-07-30 19:18:03] FAILED: Swing_Trader
+[2026-07-30 19:18:03] FAILED: Bollinger_Band
+[2026-07-30 19:18:06] FAILED: Trend_Follow
+[2026-07-30 19:18:06] FAILED: Breakout
+[2026-07-30 19:18:09] FAILED: Volume_Spike
+[2026-07-30 19:18:09] FAILED: Correlation
+[2026-07-30 19:18:10] SUMMARY: 0 success, 30 failed, total=30
+[2026-07-30 19:18:12] FAILED: Divergence
+[2026-07-30 19:18:15] FAILED: EMA_Cross
+[2026-07-30 19:18:18] FAILED: Fibonacci
+[2026-07-30 19:18:21] FAILED: Grid_Trading
+[2026-07-30 19:18:24] FAILED: Hedge_Fund
+[2026-07-30 19:18:27] FAILED: Heikin_Ashi
+[2026-07-30 19:18:30] FAILED: Ichimoku
+[2026-07-30 19:18:33] FAILED: MACD_Cross
+[2026-07-30 19:18:36] FAILED: Machine_Learn
+[2026-07-30 19:18:39] FAILED: Martingale
+[2026-07-30 19:18:42] FAILED: Mean_Reversion
+[2026-07-30 19:18:45] FAILED: Momentum
+[2026-07-30 19:18:48] FAILED: Multi_TimeFrame
+[2026-07-30 19:18:51] FAILED: News_Trader
+[2026-07-30 19:18:54] FAILED: Parabolic_SAR
+[2026-07-30 19:18:57] FAILED: Price_Action
+[2026-07-30 19:19:00] FAILED: RSI_Over
+[2026-07-30 19:19:03] FAILED: SMA_Cross
+[2026-07-30 19:19:06] FAILED: Scalping_M1
+[2026-07-30 19:19:09] FAILED: Seasonal
+[2026-07-30 19:19:12] FAILED: Stochastic
+[2026-07-30 19:19:15] FAILED: Support_Resist
+[2026-07-30 19:19:18] FAILED: Swing_Trader
+[2026-07-30 19:19:21] FAILED: Trend_Follow
+[2026-07-30 19:19:24] FAILED: Volume_Spike
+[2026-07-30 19:19:25] SUMMARY: 1 success, 29 failed, total=30
+[2026-07-30 19:19:30] SUCCESS: ADX_Trend (no heartbeat file)
+[2026-07-30 19:20:29] SUCCESS: ATR_Stop (no heartbeat file)
+[2026-07-30 19:21:29] SUCCESS: Bollinger_Band (no heartbeat file)
+[2026-07-30 19:44:55] SUMMARY: 30 success, 0 failed, total=30
+[2026-07-30 19:50] DEPLOYED: ADX_Trend (Properties dialog confirmed, no heartbeat)
+[2026-07-30 19:53:04] === Batch started ===
+[2026-07-30 19:54:29] === Batch 2 starting ===
+[2026-07-30 19:54:29] Deploying Bollinger_Band ...
+[2026-07-30 19:57:41] === Batch Auto-Attach started: 27 EAs ===
+[2026-07-30 19:57:41] DEPLOYING: Breakout ...
+[2026-07-30 19:57:44] FAILED: Breakout (exit 1)
+[2026-07-30 19:57:44]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 19:57:45] DEPLOYING: Correlation ...
+[2026-07-30 19:57:46] FAILED: Correlation (exit 1)
+[2026-07-30 19:57:46]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 19:57:47] DEPLOYING: Divergence ...
+[2026-07-30 19:57:49] FAILED: Divergence (exit 1)
+[2026-07-30 19:57:49]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 19:57:50] DEPLOYING: EMA_Cross ...
+[2026-07-30 19:57:52] FAILED: EMA_Cross (exit 1)
+[2026-07-30 19:57:52]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 19:57:53] DEPLOYING: Fibonacci ...
+[2026-07-30 19:57:55] FAILED: Fibonacci (exit 1)
+[2026-07-30 19:57:55]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 19:57:56] DEPLOYING: Grid_Trading ...
+[2026-07-30 19:59:56] TIMEOUT: Grid_Trading (120s)
+[2026-07-30 19:59:57] DEPLOYING: Hedge_Fund ...
+[2026-07-30 19:59:59] FAILED: Hedge_Fund (exit 1)
+[2026-07-30 19:59:59]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:00] DEPLOYING: Heikin_Ashi ...
+[2026-07-30 20:00:02] FAILED: Heikin_Ashi (exit 1)
+[2026-07-30 20:00:02]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:03] DEPLOYING: Ichimoku ...
+[2026-07-30 20:00:04] FAILED: Ichimoku (exit 1)
+[2026-07-30 20:00:04]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:05] DEPLOYING: MACD_Cross ...
+[2026-07-30 20:00:07] FAILED: MACD_Cross (exit 1)
+[2026-07-30 20:00:07]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:08] DEPLOYING: Machine_Learn ...
+[2026-07-30 20:00:10] FAILED: Machine_Learn (exit 1)
+[2026-07-30 20:00:10]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:11] DEPLOYING: Martingale ...
+[2026-07-30 20:00:13] FAILED: Martingale (exit 1)
+[2026-07-30 20:00:13]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:14] DEPLOYING: Mean_Reversion ...
+[2026-07-30 20:00:16] FAILED: Mean_Reversion (exit 1)
+[2026-07-30 20:00:16]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:17] DEPLOYING: Momentum ...
+[2026-07-30 20:00:19] FAILED: Momentum (exit 1)
+[2026-07-30 20:00:19]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:20] DEPLOYING: Multi_TimeFrame ...
+[2026-07-30 20:00:21] FAILED: Multi_TimeFrame (exit 1)
+[2026-07-30 20:00:21]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:22] DEPLOYING: News_Trader ...
+[2026-07-30 20:00:24] FAILED: News_Trader (exit 1)
+[2026-07-30 20:00:24]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:25] DEPLOYING: Parabolic_SAR ...
+[2026-07-30 20:00:27] FAILED: Parabolic_SAR (exit 1)
+[2026-07-30 20:00:27]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:28] DEPLOYING: Price_Action ...
+[2026-07-30 20:00:30] FAILED: Price_Action (exit 1)
+[2026-07-30 20:00:30]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:31] DEPLOYING: RSI_Over ...
+[2026-07-30 20:00:33] FAILED: RSI_Over (exit 1)
+[2026-07-30 20:00:33]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:34] DEPLOYING: SMA_Cross ...
+[2026-07-30 20:00:36] FAILED: SMA_Cross (exit 1)
+[2026-07-30 20:00:36]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:37] DEPLOYING: Scalping_M1 ...
+[2026-07-30 20:00:38] FAILED: Scalping_M1 (exit 1)
+[2026-07-30 20:00:38]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:39] DEPLOYING: Seasonal ...
+[2026-07-30 20:00:41] FAILED: Seasonal (exit 1)
+[2026-07-30 20:00:41]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:42] DEPLOYING: Stochastic ...
+[2026-07-30 20:00:44] FAILED: Stochastic (exit 1)
+[2026-07-30 20:00:44]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:45] DEPLOYING: Support_Resist ...
+[2026-07-30 20:00:47] FAILED: Support_Resist (exit 1)
+[2026-07-30 20:00:47]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:48] DEPLOYING: Swing_Trader ...
+[2026-07-30 20:00:50] FAILED: Swing_Trader (exit 1)
+[2026-07-30 20:00:50]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:51] DEPLOYING: Trend_Follow ...
+[2026-07-30 20:00:53] FAILED: Trend_Follow (exit 1)
+[2026-07-30 20:00:53]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:54] DEPLOYING: Volume_Spike ...
+[2026-07-30 20:00:55] FAILED: Volume_Spike (exit 1)
+[2026-07-30 20:00:55]   Last output: ['  File "C:\\Users\\hongk\\Desktop\\mt5-cloud\\agent\\auto_attach.py", line 235, in attach_ea_navigator', '    from pywinauto import Application', "ModuleNotFoundError: No module named 'pywinauto'"]
+[2026-07-30 20:00:56] SUMMARY: 0 success, 27 failed, total=27
+[2026-07-30 20:00:56] === Batch Complete ===
+[2026-07-30 20:09:12] === Batch Auto-Attach started: 30 EAs ===
+[2026-07-30 20:09:12] DEPLOYING: ADX_Trend ...
+[2026-07-30 20:10:25] FAILED: ADX_Trend (exit 1)
+[2026-07-30 20:10:25]   Last output: ['❌ ADX_Trend attach failed after 1 attempts', '⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)', '❌ Failed to attach EA']
+[2026-07-30 20:10:26] DEPLOYING: ATR_Stop ...
+[2026-07-30 20:12:09] SUCCESS: ATR_Stop (Properties dialog confirmed)
+[2026-07-30 20:12:10] DEPLOYING: Bollinger_Band ...
+[2026-07-30 20:13:53] SUCCESS: Bollinger_Band (Properties dialog confirmed)
+[2026-07-30 20:13:54] DEPLOYING: Breakout ...
+[2026-07-30 20:14:07] FAILED: Breakout (exit 1)
+[2026-07-30 20:14:07]   Last output: ['  File "C:\\Users\\hongk\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\pywinauto\\findwindows.py", line 87, in find_element', '    raise ElementNotFoundError(kwargs)', "pywinauto.findwindows.ElementNotFoundError: {'class_name': 'MetaQuotes::MetaTrader::5.00', 'backend': 'win32', 'process': 15604}"]
+[2026-07-30 20:14:08] DEPLOYING: Correlation ...
+[2026-07-30 20:15:52] SUCCESS: Correlation (Properties dialog confirmed)
+[2026-07-30 20:15:53] DEPLOYING: Divergence ...
+[2026-07-30 20:17:36] SUCCESS: Divergence (Properties dialog confirmed)
+[2026-07-30 20:17:37] DEPLOYING: EMA_Cross ...
+[2026-07-30 20:21:25] === Phase 3 started: 22 EAs ===
+[2026-07-30 20:21:25] [1/22] Deploying Grid_Trading ...
+[2026-07-30 20:22:56] FAILED: Grid_Trading (exit 1)
+[2026-07-30 20:22:56]   | 📋 Replace EA dialog detected ('MetaTrader 5'), sending Yes...
+[2026-07-30 20:22:56]   | ⚠️ Grid_Trading dialog not found after scan (attempt 1/1)
+[2026-07-30 20:22:56]   | ❌ Grid_Trading attach failed after 1 attempts
+[2026-07-30 20:22:56]   | ⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)
+[2026-07-30 20:22:56]   | ❌ Failed to attach EA
+[2026-07-30 20:22:56] [2/22] Deploying Hedge_Fund ...
+[2026-07-30 20:23:52] >>> Hedge_Fund <<<
+
+==================================================
+  🚀 Auto-Attach: Hedge_Fund → EURUSD H1
+==================================================
+📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Hedge_Fund_EURUSD_H1.tpl (2406 bytes)
+⚠️ No symbol dialog appeared after Ctrl+N
+📋 New chart opened for this EA (Ctrl+N → EURUSD → Enter)
+📋 Navigator panel shown via ShowWindow
+📋 TreeView visible=True rect=(0,94)-(390,988)
+🎯 Found Hedge_Fund, attaching via pyautogui double-click...
+📋 Trying WM_KEYDOWN Enter with focus...
+📋 Trying PostMessage double-click with correct coords...
+   Double-click coords: (104, 210) lparam=0x00D20068
+📋 Trying SetCursorPos + mouse_event double-click with focus...
+   SetCursorPos target: (104, 304)
+🎉 Hedge_Fund Properties dialog opened via SetCursorPos + mouse_event!
+🔴 AutoTrading OFF → toggled ON
+🟢 AutoTrading is already ON
+❌ Hedge_Fund heartbeat not detected within 60s
+
+⚠️ Hedge_Fund may be attached but verification incomplete
+
+[2026-07-30 20:25:28] >>> Heikin_Ashi <<<
+
+==================================================
+  🚀 Auto-Attach: Heikin_Ashi → EURUSD H1
+==================================================
+📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Heikin_Ashi_EURUSD_H1.tpl (2410 bytes)
+⚠️ No symbol dialog appeared after Ctrl+N
+📋 New chart opened for this EA (Ctrl+N → EURUSD → Enter)
+📋 Navigator panel shown via ShowWindow
+📋 TreeView visible=True rect=(0,94)-(390,988)
+🎯 Found Heikin_Ashi, attaching via pyautogui double-click...
+📋 Trying WM_KEYDOWN Enter with focus...
+📋 Trying PostMessage double-click with correct coords...
+   Double-click coords: (99, 230) lparam=0x00E60063
+📋 Trying SetCursorPos + mouse_event double-click with focus...
+   SetCursorPos target: (99, 324)
+📋 Trying pyautogui double-click at item position...
+📋 Exact item position (client_rect): (99, 324) rect=(L66, T220, R133, B240)
+📋 Replace EA dialog detected ('MetaTrader 5'), sending Yes...
+🎉 Heikin_Ashi Properties dialog found at (99, 324)!
+🟢 AutoTrading is ON
+🟢 AutoTrading is already ON
+[2026-07-30 20:31:28] SUCCESS: Machine_Learn (Properties dialog)
+[2026-07-30 20:36:45] FAILED: Mean_Reversion
+[2026-07-30 20:37:12] FAILED: Momentum
+[2026-07-30 20:37:58] === Final batch: 14 EAs ===
+[2026-07-30 20:37:58] [1/14] Deploying Momentum ...
+[2026-07-30 20:39:48] SUCCESS: Momentum
+[2026-07-30 20:39:48] [2/14] Deploying Multi_TimeFrame ...
+[2026-07-30 20:39:59] FAILED: Multi_TimeFrame (exit=1) - 🎯 Found Multi_TimeFrame, attaching via pyautogui double-click...
+[2026-07-30 20:39:59] [3/14] Deploying News_Trader ...
+[2026-07-30 20:40:17] FAILED: News_Trader (exit=0) - Double-click coords: (104, 270) lparam=0x010E0068
+[2026-07-30 20:40:17] [4/14] Deploying Parabolic_SAR ...
+[2026-07-30 20:40:39] FAILED: Parabolic_SAR (exit=0) - Double-click coords: (108, 290) lparam=0x0122006C
+[2026-07-30 20:40:39] [5/14] Deploying Price_Action ...
+[2026-07-30 20:41:11] SUCCESS: Price_Action
+[2026-07-30 20:41:11] [6/14] Deploying RSI_Over ...
+[2026-07-30 20:43:35] FAILED: Multi_TimeFrame
+[2026-07-30 20:44:32] === Final deployment sweep ===
+[2026-07-30 20:44:32] [1/30] Deploying ADX_Trend ...
+[2026-07-30 20:46:15] [1/30] ✅ ADX_Trend deployed successfully
+[2026-07-30 20:46:15] [2/30] Deploying ATR_Stop ...
+[2026-07-30 20:48:15] [2/30] ❌ ATR_Stop FAILED
+[2026-07-30 20:48:15] [3/30] Deploying Bollinger_Band ...
+[2026-07-30 20:51:15] SUCCESS: Breakout
+[2026-07-30 20:52:28] FAILED: Grid_Trading
+[2026-07-30 20:52:41] FAILED: Mean_Reversion
+[2026-07-30 20:52:41] FAILED: Multi_TimeFrame
+[2026-07-30 20:52:42] FAILED: RSI_Over
+[2026-07-30 20:52:42] FAILED: SMA_Cross
+[2026-07-30 20:52:42] FAILED: Scalping_M1
+[2026-07-30 20:52:42] FAILED: Seasonal
+[2026-07-30 21:02:37] SUCCESS: RSI_Over
+[2026-07-30 21:04:46] SUCCESS: SMA_Cross
+[2026-07-30 21:05:11] SUCCESS: Scalping_M1
+[2026-07-30 21:05:53] SUCCESS: Seasonal
+[2026-07-30 21:06:41] SUCCESS: Stochastic
+[2026-07-30 21:08:11] FAILED: Support_Resist
+[2026-07-30 21:08:34] FAILED: Swing_Trader
+[2026-07-30 21:10:05] SUCCESS: Support_Resist
+[2026-07-30 21:10:19] FAILED: Swing_Trader
+[2026-07-30 21:10:33] FAILED: Trend_Follow
+[2026-07-30 21:11:04] SUCCESS: Volume_Spike
+[2026-07-30 21:11:18] FAILED: Grid_Trading
+[2026-07-30 21:11:29] FAILED: Mean_Reversion
+[2026-07-30 21:12:21] SUCCESS: Multi_TimeFrame
+=== FINAL 21:12:21 ===
+[2026-07-30 21:13:23] SUCCESS: Swing_Trader
+[2026-07-30 21:13:42] FAILED: Trend_Follow
+[2026-07-30 21:13:54] FAILED: Grid_Trading
+[2026-07-30 21:15:41] FAILED: Trend_Follow
+[2026-07-30 21:15:55] FAILED: Grid_Trading
+[2026-07-30 21:17:22] FAILED: Mean_Reversion
+[2026-07-30 21:17:30] Retrying Trend_Follow with restart...
+[2026-07-30 21:19:46] FAILED: Trend_Follow
+[2026-07-30 21:19:46] FAILED: Grid_Trading
+[2026-07-30 21:19:46] FAILED: Mean_Reversion

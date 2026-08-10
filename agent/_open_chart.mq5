@@ -1,17 +1,19 @@
 //+------------------------------------------------------------------+
-//| OpenChart.mq5 — 程式化開新圖表（EA 版 — 2026-08-07）
-//| 附加後 OnInit 執行 → ChartOpen 開圖表 → ExpertRemove 自己移除
-//| 配熱鍵 — send 熱鍵即開圖表（唔使 double-click）
+//| OpenChart.mq5 — 程式化開新圖表（EA 版 v2 — 2026-08-07）
+//| 附加後 OnTimer 延遲 1 秒 → ChartOpen 開圖表 → ExpertRemove 自己移除
+//| （OnInit 直接 ChartOpen 會卡 MT5 — 改用 OnTimer 唔卡）
 //| 讀 Common/Files/open_chart_cmd.json 指定 symbol: {"symbol":"USDJPY","tf":"H1"}
 //+------------------------------------------------------------------+
 #property copyright "MT5 Cloud"
-#property version   "1.00"
+#property version   "2.00"
 #property strict
 
+string g_symbol = "EURUSD";
+
 //+------------------------------------------------------------------+
-string ReadCmdSymbol()
+void ReadCmdSymbol()
 {
-   string sym = "EURUSD";          // 默認
+   string sym = "EURUSD";
    string path = "Common\\Files\\open_chart_cmd.json";
    long h = FileOpen(path, FILE_READ | FILE_TXT | FILE_ANSI);
    if(h != INVALID_HANDLE)
@@ -28,32 +30,32 @@ string ReadCmdSymbol()
          if(start >= 0 && end > start)
             sym = StringSubstr(content, start + 1, end - start - 1);
       }
-      // 用咗就刪（避免重用舊設定）
-      FileDelete(path);
+      FileDelete(path);  // 用咗就刪（避免重用）
    }
-   Print("📋 open_chart_cmd: symbol=", sym);
-   return sym;
+   g_symbol = sym;
+   Print("📋 OpenChart 讀取: symbol=", sym);
 }
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   string sym = ReadCmdSymbol();
-   long chart_id = ChartOpen(sym, PERIOD_H1);
-   if(chart_id > 0)
-   {
-      Print("✅ 已開新圖表: ", sym, " (id=", chart_id, ")");
-   }
-   else
-   {
-      Print("❌ 開圖表失敗: ", sym, " err=", GetLastError());
-   }
-   // 開完圖表即刻移除自己（EA 唔使留低）
-   ExpertRemove();
+   ReadCmdSymbol();
+   EventSetTimer(1);  // 1 秒後開圖表（唔卡 OnInit）
    return INIT_SUCCEEDED;
+}
+//+------------------------------------------------------------------+
+void OnTimer()
+{
+   EventKillTimer();
+   long chart_id = ChartOpen(g_symbol, PERIOD_H1);
+   if(chart_id > 0)
+      Print("✅ 已開新圖表: ", g_symbol, " (id=", chart_id, ")");
+   else
+      Print("❌ 開圖表失敗: ", g_symbol, " err=", GetLastError());
+   ExpertRemove();  // 開完自己移除
 }
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   // 唔需要（OnInit 已處理）
+   // 唔需要（OnTimer 已處理）
 }
 //+------------------------------------------------------------------+

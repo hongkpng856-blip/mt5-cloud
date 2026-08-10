@@ -1,0 +1,113 @@
+
+===== [2026-08-10 16:45:42] watcher 啟動 =====
+
+========================================================
+  👀 MT5 Cloud Deploy Watcher
+========================================================
+  Server:      http://localhost:5001
+  Agent ID:    DEV00001
+  Watching:    C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\Common\Files/deploy_cmd_*.json
+  Auto-attach: C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py
+  Interval:    3s
+========================================================
+  Starting watcher...
+  ✓ AI 控制警告視窗已預先就緒（隱藏）
+  ✓ Navigator refresh worker 已啟動
+  ✓ Deploy worker 已啟動
+🔄 [WATCHER] deploy worker 已重生（死咗自動開返）
+
+🔨 [WATCHER] Compile command: compile_cmd_Machine_Learn_1786352216.json
+   🔨 Compiling Machine_Learn.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Machine_Learn.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Machine_Learn 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Machine_Learn.ex5 (12128 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Machine_Learn 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Machine_Learn 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/Machine_Learn added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Machine_Learn.mq5, MT5Cloud_EA/Machine_Learn.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🛡️  [CONTROL] 刷新 Navigator 開始控制電腦（警告視窗已彈出）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+⚠️ 搵唔到 popup menu
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ⚠️ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🛡️  [CONTROL] 刷新 Navigator 開始控制電腦（警告視窗已彈出）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+⚠️ 搵唔到 popup menu
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ⚠️ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Seasonal_1786352316.json
+   🔨 Compiling Seasonal.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Seasonal.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Seasonal 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Seasonal.ex5 (11900 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Seasonal 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Seasonal 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/Seasonal added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Seasonal.ex5, MT5Cloud_EA/Seasonal.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🛡️  [CONTROL] 刷新 Navigator 開始控制電腦（警告視窗已彈出）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🛡️  [CONTROL] 刷新 Navigator 開始控制電腦（警告視窗已彈出）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_Seasonal_1786352637.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Seasonal_1786352637.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Seasonal_1786352637.json
+🤖 AI 正在部署 Seasonal 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Seasonal → NZDUSD H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Seasonal --symbol NZDUSD --tf H1 --magic 240701 --lot 1
+
+📥 [WATCHER] New deploy command: deploy_cmd_Seasonal_1786352644.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Seasonal_1786352644.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Seasonal_1786352644.json
+🤖 AI 正在部署 Seasonal 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+   ⚠️ auto_attach.py already running, queuing Seasonal
+[deploy_notify] 控制結束
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Seasonal_NZDUSD_H1.tpl (2398 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 用熱鍵 ^9 附加 Seasonal...
+   📋 已開新圖表（打字揀 symbol — NZDUSD）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ Seasonal 熱鍵附加流程完成（心跳等 tick）
+   ❌ log 驗證: Seasonal 冇喺 NZDUSD 啟動（可能開錯圖表 — 返回失敗）
+   ⚠️ 第一種方法失敗 — 試另一種...
+   📋 Chart already open, skipping Ctrl+N...
+   📋 Navigator panel shown via ShowWindow
+   📋 TreeView rect=(8,131)-(332,887)
+   🎯 Found Seasonal, attaching via pyautogui double-click...
+   ⚠️ GETITEMRECT fail (caret=2794100412208)
+   🔴 AutoTrading OFF → toggled ON（double-click 前） ⚠️ 未確認
+   ⚠️ Seasonal dialog not found after scan (attempt 1/3)
+   ⚠️ win32 connect failed: Process with PID=8936 not found! (attempt 2/3)
+   ⚠️ win32 connect failed: Process with PID=8936 not found! (attempt 3/3)
+   ❌ Seasonal attach failed after 3 attempts
+   ⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)
+   ❌ Failed to attach EA
+   ❌ Seasonal attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: Seasonal 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ Seasonal

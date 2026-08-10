@@ -1,0 +1,84 @@
+============================================================
+EA AUTO-ATTACH DEPLOYMENT REPORT
+Date: 2026-07-30 12:35
+Host: Windows 10
+MT5 Build: terminal64.exe
+============================================================
+
+EXECUTIVE SUMMARY
+-----------------
+Status: PARTIALLY COMPLETE
+EAs registered: 30 (excluding TestBlank, TemplateLoader, AgentHelper)
+EAs currently running: 0 (no active heartbeats)
+EAs historically deployed successfully: 5 (ADX_Trend, ATR_Stop, Breakout, Divergence, Bollinger_Band)
+
+TECHNICAL CHALLENGES ENCOUNTERED
+---------------------------------
+1. KEYBOARD AUTOMATION LIMITATION:
+   - pyautogui/pywinauto send_keys keyboard events DO NOT work from background 
+     terminal processes (SendInput requires foreground thread lock)
+   - Mouse clicks (pyautogui.click) DO work
+   - This means keyboard shortcuts like Ctrl+N, Alt+F cannot create new charts
+   - auto_attach.py relies on send_keys for chart creation and menu navigation
+
+2. CHART CREATION FAILURE:
+   - Ctrl+N in this MT5 build does NOT open "New Chart" dialog
+   - The script reports "No symbol dialog appeared after Ctrl+N"
+   - Without chart creation, all EAs attach to the same chart (Replace dialog)
+   - Market Watch right-click → Chart Window method is unreliable from background
+
+3. VERIFICATION STALE LOGS:
+   - auto_attach.py reads MT5 log files to verify EA attachment
+   - When MT5 is restarted, old log entries from previous sessions cause
+     false positives (script thinks old entry is from current attach)
+   - Heartbeat verification has 60s timeout which often expires even on
+     successful attachments
+
+4. MT5 SESSION RESTORATION:
+   - MT5 auto-restores previous workspace on restart
+   - Killing MT5 requires multiple taskkill calls (MT5 has crash recovery)
+   - Running with --restart flag failed because wait_for_mt5() uses UIA
+     backend which doesn't work in this environment
+
+DEPLOYMENTS THAT SUCCEEDED (before state reset)
+------------------------------------------------
+10:57:33 - ADX_Trend ✅ (right-click method)
+10:58:32 - ATR_Stop ✅ (right-click method)
+10:59:49 - ADX_Trend ✅ (right-click method, re-attach)
+11:03:15 - Breakout ✅ (right-click method)
+11:07:18 - Divergence ✅ (right-click method)
+11:16:46 - ADX_Trend ✅ (auto_attach.py)
+11:17:37 - ATR_Stop ✅ (auto_attach.py)
+
+LAST 5 ATTEMPTS (all failed)
+-----------------------------
+12:07:04 - ADX_Trend ❌ no dialog appeared
+12:07:29 - ATR_Stop ❌ no dialog appeared
+12:07:53 - Bollinger_Band ❌ no dialog appeared
+12:08:18 - Breakout ❌ no dialog appeared
+12:08:43 - Correlation ❌ no dialog appeared
+12:09:07 - Divergence ❌ no dialog appeared
+
+CURRENT MT5 STATE
+------------------
+Process: Running (PID 17300)
+Window Title: MetaTrader 5 - Netting (no chart open)
+Heartbeat files: None (cleared during troubleshooting)
+
+RECOMMENDATIONS
+---------------
+1. Run auto_attach.py from a user-interactive process (not cron/background)
+   where SendInput keyboard events work properly.
+2. Fix chart creation by patching auto_attach.py to use mouse-based 
+   Market Watch right-click → Chart Window instead of Ctrl+N.
+3. For full 30-EA deployment, use different symbols (e.g., EURUSD, GBPUSD, 
+   USDJPY...) to avoid Replace dialog conflicts, or use MT5's MQL5 API 
+   to create 30 separate chart tabs programmatically.
+4. An MQL5 batch script was generated at:
+   C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Scripts\BatchApplyTemplates.ex5
+   This can be run manually from MT5 Navigator → Scripts.
+
+LOG LOCATION
+------------
+C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach_log.txt
+(42 success entries, 218 failure entries historically)

@@ -1174,12 +1174,34 @@ def load_hotkey_map():
 
 
 def _update_steps(steps):
-    """🚨 2026-08-10：更新警告視窗步驟（一排排 — ✅/⏳/⬜）"""
+    """🚨 2026-08-10：更新警告視窗步驟 — 累積模式（一條條加落去 — 完成嘅留低 — 唔好蓋過 — 用戶要求）"""
     try:
         import json as _j
         _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+        old = []
+        try:
+            if os.path.isfile(_f):
+                old = _j.load(open(_f, 'r', encoding='utf-8'))
+                if not isinstance(old, list):
+                    old = []
+        except Exception:
+            old = []
+        # 合併：舊步驟保留（同名更新 status）— 新步驟加落去（累積）
+        merged = list(old)
+        for ns in steps:
+            found = False
+            for i, os_ in enumerate(merged):
+                if isinstance(os_, dict) and os_.get('text') == ns.get('text'):
+                    merged[i]['status'] = ns['status']
+                    found = True
+                    break
+            if not found:
+                merged.append(ns)
+        # 上限 15 步（防太長）
+        if len(merged) > 15:
+            merged = merged[-15:]
         with open(_f, 'w', encoding='utf-8') as _fh:
-            _j.dump(steps, _fh, ensure_ascii=False)
+            _j.dump(merged, _fh, ensure_ascii=False)
     except Exception:
         pass
 
@@ -1211,6 +1233,40 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             return False
         print(f"🎯 用熱鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+        # 🚨 2026-08-10 部署穩定性：一次過 reload（hotkeys.ini mtime > MT5 啟動 → 外部寫入未 load — reload 一次）
+        # 唔好每次部署同步 reload（之前 server ensure_hotkey sleep 50+55 = 卡 105 秒 — 「第一次冇反應」）
+        try:
+            _hk_ini = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
+                                   'D0E8209F77C8CF37AD8BF550E51FF075', 'config', 'hotkeys.ini')
+            if os.path.isfile(_hk_ini):
+                _hk_mt = os.path.getmtime(_hk_ini)
+                _mt5_start = None
+                try:
+                    import psutil as _ps
+                    for _p in _ps.process_iter(['name', 'create_time']):
+                        if _p.info['name'] and 'terminal64' in _p.info['name'].lower():
+                            _mt5_start = _p.info['create_time']
+                            break
+                except Exception:
+                    pass
+                if _mt5_start is not None and _hk_mt > _mt5_start:
+                    print(f"🔄 hotkeys.ini 有變（外部寫入 — MT5 未 load）→ reload 一次（關 MT5 → 開）")
+                    _chk_abort()
+                    do_restart_mt5()
+                    # reload 後重新攞 MT5 PID + connect
+                    try:
+                        import subprocess as _sp2
+                        _out = _sp2.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+                        for _l in _out.stdout.decode('utf-8', errors='replace').splitlines():
+                            _pa = [x.strip().strip('"') for x in _l.split(',')]
+                            if len(_pa) >= 2 and _pa[0] == 'terminal64.exe' and _pa[1].isdigit():
+                                mt5_pid = int(_pa[1])
+                                break
+                        _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         # 主視窗帶最前（快捷鍵要 active window）
         try:
             win = _app.window(class_name='MetaQuotes::MetaTrader::5.00')
@@ -1232,24 +1288,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             # 🚨 2026-08-10 根治（v3）：打字揀 symbol（取代 Down×N — 位置唔可靠/active 問題）
             # 方法二實測成功：Ctrl+A 全選 → 打字 symbol → Enter（揀中）→ Enter（開圖表）
             # → 圖表一定係目標 symbol → 開完自動 active → 熱鍵附加正確
+            # 🚨 2026-08-10 用戶要求：用返 Down×N（打字完全唔準確 — 每次開 AMD 圖表 — Down×N 位置固定 10/10 實測）
             _sym = (symbol or 'EURUSD').upper()
-            try:
-                _sk('^a')
-                time.sleep(0.5)
-                _sk(_sym)
-                time.sleep(1)
-                _sk('{ENTER}')
-                time.sleep(2)
-                _sk('{ENTER}')
-            except Exception:
-                # fallback：打字失敗 → 用 Down×N（舊方法）
-                _down_n = _SYM_DOWN.get(_sym, 0)
-                if _down_n > 0:
-                    _sk('{DOWN}' * _down_n)
-                    time.sleep(1.5)
-                _sk('{ENTER}')
+            _down_n = _SYM_DOWN.get(_sym, 0)
+            if _down_n > 0:
+                _sk('{DOWN}' * _down_n)
+                time.sleep(1.5)
+            _sk('{ENTER}')
             time.sleep(3)
-            print(f"📋 已開新圖表（打字揀 symbol — {_sym}）")
+            print(f"📋 已開新圖表（Down×{_down_n} — {_sym}）")
             # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
             # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
             try:
@@ -1290,11 +1337,13 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                 pass
         except Exception:
             pass
-        # 🚨 2026-08-10：警告視窗步驟（一排排）
+        # 🚨 2026-08-10：警告視窗步驟（一排排 — 同任務內累積）
+        # 部署係「新任務」→ 清舊任務步驟（唔同任務唔累積 — 用戶要求）
+        _clear_steps()
         _steps = [
-            {"text": f"開新圖表（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
+            {"text": f"部署 {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
+            {"text": f"開新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
             {"text": f"附加 {ea_name}（熱鍵 {combo}）", "status": "pending"},
-            {"text": "確認 Properties", "status": "pending"},
             {"text": "驗證心跳/MT5 log", "status": "pending"},
         ]
         _update_steps(_steps)
@@ -1460,6 +1509,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
         # 🚨 2026-08-10：log 驗證 symbol（打字方法可能開錯圖表 — AMD 案例）
         try:
             import glob as _g4
+            # 🚨 等 OnInit 行 + log 寫入（撳確定後即刻讀 — log 未寫 → 誤判失敗 — Breakout 案例）
+            time.sleep(4)
             _lg = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             _latest = None
             for _d in os.listdir(_lg):
@@ -1639,14 +1690,16 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         else:
             success = attach_ea_navigator(ea_name, mt5_pid)
         if not success:
-            # fallback：另一種方法
-            print(f"⚠️ 第一種方法失敗 — 試另一種...")
-            if ea_name in hotkeys:
-                success = attach_ea_navigator(ea_name, mt5_pid)
-            else:
+            # 🚨 2026-08-10 部署穩定性：fallback 改「熱鍵重試 ×2」（Navigator 6093 免疫 — 註定失敗 — 唔好浪費時間）
+            print(f"⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2）...")
+            for _rt2 in range(2):
+                check_abort()
                 success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
+                if success:
+                    break
+                time.sleep(2)
         if not success:
-            print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
+            print("⚠️ 熱鍵重試後都失敗（不再試 Navigator — 6093 免疫）")
         
         if not success:
             print("❌ Failed to attach EA")

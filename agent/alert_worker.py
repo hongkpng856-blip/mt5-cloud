@@ -18,14 +18,23 @@ window = None
 _steps_frame = None
 _last_steps = ''
 _done_btn = None
+_stop_btn = None
+_btn_frame = None
 _all_done_shown = False
 
 
 def build_window():
-    global root, window, _steps_frame, _done_btn
+    global root, window, _steps_frame, _done_btn, _stop_btn, _btn_frame
     root = tk.Tk()
     window = root
     root.title("AI 控制中")
+    # 🚨 2026-08-10：唔用 default tkinter icon（用戶要求）— 用自訂 emerald 色 icon
+    try:
+        _img = tk.PhotoImage(width=32, height=32)
+        _img.put('#10b981', to=(0, 0, 32, 32))  # emerald 色塊
+        root.iconphoto(True, _img)
+    except Exception:
+        pass
     root.attributes("-topmost", True)
     root.attributes("-alpha", 0.98)
     root.configure(bg="#18181b")
@@ -34,6 +43,8 @@ def build_window():
     window._prog_label = tk.Label(root, text="🤖 AI 控制中", bg="#18181b", fg="#fafafa",
              font=("Microsoft JhengHei UI", 16, "bold"))
     window._prog_label.pack(pady=(12, 4))
+    # 🚨 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表）
+    window._prog_label.pack_forget()
     tk.Label(root, text="請勿使用滑鼠及鍵盤…", bg="#18181b", fg="#a1a1aa",
              font=("Microsoft JhengHei UI", 11)).pack(pady=(0, 6))
     # 步驟列表 frame（一排排 — 完成 ✅ / 操作中 ⏳ / 等待 ⬜）
@@ -42,15 +53,31 @@ def build_window():
     tk.Label(root, text="⚠️ 如非必要請勿操作電腦", bg="#18181b", fg="#fbbf24",
              font=("Microsoft JhengHei UI", 10)).pack(pady=(0, 6))
     # 🚨 2026-08-10：完成後顯示「確定」按鈕（用戶撳先關閉 — 唔會自動消失）
-    _done_btn = tk.Button(root, text="✅ 確定", bg="#10b981", fg="#18181b",
-             font=("Microsoft JhengHei UI", 12, "bold"), relief="flat",
+    # 🚨 2026-08-10：確定 + 緊急停止同一大細（用戶投訴唔一致）— 並排（frame）
+    _btn_frame = tk.Frame(root, bg="#18181b")
+    _done_btn = tk.Button(_btn_frame, text="確定", bg="#10b981", fg="#18181b",
+             font=("Microsoft JhengHei UI", 12, "bold"), relief="flat", width=10,
              command=lambda: root.withdraw())
+    # 🚨 2026-08-10：強制終止（緊急停止）保留 — 撳 → 寫 .ai_control.stop flag（watcher/auto_attach check_abort 偵測）
+    def _emergency_stop():
+        try:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.stop'), 'w') as f:
+                f.write('1')
+        except Exception:
+            pass
+    _stop_btn = tk.Button(_btn_frame, text="緊急停止", bg="#dc2626", fg="#fff",
+             font=("Microsoft JhengHei UI", 12, "bold"), relief="flat", width=10,
+             command=_emergency_stop)
+    _done_btn.pack(side="left", padx=4)
+    _stop_btn.pack(side="left", padx=4)
     root.withdraw()  # 初始隱藏
-    # 放右下角
+    # 放右下角（🚨 2026-08-10：固定高度 380 — 唔好每次 resize — 抽搐根治）
     sw = root.winfo_screenwidth()
     sh = root.winfo_screenheight()
-    w, h = 340, 230
+    w, h = 340, 380
     root.geometry(f"{w}x{h}+{sw - w - 24}+{sh - h - 60}")
+    root.minsize(340, 380)
+    root.maxsize(340, 380)
 
 
 def render_steps(steps):
@@ -69,32 +96,38 @@ def render_steps(steps):
             return
         all_done = bool(data) and all(s.get('status') == 'done' for s in data)
         if all_done:
-            window._prog_label.config(text='✅ 已完成')
+            # 🚨 2026-08-10：唔用 emoji（用戶要求）— 純文字「已完成」；prog 完成先顯示（平時隱藏 — 併入步驟）
+            window._prog_label.config(text='已完成')
+            try:
+                if not window._prog_label.winfo_ismapped():
+                    window._prog_label.pack(pady=(12, 4))
+            except Exception:
+                pass
             if not _all_done_shown:
                 _all_done_shown = True
                 # 🚨 2026-08-10：完成 → 顯示「確定」按鈕（用戶撳先關 — 唔自動消失）
+                # 🚨 2026-08-10：完成後緊急停止消失（用戶要求 — 操作完成唔使再強制終止 — 只留確定）
+                if _stop_btn is not None:
+                    try:
+                        _stop_btn.pack_forget()
+                    except Exception:
+                        pass
+                if _btn_frame is not None and not _btn_frame.winfo_ismapped():
+                    _btn_frame.pack(pady=(0, 8))
                 if _done_btn is not None and not _done_btn.winfo_ismapped():
-                    _done_btn.pack(pady=(0, 10))
-                    sw = root.winfo_screenwidth()
-                    sh = root.winfo_screenheight()
-                    h = 230 + len(data) * 24 + 50
-                    root.geometry(f"340x{h}+{sw - 364}+{sh - h - 60}")
+                    _done_btn.pack(side="left", padx=4)
         for s in data:
-            text = s.get('text', '')
             st = s.get('status', 'pending')
+            # 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
             if st == 'done':
-                icon, color = '✅', '#34d399'
+                mark, color = '完成', '#34d399'
             elif st == 'doing':
-                icon, color = '⏳', '#fbbf24'
+                mark, color = '進行中', '#fbbf24'
             else:
-                icon, color = '⬜', '#71717a'
-            tk.Label(_steps_frame, text=f"{icon} {text}", bg="#18181b", fg=color,
+                mark, color = '等待', '#71717a'
+            tk.Label(_steps_frame, text=f"[{mark}] {text}", bg="#18181b", fg=color,
                      font=("Microsoft JhengHei UI", 11), anchor="w").pack(fill="x")
-        # 高度自動（按步驟數）
-        h = 230 + len(data) * 24
-        sw = root.winfo_screenwidth()
-        sh = root.winfo_screenheight()
-        root.geometry(f"340x{h}+{sw - 364}+{sh - h - 60}")
+        # 🚨 2026-08-10：移除「高度自動」— 固定高度 380（每次 resize → 視窗抽搐 — 用戶投訴）
     except Exception:
         pass
 
@@ -133,16 +166,27 @@ def main():
                     else:
                         root.lift()
                     shown = True
+                    # 🚨 2026-08-10：強制終止（緊急停止）操作期間都顯示（用戶要求保留）
+                    if _btn_frame is not None and not _btn_frame.winfo_ismapped():
+                        _btn_frame.pack(pady=(0, 8))
             elif not has_flag and shown:
-                # 🚨 2026-08-10：完成（flag 刪咗）→ 唔即刻隱藏 — 如果顯示緊「確定」等用戶撳
-                # 用戶撳確定（_done_btn command → root.withdraw）— 或者 flag 冇咗 + 冇確定顯示 → 隱藏
-                if _done_btn is not None and _done_btn.winfo_ismapped():
-                    pass  # 等用戶撳確定
-                else:
-                    root.withdraw()
-                    shown = False
-                    _last_steps = ''  # 重置（下次重新顯示）
-                    _all_done_shown = False
+                # 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
+                # 操作完成/中斷 → 一直顯示（確定按鈕顯示 — 用戶撳先關）+ 緊急停止消失（完成咗）
+                if _stop_btn is not None:
+                    try:
+                        _stop_btn.pack_forget()
+                    except Exception:
+                        pass
+                if _btn_frame is not None and not _btn_frame.winfo_ismapped():
+                    try:
+                        _btn_frame.pack(pady=(0, 8))
+                    except Exception:
+                        pass
+                if _done_btn is not None and not _done_btn.winfo_ismapped():
+                    try:
+                        _done_btn.pack(side="left", padx=4)
+                    except Exception:
+                        pass
             root.update()
         except Exception:
             pass

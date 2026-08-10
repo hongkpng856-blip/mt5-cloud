@@ -141,6 +141,8 @@ def release():
         pass
     _hide_window()
     _write_status(False)  # 網站 poll 到就關警告視窗
+    # 🚨 2026-08-10 修：唔好喺 release 清 steps（完成後用戶未撳確定 — 步驟字句要保留顯示 — 用戶投訴）
+    # 清 steps 已經喺「下一個任務入口」做（compile/部署/剷除開始 — 自動清舊任務）
     print("🛡️  [CONTROL] 控制結束，警告視窗已關閉")
 
 
@@ -300,13 +302,10 @@ def clear_steps():
 
 
 def pause_window():
-    """GUI 自動化操作前隱藏警告視窗（唔搶滑鼠 click）— 刪 flag"""
-    try:
-        _flag = os.path.join(os.path.dirname(__file__), '.ai_control.show')
-        if os.path.exists(_flag):
-            os.remove(_flag)
-    except Exception:
-        pass
+    """GUI 自動化操作前隱藏警告視窗（唔搶滑鼠 click）— 刪 flag
+    🚨 2026-08-10：改 no-op — 每次操作刪 flag → 視窗彈吓彈下（心跳咁 — 用戶投訴）
+    → 警告視窗喺右下角（唔遮 MT5 操作）— 唔需要 pause — 一直顯示"""
+    pass
 
 
 def resume_window():

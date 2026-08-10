@@ -4,52 +4,281 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register — MT5 Cloud</title>
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
     <style>
+        :root {
+            --bg: #09090b;
+            --bg-card: #18181b;
+            --bg-input: #09090b;
+            --bg-muted: #27272a;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --text-dim: #71717a;
+            --accent: #10b981;
+            --accent-hover: #34d399;
+            --accent-ring: rgba(16,185,129,0.3);
+            --destructive: #ef4444;
+            --radius: 8px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
+
         .card {
-            background: #161b22; border: 1px solid #30363d;
-            border-radius: 12px; padding: 40px; width: 380px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 384px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.03);
         }
-        .card h1 { font-size: 24px; margin-bottom: 24px; text-align: center; }
-        .card input {
-            width: 100%; padding: 10px 12px; margin-bottom: 12px;
-            background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
-            color: #e6edf3; font-size: 14px;
+
+        .card-header {
+            padding: 32px 32px 0;
+            text-align: center;
         }
-        .card input:focus { border-color: #58a6ff; outline: none; }
-        .card button {
-            width: 100%; padding: 10px;
-            background: #238636; border: 1px solid #2ea043; border-radius: 6px;
-            color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+
+        .card-header .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            color: #fff;
+            font-size: 24px;
         }
-        .card button:hover { background: #2ea043; }
-        .card p { text-align: center; margin-top: 16px; font-size: 13px; }
-        .card a { color: #58a6ff; text-decoration: none; }
-        .error { color: #f85149; font-size: 13px; margin-bottom: 12px; display: none; }
+
+        .card-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .card-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .card-content {
+            padding: 0 32px;
+        }
+
+        .card-footer {
+            padding: 20px 32px 32px;
+            text-align: center;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .field .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .field .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            color: var(--text-dim);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 14px;
+            font-family: var(--font);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .field input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-ring);
+            outline: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: var(--font);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: var(--destructive);
+            display: flex;
+        }
+
+        .link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .link:hover {
+            color: var(--text);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @media (max-width: 480px) {
+            .card { width: 100%; }
+            .card-header,
+            .card-content,
+            .card-footer { padding-left: 20px; padding-right: 20px; }
+            .card-header { padding-top: 24px; }
+            .card-footer { padding-bottom: 24px; }
+            .field input { font-size: 16px; padding: 12px 12px 12px 38px; }
+            .btn { font-size: 16px; padding: 12px; }
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>📝 Register</h1>
-        <div class="error" id="error"></div>
-        <form onsubmit="register(event)">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password (min 6 chars)" minlength="6" required>
-            <button type="submit">Create Account</button>
-        </form>
-        <p>Already have an account? <a href="/login">Login</a></p>
+        <div class="card-header">
+            <div class="logo"><i class="icon-user-plus"></i></div>
+            <h1>Create Account</h1>
+            <p>Get started with MT5 Cloud</p>
+        </div>
+
+        <div class="card-content">
+            <div class="alert" id="error" role="alert">
+                <i class="icon-circle-alert"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <form onsubmit="register(event)">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="icon-user"></i>
+                        <input type="text" id="username" placeholder="Choose a username" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="icon-mail"></i>
+                        <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="icon-lock"></i>
+                        <input type="password" id="password" placeholder="Min 6 characters" minlength="6" required autocomplete="new-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="registerBtn">
+                    <i class="icon-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+        </div>
+
+        <div class="card-footer">
+            <div>
+                <a href="/login" class="link">Already have an account? Sign in</a>
+            </div>
+        </div>
     </div>
+
     <script>
         async function register(e) {
             e.preventDefault();
+            const errEl = document.getElementById('error');
+            const errText = document.getElementById('errorText');
+            const btn = document.getElementById('registerBtn');
+            errEl.style.display = 'none';
+
+            btn.innerHTML = '<span class="spinner"></span> Creating…';
+            btn.disabled = true;
+
             const res = await fetch('/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -61,10 +290,13 @@
             });
             const data = await res.json();
             if (data.error) {
-                document.getElementById('error').textContent = data.error;
-                document.getElementById('error').style.display = 'block';
+                btn.innerHTML = '<i class="icon-user-plus"></i> Create Account';
+                btn.disabled = false;
+                errEl.className = 'alert alert-error';
+                errText.textContent = data.error;
+                errEl.style.display = 'flex';
             } else {
-                // Show agent_id
+                btn.innerHTML = '<i class="icon-check"></i> Redirecting…';
                 alert('✅ Registered! Your Agent ID: ' + data.agent_id + '\nSave this — you\'ll need it for the Windows Agent.');
                 window.location.href = '/dashboard';
             }

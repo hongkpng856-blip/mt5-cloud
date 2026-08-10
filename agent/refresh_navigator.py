@@ -153,16 +153,14 @@ def refresh_navigator(max_retries=3):
 
     for attempt in range(max_retries):
         try:
-            # AI 控制守衛 — 彈警告視窗 + 緊急停止支援
-            from control_guard import acquire, check_abort, release, ControlAborted
-            acquire("刷新 Navigator")
+            # 🚨 2026-08-10 修：唔用 acquire/release（背景 Navigator refresh 每次彈視窗 → 完成後都彈 → 抽搐 — 用戶投訴）
+            # 淨保留 check_abort（緊急停止支援）
+            from control_guard import check_abort, ControlAborted
             try:
                 return _do_refresh(mt5_pid, attempt)
             except ControlAborted:
                 print("🚨 Navigator refresh 被用戶緊急停止！")
                 return False
-            finally:
-                release()
         except Exception as e:
             print(f"⚠️ refresh attempt {attempt+1} failed: {e}")
             try:

@@ -1,0 +1,5 @@
+[2026-08-10 02:58:57] 檢查: {'watcher': 'OK', 'server': 'OK', 'detector': 'OK'}（python 進程 5 個）
+[2026-08-10 03:01:27] 檢查: {'watcher': 'OK', 'server': 'OK', 'detector': 'OK'}（python 進程 5 個）
+[2026-08-10 16:45:42] 檢查: {'watcher': 'MISSING', 'server': 'OK', 'detector': 'OK', 'alert_worker': 'OK'}（python 進程 4 個）
+[2026-08-10 16:45:42] ✅ watcher 已啟動（缺失自動重啟）
+[2026-08-10 17:20:42] 檢查: {'watcher': 'OK', 'server': 'OK', 'detector': 'OK', 'alert_worker': 'OK'}（python 進程 6 個）

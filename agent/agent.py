@@ -14,6 +14,7 @@ import time
 import struct
 import subprocess
 import threading
+import json
 
 # === Config ===
 SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://having-bent-bunch-theater.trycloudflare.com')
@@ -658,12 +659,12 @@ def download_and_install(ea_name, url, ea_config=None):
                 
                 oninit_inject = (
                     f"   GlobalVariableSet(\"{hb_var}\",TimeCurrent());\r\n"
-                    f"   int hb_fh=FileOpen(\"{hb_file}\",FILE_WRITE|FILE_TXT|FILE_COMMON);\r\n"
+                    f"   int hb_fh=FileOpen(\"{hb_file}\",FILE_WRITE|FILE_TXT);\r\n"
                     f"   if(hb_fh!=INVALID_HANDLE){{FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}}\r\n"
                 )
                 ontick_inject = (
                     f"   GlobalVariableSet(\"{hb_var}\",TimeCurrent());\r\n"
-                    f"   int hb_fh=FileOpen(\"{hb_file}\",FILE_WRITE|FILE_TXT|FILE_COMMON);\r\n"
+                    f"   int hb_fh=FileOpen(\"{hb_file}\",FILE_WRITE|FILE_TXT);\r\n"
                     f"   if(hb_fh!=INVALID_HANDLE){{FileWrite(hb_fh,TimeCurrent());FileClose(hb_fh);}}\r\n"
                 )
                 
@@ -749,17 +750,9 @@ def download_and_install(ea_name, url, ea_config=None):
                         f.write(set_content)
                     print(f"   📋 Preset: {set_path}")
                     
-                    # === Auto-attach EA to MT5 chart ===
-                    try:
-                        inputs = {'LotSize': lot, 'MagicNumber': magic}
-                        result = auto_attach_ea(base_name, symbol=sym, 
-                                                timeframe=tf, inputs=inputs)
-                        if result:
-                            print(f"   🎉 {base_name} → {sym} {tf} 🟢 ALIVE")
-                        else:
-                            print(f"   ⚠️  Auto-attach failed for {base_name}")
-                    except Exception as attach_err:
-                        print(f"   ⚠️  Auto-attach error: {attach_err}")
+                    # === Skip deploy command for auto-sync (only 🚀 Deploy button writes it) ===
+                    # Auto-sync just compiles & registers EA. User 🚀 Deploy will trigger attach.
+                    print(f"   ✅ {base_name} compiled & registered. User 🚀 Deploy to attach.")
 
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
@@ -984,30 +977,34 @@ def execute_deploy(data):
         sio.emit('install_result', {"status": status, "ea": ea_name, "msg": msg})
 
     try:
-        # Use auto_attach_ea for reliable deployment
-        inputs = {'LotSize': lot, 'MagicNumber': magic}
-        result = auto_attach_ea(ea_name, symbol=mt5_symbol, timeframe=tf, inputs=inputs)
+        # Write command file for deploy_watcher (has desktop access for pyautogui)
+        cmd_data = {
+            'ea_name': ea_name,
+            'symbol': mt5_symbol,
+            'tf': tf,
+            'magic': magic,
+            'lot': lot,
+            'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S'),
+            'source': 'agent_deploy'
+        }
+        cmd_filename = f'deploy_cmd_{ea_name}_{int(time.time())}.json'
+        common_files = os.path.join(os.environ.get('APPDATA', ''),
+                                     'MetaQuotes', 'Terminal', 'Common', 'Files')
+        os.makedirs(common_files, exist_ok=True)
+        cmd_path = os.path.join(common_files, cmd_filename)
         
-        if result:
-            report(f'✅ {ea_name} → {symbol} {tf} 已啟動！🟢', 'ok')
-        else:
-            # Auto-attach failed — check AutoTrading state
-            import MetaTrader5 as mt5
-            if not mt5.initialize():
-                report('❌ MT5 無法連接', 'error')
-                return
-            
-            # Try enabling AutoTrading first
-            report('⚠️ Auto-attach failed, checking AutoTrading...')
-            info = mt5.account_info()
-            if info and not info.trade_allowed:
-                report('🔴 AutoTrading is OFF — 請在 MT5 按 Ctrl+E 開啟', 'error')
-            else:
-                report('⚠️ Auto-attach failed，請重試 Deploy', 'error')
-            mt5.shutdown()
+        with open(cmd_path, 'w') as f:
+            json.dump(cmd_data, f)
+        
+        print(f"   📝 Watcher command written: {cmd_path}")
+        print(f"   ⏳ deploy_watcher.py 會自動 attach {ea_name} → {symbol} {tf}")
+        sys.stdout.flush()
+        
+        # Report as sent (deploy_watcher will do the actual attach)
+        report(f'📡 Deploy 指令已交給 watcher: {ea_name} → {symbol} {tf}', 'sent')
 
     except Exception as e:
-        report(f'❌ {str(e)[:80]}', 'error')
+        report(f'❌ Failed to write deploy command: {str(e)[:80]}', 'error')
 
 
 # ================================================================
@@ -1020,17 +1017,6 @@ def sync_loop():
     last_trade = 0
     while True:
         try:
-            # Poll deploy queue
-            import requests as req
-            poll_url = f"http://localhost:5002/api/agent-poll-deploy?agent_id={AGENT_ID}"
-            resp = req.get(poll_url, timeout=5)
-            if resp.status_code == 200:
-                deploy_data = resp.json()
-                if deploy_data and 'ea_name' in deploy_data:
-                    print(f"🚀 [POLL] Deploy: {deploy_data}")
-                    sys.stdout.flush()
-                    execute_deploy(deploy_data)
-
             # Sync MT5 data every 10 seconds
             now = time.time()
             if sio.connected and now - last_sync >= 10:
@@ -1108,7 +1094,7 @@ print("=" * 56)
 print("  Connecting...\n")
 
 try:
-    sio.connect(f"{SERVER_URL}", transports=['websocket'])
+    sio.connect(f"{SERVER_URL}", transports=['polling'])  # 強制 polling，Flask dev server 唔支援 WebSocket
 except Exception as e:
     print(f"❌ Cannot connect to server: {e}")
     print(f"   Make sure {SERVER_URL} is running")

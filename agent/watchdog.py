@@ -99,7 +99,9 @@ def main():
     if status['detector'] == 'MISSING':
         _start([sys.executable, '-u', 'agent/auto_trade_detector.py'], 'detector')
     if status['alert_worker'] == 'MISSING':
-        _start([sys.executable, '-u', 'agent/alert_worker.py'], 'alert_worker')
+        # 🚨 2026-08-10：單實例保護（已行就唔起 — 防重複警告視窗 — 用戶報「兩個相同嘅嘢」）
+        if not _is_running(_py_cmdlines(), 'alert_worker'):
+            _start([sys.executable, '-u', 'agent/alert_worker.py'], 'alert_worker')
     # 🚨 2026-08-10：MT5 檢查 — 冇開就自動開（確保 EA 一直行 — 閒置唔會失效）
     try:
         mt5 = subprocess.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH',

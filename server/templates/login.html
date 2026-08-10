@@ -3,103 +3,386 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — MT5 Cloud</title>
+    <title>MT5 Cloud</title>
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
     <style>
+        /* ─── Design System ─── */
+        :root {
+            --bg: #09090b;
+            --bg-card: #18181b;
+            --bg-muted: #27272a;
+            --bg-input: #09090b;
+            --border: #27272a;
+            --border-hover: #3f3f46;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --text-dim: #71717a;
+            --accent: #10b981;
+            --accent-hover: #34d399;
+            --accent-ring: rgba(16, 185, 129, 0.3);
+            --destructive: #ef4444;
+            --radius: 8px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0d1117; color: #e6edf3;
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 40px; width: 380px; }
-        .card h1 { font-size: 24px; margin-bottom: 24px; text-align: center; }
-        .card input {
-            width: 100%; padding: 10px 12px; margin-bottom: 12px;
-            background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
-            color: #e6edf3; font-size: 14px;
+
+        /* ─── Card ─── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 384px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.03);
         }
-        .card input:focus { border-color: #58a6ff; outline: none; }
-        .card button {
-            width: 100%; padding: 10px; background: #238636; border: 1px solid #2ea043;
-            border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 8px;
+
+        .card-header {
+            padding: 32px 32px 0;
+            text-align: center;
         }
-        .card button:hover { background: #2ea043; }
-        .card button.btn2 { background: #1f6feb; border-color: #388bfd; }
-        .card button.btn2:hover { background: #388bfd; }
-        .card p { text-align: center; margin-top: 16px; font-size: 13px; }
-        .card a { color: #58a6ff; text-decoration: none; }
-        .error { color: #f85149; font-size: 13px; margin-bottom: 12px; display: none; }
-        @media (max-width: 768px) {
-            .card { width:90%; padding:24px; }
-            .card h1 { font-size:20px; }
-            .card input { font-size:16px; padding:12px; }
-            .card button { font-size:16px; padding:14px; }
-            body { padding:20px 0; }
+
+        .card-header .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            color: #fff;
+            font-size: 24px;
+        }
+
+        .card-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .card-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .card-content {
+            padding: 0 32px 4px;
+        }
+
+        .card-footer {
+            padding: 20px 32px 32px;
+            text-align: center;
+        }
+
+        /* ─── Form Fields ─── */
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .field .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .field .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            color: var(--text-dim);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 14px;
+            font-family: var(--font);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .field input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-ring);
+            outline: none;
+        }
+
+        .field input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
+        }
+
+        .field .hint {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* ─── Separator ─── */
+        .separator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        .separator::before,
+        .separator::after {
+            content: '';
+            flex: 1;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ─── Button ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: var(--font);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-muted);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #3f3f46;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        /* ─── Alert ─── */
+        .alert {
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--destructive);
+            display: flex;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--accent);
+            display: flex;
+        }
+
+        /* ─── Link ─── */
+        .link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.15s;
+        }
+
+        .link:hover {
+            color: var(--text);
+        }
+
+        /* ─── Loading ─── */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 480px) {
+            .card { width: 100%; }
+            .card-header,
+            .card-content,
+            .card-footer { padding-left: 20px; padding-right: 20px; }
+            .card-header { padding-top: 24px; }
+            .card-footer { padding-bottom: 24px; }
+            .field input { font-size: 16px; padding: 12px 12px 12px 38px; }
+            .btn { font-size: 16px; padding: 12px; }
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>🔑 Login</h1>
-        <div class="error" id="error"></div>
-        <form onsubmit="login(event)">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <button class="btn2" onclick="devLogin()">🔐 Dev Account 快速登入</button>
-        <div id="devInfo" style="display:none;margin-top:12px;padding:12px;background:#1a3a2a;border:1px solid #3fb950;border-radius:6px;font-size:13px">✅ Dev Account 已登入</div>
-        <p>No account? <a href="/register">Register</a></p>
+        <div class="card-header">
+            <div class="logo"><i class="icon-chart-candlestick"></i></div>
+            <h1>MT5 Cloud</h1>
+            <p>Sign in to your account</p>
+        </div>
+
+        <div class="card-content">
+            <div class="alert" id="error" role="alert">
+                <i class="icon-circle-alert"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <form onsubmit="login(event)">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="icon-user"></i>
+                        <input type="text" id="username" placeholder="dev" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="icon-lock"></i>
+                        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                </div>
+
+                <div class="separator">MT5 Verification</div>
+
+                <div class="field">
+                    <label for="mt5Account">Account number</label>
+                    <div class="input-wrapper">
+                        <i class="icon-hash"></i>
+                        <input type="text" id="mt5Account" placeholder="5053721681">
+                    </div>
+                    <div class="hint">Enter your MT5 account number to verify identity</div>
+                </div>
+
+                <div class="field">
+                    <label for="mt5Password">Account password</label>
+                    <div class="input-wrapper">
+                        <i class="icon-key-round"></i>
+                        <input type="password" id="mt5Password" placeholder="Optional">
+                    </div>
+                    <div class="hint">Required for two-factor authentication</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <i class="icon-log-in"></i>
+                    Sign In
+                </button>
+            </form>
+        </div>
+
+        <div class="card-footer">
+            <button class="btn btn-secondary" onclick="devLogin()">
+                <i class="icon-sparkles"></i>
+                Quick Dev Access
+            </button>
+            <div style="margin-top:16px">
+                <a href="/register" class="link">Create an account</a>
+            </div>
+        </div>
     </div>
+
     <script>
         async function login(e) {
             e.preventDefault();
+            const errEl = document.getElementById('error');
+            const errText = document.getElementById('errorText');
+            const btn = document.getElementById('loginBtn');
+            errEl.style.display = 'none';
+
+            const mt5Account = document.getElementById('mt5Account').value.trim();
+
+            btn.innerHTML = '<span class="spinner"></span> Signing in…';
+            btn.disabled = true;
+
             const res = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: document.getElementById('username').value,
-                    password: document.getElementById('password').value
+                    password: document.getElementById('password').value,
+                    mt5_account: mt5Account
                 })
             });
             const data = await res.json();
             if (data.error) {
-                document.getElementById('error').textContent = data.error;
-                document.getElementById('error').style.display = 'block';
+                btn.innerHTML = '<i class="icon-log-in"></i> Sign In';
+                btn.disabled = false;
+                errEl.className = 'alert alert-error';
+                errText.textContent = data.error;
+                errEl.style.display = 'flex';
             } else {
+                btn.innerHTML = '<i class="icon-check"></i> Redirecting…';
                 window.location.href = '/dashboard';
             }
-        }
-
-        async function createTestAccount() {
-            const btn = event.target;
-            btn.disabled = true;
-            btn.innerHTML = '⏳ 建立中...';
-            const res = await fetch('/api/test-account', { method: 'POST' });
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('testResult').innerHTML =
-                    '✅ 測試帳號已建立<br>' +
-                    '<b>Username:</b> ' + data.username + '<br>' +
-                    '<b>Password:</b> ' + data.password + '<br>' +
-                    '<b>Agent ID:</b> ' + data.agent_id + '<br><br>' +
-                    '<button onclick="autoLogin(\'' + data.username + '\',\'' + data.password + '\')" style="padding:8px 16px;background:#238636;border:1px solid #2ea043;border-radius:6px;color:#fff;cursor:pointer;font-size:13px">🔑 自動登入</button>';
-                document.getElementById('testResult').style.display = 'block';
-            }
-            btn.disabled = false;
-            btn.innerHTML = '🧪 建立測試帳號';
-        }
-
-        async function autoLogin(u, p) {
-            document.getElementById('username').value = u;
-            document.getElementById('password').value = p;
-            login({ preventDefault: () => {} });
         }
 
         async function devLogin() {
             document.getElementById('username').value = 'dev';
             document.getElementById('password').value = 'dev1234';
-            document.getElementById('devInfo').style.display = 'block';
+            document.getElementById('mt5Account').value = '5053721681';
+            document.getElementById('mt5Password').value = 'eip5ai0n';
             await login({ preventDefault: () => {} });
         }
     </script>
