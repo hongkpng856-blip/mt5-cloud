@@ -761,9 +761,9 @@ function getSignalHtml(name, sym, tf) {
 
 async function fetchEAInventory() {
     try {
-        const res = await fetch('/static/detector/ea_inventory.json?t=' + Date.now(), {
-            signal: AbortSignal.timeout(8000)
-        });
+        // 🚨 2026-08-11 修：移除 AbortSignal.timeout(8000)（可能 timeout → eaDeployStatus 空 → 「已加入」判斷錯）
+        // 🚨 2026-08-11 修：唔再 call loadEALibrary/loadEAConfig（每次 render 成個表格 → scroll 卡 — 佢哋自己 poll）
+        const res = await fetch('/static/detector/ea_inventory.json?t=' + Date.now());
         const d = await res.json();
         if (d.error) throw new Error(d.error);
 
@@ -776,15 +776,9 @@ async function fetchEAInventory() {
                 config_status: ea.config_status
             };
         });
-
-        // 重新渲染 EA 倉庫表格（加狀態列）
-        if (typeof loadEALibrary === 'function') loadEALibrary();
-        // 重新渲染配對庫（狀態列）
-        if (typeof loadEAConfig === 'function') loadEAConfig();
     } catch(e) {
         // Detector offline — 標記全部停止
         eaDeployStatus = {};
-        if (typeof loadEALibrary === 'function') loadEALibrary();
     }
 }
 
@@ -811,7 +805,7 @@ async function loadEAConfig() {
         // 過濾：只要未刪除嘅 + 本機有檔案（detector inventory）— MT5 剷除咗就自動消失
         const activeEAs = pairedEAs.filter(name => !removed.includes(name) && eaDeployStatus[name]);
 
-        // 本機 MT5 已安裝嘅 EA（detector）— 未配對都顯示
+        // 🚨 2026-08-11：配對庫顯示「本機 EA」（未配對都顯示 — 用戶想要）+ 每行有狀態標記（已配對/未配對 — 唔會誤會）
         const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n));
         const allEAs = [...new Set([...activeEAs, ...localEA])];
 
@@ -866,8 +860,8 @@ async function loadEAConfig() {
                 <td><b>${name}</b></td>
                 <td><span style="font-size:10px" class="${isSystem?'badge badge-blue':isOfficial?'badge badge-green':'badge badge-gray'}">${isSystem?'系統':isOfficial?'官方':(eaMappings[name]?'自訂':'本機')}</span></td>
                 <td style="text-align:center;white-space:nowrap">
-                    <div style="font-size:14px;${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'color:var(--success)':'color:var(--text-dim)'}" title="${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':'停止中'}">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'<i class="icon-circle" style="color:var(--success);font-size:10px"></i>':'<i class="icon-circle" style="color:var(--text-dim);font-size:10px"></i>'}</div>
-                    <div style="font-size:9px;color:#8b949e;margin-top:1px">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':'停止中'}</div>
+                    <div style="font-size:14px;${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'color:var(--success)':'color:var(--text-dim)'}" title="${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':(eaMappings[name]?'停止中':'未配對')}">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'<i class="icon-circle" style="color:var(--success);font-size:10px"></i>':'<i class="icon-circle" style="color:var(--text-dim);font-size:10px"></i>'}</div>
+                    <div style="font-size:9px;color:#8b949e;margin-top:1px">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':(eaMappings[name]?'停止中':'未配對')}</div>
                     ${runtimeStatus[name]?`<div style="font-size:9px;color:${runtimeStatus[name]==='running'?'var(--success)':runtimeStatus[name]==='stopped'?'var(--text-dim)':'#d29922'};margin-top:1px" title="控制層心跳">${runtimeStatus[name]==='running'?'❤ 心跳運行':runtimeStatus[name]==='stopped'?'● 已停止':'◇ 無心跳'}</div>`:''}
                 </td>
                 <td><select class="ea-magic" data-ea="${name}" style="width:85px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 4px;font-size:12px">${(analysisData&&analysisData.all_magics||['240701']).map(m => `<option ${m===magic?'selected':''} value="${m}">Magic ${m}</option>`).join('')}</select></td>
@@ -1129,8 +1123,15 @@ function showControlModal(actionDesc, detailMsg) {
     const modal = document.getElementById('aiControlModal');
     const prog = document.getElementById('aiControlProg');
     const desc = document.getElementById('aiControlDesc');
+    // 🚨 2026-08-11：新操作彈出 → 清舊內容（唔殘留上一個操作資訊 + 按鈕正常 — 用戶投訴）
+    const sc0 = document.getElementById('aiControlSteps');
+    if (sc0) sc0.innerHTML = '';
+    const stop0 = document.getElementById('aiControlStopBtn');
+    if (stop0) { stop0.style.display = 'inline-flex'; stop0.disabled = false; }
+    const close0 = document.getElementById('aiControlCloseBtn');
+    if (close0) close0.style.display = 'none';
     // 🚨 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表 — 同電腦版一致）
-    if (prog) { prog.style.display = 'none'; prog.textContent = actionDesc || '正在處理'; }
+    if (prog) { prog.style.display = 'none'; prog.textContent = actionDesc || '正在處理'; prog.style.color = 'inherit'; }
     if (desc) desc.textContent = detailMsg || '請勿移動滑鼠或按鍵盤！';
     if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
     // 動作開始：最少顯示 3 秒（等 watcher 後續動作接手，唔會「彈一下」）
@@ -1346,9 +1347,10 @@ async function refreshPairingLibrary() {
         const res = await fetch('/api/ea-library/refresh', { method: 'POST' });
         const data = await res.json().catch(() => ({}));
         if (data.success) {
-            // 🚨 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「而家入」/「移去配對」正確）
+            // 🚨 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「已加入」/「移去配對」正確）
+            // 🚨 2026-08-11 修：fetchEAInventory 要 await（之前冇 await → loadEALibrary 用舊 eaDeployStatus → detect 唔到已加入）
             if (typeof loadEAConfig === 'function') await loadEAConfig();      // 攞 eaMappings（已配對）
-            if (typeof fetchEAInventory === 'function') fetchEAInventory();   // 攞 eaDeployStatus（本機狀態）
+            if (typeof fetchEAInventory === 'function') await fetchEAInventory();   // 攞 eaDeployStatus（本機狀態）
             if (typeof loadEALibrary === 'function') await loadEALibrary();   // 渲染 EA 倉庫（狀態正確）
             if (typeof showLog === 'function') showLog('已重新整理配對庫（攞最新資訊）', 'log-info');
         } else {
@@ -1363,9 +1365,18 @@ async function refreshPairingLibrary() {
 // === EA Library ===
 async function loadEALibrary() {
     try {
+        // 🚨 2026-08-11 修：唔再自動 call loadEAConfig（loadEAConfig 本身每 10 秒 poll — 已經同步 — 避免每次 render 配對庫表格 → scroll 卡）
         // 🚨 2026-08-11：cache-busting（強制攞最新 — 唔用瀏覽器 cache）
         const res = await fetch('/api/ea-library?t=' + Date.now());
         const data = await res.json();
+
+        // 🚨 2026-08-11：自己攞本機狀態（唔靠 fetchEAInventory 全局 — 確保「已加入」判斷一定準 — 用戶投訴）
+        let localSet = {};
+        try {
+            const invRes = await fetch('/static/detector/ea_inventory.json?t=' + Date.now());
+            const invD = await invRes.json();
+            (invD.eas || []).forEach(ea => { localSet[ea.name] = true; });
+        } catch(e) {}
 
         // 官方 EA
         const official = (data.files || []).filter(f => f.type === 'official');
@@ -1373,10 +1384,11 @@ async function loadEALibrary() {
         let oHtml = '';
         official.forEach(f => {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-            // 🚨 2026-08-11：三態對比（電腦真實 vs 網頁配對）— 重新整理後準確顯示
+            // 🚨 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
+            // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
-            const localHas = !!eaDeployStatus[baseName];                                          // 本機有檔案
-            const added = webHas && localHas;
+            const localHas = !!(eaDeployStatus[baseName] || localSet[baseName]);                  // 本機有檔案
+            const added = localHas;
             oHtml += `<tr>
                 <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">平台提供</span></td>
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>

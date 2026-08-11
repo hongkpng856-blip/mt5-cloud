@@ -8,7 +8,7 @@ import threading
 import time
 import glob
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, make_response
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -166,13 +166,21 @@ TIMEFRAMES = ['M1','M5','M15','M30','H1','H4','D1','W1','MN1']
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        return render_template('dashboard.html')
+        # 🚨 2026-08-11：dashboard.html 唔 cache（前端 JS 一定攞最新 — 用戶硬刷新都唔夠時確保）
+        resp = make_response(render_template('dashboard.html'))
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        resp.headers['Pragma'] = 'no-cache'
+        return resp
     return render_template('index.html')
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    # 🚨 2026-08-11：dashboard.html 唔 cache
+    resp = make_response(render_template('dashboard.html'))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    return resp
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -257,7 +265,17 @@ def logout():
 @login_required
 def api_ea_config():
     if request.method == 'GET':
-        config = json.loads(current_user.ea_config or '{}')
+        # 🚨 2026-08-11：直接 SQL 讀 DB（SQLAlchemy session 有隔離問題 — current_user.ea_config 返回舊值含已剷除 EA）
+        try:
+            import sqlite3 as _sq2
+            _dbp2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'server', 'instance', 'mt5cloud.db')
+            _c2 = _sq2.connect(_dbp2)
+            _c2.row_factory = _sq2.Row
+            _r2 = _c2.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+            _c2.close()
+            config = json.loads(_r2['ea_config'] or '{}') if _r2 else {}
+        except Exception:
+            config = json.loads(current_user.ea_config or '{}')
         # ⚠️ 控制層心跳狀態（CONTROL_LAYER_DESIGN.md）：讀 Common/Files/state_<ea>.json
         # running（ts 新鮮 <30 秒）/ stopped / unknown（冇檔或過期）
         # ⚠️ 2026-08 修：config 冇 _status key（只有 ea_name/ea_lot/ea_magic/ea_tf）→ 唔可以靠 _status 尾
@@ -903,6 +921,56 @@ def api_ea_library_refresh():
         pass
     try:
         files = []
+        # 🚨 2026-08-11：掃描本機 MT5Cloud_EA 實際檔案（.mq5/.ex5 — base name 集合 — 用嚟對比網頁 config）
+        local_bases = set()
+        try:
+            data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            if os.path.isdir(data_dir):
+                for d in os.listdir(data_dir):
+                    exp = os.path.join(data_dir, d, 'MQL5', 'Experts')
+                    for sub in (exp, os.path.join(exp, 'MT5Cloud_EA')):
+                        if os.path.isdir(sub):
+                            for fn in os.listdir(sub):
+                                if fn.endswith(('.mq5', '.ex5')):
+                                    local_bases.add(os.path.splitext(fn)[0])
+        except Exception:
+            pass
+        # 🚨 自動清殘留 config：網頁已配對 + 本機完全冇檔案（冇 .mq5 冇 .ex5）→ 刪 config（電腦剷除後自動同步）
+        # 🚨 2026-08-11 修：清所有用戶（唔止 current_user — 殘留喺其它帳號）
+        try:
+            # 🚨 獨立 sqlite3 連接（SQLAlchemy session 喺 request 內有隔離問題 — 直接 sqlite3 最穩陣）
+            import sqlite3 as _sq
+            _db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'server', 'instance', 'mt5cloud.db')
+            if os.path.isfile(_db_path):
+                _conn = _sq.connect(_db_path)
+                _cur = _conn.cursor()
+                _cur.execute('SELECT id, ea_config FROM user')
+                cleaned_total = 0
+                for _rid, _cfg_str in _cur.fetchall():
+                    cfg = json.loads(_cfg_str or '{}')
+                    if not isinstance(cfg, dict):
+                        continue
+                    to_del = []
+                    for key in list(cfg.keys()):
+                        base = key
+                        for suffix in ('_lot', '_magic', '_tf', '_status'):
+                            if key.endswith(suffix):
+                                base = key[:-len(suffix)]
+                                break
+                        if base and base not in local_bases and base != 'Controller' and not base.startswith('_'):
+                            to_del.append(key)
+                    if to_del:
+                        for key in to_del:
+                            del cfg[key]
+                        _cur.execute('UPDATE user SET ea_config=? WHERE id=?', (json.dumps(cfg), _rid))
+                        cleaned_total += len(to_del)
+                if cleaned_total:
+                    _conn.commit()
+                    print(f"[refresh] 自動清理 {cleaned_total} 個殘留 config key（本機已剷除）", flush=True)
+                _conn.close()
+        except Exception as _ce:
+            print(f"[refresh] 自動清理失敗: {_ce}", flush=True)
+            pass
         if os.path.isdir(EA_LIBRARY_DIR):
             for f in sorted(os.listdir(EA_LIBRARY_DIR)):
                 if f.endswith('.mq5'):
