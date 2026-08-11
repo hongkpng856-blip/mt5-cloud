@@ -499,28 +499,19 @@ def _refresh_auto_trade_cache(user):
         print(f"[DEBUG] compute_auto_trade_status failed: {e}")
         pass
     
-    # Also refresh account info
+    # Also refresh account info（🚨 2026-08-12 修：唔直接 init MT5 — detector 已持連接 → read 佢嘅 auto_trade_status.json）
     try:
-        import MetaTrader5 as mt5
-        import subprocess as _sp
-        # Check if MT5 is running first（bytes 檢查 — tasklist GBK 輸出 decode 會炸）
-        r = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /NH', shell=True, capture_output=True, timeout=5)
-        if b'terminal64' in r.stdout:
-            if mt5.initialize(timeout=10000):
-                info = mt5.account_info()
-                if info:
-                    with _auto_trade_lock:
-                        _auto_trade_cache["account_info"] = {
-                            'login': str(info.login),
-                            'server': info.server,
-                            'name': info.name,
-                            'balance': info.balance,
-                            'equity': info.equity,
-                            'currency': info.currency,
-                            'leverage': info.leverage
-                        }
-                mt5.shutdown()
-    except:
+        status_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                    'server', 'static', 'detector', 'auto_trade_status.json')
+        if os.path.isfile(status_file):
+            with open(status_file, 'r', encoding='utf-8') as f:
+                status_data = json.load(f)
+            status_account = status_data.get('account', '').strip()
+            if status_account:
+                with _auto_trade_lock:
+                    _auto_trade_cache["account_info"] = status_data.get("account_info", {'login': status_account})
+    except Exception as e:
+        print(f"[DEBUG] auto_trade_status read failed: {e}")
         pass
 
 @app.route('/api/dashboard')

@@ -29,19 +29,25 @@ status_cache = {
 
 
 def load_ea_config():
-    """直接讀 SQLite DB 攞 EA config"""
+    """直接讀 SQLite DB 攞 EA config（🚨 2026-08-12 修：合併所有用戶 config — 之前 hardcode 'dev' 得 0 keys）"""
+    cfg = {}
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
-        c.execute("SELECT ea_config FROM user WHERE username='dev'")
-        row = c.fetchone()
+        c.execute("SELECT ea_config FROM user")
+        for row in c.fetchall():
+            try:
+                user_cfg = json.loads(row['ea_config'] or '{}')
+                for k, v in user_cfg.items():
+                    if k not in cfg:
+                        cfg[k] = v
+            except Exception:
+                pass
         conn.close()
-        if row:
-            return json.loads(row['ea_config'] or '{}')
     except Exception as e:
         status_cache["error"] = f"DB read error: {e}"
-    return {}
+    return cfg
 
 
 def compute_signals():
@@ -70,6 +76,21 @@ def compute_signals():
         status_cache["error"] = f"mt5.initialize failed: {mt5.last_error()}"
         status_cache["timestamp"] = time.time()
         return
+
+    # 🚨 2026-08-12：initialize 完即刻攞 account info（EA 計算後可能 disconnect — account_info 返回 None）
+    account = ""
+    account_info_full = {}
+    try:
+        info = mt5.account_info()
+        if info:
+            account = str(info.login)
+            account_info_full = {
+                'login': str(info.login), 'server': info.server, 'name': info.name,
+                'balance': info.balance, 'equity': info.equity,
+                'currency': info.currency, 'leverage': info.leverage
+            }
+    except Exception:
+        pass
 
     results = []
     for ea in eas:
@@ -131,21 +152,12 @@ def compute_signals():
             results.append({'ea': ea, 'symbol': cfg.get(ea, ''), 'tf': cfg.get(ea + '_tf', 'H1'),
                             'sma10': 0, 'sma30': 0, 'signal': 'ERROR', 'alive': False, 'error': str(e)})
 
+    # 🚨 2026-08-12：account_info 已喺 initialize 後攞（上面）— 唔使再攞
     mt5.shutdown()
-
-    # 攞 account info
-    account = ""
-    try:
-        if mt5.initialize(timeout=5000):
-            info = mt5.account_info()
-            if info:
-                account = str(info.login)
-            mt5.shutdown()
-    except:
-        pass
 
     status_cache["results"] = results
     status_cache["account"] = account
+    status_cache["account_info"] = account_info_full
     status_cache["error"] = ""
     status_cache["timestamp"] = time.time()
 
@@ -307,6 +319,7 @@ def write_static_json():
         status_payload = {
             "timestamp": status_cache["timestamp"],
             "account": status_cache["account"],
+            "account_info": status_cache.get("account_info", {}),
             "error": status_cache["error"],
             "results": status_cache["results"]
         }

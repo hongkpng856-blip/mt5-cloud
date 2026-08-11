@@ -1141,6 +1141,10 @@ function showControlModal(actionDesc, detailMsg) {
     if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
     // 🚨 2026-08-11：記錄「當前任務」時間戳（poll 用嚟判斷舊 steps 唔顯示 — 新任務開始唔殘留上一個操作）
     window._modalShownAt = Date.now();
+    // 🚨 2026-08-12：新任務開始 → 清空步驟區 + 顯示「等待操作開始」
+    // 等 poll 讀到「新 steps」（steps 含當前 EA 名）先 render — 唔會顯示舊任務殘留 → 流程閃
+    if (sc0) sc0.innerHTML = '<div style="padding:2px 0;color:#71717a;font-size:12px">[等待] 等待操作開始…</div>';
+    window._stepsShow = false;  // poll 第一次見新 steps → 顯示
     // 動作開始：最少顯示 3 秒（等 watcher 後續動作接手，唔會「彈一下」）
     minShowUntil = Date.now() + 3000;
 }
@@ -1163,6 +1167,10 @@ async function pollAiControl() {
                 // 🚨 2026-08-12 修：移除 mtime 判斷（誤判 → 「等待操作開始」↔ 6 步反覆 → 「彈」！）
                 // 接受開頭可能顯示舊 steps 一秒（新 steps 寫入即覆蓋 — 唔會反覆彈）
                 if (sc) {
+                    // 🚨 2026-08-12：第一次見新 steps → 顯示（_stepsShow true — 唔會殘留舊任務 → 流程閃）
+                    if (!window._stepsShow && steps && steps.length > 0) {
+                        window._stepsShow = true;
+                    }
                     if (steps && steps.length) {
                         // 🚨 2026-08-11：移除 placeholder 舊 code（喺下面）— 空 steps 用 else 分支
                         // 🚨 2026-08-10：新任務開始（有 doing）→ 隱藏確定 + 顯示緊急停止（唔殘留上一個任務按鈕）+ 重置 prog 顏色
