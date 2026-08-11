@@ -1,1 +1,1 @@
-[{"text": "開始編譯 MACD_Cross 進行中…", "status": "doing"}, {"text": "完成編譯", "status": "pending"}]
+[{"text": "開始剷除 Mean_Reversion", "status": "done"}, {"text": "檢查圖表（有冇 EA 運行）", "status": "done"}, {"text": "移除圖表 EA", "status": "done"}, {"text": "刪除本機檔案（.mq5/.ex5）", "status": "done"}, {"text": "清理配對設定 + 釋放熱鍵", "status": "done"}, {"text": "完成剷除", "status": "done"}]

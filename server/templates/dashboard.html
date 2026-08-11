@@ -468,6 +468,8 @@
 
 <div class="main">
 <!-- AI 控制警告視窗（網站版 — 同 MT5 端 control_guard 一致，Lucide icons 0 emoji） -->
+<!-- 🚨 2026-08-12：版本標記（確認網頁載入最新版 — 用戶「完全冇改善」= 可能 cache 舊版） -->
+<span style="position:fixed;bottom:4px;right:8px;font-size:10px;color:rgba(148,163,184,0.5);z-index:9998">v0.9.25-dev</span>
 <div id="aiControlModal">
     <div class="ai-control-box">
         <div class="ai-control-accent"></div>
@@ -1192,9 +1194,26 @@ async function pollAiControl() {
                                 cbtn2.style.display = 'inline-block';
                             }
                         }
+                        // 🚨 2026-08-12：預留固定行數（空行填補 — 步驟加/減位置唔跳 — 網頁版抖動根治）
+                        const _MAX_ROWS = 6;
+                        const _totalRows = Math.max(steps.length, _MAX_ROWS);
                         // 🚨 2026-08-11：重新設計步驟出現 — 增量渲染（DOM 對比 — 只改變嗰行 — 唔重寫全部 → 唔閃）
                         const _rows = sc.children;
-                        for (let _i = 0; _i < steps.length; _i++) {
+                        for (let _i = 0; _i < _totalRows; _i++) {
+                            if (_i >= steps.length) {
+                                // 空行填補（位置固定 — 唔跳）
+                                if (_i < _rows.length) {
+                                    if (_rows[_i].innerHTML !== '') _rows[_i].innerHTML = '';
+                                } else {
+                                    const _divE = document.createElement('div');
+                                    _divE.style.padding = '2px 0';
+                                    _divE.style.color = 'transparent';
+                                    _divE.style.fontSize = '12px';
+                                    _divE.innerHTML = '&nbsp;';
+                                    sc.appendChild(_divE);
+                                }
+                                continue;
+                            }
                             const _s = steps[_i];
                             const _st2 = _s.status || 'pending';
                             const _txt = String(_s.text || '');
@@ -1218,7 +1237,7 @@ async function pollAiControl() {
                             }
                         }
                         // 多餘行移除（步驟減少）
-                        while (sc.children.length > steps.length) sc.removeChild(sc.lastChild);
+                        while (sc.children.length > _totalRows) sc.removeChild(sc.lastChild);
                         // 🚨 2026-08-10：全部完成（成功 → 確定；失敗 → 緊急停止 — 二選一 — 用戶要求）
                         if (steps.every(s => s.status === 'done')) {
                             const hasFail = steps.some(s => String(s.text || '').indexOf('失敗') >= 0);
@@ -1245,11 +1264,7 @@ async function pollAiControl() {
         if (!res.ok) {
             // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
             // 404 / 冇狀態檔 = 冇 AI 操控緊 → 唔自動關（一直顯示 — 確定撳先關）
-            // 🚨 2026-08-12：按鈕統一由 steps render 決定（唔喺呢度 set — 避免同二選一衝突 — 兩個按鈕同時出現）
-            const doneBtn2 = document.getElementById('aiControlCloseBtn');
-            const scx2 = document.getElementById('aiControlSteps');
-            const hasDoingNow2 = scx2 && scx2.innerHTML.indexOf('[進行中]') >= 0;
-            if (doneBtn2 && !hasDoingNow2 && aiControlVisible) { doneBtn2.style.display = 'inline-block'; doneBtn2.style.margin = '8px auto 0'; }
+            // 🚨 2026-08-12：確定按鈕完全由 steps render 決定（移除喺呢度 set — 三處 set 互相覆蓋 → 兩個按鈕同時出現）
             if (aiControlVisible && Date.now() >= minShowUntil) {
                 const pg = document.getElementById('aiControlProg');
                 if (pg) { pg.textContent = '已完成'; pg.style.display = 'block'; }
@@ -1265,16 +1280,14 @@ async function pollAiControl() {
         } else if (aiControlVisible && Date.now() >= minShowUntil) {
             // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
             // active false / stale → 唔自動 hide — 一直顯示（確定撳先關）
-            const doneBtn2 = document.getElementById('aiControlCloseBtn');
-            if (doneBtn2) { doneBtn2.style.display = 'inline-block'; doneBtn2.style.margin = '8px auto 0'; }
+            // 🚨 2026-08-12：確定按鈕統一由 steps render 決定（唔喺呢度 set）
             const pg2 = document.getElementById('aiControlProg');
             if (pg2) { pg2.textContent = '已完成'; pg2.style.display = 'block'; }
         }
     } catch(e) {
         // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 網絡錯誤都唔自動關 — 確定撳先關
+        // 🚨 2026-08-12：確定按鈕統一由 steps render 決定（唔喺呢度 set）
         if (aiControlVisible && Date.now() >= minShowUntil) {
-            const doneBtn3 = document.getElementById('aiControlCloseBtn');
-            if (doneBtn3) { doneBtn3.style.display = 'inline-block'; doneBtn3.style.margin = '8px auto 0'; }
             const pg3 = document.getElementById('aiControlProg');
             if (pg3) { pg3.textContent = '已完成'; pg3.style.display = 'block'; }
         }
@@ -1370,7 +1383,7 @@ setInterval(loadEALibrary, 30000);
 setInterval(fetchEAInventory, 10000);
 setInterval(fetchNotifications, 5000);
 setInterval(fetchActivity, 10000);
-setInterval(pollAiControl, 2000);  // 網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
+setInterval(pollAiControl, 700);  // 🚨 2026-08-12：poll 加快（2 秒 → 0.7 秒 — 捕到每步逐步 — 內容平滑更新唔「彈」）網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
 
 // 🚨 2026-08-11：配對庫「重新整理」— 即刻刷新 + 警告視窗流程（成功確定 / 失敗紅色+原因+確定）
 async function refreshPairingLibrary() {
