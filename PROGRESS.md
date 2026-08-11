@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.22** | 2026-08-10 | 🎯 網頁版警告視窗修復（配對唔「假完成」（compile_ok null → 等 watcher — 唔即刻寫「完成配對」）+ 移除原生 confirm「重唔重新編譯」（撳取消後狀態混亂）+ 網頁版強制二選一（每次 render：doing/失敗 → 只有緊急停止；成功 → 只有確定 — 唔靠殘留）+ 網頁版失敗步驟紅色（字眼有「失敗」→ 紅色）+ alert_worker crash log（死因記錄）+ alert_worker 新任務重置按鈕狀態）⚠️ 已知未解決（2026-08-11 用戶補充）：網頁版「兩個按鈕 + 抽搐」— 編譯失敗後**隔一陣**先出現（時序問題 — 可能 steps 被覆蓋（有嘢再寫 steps 冇「失敗」字眼 → hasFail False → 確定顯示 + 緊急停止未隱藏 → 兩個）+ 或者 ai_control.json active 交替（殘留操作 → modal 彈/關 → 抽搐））— 下次根治方向：① 失敗狀態鎖定（steps 有「失敗」後 — 唔准覆蓋 — 直到新任務）② 檢查失敗後邊個寫 steps/acquire|
+| **v0.9.23** | 2026-08-11 | 🎯 配對庫「重新整理」全面升級（警告視窗流程（重新整理緊 → 成功確定 / 失敗紅色+原因+確定 — 新增 POST /api/ea-library/refresh）+ 即刻彈 modal（唔靠 poll — refresh 太快捕唔到 active）+ EA 倉庫 + 我的配對庫 → 一個大 card「EA 管理」（重新整理掣喺大 card — Database icon）+ 重新整理三態對比（電腦真實 ea_inventory vs 網頁 eaMappings — 已加入 / 已加入（本機冇檔案）橙色 / 移去配對）+ cache-busting（/api/ea-library?t=時間戳 — 強制攞最新）⚠️ 已知未解決（2026-08-11）：網頁版「兩個按鈕 + 抽搐」— 編譯失敗後隔一陣先出現（時序 — 可能 steps 被覆蓋/ai_control.json active 交替）— 下次根治：① 失敗狀態鎖定（steps 有「失敗」後唔准覆蓋）② 檢查失敗後邊個寫 steps/acquire |
 | **v0.9.7** | 2026-08-06 | 🎯 熱鍵部署全自動（hotkeys.ini 用戶格式 + 關閉MT5寫入重啟生效 + Properties/代替確認 dialog 自動處理 BM_CLICK）+ 配對 TypeError 修復（install-local 函數頭被食）+ compile_ok 檢查指向 MT5Cloud_EA + watcher 鎖修復（唔 block 自己）+ 部署卡死修復（清積壓）|
 | **v0.9.6** | 2026-08-06 | 🎯 熱鍵管理完整實現：配對自動分配熱鍵（hotkeys.ini 直接寫入 — Ctrl+1/2/3 下一個空位）+ 熱鍵唯一檢查 + 剷除自動釋放 + auto_attach 讀 hotkeys.ini（權威來源）— 驗證：重啟後 Ctrl+1 work（Bollinger Properties 彈出）|
 | **v0.9.5** | 2026-08-06 | 🎯 熱鍵方案突破：導航熱鍵（右擊 Navigator 空白 → H）— 每隻 EA 設熱鍵 — send Ctrl+1 成功附加 Bollinger_Band + 心跳 running（解決 6093 double-click 問題！）|

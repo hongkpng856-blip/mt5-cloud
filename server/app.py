@@ -874,6 +874,91 @@ def api_ea_library():
                     files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "user", "author": current_user.username})
     return jsonify({"files": files, "count": len(files)})
 
+
+@app.route('/api/ea-library/refresh', methods=['POST'])
+@login_required
+def api_ea_library_refresh():
+    """🚨 2026-08-11：配對庫「重新整理」— 警告視窗流程（重新整理緊 → 成功確定 / 失敗紅色+原因+確定）
+    重新整理唔係危險操作 → 失敗都係「確定」（唔需要緊急停止）
+    用 control_guard acquire/release（寫 .ai_control.show + ai_control.json active — 網頁+電腦版都彈）"""
+    import json as _jrf
+    _adir_rf = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+    # acquire（警告視窗彈 — 網頁 modal + 電腦版）
+    _cg = None
+    try:
+        sys.path.insert(0, _adir_rf)
+        import control_guard as _cg
+        _cg.acquire('重新整理配對庫')
+    except Exception:
+        _cg = None
+    try:
+        with open(os.path.join(_adir_rf, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+            _f.write('重新整理配對庫')
+        with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+            _jrf.dump([
+                {'text': '重新整理配對庫 進行中…', 'status': 'doing'},
+                {'text': '完成重新整理', 'status': 'pending'},
+            ], _f, ensure_ascii=False)
+    except Exception:
+        pass
+    try:
+        files = []
+        if os.path.isdir(EA_LIBRARY_DIR):
+            for f in sorted(os.listdir(EA_LIBRARY_DIR)):
+                if f.endswith('.mq5'):
+                    path = os.path.join(EA_LIBRARY_DIR, f)
+                    files.append({"name": f, "size": f"{os.path.getsize(path)/1024:.1f} KB", "type": "official", "author": "Platform"})
+        if os.path.isdir(COMMUNITY_EA_DIR):
+            for f in sorted(os.listdir(COMMUNITY_EA_DIR)):
+                if f.endswith('.mq5'):
+                    path = os.path.join(COMMUNITY_EA_DIR, f)
+                    files.append({"name": f, "size": f"{os.path.getsize(path)/1024:.1f} KB", "type": "community", "author": "Dev"})
+        if current_user.is_authenticated:
+            user_dir = os.path.join(UPLOAD_DIR, current_user.username)
+            if os.path.isdir(user_dir):
+                for f in sorted(os.listdir(user_dir)):
+                    if f.endswith(('.mq5', '.ex5')):
+                        path = os.path.join(user_dir, f)
+                        files.append({"name": f, "size": f"{os.path.getsize(path)/1024:.1f} KB", "type": "user", "author": current_user.username})
+        # 成功 → steps done（完成重新整理）
+        try:
+            with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                _jrf.dump([
+                    {'text': '重新整理配對庫 進行中…', 'status': 'done'},
+                    {'text': '完成重新整理', 'status': 'done'},
+                ], _f, ensure_ascii=False)
+            _sf_show = os.path.join(_adir_rf, '.ai_control.show')
+            if os.path.exists(_sf_show):
+                os.remove(_sf_show)
+        except Exception:
+            pass
+        # release（完成 — 網頁 modal 唔自動關 — 確定撳先關）
+        try:
+            if _cg is not None:
+                _cg.release()
+        except Exception:
+            pass
+        return jsonify({"success": True, "files": files, "count": len(files)})
+    except Exception as e:
+        # 失敗 → steps 顯示失敗原因（紅色）+ 確定（唔需要緊急停止）
+        try:
+            with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                _jrf.dump([
+                    {'text': '重新整理配對庫 進行中…', 'status': 'done'},
+                    {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
+                ], _f, ensure_ascii=False)
+            _sf_show = os.path.join(_adir_rf, '.ai_control.show')
+            if os.path.exists(_sf_show):
+                os.remove(_sf_show)
+        except Exception:
+            pass
+        try:
+            if _cg is not None:
+                _cg.release()
+        except Exception:
+            pass
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/ea-library/dev-upload', methods=['POST'])
 @login_required
 def api_ea_dev_upload():

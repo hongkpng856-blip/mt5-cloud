@@ -532,8 +532,14 @@
     </div>
 </div>
 
-<!-- EA Library - 平台提供 + 社群提供 -->
-                <div class="card">
+<!-- 🚨 2026-08-11：EA 倉庫 + 我的配對庫 放喺一個大 card（重新整理掣喺大 card） -->
+<div class="card" style="margin-bottom:16px">
+    <div class="card-title"><i class="icon-database" style="color:var(--accent)"></i> EA 管理
+        <button class="btn" onclick="refreshPairingLibrary()" style="margin-left:auto"><i class="icon-refresh-cw"></i> 重新整理</button>
+    </div>
+
+    <!-- EA Library - 平台提供 + 社群提供 -->
+                <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);margin-bottom:12px">
                 <div class="card-title"><i class="icon-package" style="color:var(--accent)"></i> EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
                 <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;margin-left:auto"><i class="icon-upload"></i> 上傳 EA 去社群庫</button>
                 <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
@@ -547,12 +553,11 @@
     </div>
 
     <!-- 我的配對庫（=我的倉庫） -->
-    <div class="card">
+    <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--border)">
         <div class="card-title"><i class="icon-clipboard-list" style="color:var(--accent)"></i> 我的配對庫 <span id="eaCount" class="badge">0</span>
             <span style="font-size:11px;color:var(--text-muted);font-weight:normal">— 可以上傳自己嘅 EA</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <button class="btn" onclick="loadEAConfig()"><i class="icon-refresh-cw"></i> 重新整理</button>
             <label class="btn" style="cursor:pointer"><i class="icon-upload"></i> 上傳自己嘅 EA
                 <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
             </label>
@@ -571,6 +576,7 @@
             </table>
         </div>
     </div>
+</div>
     <!-- Analysis -->
     <div class="card">
         <div class="card-title"><i class="icon-bar-chart-3" style="color:var(--accent)"></i> Performance</div>
@@ -1147,13 +1153,15 @@ async function pollAiControl() {
                 const sc = document.getElementById('aiControlSteps');
                 if (sc) {
                     if (steps && steps.length) {
-                        // 🚨 2026-08-10：新任務開始（有 doing）→ 隱藏確定 + 顯示緊急停止（唔殘留上一個任務按鈕）
+                        // 🚨 2026-08-10：新任務開始（有 doing）→ 隱藏確定 + 顯示緊急停止（唔殘留上一個任務按鈕）+ 重置 prog 顏色
                         const hasDoing = steps.some(s => s.status === 'doing');
                         if (hasDoing) {
                             const dbtn = document.getElementById('aiControlCloseBtn');
                             if (dbtn) dbtn.style.display = 'none';
                             const sbtn = document.getElementById('aiControlStopBtn');
                             if (sbtn) sbtn.style.display = 'inline-flex';
+                            const pg0 = document.getElementById('aiControlProg');
+                            if (pg0) { pg0.style.color = 'inherit'; pg0.style.display = 'none'; }
                         }
                         // 🚨 2026-08-10：強制二選一（每次 render — 唔靠殘留 — 用戶投訴兩個按鈕）
                         const hasDoing2 = steps.some(s => s.status === 'doing');
@@ -1330,10 +1338,33 @@ setInterval(fetchNotifications, 5000);
 setInterval(fetchActivity, 10000);
 setInterval(pollAiControl, 2000);  // 網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
 
+// 🚨 2026-08-11：配對庫「重新整理」— 即刻刷新 + 警告視窗流程（成功確定 / 失敗紅色+原因+確定）
+async function refreshPairingLibrary() {
+    // 🚨 即刻彈 modal（唔靠 poll — refresh 太快捕唔到 active）
+    showControlModal('重新整理配對庫', '正在刷新最新 EA 資訊...');
+    try {
+        const res = await fetch('/api/ea-library/refresh', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (data.success) {
+            // 🚨 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「而家入」/「移去配對」正確）
+            if (typeof loadEAConfig === 'function') await loadEAConfig();      // 攞 eaMappings（已配對）
+            if (typeof fetchEAInventory === 'function') fetchEAInventory();   // 攞 eaDeployStatus（本機狀態）
+            if (typeof loadEALibrary === 'function') await loadEALibrary();   // 渲染 EA 倉庫（狀態正確）
+            if (typeof showLog === 'function') showLog('已重新整理配對庫（攞最新資訊）', 'log-info');
+        } else {
+            if (typeof showLog === 'function') showLog('❌ 重新整理失敗: ' + (data.error || 'unknown'), 'log-error');
+        }
+    } catch(e) {
+        if (typeof showLog === 'function') showLog('❌ 重新整理失敗: ' + e.message, 'log-error');
+    }
+    // 完成 → steps 有 done（poll 顯示確定 — 唔自動關）
+}
+
 // === EA Library ===
 async function loadEALibrary() {
     try {
-        const res = await fetch('/api/ea-library');
+        // 🚨 2026-08-11：cache-busting（強制攞最新 — 唔用瀏覽器 cache）
+        const res = await fetch('/api/ea-library?t=' + Date.now());
         const data = await res.json();
 
         // 官方 EA
@@ -1342,13 +1373,16 @@ async function loadEALibrary() {
         let oHtml = '';
         official.forEach(f => {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-            // 已加入 = config 有配對設定 + 本機有檔案（同配對庫一致 — Bug #65：本機冇但 config 殘留會誤顯示「已加入」）
-            const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string' && !!eaDeployStatus[baseName];
+            // 🚨 2026-08-11：三態對比（電腦真實 vs 網頁配對）— 重新整理後準確顯示
+            const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
+            const localHas = !!eaDeployStatus[baseName];                                          // 本機有檔案
+            const added = webHas && localHas;
             oHtml += `<tr>
                 <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">平台提供</span></td>
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
                 <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
-                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
+                    : (webHas ? '<span style="color:#f59e0b;font-size:11px"><i class="icon-alert-triangle"></i> 已加入（本機冇檔案）</span>'
+                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 移去配對</button>`)}</td>
             </tr>`;
         });
         const offTable = document.querySelector('#officialTable tbody');
