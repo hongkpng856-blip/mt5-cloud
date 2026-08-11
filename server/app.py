@@ -56,10 +56,18 @@ def api_control_steps():
         agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         steps_file = os.path.join(agent_dir, '.ai_control.steps')
         if os.path.isfile(steps_file):
-            with open(steps_file, 'r', encoding='utf-8') as f:
-                # 🚨 2026-08-10 修：唔用 Response（未 import → NameError → 返回 []）— 用 jsonify
-                return jsonify(json.load(f))
-        return jsonify([])
+            try:
+                with open(steps_file, 'r', encoding='utf-8') as f:
+                    steps_data = json.load(f)
+                if not isinstance(steps_data, list):
+                    steps_data = []
+            except Exception:
+                # 🚨 2026-08-12：讀唔到（多個 process 同時寫 → 檔案損壞/空）→ 唔返回 []（網頁唔會空白 — 彈嚟彈去根治）
+                steps_data = [{'text': '等待操作開始…', 'status': 'pending'}]
+            # 🚨 2026-08-11：返回 steps + mtime（前端用嚟判斷「舊 steps 唔顯示」— 新任務開始唔會殘留上一個操作 — 用戶投訴）
+            import time as _tm
+            return jsonify({"steps": steps_data, "mtime": os.path.getmtime(steps_file)})
+        return jsonify({"steps": [{'text': '等待操作開始…', 'status': 'pending'}], "mtime": 0})
     except Exception:
         return jsonify([])
 
@@ -1087,8 +1095,13 @@ def api_ea_remove_local(filename):
         with open(os.path.join(_adir_del, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'剷除 {base_only}')
         with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+            # 🚨 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
             _jdel.dump([
-                {'text': f'移除 {base_only} 進行中…', 'status': 'doing'},
+                {'text': f'開始剷除 {base_only}', 'status': 'doing'},
+                {'text': '檢查圖表（有冇 EA 運行）', 'status': 'pending'},
+                {'text': '移除圖表 EA', 'status': 'pending'},
+                {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
+                {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
                 {'text': '完成剷除', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
     except Exception:
@@ -1124,15 +1137,29 @@ def api_ea_remove_local(filename):
 
     if removed:
         # 🚨 2026-08-10：網頁 delete 完成 → steps 全部 done（警告視窗顯示「完成剷除」+ 確定）
+        # 🚨 2026-08-12：讀現有 steps（6 步）→ 全部 done（唔覆蓋 2 行 — 活動記錄式保持）
         try:
             import json as _jdel2
             _sf_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent', '.ai_control.steps')
-            if os.path.isfile(_sf_del):
-                with open(_sf_del, 'w', encoding='utf-8') as _f:
-                    _jdel2.dump([
-                        {'text': f'移除 {base_only} 進行中…', 'status': 'done'},
-                        {'text': '完成剷除', 'status': 'done'},
-                    ], _f, ensure_ascii=False)
+            _del_steps = []
+            try:
+                if os.path.isfile(_sf_del):
+                    _del_steps = _jdel2.load(open(_sf_del, 'r', encoding='utf-8'))
+                    if not isinstance(_del_steps, list):
+                        _del_steps = []
+            except Exception:
+                _del_steps = []
+            # 🚨 2026-08-12 修：唔寫 done（DELETE config 會寫 pause_cmd → watcher 接手逐步 — 雙重寫 steps → 覆蓋 → 網頁彈嚟彈去）
+            # 只係確保 steps 有內容（等 watcher 接手逐步完成）
+            if not _del_steps:
+                _del_steps = [{'text': f'開始剷除 {base_only}', 'status': 'doing'},
+                              {'text': '檢查圖表（有冇 EA 運行）', 'status': 'pending'},
+                              {'text': '移除圖表 EA', 'status': 'pending'},
+                              {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
+                              {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
+                              {'text': '完成剷除', 'status': 'pending'}]
+            with open(_sf_del, 'w', encoding='utf-8') as _f:
+                _jdel2.dump(_del_steps, _f, ensure_ascii=False)
         except Exception:
             pass
         # 寫「網頁剷除」標記 → watcher 偵測到刪除時知道來源（唔會誤判做電腦剷除）

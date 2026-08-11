@@ -132,7 +132,10 @@ def do_restart_mt5():
                 os.remove(_rf)
             _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
             if os.path.exists(_sf):
-                os.remove(_sf)
+                # 🚨 2026-08-12：寫「等待操作開始…」（唔係空 [] — 空 → 網頁彈嚟彈去）
+                import json as _j3
+                with open(_sf, 'w', encoding='utf-8') as _f3:
+                    _j3.dump([{'text': '等待操作開始…', 'status': 'pending'}], _f3)
         except Exception:
             pass
         print(f"✅ MT5 restarted, PID={pid}")
@@ -1206,10 +1209,12 @@ def _update_steps(steps):
         pass
 
 def _clear_steps():
+    # 🚨 2026-08-12：寫「等待操作開始…」（唔係空 [] — 空 → 網頁 placeholder 同 steps 交替 → 「彈嚟彈去」— 用戶投訴）
     try:
+        import json as _j
         _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
-        if os.path.exists(_f):
-            os.remove(_f)
+        with open(_f, 'w', encoding='utf-8') as _fh:
+            _j.dump([{'text': '等待操作開始…', 'status': 'pending'}], _fh)
     except Exception:
         pass
 

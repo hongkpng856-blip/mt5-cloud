@@ -968,12 +968,39 @@ def process_pause_cmd(fp):
             with open(os.path.join(_adir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
                 _f.write(f'剷除 {ea_name}')
             _sf = os.path.join(_adir, '.ai_control.steps')
-            _old = [{'text': f'移除 {ea_name} 進行中…', 'status': 'doing'},
+            # 🚨 2026-08-12：詳細步驟（活動記錄式 — 每一步清楚：未完成 → 完成 — 用戶要求）
+            _old = [{'text': f'開始剷除 {ea_name}', 'status': 'doing'},
+                    {'text': '檢查圖表（有冇 EA 運行）', 'status': 'pending'},
+                    {'text': '移除圖表 EA', 'status': 'pending'},
+                    {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
+                    {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
                     {'text': '完成剷除', 'status': 'pending'}]
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _jp.dump(_old, _f2, ensure_ascii=False)
         except Exception:
             pass
+
+        # 🚨 2026-08-12：真逐步（每步延遲 — 網頁捕到「進行中」— 用戶要求「成個過程好似活動記錄」）
+        def _prog_steps(done_texts, doing_text=None):
+            """逐步更新 steps：指定 steps done + 可選下一個 doing"""
+            try:
+                import json as _jp3
+                _sf3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                _st3 = []
+                if os.path.isfile(_sf3):
+                    _st3 = _jp3.load(open(_sf3, 'r', encoding='utf-8'))
+                for _s3 in _st3:
+                    if isinstance(_s3, dict) and _s3.get('text') in done_texts:
+                        _s3['status'] = 'done'
+                    elif isinstance(_s3, dict) and _s3.get('text') == doing_text:
+                        _s3['status'] = 'doing'
+                with open(_sf3, 'w', encoding='utf-8') as _f3:
+                    _jp3.dump(_st3, _f3, ensure_ascii=False)
+            except Exception:
+                pass
+            time.sleep(0.8)  # 每步停留（網頁 poll 捕到「進行中」）
+
+        _prog_steps([f'開始剷除 {ea_name}'], '檢查圖表（有冇 EA 運行）')
         try:
             result = subprocess.run(
                 [sys.executable, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
@@ -987,6 +1014,11 @@ def process_pause_cmd(fp):
                     print(f"   {ls}")
         except subprocess.TimeoutExpired:
             print(f"   ⚠️ 暫停 {ea_name} timeout")
+        # 🚨 2026-08-12：逐步（auto_attach 完成 → 檢查/移除 done → 刪檔 doing → …）
+        _prog_steps(['檢查圖表（有冇 EA 運行）', '移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
+        _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理配對設定 + 釋放熱鍵')
+        _prog_steps(['清理配對設定 + 釋放熱鍵'], '完成剷除')
+        _prog_steps(['完成剷除'])
         # 通知 server
         try:
             _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
@@ -1006,7 +1038,7 @@ def process_pause_cmd(fp):
             except Exception:
                 _old2 = []
             for _s in _old2:
-                if isinstance(_s, dict) and ('剷除' in _s.get('text', '') or '移除' in _s.get('text', '')):
+                if isinstance(_s, dict):
                     _s['status'] = 'done'
             with open(_sf2, 'w', encoding='utf-8') as _f:
                 _jp2.dump(_old2, _f, ensure_ascii=False)

@@ -24776,3 +24776,1045 @@
 {"time": 1786457221.6359575, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786457251.6801982, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786457267.0058224, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786457281.7519655, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457311.7959561, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457341.8386035, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457371.8875985, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457401.932485, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457431.984241, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457462.0291286, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457492.0734231, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457522.125316, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457552.1698709, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457582.210664, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457609.7688074, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786457611.189009, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786457612.2547755, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457612.7823315, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786457625.3287706, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786457642.2986362, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457672.345435, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457702.3906794, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457732.4323337, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457753.190693, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786457753.482763, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786457762.4736462, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457763.6393726, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786457765.6890676, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786457782.657713, "action": "ea_delete", "ea": "Heikin_Ashi", "message": "Heikin_Ashi 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786457782.7604105, "action": "ea_delete", "ea": "Heikin_Ashi", "message": "Heikin_Ashi 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786457792.518115, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457792.8794956, "action": "unknown", "ea": "Heikin_Ashi", "message": "Heikin_Ashi 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786457794.9333482, "action": "deleted", "ea": "MT5Cloud_EA/Heikin_Ashi", "message": "MT5Cloud_EA/Heikin_Ashi 已於電腦刪除", "source": "watcher"}
+{"time": 1786457822.559099, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457852.611708, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457882.6593475, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457912.7064493, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457942.7537644, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786457972.8006604, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458002.8478165, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458032.893905, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458062.9357874, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458092.9830387, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458123.025187, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458153.0717866, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458183.1135902, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458213.1586185, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458243.204649, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458273.2466109, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458303.288253, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458333.3305306, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458363.374189, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458393.4223082, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458397.1493843, "action": "ea_delete", "ea": "MACD_Cross", "message": "MACD_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786458398.7755625, "action": "ea_delete", "ea": "MACD_Cross", "message": "MACD_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786458408.4000564, "action": "unknown", "ea": "MACD_Cross", "message": "MACD_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786458410.4684446, "action": "deleted", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786458423.4672449, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458445.2965164, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786458453.5108824, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458472.91043, "action": "ea_delete", "ea": "Momentum", "message": "Momentum 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786458475.6558444, "action": "deleted", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦刪除", "source": "watcher"}
+{"time": 1786458479.6383586, "action": "ea_delete", "ea": "Momentum", "message": "Momentum 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786458483.55498, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458490.818375, "action": "unknown", "ea": "Momentum", "message": "Momentum 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786458513.5949225, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458543.6375291, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458573.6811256, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458603.721952, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458633.7629147, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458663.8067584, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458693.847622, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458723.8886988, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458753.9321861, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458783.9798903, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458814.0182931, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458844.0613084, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458874.103854, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458904.1420577, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458934.184204, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458964.2299285, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786458994.2762325, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459024.321975, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459049.322128, "action": "ea_delete", "ea": "Stochastic", "message": "Stochastic 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786459049.4206219, "action": "ea_delete", "ea": "Stochastic", "message": "Stochastic 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786459054.3885772, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459058.8879583, "action": "unknown", "ea": "Stochastic", "message": "Stochastic 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786459060.9560993, "action": "deleted", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦刪除", "source": "watcher"}
+{"time": 1786459084.4418025, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459114.494532, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459144.557344, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459174.7619338, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459204.808464, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459234.8549325, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459255.2006874, "action": "ea_delete", "ea": "RSI_Over", "message": "RSI_Over 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786459255.3047454, "action": "ea_delete", "ea": "RSI_Over", "message": "RSI_Over 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786459264.9121222, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459265.5168595, "action": "unknown", "ea": "RSI_Over", "message": "RSI_Over 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786459267.5929754, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786459294.9592032, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459324.9962752, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459355.0346227, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459385.0754166, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459405.6762285, "action": "ea_delete", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786459405.781063, "action": "ea_delete", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786459415.005344, "action": "unknown", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786459415.118034, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459417.0840862, "action": "deleted", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦刪除", "source": "watcher"}
+{"time": 1786459445.1669421, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459475.210985, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459497.35194, "action": "ea_delete", "ea": "Support_Resist", "message": "Support_Resist 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786459497.5550985, "action": "ea_delete", "ea": "Support_Resist", "message": "Support_Resist 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786459505.2585979, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459507.3222318, "action": "unknown", "ea": "Support_Resist", "message": "Support_Resist 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786459509.412512, "action": "deleted", "ea": "MT5Cloud_EA/Support_Resist", "message": "MT5Cloud_EA/Support_Resist 已於電腦刪除", "source": "watcher"}
+{"time": 1786459535.3147578, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459565.3661566, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459595.4268944, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459625.468679, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459655.519709, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459685.5652974, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459715.638902, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459725.7267485, "action": "ea_delete", "ea": "Machine_Learn", "message": "Machine_Learn 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786459726.0769567, "action": "ea_delete", "ea": "Machine_Learn", "message": "Machine_Learn 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786459728.0011618, "action": "deleted", "ea": "MT5Cloud_EA/Machine_Learn", "message": "MT5Cloud_EA/Machine_Learn 已於電腦刪除", "source": "watcher"}
+{"time": 1786459740.0810034, "action": "unknown", "ea": "Machine_Learn", "message": "Machine_Learn 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786459745.6898732, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459775.74097, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459805.801732, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459835.8528998, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459865.8961973, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459895.9437065, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459925.9808495, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459956.017515, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786459986.0594826, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460016.1034482, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460046.1420677, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460051.0138435, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786460051.160512, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786460061.9601834, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786460064.0111957, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786460076.182186, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460106.2432222, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460136.2866275, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460166.3269098, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460196.3775513, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460226.431339, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460256.4798815, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460286.5285382, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460316.5800989, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460346.6215324, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460376.6598344, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460406.7124717, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460436.7504482, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460466.7969575, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460496.8515823, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460526.9007065, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460556.9395573, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460572.0630412, "action": "ea_delete", "ea": "Trend_Follow", "message": "Trend_Follow 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786460572.2260718, "action": "ea_delete", "ea": "Trend_Follow", "message": "Trend_Follow 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786460584.0616658, "action": "unknown", "ea": "Trend_Follow", "message": "Trend_Follow 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786460586.1289985, "action": "deleted", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦刪除", "source": "watcher"}
+{"time": 1786460586.977194, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460617.0182927, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460647.0599127, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460677.1024644, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460707.1444335, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460715.2142673, "action": "ea_delete", "ea": "Swing_Trader", "message": "Swing_Trader 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786460715.326921, "action": "ea_delete", "ea": "Swing_Trader", "message": "Swing_Trader 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786460724.483914, "action": "unknown", "ea": "Swing_Trader", "message": "Swing_Trader 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786460726.546527, "action": "deleted", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦刪除", "source": "watcher"}
+{"time": 1786460737.1840894, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460737.2082698, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 配對處理中...", "source": "server"}
+{"time": 1786460755.2458794, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786460767.2322755, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460770.5253289, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786460797.2772098, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460827.3296416, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460836.3368568, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786460852.8773992, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786460857.376656, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460868.6187024, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786460887.4341884, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460917.4779568, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460947.534929, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786460977.5818403, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461007.621225, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461037.6688478, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461067.7119036, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461097.7608705, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461127.8105605, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461157.8599427, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461187.9107454, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461217.968733, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461248.0062823, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461278.0519788, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461308.0902753, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461338.1450589, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461368.2003918, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461398.2603886, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461428.3245907, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461458.390327, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461488.440482, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461518.4909742, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461548.5339499, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461578.5775933, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461608.6228886, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461638.6691172, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461668.7287428, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461698.776698, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461714.54169, "action": "ea_delete", "ea": "Divergence", "message": "Divergence 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786461714.6434135, "action": "ea_delete", "ea": "Divergence", "message": "Divergence 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786461725.6326675, "action": "unknown", "ea": "Divergence", "message": "Divergence 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786461727.6841555, "action": "deleted", "ea": "MT5Cloud_EA/Divergence", "message": "MT5Cloud_EA/Divergence 已於電腦刪除", "source": "watcher"}
+{"time": 1786461728.8274088, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461742.4954584, "action": "ea_install", "ea": "Controller", "message": "Controller 配對處理中...", "source": "server"}
+{"time": 1786461758.8723822, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461759.0331452, "action": "ea_install", "ea": "Controller", "message": "Controller 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786461774.6541755, "action": "added", "ea": "MT5Cloud_EA/Controller", "message": "MT5Cloud_EA/Controller 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786461788.9271538, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461818.9776442, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461825.3645823, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786461849.0152907, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461879.0554352, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461909.1026058, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461939.14382, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461969.1902685, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786461999.2381296, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462029.2827237, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462059.3387911, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462089.380726, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462119.4461193, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462149.4996305, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462179.5481658, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462209.5889266, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462239.626468, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462269.679681, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462299.7282283, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462329.796299, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462359.841842, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462389.8955197, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462419.9534907, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462449.9942837, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462480.0308979, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462510.0679896, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462540.1050093, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462570.1454487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462600.2025604, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462630.2548158, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462660.2944486, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462690.344954, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462720.406081, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462750.4680507, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462780.5222213, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462810.5754385, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462840.6273053, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462870.668117, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462900.716442, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462930.7699392, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462960.817986, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786462990.8663242, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463020.9219487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463050.969642, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463081.0034285, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463111.044838, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463141.0954156, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463171.1425178, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463201.2072906, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463231.2666602, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463261.3187811, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463291.3624735, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463321.4135704, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463351.4593236, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463381.5147727, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463411.56608, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463441.6163828, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463471.6714618, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463501.7254374, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463531.7861123, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463561.837291, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463591.9010606, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463621.9501958, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463651.98797, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463682.0235357, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463712.0636156, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463742.1085572, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463772.1505592, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463802.195581, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463832.2340217, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463862.2839983, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463892.3463025, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463922.4050775, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463952.4508328, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786463982.4889026, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464012.5275538, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464042.5821214, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464072.6255195, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464102.6718888, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464132.7331614, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464162.7761612, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464192.8328948, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464222.88693, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464252.9302359, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464282.9737494, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464313.0132, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464343.0549586, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464373.1058304, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464403.1563017, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464433.2079525, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464463.2774003, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464493.328074, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464523.3808615, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464553.4384775, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464583.4900942, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464613.5442069, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464643.5981925, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464673.6571314, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464703.7169414, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464733.769784, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464763.823641, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464793.8838587, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464823.9338813, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464853.972584, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464884.012, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464914.0643673, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464944.108081, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786464974.1625144, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465004.2035394, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465032.961642, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465063.0029962, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465093.0506399, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465123.123967, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465153.1727831, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465183.2373815, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465213.295407, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465243.3413007, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465273.388267, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465303.4441376, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465333.5195146, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465363.568887, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465393.617816, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465423.6550348, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465453.6925735, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465483.7318068, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465513.7714992, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465543.825967, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465573.8794122, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465603.9248378, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465633.9735475, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465664.0299413, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465694.0758095, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465724.1293347, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465754.1731052, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465784.2357287, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465814.2763505, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465844.3280032, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465874.387635, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465904.4355807, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465934.4800868, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465964.5356736, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786465994.5867107, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466024.6419632, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466054.6824205, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466084.7195537, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466114.7591798, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466144.7973146, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466174.845706, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466204.8958504, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466234.937248, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466264.9954824, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466295.0505314, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466325.103496, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466355.1609502, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466385.1977522, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466415.2408626, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466445.3012679, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466475.3591857, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466505.4039412, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466535.4535315, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466565.501773, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466595.559091, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466625.6204195, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466655.6636188, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466685.6990488, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466715.735563, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466745.7749677, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466775.8158562, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466805.8826573, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466835.936123, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466865.9790606, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466896.01959, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466926.0821767, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466956.1346505, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786466986.2028487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467016.2418268, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467046.2845616, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467076.3371544, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467106.3926792, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467136.4524877, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467166.5006025, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467196.5531788, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467226.6074305, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467256.6552699, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467286.695069, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467316.7401261, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467346.785041, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467376.8323023, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467406.8804784, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467436.9449508, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467467.0062199, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467497.0692701, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467527.1173236, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467557.1733313, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467587.226398, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467617.2687738, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467647.3148553, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467677.365096, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467707.4077017, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467737.4452946, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467767.5006943, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467797.559225, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467827.6206791, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467857.665515, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467887.701264, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467917.7423046, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467947.8020678, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786467977.8718202, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468007.941215, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468037.990504, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468068.0346947, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468098.0732095, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468128.1367753, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468158.1854432, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468188.2421286, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468218.2815413, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468248.3248498, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468278.3628561, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468308.4047847, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468338.4478517, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468368.5100255, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468398.5551028, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468428.6005113, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468458.6549187, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468488.6927218, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468518.7300787, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468548.7741747, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468578.8240995, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468608.8625946, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468638.9037366, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468668.9525034, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468699.0107484, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468729.079552, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468759.126435, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468789.2072582, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468819.2592669, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468849.3218887, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468879.3680894, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468909.4320989, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468939.4845893, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468969.5328326, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786468999.5848868, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469029.6386652, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469059.6855135, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469089.7232354, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469119.762486, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469149.8162358, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469179.8713994, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469209.9198887, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469239.9741194, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469270.0449243, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469300.0989847, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469330.1510103, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469360.212671, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469390.269102, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469420.3255982, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469450.378369, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469480.4400892, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469510.5003016, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469540.5688012, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469570.6244526, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469600.666401, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469630.7015324, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469660.7374043, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469690.7881167, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469720.8494012, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469750.905316, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469780.960754, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469811.0238073, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469841.0917444, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469871.140116, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469901.2053535, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469931.271584, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469961.3349075, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786469991.4029346, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470021.464101, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470051.5211258, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470081.5939944, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470111.6564875, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470141.6904483, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470171.7291052, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470201.778934, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470231.8269644, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470261.8865793, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470291.9601889, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470322.029336, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470352.0971096, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470382.1627293, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470412.2346227, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470442.2977457, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470472.3546014, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470502.4242492, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470532.4761834, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470562.5418563, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470592.609042, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470622.6635377, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470652.6988065, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470682.7360463, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470712.7905524, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470742.8559005, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470772.9257138, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470802.9929595, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470833.0561566, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470863.1266274, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470893.194064, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470923.2678504, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470953.3413122, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786470983.403341, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471013.4592938, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471043.5066104, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471073.557665, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471103.6023355, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471133.6627188, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471163.6980946, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471193.735293, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471223.7806058, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471253.8375208, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471283.9038277, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471313.95089, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471344.0152957, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471374.0816662, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471404.1391416, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471434.1983528, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471464.2643852, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471494.3188777, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471524.3679252, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471554.4301796, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471584.4939823, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471614.5421178, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471644.590798, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471674.654177, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471704.689968, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471734.7256658, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471764.7620513, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471794.79778, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471824.8421474, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471854.908325, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471884.957779, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471915.0066457, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471945.058336, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786471975.0969572, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472005.1642866, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472035.2244616, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472065.2763393, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472095.335551, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472125.3750134, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472155.4265406, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472185.4828212, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472215.5311198, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472245.5808833, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472275.624309, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472305.664861, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472335.7024155, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472365.7438812, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472395.7920084, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472425.841754, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472455.9045377, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472485.9707189, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472516.019874, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472546.0827618, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472576.134523, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472606.1951566, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472636.2417717, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472666.2938678, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472696.3365717, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472726.3923333, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472756.4410765, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472786.502711, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472816.5567462, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472846.6250162, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472876.6674812, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472906.7030869, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472936.7399287, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472966.7824292, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786472996.825226, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473026.8680606, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473056.9212155, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473086.979469, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473117.0434315, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473147.1093853, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473177.1618402, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473207.2250135, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473237.2690175, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473267.3126721, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473297.3566725, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473327.4092157, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473357.4655209, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473387.5299525, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473417.594205, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473447.6558495, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473477.693568, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473507.729805, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473537.7700126, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473567.8183098, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473597.8707998, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473627.9135523, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473657.9637387, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473688.013142, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473718.0613244, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473748.1077027, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473778.1676784, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473808.2072856, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473838.2539186, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473868.3089213, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473898.3586226, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473928.417392, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473958.4806702, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786473988.536335, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474018.5981984, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474048.6484993, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474078.6850111, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474108.7224803, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474138.7649176, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474168.8267224, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474198.891567, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474228.9448705, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474258.9989612, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474289.0463064, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474319.1048768, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474349.1512613, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474379.2298472, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474409.2947707, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474439.3601992, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474469.4399116, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474499.483337, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474529.563916, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474559.6273444, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474589.6668518, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474619.7019284, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474649.7430584, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474679.8039696, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474709.8678002, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474739.9224284, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474769.972658, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474800.0169973, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474830.0733244, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474860.1175683, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474890.1650424, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474920.2237906, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474950.2757506, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786474980.3302536, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475010.3958445, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475040.4486456, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475070.5025642, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475100.5518208, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475130.6278658, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475160.6730516, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475190.7068312, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475220.7439773, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475250.790209, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475280.8369136, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475310.8848293, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475340.9419262, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475371.008343, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475401.0728216, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475431.1331384, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475461.1924927, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475491.2537932, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475521.3096316, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475551.3656502, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475581.426152, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475611.4809756, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475641.5388303, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475671.606608, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475701.6587555, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475731.6939359, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475761.7299278, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475791.779472, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475821.8310237, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475851.8900652, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475881.9524722, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475912.0157595, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475942.067607, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786475972.127178, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476002.1871004, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476032.2510996, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476062.310084, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476092.3664582, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476122.4175425, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476152.4604661, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476182.531706, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476212.5927787, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476242.646571, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476272.683985, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476302.7184412, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476332.7649019, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476362.8185155, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476392.8655796, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476422.9147556, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476452.9789627, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476483.02526, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476513.075015, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476543.1350548, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476573.218218, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476603.270804, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476633.3283114, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476663.3804302, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476693.4558015, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476723.5037029, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476753.5563946, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476783.6326358, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476813.669409, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476843.706054, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476873.7432535, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476903.8079987, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476933.8642433, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476963.9189262, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786476993.9694502, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477024.0229778, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477054.084324, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477084.1447172, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477114.2152646, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477144.2806313, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477174.3369012, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477204.3919644, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477234.4596999, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477264.5399616, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477294.598063, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477324.658941, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477354.6938848, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477384.7323658, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477414.7790124, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477444.8324623, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477474.8892453, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477504.9360974, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477534.987344, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477565.0505285, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477595.1124556, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477625.1683438, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477655.220347, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477685.2896528, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477715.3641267, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477745.4127626, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477775.4728987, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477805.5240495, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477835.5805013, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477865.6547334, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477895.6917734, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477925.7267563, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477955.772608, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786477985.8355765, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478015.8867877, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478045.9379075, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478075.982992, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478106.0455832, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478136.0931284, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478166.1506035, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478196.2100449, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478226.2695844, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478256.3150353, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478286.3741372, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478316.4159749, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478346.4518015, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478376.51382, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478406.5643945, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478436.6119394, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478466.6575408, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478496.6925793, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478526.7327769, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478556.7949765, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478586.8503208, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478616.8912926, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478646.9430106, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478677.017399, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478707.0803318, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478737.135836, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478767.1974416, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478797.2636404, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478827.3135302, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478857.3853674, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478887.434886, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478902.0835125, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786478917.5003633, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478947.5523999, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786478977.6020367, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479007.6596735, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479037.6969109, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479067.7393174, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479097.789759, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479127.8442001, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479157.8965495, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479187.947788, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479217.9980567, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479248.0499816, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479278.1048214, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479308.1559467, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479338.1980062, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479368.2578995, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479398.3154628, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479427.0939336, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786479427.2166882, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786479428.370317, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479438.9293828, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786479439.0176942, "action": "emergency_stop", "ea": "", "message": "網站緊急停止已觸發（AI 操作會即刻中止）", "source": "server"}
+{"time": 1786479441.0062685, "action": "deleted", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦刪除", "source": "watcher"}
+{"time": 1786479449.2335415, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786479449.3410485, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786479458.408383, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479459.177606, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786479461.2308738, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786479488.4591055, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479500.0772688, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786479500.1936858, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786479509.3756757, "action": "unknown", "ea": "Grid_Trading", "message": "Grid_Trading 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786479511.452973, "action": "deleted", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦刪除", "source": "watcher"}
+{"time": 1786479518.5252085, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479548.5763001, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479578.6296866, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479608.6765182, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479638.7103384, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479668.748127, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479698.8108675, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479728.865052, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479758.9207883, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479788.967614, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479819.0381877, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479849.0809162, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479851.8753786, "action": "ea_delete", "ea": "Volume_Spike", "message": "Volume_Spike 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786479851.992162, "action": "ea_delete", "ea": "Volume_Spike", "message": "Volume_Spike 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786479861.1325004, "action": "unknown", "ea": "Volume_Spike", "message": "Volume_Spike 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786479863.2104492, "action": "deleted", "ea": "MT5Cloud_EA/Volume_Spike", "message": "MT5Cloud_EA/Volume_Spike 已於電腦刪除", "source": "watcher"}
+{"time": 1786479879.125887, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479909.169835, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479939.226316, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479969.2686155, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786479999.3154192, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480029.365789, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480059.4299588, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480089.4864378, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480119.5498307, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480149.6046736, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480166.7335021, "action": "ea_install", "ea": "Divergence", "message": "Divergence 配對處理中...", "source": "server"}
+{"time": 1786480179.653214, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480186.2705905, "action": "ea_install", "ea": "Divergence", "message": "Divergence 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786480202.1623712, "action": "added", "ea": "MT5Cloud_EA/Divergence", "message": "MT5Cloud_EA/Divergence 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786480209.6934943, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480215.850286, "action": "ea_delete", "ea": "Divergence", "message": "Divergence 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786480215.9600518, "action": "ea_delete", "ea": "Divergence", "message": "Divergence 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786480226.2773192, "action": "unknown", "ea": "Divergence", "message": "Divergence 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786480228.3599138, "action": "deleted", "ea": "MT5Cloud_EA/Divergence", "message": "MT5Cloud_EA/Divergence 已於電腦刪除", "source": "watcher"}
+{"time": 1786480239.7447572, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480269.7904024, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480289.0732317, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786480299.8366215, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480329.8920743, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480359.9351454, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480374.807803, "action": "ea_install", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對處理中...", "source": "server"}
+{"time": 1786480389.9905741, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480391.3535805, "action": "ea_install", "ea": "Bollinger_Band", "message": "Bollinger_Band 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786480407.5155818, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786480420.032559, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480436.350896, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786480436.4487224, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786480446.6446292, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786480448.7273874, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786480450.07901, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480480.1408207, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480510.200523, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480540.2512476, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480570.301653, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480600.3548143, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480630.40651, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480659.075168, "action": "ea_install", "ea": "Correlation", "message": "Correlation 配對處理中...", "source": "server"}
+{"time": 1786480660.4569452, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480675.6100762, "action": "ea_install", "ea": "Correlation", "message": "Correlation 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786480690.4948387, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480691.037098, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786480720.5339367, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480737.7614045, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786480737.861023, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786480748.2158034, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786480750.2931364, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786480750.5813687, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480780.6459477, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480810.6880112, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480840.7242742, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480870.7613373, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480900.806966, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480930.8598268, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480960.9097211, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480967.3882222, "action": "ea_install", "ea": "Correlation", "message": "Correlation 配對處理中...", "source": "server"}
+{"time": 1786480983.9314165, "action": "ea_install", "ea": "Correlation", "message": "Correlation 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786480990.9698548, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786480999.6809244, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786481012.6567926, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786481012.7534463, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786481021.0374417, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481027.797474, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786481029.8823824, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786481051.1025538, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481081.1505582, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481111.2001405, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481141.2351885, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481171.2816646, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481174.5491965, "action": "ea_install", "ea": "ATR_Stop", "message": "ATR_Stop 配對處理中...", "source": "server"}
+{"time": 1786481192.6084716, "action": "ea_install", "ea": "ATR_Stop", "message": "ATR_Stop 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786481201.3246338, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481209.0151, "action": "added", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786481220.9738803, "action": "ea_delete", "ea": "ATR_Stop", "message": "ATR_Stop 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786481221.1127324, "action": "ea_delete", "ea": "ATR_Stop", "message": "ATR_Stop 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786481223.1312456, "action": "deleted", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦刪除", "source": "watcher"}
+{"time": 1786481231.375392, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481239.3975947, "action": "unknown", "ea": "ATR_Stop", "message": "ATR_Stop 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786481250.5682316, "action": "ea_install", "ea": "RSI_Over", "message": "RSI_Over 配對處理中...", "source": "server"}
+{"time": 1786481261.439829, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481267.1449187, "action": "ea_install", "ea": "RSI_Over", "message": "RSI_Over 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786481283.3223727, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786481291.4877849, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481321.5366666, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481351.5805328, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481381.6412342, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481411.6796038, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481441.7125752, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481471.7489781, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481492.0813496, "action": "ea_delete", "ea": "RSI_Over", "message": "RSI_Over 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786481492.1873412, "action": "ea_delete", "ea": "RSI_Over", "message": "RSI_Over 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786481501.7951393, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481505.8740146, "action": "unknown", "ea": "RSI_Over", "message": "RSI_Over 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786481507.9457972, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786481520.670033, "action": "ea_install", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對處理中...", "source": "server"}
+{"time": 1786481531.8491154, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481538.7075438, "action": "ea_install", "ea": "Bollinger_Band", "message": "Bollinger_Band 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786481554.830847, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786481561.9153965, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481581.0211549, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786481581.1180756, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786481591.974337, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481594.9356623, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786481597.0197556, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786481622.0214608, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481652.0920467, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481682.1626441, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481712.2261775, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481742.3018785, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481772.3676348, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481802.425767, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481832.4877431, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481862.5440812, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481892.5955923, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481922.642473, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481938.5142374, "action": "ea_install", "ea": "AgentHelper", "message": "AgentHelper 配對處理中...", "source": "server"}
+{"time": 1786481952.6825066, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786481982.7153056, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482012.7540898, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482027.1275237, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482027.2264998, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482042.2829552, "action": "unknown", "ea": "AgentHelper", "message": "AgentHelper 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482042.8058317, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482044.384333, "action": "deleted", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦刪除", "source": "watcher"}
+{"time": 1786482054.7350888, "action": "ea_install", "ea": "Breakout", "message": "Breakout 配對處理中...", "source": "server"}
+{"time": 1786482065.2593436, "action": "ea_install", "ea": "Breakout", "message": "Breakout 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786482072.8628998, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482076.390492, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482076.3944924, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482080.948938, "action": "ea_install", "ea": "Correlation", "message": "Correlation 配對處理中...", "source": "server"}
+{"time": 1786482094.479803, "action": "ea_install", "ea": "Correlation", "message": "Correlation 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786482102.9067643, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482105.5158632, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482120.6070316, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482120.7295518, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482132.974213, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482136.6622865, "action": "unknown", "ea": "Breakout", "message": "Breakout 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482138.7238324, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786482163.0233963, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482193.06944, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482223.1283867, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482253.205419, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482265.5799947, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482265.7069638, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482281.1743586, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482283.264665, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786482283.2733142, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482313.3390558, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482320.6069906, "action": "ea_install", "ea": "AgentHelper", "message": "AgentHelper 配對處理中...", "source": "server"}
+{"time": 1786482331.2128873, "action": "ea_install", "ea": "AgentHelper", "message": "AgentHelper 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786482342.3257527, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482342.3282816, "action": "modified", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已更新", "source": "watcher"}
+{"time": 1786482342.3396943, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482342.3500094, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482343.3972113, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482359.0169659, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482359.1155255, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482373.464486, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482373.5057495, "action": "unknown", "ea": "AgentHelper", "message": "AgentHelper 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482375.556968, "action": "deleted", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦刪除", "source": "watcher"}
+{"time": 1786482403.5251513, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482427.2503374, "action": "ea_install", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對處理中...", "source": "server"}
+{"time": 1786482433.5904408, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482437.7810826, "action": "ea_install", "ea": "Bollinger_Band", "message": "Bollinger_Band 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786482449.637104, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482449.6401026, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482463.646812, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482481.2370517, "action": "ea_install", "ea": "Breakout", "message": "Breakout 配對處理中...", "source": "server"}
+{"time": 1786482490.268834, "action": "ea_install", "ea": "Breakout", "message": "Breakout 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786482493.6841407, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482502.6473775, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482502.6489594, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786482523.7188787, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482532.504095, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482532.6208427, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482545.7580192, "action": "unknown", "ea": "Breakout", "message": "Breakout 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482547.8167632, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786482553.754384, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482555.1765065, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482555.2732813, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482569.8972108, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482571.9291558, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786482583.8096776, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482613.868951, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482643.9214022, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482673.9760547, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482704.0354404, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482717.6127396, "action": "ea_install", "ea": "Correlation", "message": "Correlation 配對處理中...", "source": "server"}
+{"time": 1786482728.1402214, "action": "ea_install", "ea": "Correlation", "message": "Correlation 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786482734.0813453, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482739.268359, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482739.272885, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482739.289869, "action": "modified", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已更新", "source": "watcher"}
+{"time": 1786482739.3019595, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786482752.383222, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786482753.1988087, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786482764.1431954, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482767.40033, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786482769.4769459, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786482794.2098646, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786482813.356419, "action": "ea_install", "ea": "MACD_Cross", "message": "MACD_Cross 配對處理中...", "source": "server"}

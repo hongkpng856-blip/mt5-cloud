@@ -1,240 +1,241 @@
-"""獨立警告視窗 process（2026-08-07：根治 Tcl_AsyncDelete crash）
-原本 tkinter 喺 watcher 入面嘅獨立 thread — Python 退出時 crash（async handler deleted by wrong thread）
-而家：獨立 subprocess — watcher 唔再 import tkinter — 唔會 crash
-機制：讀 flag 檔（.ai_control.show）— 有 → 顯示視窗；冇 → 隱藏
-🚨 2026-08-10：加操作步驟顯示（.ai_control.steps JSON — 一排排 ✅ 完成 / ⏳ 操作中 / ⬜ 等待）"""
+# ============================================================
+# alert_worker.py — 警告視窗（重製版 v2 — 2026-08-11）
+# 獨立 process（讀 .ai_control.show / .ai_control.steps flag）
+# 設計原則：
+#   1. 穩定 — 固定大小、唔自動關、唔抽搐、唔殘留
+#   2. 清晰 — 標題「遙距控制」+ 操作名 + 步驟（累積）
+#   3. 成功/失敗一目了然（綠/紅 + 文字）
+#   4. 按鈕二選一：操作期間緊急停止 / 完成後確定（撳先關）
+# ============================================================
 import os
 import sys
-import time
 import json
+import time
 import tkinter as tk
 
 AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 SHOW_FLAG = os.path.join(AGENT_DIR, '.ai_control.show')
 STEPS_FLAG = os.path.join(AGENT_DIR, '.ai_control.steps')
 
-root = None
-window = None
-_steps_frame = None
-_last_steps = ''
-_done_btn = None
-_stop_btn = None
-_btn_frame = None
+# 窗口狀態
+shown = False
 _all_done_shown = False
+_last_sig = None
 
 
-def build_window():
-    global root, window, _steps_frame, _done_btn, _stop_btn, _btn_frame
-    root = tk.Tk()
-    window = root
-    root.title("AI 控制中")
-    # 🚨 2026-08-10：唔用 default tkinter icon（用戶要求）— 用自訂 emerald 色 icon
+def build_window(root):
+    """建立警告視窗（右下角固定位置 — 唔遮 MT5 操作區）"""
+    root.title('AI 控制中')
+    root.attributes('-topmost', True)
+    # 固定大小（唔自動 resize — 唔抽搐）
+    W, H = 360, 400
     try:
-        _img = tk.PhotoImage(width=32, height=32)
-        _img.put('#10b981', to=(0, 0, 32, 32))  # emerald 色塊
-        root.iconphoto(True, _img)
+        sw = root.winfo_screenwidth()
+        sh = root.winfo_screenheight()
+        root.geometry(f'{W}x{H}+{sw - W - 20}+{sh - H - 80}')
+    except Exception:
+        root.geometry(f'{W}x{H}+1200+580')
+    root.resizable(False, False)
+    # 🚨 2026-08-11：鎖死最小+最大（內容驅動自動 resize 根治 — 用戶話視窗大細抖動仲有）
+    root.minsize(W, H)
+    root.maxsize(W, H)
+    root.overrideredirect(False)
+
+    # 背景
+    root.configure(bg='#1e1e2e')
+
+    # 自訂 icon（emerald — 唔用 default tkinter 羽毛）
+    try:
+        img = tk.PhotoImage(width=32, height=32)
+        for y in range(32):
+            for x in range(32):
+                img.put('#34d399' if (x + y) % 3 != 0 else '#1e1e2e', (x, y))
+        root.iconphoto(True, img)
     except Exception:
         pass
-    root.attributes("-topmost", True)
-    root.attributes("-alpha", 0.98)
-    root.configure(bg="#18181b")
-    # emerald 頂條
-    tk.Frame(root, bg="#10b981", height=4).pack(fill="x")
-    window._prog_label = tk.Label(root, text="🤖 AI 控制中", bg="#18181b", fg="#fafafa",
-             font=("Microsoft JhengHei UI", 16, "bold"))
-    window._prog_label.pack(pady=(12, 4))
-    # 🚨 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表）
-    window._prog_label.pack_forget()
-    tk.Label(root, text="請勿使用滑鼠及鍵盤…", bg="#18181b", fg="#a1a1aa",
-             font=("Microsoft JhengHei UI", 11)).pack(pady=(0, 6))
-    # 步驟列表 frame（一排排 — 完成 ✅ / 操作中 ⏳ / 等待 ⬜）
-    _steps_frame = tk.Frame(root, bg="#18181b")
-    _steps_frame.pack(fill="x", padx=16, pady=(0, 6))
-    tk.Label(root, text="⚠️ 如非必要請勿操作電腦", bg="#18181b", fg="#fbbf24",
-             font=("Microsoft JhengHei UI", 10)).pack(pady=(0, 6))
-    # 🚨 2026-08-10：完成後顯示「確定」按鈕（用戶撳先關閉 — 唔會自動消失）
-    # 🚨 2026-08-10：確定 + 緊急停止同一大細（用戶投訴唔一致）— 並排（frame）
-    _btn_frame = tk.Frame(root, bg="#18181b")
-    _done_btn = tk.Button(_btn_frame, text="確定", bg="#10b981", fg="#18181b",
-             font=("Microsoft JhengHei UI", 12, "bold"), relief="flat", width=10,
-             command=lambda: root.withdraw())
-    # 🚨 2026-08-10：強制終止（緊急停止）保留 — 撳 → 寫 .ai_control.stop flag（watcher/auto_attach check_abort 偵測）
-    def _emergency_stop():
-        try:
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.stop'), 'w') as f:
-                f.write('1')
-        except Exception:
-            pass
-    _stop_btn = tk.Button(_btn_frame, text="緊急停止", bg="#dc2626", fg="#fff",
-             font=("Microsoft JhengHei UI", 12, "bold"), relief="flat", width=10,
-             command=_emergency_stop)
-    # 初始唔 pack（操作期間先顯示 — 二選一）
-    root.withdraw()  # 初始隱藏
-    # 放右下角（🚨 2026-08-10：固定高度 380 — 唔好每次 resize — 抽搐根治）
-    sw = root.winfo_screenwidth()
-    sh = root.winfo_screenheight()
-    w, h = 340, 380
-    root.geometry(f"{w}x{h}+{sw - w - 24}+{sh - h - 60}")
-    root.minsize(340, 380)
-    root.maxsize(340, 380)
+
+    # 頂部色條
+    bar = tk.Frame(root, bg='#34d399', height=4)
+    bar.pack(fill='x')
+
+    # 標題行
+    head = tk.Frame(root, bg='#1e1e2e')
+    head.pack(fill='x', padx=14, pady=(10, 2))
+    tk.Label(head, text='🤖', font=('Segoe UI Emoji', 20), bg='#1e1e2e').pack(side='left')
+    tk.Label(head, text='遙距控制', font=('Microsoft JhengHei', 15, 'bold'), fg='#e2e8f0', bg='#1e1e2e').pack(side='left', padx=8)
+
+    # 操作名（併入步驟第一條 — 呢度顯示「狀態」）
+    root._status_label = tk.Label(root, text='處理中…', font=('Microsoft JhengHei', 13, 'bold'), fg='#fbbf24', bg='#1e1e2e', anchor='w')
+    root._status_label.pack(fill='x', padx=14, pady=(2, 2))
+
+    # 分隔線
+    tk.Frame(root, bg='#2d2d44', height=1).pack(fill='x', padx=10, pady=4)
+
+    # 步驟列表
+    root._steps_frame = tk.Frame(root, bg='#1e1e2e')
+    root._steps_frame.pack(fill='both', expand=True, padx=14, pady=4)
+
+    # 按鈕區（固定底部 — 唔亂跳）
+    root._btn_frame = tk.Frame(root, bg='#1e1e2e')
+    root._btn_frame.pack(fill='x', padx=14, pady=(2, 12))
+
+    # 緊急停止（操作期間顯示）
+    root._stop_btn = tk.Button(root._btn_frame, text='緊急停止', font=('Microsoft JhengHei', 12, 'bold'),
+                               fg='#fff', bg='#ef4444', activebackground='#dc2626', activeforeground='#fff',
+                               relief='flat', bd=0, cursor='hand2', width=10, pady=6)
+    root._stop_btn.configure(command=lambda: emergency_stop(root))
+    # 確定（完成後顯示 — 撳先關）
+    root._done_btn = tk.Button(root._btn_frame, text='確定', font=('Microsoft JhengHei', 12, 'bold'),
+                               fg='#fff', bg='#34d399', activebackground='#10b981', activeforeground='#fff',
+                               relief='flat', bd=0, cursor='hand2', width=10, pady=6)
+    root._done_btn.configure(command=lambda: root.withdraw())
+
+    # 初始隱藏（等 flag）
+    root.withdraw()
+    return root
 
 
-def render_steps(steps):
-    """更新步驟列表（一排排 — ✅ 完成 / ⏳ 操作中 / ⬜ 等待）
-    🚨 2026-08-10：全部完成 → 標題顯示「✅ 已完成」"""
-    global _last_steps
+def emergency_stop(root):
+    """緊急停止 — 寫 flag（watcher/auto_attach 會 check）+ 隱藏視窗"""
     try:
-        data = json.loads(steps) if steps else []
-        key = json.dumps(data, ensure_ascii=False)
-        if key == _last_steps:
-            return
-        _last_steps = key
-        for w in _steps_frame.winfo_children():
-            w.destroy()
-        if not data:
-            return
-        all_done = bool(data) and all(s.get('status') == 'done' for s in data)
-        # 🚨 2026-08-10：新任務開始（有 doing 步驟）→ 重置按鈕狀態（唔好殘留上一個任務嘅確定/緊急停止 — 用戶投訴）
-        has_doing = any(s.get('status') == 'doing' for s in data if isinstance(s, dict))
-        if has_doing and _all_done_shown:
-            _all_done_shown = False
-            try:
-                if _done_btn is not None:
-                    _done_btn.pack_forget()
-            except Exception:
-                pass
-            try:
-                if _stop_btn is not None:
-                    _stop_btn.pack(pady=2)
-            except Exception:
-                pass
-        if all_done:
-            # 🚨 2026-08-10：成功 → 「已完成」；失敗（steps 有「失敗」）→ 「失敗」+ 紅色（用戶要求）
-            _has_fail = any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in data)
-            window._prog_label.config(text='失敗' if _has_fail else '已完成')
-            try:
-                window._prog_label.config(fg='#f87171' if _has_fail else '#fafafa')
-                if not window._prog_label.winfo_ismapped():
-                    window._prog_label.pack(pady=(12, 4))
-            except Exception:
-                pass
-            if not _all_done_shown:
-                _all_done_shown = True
-                # 🚨 2026-08-10：二選一（用戶要求）— 成功 → 只有確定；失敗 → 只有緊急停止
-                if _has_fail:
-                    try:
-                        if _done_btn is not None:
-                            _done_btn.pack_forget()
-                    except Exception:
-                        pass
-                    try:
-                        if _stop_btn is not None:
-                            _stop_btn.pack(pady=2)
-                    except Exception:
-                        pass
-                else:
-                    try:
-                        if _stop_btn is not None:
-                            _stop_btn.pack_forget()
-                    except Exception:
-                        pass
-                    try:
-                        if _done_btn is not None:
-                            _done_btn.pack(pady=2)
-                    except Exception:
-                        pass
-                if _btn_frame is not None and not _btn_frame.winfo_ismapped():
-                    _btn_frame.pack(pady=(0, 8))
-                for s in data:
-                    text = s.get('text', '')
-                    st = s.get('status', 'pending')
-                    # 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
-                    # 🚨 2026-08-10：失敗步驟 → 紅色（文字有「失敗」— 唔理 status — 用戶要求）
-                    if '失敗' in text:
-                        mark, color = '失敗', '#f87171'
-                    elif st == 'done':
-                        mark, color = '完成', '#34d399'
-                    elif st == 'doing':
-                        mark, color = '進行中', '#fbbf24'
-                    else:
-                        mark, color = '等待', '#71717a'
-                    tk.Label(_steps_frame, text=f"[{mark}] {text}", bg="#18181b", fg=color,
-                             font=("Microsoft JhengHei UI", 11), anchor="w").pack(fill="x")
-        # 🚨 2026-08-10：移除「高度自動」— 固定高度 380（每次 resize → 視窗抽搐 — 用戶投訴）
+        with open(os.path.join(AGENT_DIR, '.ai_control.abort'), 'w', encoding='utf-8') as f:
+            f.write('1')
+        print('[alert_worker] 緊急停止已觸發', flush=True)
     except Exception:
         pass
+    root.withdraw()
+
+
+def read_steps():
+    """讀 steps（失敗返回 []）"""
+    try:
+        if os.path.isfile(STEPS_FLAG):
+            with open(STEPS_FLAG, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return data
+    except Exception:
+        pass
+    return []
+
+
+_last_render_key = None
+
+
+def render_steps(root, data):
+    """渲染步驟（累積 — 唔消失）
+    🚨 2026-08-11 修：① 內容一樣 → skip ② 增量更新 ③ 預留固定行數（步驟加/減 — 空行填補 — 內容位置唔跳 — 用戶投訴抖動）"""
+    global _last_render_key
+    key = json.dumps(data, ensure_ascii=False)
+    if key == _last_render_key:
+        return
+    _last_render_key = key
+    children = root._steps_frame.winfo_children()
+    MAX_ROWS = 6  # 預留最大行數（內容位置固定 — 唔跳）
+    for i in range(MAX_ROWS):
+        if i < len(data):
+            s = data[i]
+            text = s.get('text', '')
+            st = s.get('status', 'pending')
+            if st == 'doing':
+                mark, color = '[進行中]', '#fbbf24'
+            elif st == 'done':
+                mark, color = '[完成]', '#34d399'
+            else:
+                mark, color = '[等待]', '#71717a'
+            if '失敗' in text:
+                mark, color = '[失敗]', '#f87171'
+            full = f'{mark} {text}'
+        else:
+            # 空行填補（位置固定 — 步驟加/減唔會跳）
+            full = ''
+            color = '#1e1e2e'
+        if i < len(children):
+            children[i].config(text=full, fg=color)
+        else:
+            lbl = tk.Label(root._steps_frame, text=full, font=('Microsoft JhengHei', 11), fg=color,
+                           bg='#1e1e2e', anchor='w', wraplength=300, justify='left')
+            lbl.pack(fill='x', pady=1)
+    # 多餘 destroy
+    for w in children[MAX_ROWS:]:
+        w.destroy()
 
 
 def main():
-    global _all_done_shown
-    build_window()
-    shown = False
-    last_prog = ''
+    global shown, _all_done_shown, _last_sig
+    root = tk.Tk()
+    build_window(root)
+
     while True:
         try:
+            root.update_idletasks()
+            root.update()
+            # 🚨 2026-08-11 修：只喺「偏離」先修正（唔係每 round set — 之前每 round set 觸發 re-layout 抖動；唔 set 又會內容少時縮細）
+            try:
+                _w = root.winfo_width()
+                _h = root.winfo_height()
+                if _h < 400 or _w < 360:
+                    root.geometry(f'360x400+{root.winfo_screenwidth() - 360 - 20}+{root.winfo_screenheight() - 400 - 80}')
+            except Exception:
+                pass
+            time.sleep(0.4)
+
             has_flag = os.path.isfile(SHOW_FLAG)
+            # 讀 flag 內容（操作名 — 用嚟偵測新任務）
+            sig = None
             if has_flag:
-                # 🚨 每次 poll 都讀 flag 更新程式名（唔理 shown 狀態 — 連續操作唔會顯示舊名）
                 try:
                     with open(SHOW_FLAG, 'r', encoding='utf-8') as f:
-                        prog = f.read().strip() or 'AI 控制中'
-                    if prog != last_prog:
-                        window._prog_label.config(text=prog)
-                        last_prog = prog
+                        sig = f.read().strip() or '操作中'
                 except Exception:
-                    pass
-                # 🚨 步驟列表（.ai_control.steps）
-                try:
-                    if os.path.isfile(STEPS_FLAG):
-                        with open(STEPS_FLAG, 'r', encoding='utf-8') as f:
-                            render_steps(f.read())
-                    else:
-                        render_steps('')
-                except Exception:
-                    pass
+                    sig = '操作中'
+
+            steps = read_steps()
+            has_doing = any(s.get('status') == 'doing' for s in steps)
+            all_done = bool(steps) and all(s.get('status') == 'done' for s in steps)
+            has_fail = any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in steps)
+
+            if has_flag:
+                # 🚨 新任務偵測（flag 內容變咗 / 有 doing 步驟）→ 重置按鈕狀態
+                if sig != _last_sig or has_doing:
+                    _last_sig = sig
+                    _all_done_shown = False
+                    # 操作期間：確定隱藏 + 緊急停止顯示 + 狀態「處理中」
+                    root._done_btn.pack_forget()
+                    root._stop_btn.pack(fill='x')
+                    root._status_label.config(text=f'執行中：{sig}', fg='#fbbf24')
                 if not shown:
-                    window_state = root.state()
-                    if window_state == 'withdrawn':
-                        root.deiconify()
-                    else:
-                        root.lift()
+                    root.deiconify()
                     shown = True
-                    # 🚨 2026-08-10：強制終止（緊急停止）操作期間都顯示（用戶要求保留）
-                    if _btn_frame is not None and not _btn_frame.winfo_ismapped():
-                        _btn_frame.pack(pady=(0, 8))
-            elif not has_flag and shown:
-                # 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
-                # 操作完成/中斷 → 一直顯示（確定按鈕顯示 — 用戶撳先關）+ 緊急停止消失（完成咗）
-                if _stop_btn is not None:
-                    try:
-                        _stop_btn.pack_forget()
-                    except Exception:
-                        pass
-                if _btn_frame is not None and not _btn_frame.winfo_ismapped():
-                    try:
-                        _btn_frame.pack(pady=(0, 8))
-                    except Exception:
-                        pass
-                if _done_btn is not None and not _done_btn.winfo_ismapped():
-                    try:
-                        _done_btn.pack(side="left", padx=4)
-                    except Exception:
-                        pass
-            root.update()
+                render_steps(root, steps)
+                if all_done:
+                    # 完成：確定顯示（撳先關）+ 緊急停止隱藏 + 狀態 綠/紅
+                    if not _all_done_shown:
+                        _all_done_shown = True
+                        root._stop_btn.pack_forget()
+                        root._done_btn.pack(fill='x')
+                        if has_fail:
+                            root._status_label.config(text=f'失敗（{sig}）', fg='#f87171')
+                        else:
+                            root._status_label.config(text='已完成', fg='#34d399')
+            else:
+                # flag 冇 — 視窗唔自動關（用戶撳確定先關）— 保持現狀
+                if shown and _all_done_shown:
+                    pass  # 保持（確定顯示 — 等用戶撳）
+        except tk.TclError:
+            break
         except Exception:
-            pass
-        time.sleep(0.5)
+            continue
 
 
 if __name__ == '__main__':
-    # 🚨 2026-08-10：crash log（alert_worker 成日死 exit 1 → 抽搐 — 記錄死因）
+    # 🚨 crash log（死因記錄）
     try:
         main()
     except Exception as _e:
         try:
             import traceback as _tb
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'alert_worker.log'), 'a', encoding='utf-8') as _f:
-                _f.write(f"[{time.strftime('%H:%M:%S')}] CRASH: {_e}\n{_tb.format_exc()}\n")
+            with open(os.path.join(AGENT_DIR, 'alert_worker.log'), 'a', encoding='utf-8') as _f:
+                _f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {_e}\n{_tb.format_exc()}\n")
         except Exception:
             pass
-        raise

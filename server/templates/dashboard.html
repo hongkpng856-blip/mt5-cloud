@@ -369,6 +369,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             width: 360px;
+            min-height: 430px;  /* 🚨 2026-08-11：固定最小高度（內容變化唔會縮細/變大 → 抖動根治） */
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
@@ -471,12 +472,14 @@
     <div class="ai-control-box">
         <div class="ai-control-accent"></div>
         <div class="ai-control-body">
-            <i class="icon-bot" style="font-size:36px;color:var(--accent)"></i>
-            <div class="ai-control-title">AI 控制中</div>
-            <div class="ai-control-prog" id="aiControlProg">正在處理</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <span style="font-size:22px">🤖</span>
+                <div class="ai-control-title" style="margin:0">遙距控制</div>
+            </div>
+            <div class="ai-control-prog" id="aiControlProg" style="margin-top:10px">處理中…</div>
             <div class="ai-control-desc" id="aiControlDesc">請勿移動滑鼠或按鍵盤！</div>
-            <!-- 🚨 2026-08-10：操作步驟（一排排 — ✅ 完成 / ⏳ 操作中 / ⬜ 等待）-->
-            <div class="ai-control-steps" id="aiControlSteps" style="margin-top:10px;text-align:left;font-size:12px;color:var(--text-dim);min-height:18px;"></div>
+            <!-- 操作步驟（累積 — [進行中]/[完成]/[等待]）-->
+            <div class="ai-control-steps" id="aiControlSteps" style="margin-top:10px;text-align:left;font-size:12px;color:var(--text-dim);min-height:120px;max-height:160px;overflow-y:auto;"></div>
             <button class="ai-control-stop" id="aiControlStopBtn" onclick="emergencyStop()">
                 <i class="icon-alert-octagon"></i> 緊急停止
             </button>
@@ -1134,6 +1137,8 @@ function showControlModal(actionDesc, detailMsg) {
     if (prog) { prog.style.display = 'none'; prog.textContent = actionDesc || '正在處理'; prog.style.color = 'inherit'; }
     if (desc) desc.textContent = detailMsg || '請勿移動滑鼠或按鍵盤！';
     if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
+    // 🚨 2026-08-11：記錄「當前任務」時間戳（poll 用嚟判斷舊 steps 唔顯示 — 新任務開始唔殘留上一個操作）
+    window._modalShownAt = Date.now();
     // 動作開始：最少顯示 3 秒（等 watcher 後續動作接手，唔會「彈一下」）
     minShowUntil = Date.now() + 3000;
 }
@@ -1150,10 +1155,19 @@ async function pollAiControl() {
         try {
             const sr = await fetch('/api/control-steps?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
             if (sr.ok) {
-                const steps = await sr.json();
+                const stepsResp = await sr.json();
+                const steps = Array.isArray(stepsResp) ? stepsResp : (stepsResp.steps || []);
                 const sc = document.getElementById('aiControlSteps');
+                // 🚨 2026-08-12：舊 steps 唔顯示（上一個任務殘留 — 顯示「等待操作開始」— 穩定 — 唔會第一畫面全部完成）
+                if (stepsResp.mtime && window._modalShownAt && (stepsResp.mtime * 1000) < window._modalShownAt) {
+                    if (sc && sc.children.length === 0) {
+                        sc.innerHTML = '<div style="padding:2px 0;color:#71717a;font-size:12px">[等待] 等待操作開始…</div>';
+                    }
+                    return;
+                }
                 if (sc) {
                     if (steps && steps.length) {
+                        // 🚨 2026-08-11：移除 placeholder 舊 code（喺下面）— 空 steps 用 else 分支
                         // 🚨 2026-08-10：新任務開始（有 doing）→ 隱藏確定 + 顯示緊急停止（唔殘留上一個任務按鈕）+ 重置 prog 顏色
                         const hasDoing = steps.some(s => s.status === 'doing');
                         if (hasDoing) {
@@ -1178,18 +1192,33 @@ async function pollAiControl() {
                                 cbtn2.style.display = 'inline-block';
                             }
                         }
-                        sc.innerHTML = steps.map(s => {
-                            // 🚨 2026-08-10：唔用 emoji icon（用戶要求）— 用文字標記
-                            // 🚨 2026-08-10：失敗步驟 → 紅色（文字有「失敗」— 唔理 status — 用戶要求）
-                            const st2 = s.status || 'pending';
-                            const txt = s.text || '';
-                            let mk, col;
-                            if (txt.indexOf('失敗') >= 0) { mk = '失敗'; col = '#f87171'; }
-                            else if (st2 === 'done') { mk = '完成'; col = '#34d399'; }
-                            else if (st2 === 'doing') { mk = '進行中'; col = '#fbbf24'; }
-                            else { mk = '等待'; col = '#71717a'; }
-                            return `<div style="color:${col};padding:1px 0;">[${mk}] ${txt}</div>`;
-                        }).join('');
+                        // 🚨 2026-08-11：重新設計步驟出現 — 增量渲染（DOM 對比 — 只改變嗰行 — 唔重寫全部 → 唔閃）
+                        const _rows = sc.children;
+                        for (let _i = 0; _i < steps.length; _i++) {
+                            const _s = steps[_i];
+                            const _st2 = _s.status || 'pending';
+                            const _txt = String(_s.text || '');
+                            let _mk, _col;
+                            if (_txt.indexOf('失敗') >= 0) { _mk = '失敗'; _col = '#f87171'; }
+                            else if (_st2 === 'done') { _mk = '完成'; _col = '#34d399'; }
+                            else if (_st2 === 'doing') { _mk = '進行中'; _col = '#fbbf24'; }
+                            else { _mk = '等待'; _col = '#71717a'; }
+                            const _html = `<span style="color:${_col}">[${_mk}]</span> ${_txt}`;
+                            if (_i < _rows.length) {
+                                // 行存在 → 只更新內容（唔重建元素 — 唔閃）
+                                if (_rows[_i].innerHTML !== _html) _rows[_i].innerHTML = _html;
+                            } else {
+                                // 新步驟 → 新行（加落去）
+                                const _div = document.createElement('div');
+                                _div.style.padding = '2px 0';
+                                _div.style.color = '#cbd5e1';
+                                _div.style.fontSize = '12px';
+                                _div.innerHTML = _html;
+                                sc.appendChild(_div);
+                            }
+                        }
+                        // 多餘行移除（步驟減少）
+                        while (sc.children.length > steps.length) sc.removeChild(sc.lastChild);
                         // 🚨 2026-08-10：全部完成（成功 → 確定；失敗 → 緊急停止 — 二選一 — 用戶要求）
                         if (steps.every(s => s.status === 'done')) {
                             const hasFail = steps.some(s => String(s.text || '').indexOf('失敗') >= 0);
@@ -1205,7 +1234,8 @@ async function pollAiControl() {
                                 pg.style.color = hasFail ? '#f87171' : 'inherit';
                             }
                         }
-                    } else if (sc.innerHTML) {
+                    } else if (sc.innerHTML && (!sc.children[0] || sc.children[0].getAttribute('data-placeholder') !== '1')) {
+                        // 🚨 2026-08-11：有 placeholder 唔清空（「等待中…」保留 — 唔會空白）
                         sc.innerHTML = '';
                     }
                 }
@@ -1215,8 +1245,11 @@ async function pollAiControl() {
         if (!res.ok) {
             // 🚨 2026-08-10：警告視窗唔自動關閉（用戶要求）— 一定要撳「確定」先關
             // 404 / 冇狀態檔 = 冇 AI 操控緊 → 唔自動關（一直顯示 — 確定撳先關）
-            const doneBtn = document.getElementById('aiControlCloseBtn');
-            if (doneBtn) { doneBtn.style.display = 'inline-block'; doneBtn.style.margin = '8px auto 0'; }
+            // 🚨 2026-08-12：按鈕統一由 steps render 決定（唔喺呢度 set — 避免同二選一衝突 — 兩個按鈕同時出現）
+            const doneBtn2 = document.getElementById('aiControlCloseBtn');
+            const scx2 = document.getElementById('aiControlSteps');
+            const hasDoingNow2 = scx2 && scx2.innerHTML.indexOf('[進行中]') >= 0;
+            if (doneBtn2 && !hasDoingNow2 && aiControlVisible) { doneBtn2.style.display = 'inline-block'; doneBtn2.style.margin = '8px auto 0'; }
             if (aiControlVisible && Date.now() >= minShowUntil) {
                 const pg = document.getElementById('aiControlProg');
                 if (pg) { pg.textContent = '已完成'; pg.style.display = 'block'; }
