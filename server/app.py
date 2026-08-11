@@ -920,7 +920,8 @@ def api_ea_library_refresh():
     try:
         with open(os.path.join(_adir_rf, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write('重新整理配對庫')
-        with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+        with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
+            _os_replace_0.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             _jrf.dump([
                 {'text': '重新整理配對庫 進行中…', 'status': 'doing'},
                 {'text': '完成重新整理', 'status': 'pending'},
@@ -998,7 +999,8 @@ def api_ea_library_refresh():
                         files.append({"name": f, "size": f"{os.path.getsize(path)/1024:.1f} KB", "type": "user", "author": current_user.username})
         # 成功 → steps done（完成重新整理）
         try:
-            with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+            with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
+                _os_replace_1.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 _jrf.dump([
                     {'text': '重新整理配對庫 進行中…', 'status': 'done'},
                     {'text': '完成重新整理', 'status': 'done'},
@@ -1018,7 +1020,8 @@ def api_ea_library_refresh():
     except Exception as e:
         # 失敗 → steps 顯示失敗原因（紅色）+ 確定（唔需要緊急停止）
         try:
-            with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+            with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
+                _os_replace_2.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 _jrf.dump([
                     {'text': '重新整理配對庫 進行中…', 'status': 'done'},
                     {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
@@ -1094,7 +1097,8 @@ def api_ea_remove_local(filename):
         _adir_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         with open(os.path.join(_adir_del, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'剷除 {base_only}')
-        with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+        with open(os.path.join(_adir_del, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
+            _os_replace_3.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             # 🚨 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
             _jdel.dump([
                 {'text': f'開始剷除 {base_only}', 'status': 'doing'},
@@ -1198,7 +1202,8 @@ def api_ea_install_local(filename):
         _adir_in = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         with open(os.path.join(_adir_in, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'配對 {_base0}')
-        with open(os.path.join(_adir_in, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+        with open(os.path.join(_adir_in, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
+            _os_replace_4.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             _jin.dump([
                 {'text': f'配對 {_base0} 進行中…', 'status': 'doing'},
                 {'text': '完成配對', 'status': 'pending'},
@@ -1353,11 +1358,12 @@ def api_ea_install_local(filename):
             _adir_in2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
             if os.path.isfile(_sf_in):
-                with open(_sf_in, 'w', encoding='utf-8') as _f:
+                with open(_sf_in + '.tmp', 'w', encoding='utf-8') as _f:
                     _jin2.dump([
                         {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
                         {'text': '配對失敗（compile 失敗）', 'status': 'done'},
                     ], _f, ensure_ascii=False)
+                os.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
             _sf_show = os.path.join(_adir_in2, '.ai_control.show')
             if os.path.exists(_sf_show):
@@ -1556,7 +1562,8 @@ def _restart_mt5():
             _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             with open(os.path.join(_ad, '.ai_control.show'), 'w', encoding='utf-8') as _f:
                 _f.write('🔄 重啟 MT5 中（載入熱鍵）— 請稍候約 1 分鐘')
-            with open(os.path.join(_ad, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+            with open(os.path.join(_ad, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
+                _os_replace_5.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 _j.dump([{"text": "關閉 MT5", "status": "doing"},
                          {"text": "載入熱鍵設定", "status": "pending"},
                          {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)

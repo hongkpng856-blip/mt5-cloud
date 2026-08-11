@@ -1160,13 +1160,8 @@ async function pollAiControl() {
                 const stepsResp = await sr.json();
                 const steps = Array.isArray(stepsResp) ? stepsResp : (stepsResp.steps || []);
                 const sc = document.getElementById('aiControlSteps');
-                // 🚨 2026-08-12：舊 steps 唔顯示（上一個任務殘留 — 顯示「等待操作開始」— 穩定 — 唔會第一畫面全部完成）
-                if (stepsResp.mtime && window._modalShownAt && (stepsResp.mtime * 1000) < window._modalShownAt) {
-                    if (sc && sc.children.length === 0) {
-                        sc.innerHTML = '<div style="padding:2px 0;color:#71717a;font-size:12px">[等待] 等待操作開始…</div>';
-                    }
-                    return;
-                }
+                // 🚨 2026-08-12 修：移除 mtime 判斷（誤判 → 「等待操作開始」↔ 6 步反覆 → 「彈」！）
+                // 接受開頭可能顯示舊 steps 一秒（新 steps 寫入即覆蓋 — 唔會反覆彈）
                 if (sc) {
                     if (steps && steps.length) {
                         // 🚨 2026-08-11：移除 placeholder 舊 code（喺下面）— 空 steps 用 else 分支
@@ -1253,9 +1248,12 @@ async function pollAiControl() {
                                 pg.style.color = hasFail ? '#f87171' : 'inherit';
                             }
                         }
-                    } else if (sc.innerHTML && (!sc.children[0] || sc.children[0].getAttribute('data-placeholder') !== '1')) {
-                        // 🚨 2026-08-11：有 placeholder 唔清空（「等待中…」保留 — 唔會空白）
-                        sc.innerHTML = '';
+                    } else {
+                        // 🚨 2026-08-12 修：steps 空 → 唔清空（清空 → 步驟區空白 → 「彈」！— 用戶截圖實據：第 3 幅步驟區空白）
+                        // 保留現有步驟（等 steps 再寫入）— 或者如果原本就空 → 顯示「等待操作開始」
+                        if (sc.children.length === 0) {
+                            sc.innerHTML = '<div style="padding:2px 0;color:#71717a;font-size:12px">[等待] 等待操作開始…</div>';
+                        }
                     }
                 }
             }
@@ -1580,7 +1578,8 @@ async function retryCompile(baseName) {
 }
 
 async function deleteEA(eaName) {
-    if (!confirm(`確定要刪除 ${eaName} 嗎？\n會刪除本機 MT5 檔案及配對設定`)) return;
+    // 🚨 2026-08-12 修：移除瀏覽器原生 confirm（「確定要刪除？」彈出 → 同警告視窗交替 → 「彈」！— 影片實據：f_007 捕捉到原生 confirm）
+    // 直接刪除 — 警告視窗會顯示「開始剷除 XXX」流程（用戶睇到做緊咩 — 唔需要原生確認框）
     showControlModal('正在刪除 ' + eaName + '，請稍候...');
     try {
         // 1. 刪除本機 MQL5/Experts 檔案

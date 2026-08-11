@@ -72,10 +72,11 @@ def do_restart_mt5():
         _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
         try:
             import json as _j2
-            with open(_sf, 'w', encoding='utf-8') as _f2:
+            with open(_sf + '.tmp', 'w', encoding='utf-8') as _f2:
                 _j2.dump([{"text": "關閉 MT5", "status": "doing"},
                           {"text": "載入熱鍵設定", "status": "pending"},
                           {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
+            os.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入
         except Exception:
             pass
     except Exception:
@@ -134,8 +135,9 @@ def do_restart_mt5():
             if os.path.exists(_sf):
                 # 🚨 2026-08-12：寫「等待操作開始…」（唔係空 [] — 空 → 網頁彈嚟彈去）
                 import json as _j3
-                with open(_sf, 'w', encoding='utf-8') as _f3:
+                with open(_sf + '.tmp', 'w', encoding='utf-8') as _f3:
                     _j3.dump([{'text': '等待操作開始…', 'status': 'pending'}], _f3)
+                os.replace(_f3.name, _f3.name[:-4])  # 🚨 原子寫入
         except Exception:
             pass
         print(f"✅ MT5 restarted, PID={pid}")
@@ -1213,8 +1215,9 @@ def _clear_steps():
     try:
         import json as _j
         _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
-        with open(_f, 'w', encoding='utf-8') as _fh:
+        with open(_f + '.tmp', 'w', encoding='utf-8') as _fh:
             _j.dump([{'text': '等待操作開始…', 'status': 'pending'}], _fh)
+        os.replace(_fh.name, _fh.name[:-4])  # 🚨 原子寫入
     except Exception:
         pass
 
