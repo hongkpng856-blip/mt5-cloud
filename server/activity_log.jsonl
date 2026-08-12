@@ -27966,3 +27966,21 @@
 {"time": 1786536711.0483494, "action": "unknown", "ea": "Breakout", "message": "Breakout 已暫停（EA 已從圖表移除）", "source": "watcher"}
 {"time": 1786536713.127987, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
 {"time": 1786536714.4483416, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536745.191363, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536775.932955, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536806.6356864, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536837.329306, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536849.4363935, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786536868.324701, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536899.040765, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536918.7721856, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786536929.7482693, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536936.3411856, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786536936.468057, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786536946.7894273, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786536948.8263342, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786536960.44782, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786536991.1716948, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786537021.861356, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786537052.5498009, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786537083.2387013, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

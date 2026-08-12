@@ -428,6 +428,41 @@
             .ea-table select { max-width: 80px; font-size: 10px; }
             .ea-table input { width: 40px; font-size: 10px; }
             .scroll-box { max-height: 300px; overflow-x: auto; }
+            /* 🚨 2026-08-12：768px 以下 modal 寬度 fit（平板/手機 — 唔會 380px 爆出畫面） */
+            .ai-control-box { width: calc(100vw - 32px); max-width: 380px; }
+        }
+        /* ─── 📱 手機版（2026-08-12 重新設計 — 提高可閱讀性）─── */
+        @media (max-width: 480px) {
+            .main { padding: 12px; }
+            .card { padding: 14px; margin-bottom: 12px; }
+            .card-title { font-size: 15px; }
+            .stat-box { min-width: 100%; flex: 1 1 100%; padding: 12px; }
+            .stat-box .label { font-size: 12px; }
+            .stat-box .value { font-size: 20px; }
+            .btn { font-size: 13px; padding: 10px 14px; min-height: 40px; }
+            /* 警告視窗（modal）手機版：近全屏 + 大字體 + 大按鈕（觸摸友好） */
+            .ai-control-box {
+                width: calc(100vw - 24px);
+                min-height: auto;
+                border-radius: 16px;
+            }
+            .ai-control-body { padding: 20px 16px; }
+            .ai-control-title { font-size: 18px; }
+            .ai-control-prog { font-size: 15px; margin-top: 12px !important; }
+            .ai-control-desc { font-size: 13px; margin-bottom: 14px; }
+            .ai-control-steps { font-size: 14px !important; line-height: 1.8 !important; min-height: 120px !important; max-height: 40vh !important; padding: 10px 12px !important; }
+            .ai-control-stop { padding: 14px 0; font-size: 15px; margin-top: 16px; min-height: 48px; }
+            .ai-control-close { padding: 14px 0; font-size: 15px; min-height: 48px; }
+            /* 表格：橫向 scroll + 字體可讀 */
+            .ea-table { font-size: 12px; min-width: 520px; }
+            .ea-table th { font-size: 11px; padding: 8px 6px; }
+            .ea-table td { padding: 8px 6px; }
+            .scroll-box { max-height: 60vh; }
+            .log-box { font-size: 13px; }
+            h1 { font-size: 20px; }
+            /* 配對庫操作按鈕（4 粒掣）手機版：細啲 fit 橫排（唔打直） */
+            .ea-table td .btn { padding: 4px 6px; font-size: 10px; }
+            .ea-table td .btn i { font-size: 10px; }
         }
         .log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:12px; display:none; }
         .log-box.show { display:block; }
@@ -883,7 +918,7 @@ async function loadEAConfig() {
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
-                <td>
+                <td style="white-space:nowrap">
                     <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i></button>`:''}
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i>':'<i class="icon-play" style="font-size:11px"></i>'}</button>`:''}
