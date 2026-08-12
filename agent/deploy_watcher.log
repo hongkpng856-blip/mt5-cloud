@@ -576,3 +576,58 @@
 
 ===== [2026-08-12 18:13:46] watcher 啟動 =====
 ⚠️ 已有 watcher 行緊 (PID 14368) — 退出（單實例守衛）
+
+===== [2026-08-12 19:47:49] watcher 啟動 =====
+
+========================================================
+  👀 MT5 Cloud Deploy Watcher
+========================================================
+  Server:      http://localhost:5001
+  Agent ID:    DEV00001
+  Watching:    C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\Common\Files/deploy_cmd_*.json
+  Auto-attach: C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py
+  Interval:    3s
+========================================================
+  Starting watcher...
+  ✓ AI 控制警告視窗已預先就緒（隱藏）
+  ✓ Navigator refresh worker 已啟動
+  ✓ Deploy worker 已啟動
+🔄 [WATCHER] deploy worker 已重生（死咗自動開返）
+
+📥 [WATCHER] New deploy command: deploy_cmd_Bollinger_Band_1786535329.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Bollinger_Band_1786535329.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Bollinger_Band_1786535329.json
+🤖 AI 正在部署 Bollinger_Band 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Bollinger_Band → USDJPY H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\pythonw.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Bollinger_Band --symbol USDJPY --tf H1 --magic 240701 --lot 1
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Bollinger_Band_USDJPY_H1.tpl (2422 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 用熱鍵 ^2 附加 Bollinger_Band...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=5240
+   📋 已開新圖表（Down×3 — USDJPY）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ Bollinger_Band 附加成功（心跳存在）
+   ❌ log 驗證: Bollinger_Band 冇喺 USDJPY 啟動（可能開錯圖表 — 檢查心跳後備）
+   ⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2，唔再開新圖表）...
+   🎯 用熱鍵 ^2 附加 Bollinger_Band...
+   ⚠️ 熱鍵附加失敗: Process with PID=11972 not found!
+   🎯 用熱鍵 ^2 附加 Bollinger_Band...
+   ⚠️ 熱鍵附加失敗: Process with PID=11972 not found!
+   ⚠️ 熱鍵重試後都失敗（不再試 Navigator — 6093 免疫）
+   ❌ Failed to attach EA
+   ❌ Bollinger_Band attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: Bollinger_Band 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ Bollinger_Band
+
+===== [2026-08-12 19:50:49] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 12056) — 退出（單實例守衛）

@@ -27890,3 +27890,25 @@
 {"time": 1786535006.5541298, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786535037.2785995, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786535067.9831603, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535098.7315013, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535129.4265938, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535160.1572902, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535190.874696, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535221.6061795, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535252.3296087, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535283.0710244, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535313.8133764, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535329.8249867, "action": "deploy", "ea": "Bollinger_Band", "message": "Bollinger_Band 部署 → USDJPY H1", "source": "server"}
+{"time": 1786535347.0772817, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535377.8052158, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535397.813123, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786535408.5467124, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535439.2679458, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535469.9986556, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535500.716255, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535531.4249895, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535551.0539677, "action": "deploy", "ea": "Grid_Trading", "message": "Grid_Trading 部署 → USDCHF H1", "source": "server"}
+{"time": 1786535562.1502492, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535593.917129, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535604.7786422, "action": "unknown", "ea": "Grid_Trading", "message": "Grid_Trading 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786535624.6337373, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

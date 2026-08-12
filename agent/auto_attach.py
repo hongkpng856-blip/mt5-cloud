@@ -82,18 +82,12 @@ def do_restart_mt5():
             except Exception:
                 _cur_rst = []
             _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != '等待操作開始…']
-            # append 重啟 3 步（同名更新）
-            for _rst in [{"text": "關閉 MT5", "status": "doing"},
+            # 🚨 2026-08-12 FIX：重啟 3 步放最前（之前 append 尾 → 步驟順序「部署 4 步 + 重啟 3 步」亂 — 重啟應該喺部署前）
+            _RESTART3 = [{"text": "關閉 MT5", "status": "doing"},
                          {"text": "載入熱鍵設定", "status": "pending"},
-                         {"text": "重新啟動 MT5", "status": "pending"}]:
-                _fnd = False
-                for _s in _cur_rst:
-                    if _s.get('text') == _rst['text']:
-                        _s['status'] = _rst['status']
-                        _fnd = True
-                        break
-                if not _fnd:
-                    _cur_rst.append(_rst)
+                         {"text": "重新啟動 MT5", "status": "pending"}]
+            _cur_rst = [s for s in _cur_rst if s.get('text') not in ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5')]
+            _cur_rst = _RESTART3 + _cur_rst
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _j2.dump(_cur_rst, _f2, ensure_ascii=False)
         except Exception:
@@ -1631,27 +1625,49 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 if _ok_sym:
                     print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（正確圖表）")
                 else:
-                    print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 返回失敗）")
-                    # 🚨 2026-08-12 FIX：寫失敗 steps（唔係「等待操作開始」）
+                    print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 檢查心跳後備）")
+                    # 🚨 2026-08-12 FIX：心跳後備 — log 冇「已啟動」字眼唔代表 EA 冇運行（重啟 MT5 後 log 時序/字眼問題）
+                    # 用戶實測：電腦實際一致（Breakout 喺 USDJPY 運行）但 log 驗證誤判失敗！
+                    _hb_ok = False
                     try:
-                        import json as _jlv
-                        _sf_lv = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
-                        _cur_lv = []
-                        try:
-                            if os.path.isfile(_sf_lv):
-                                _cur_lv = _jlv.load(open(_sf_lv, 'r', encoding='utf-8'))
-                                if not isinstance(_cur_lv, list):
-                                    _cur_lv = []
-                        except Exception:
-                            _cur_lv = []
-                        _cur_lv = [s for s in _cur_lv if isinstance(s, dict) and s.get('text') != '等待操作開始…']
-                        if not any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_lv):
-                            _cur_lv.append({'text': f'驗證 {ea_name} 啟動失敗（圖表不符）', 'status': 'done'})
-                        with open(_sf_lv, 'w', encoding='utf-8') as _f:
-                            _jlv.dump(_cur_lv, _f, ensure_ascii=False)
+                        _hb_f = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
+                        if os.path.isfile(_hb_f):
+                            import json as _jhbl
+                            # 🚨 2026-08-12 FIX：心跳檔案係 UTF-16 編碼（EA 寫嘅 — 0xff 0xfe BOM）— 多編碼嘗試（之前 utf-8 讀失敗 → 後備冇效 → 誤判失敗）
+                            _hb_d = None
+                            for _enc_hb in ('utf-16', 'utf-8', 'cp1252'):
+                                try:
+                                    _hb_d = _jhbl.load(open(_hb_f, 'r', encoding=_enc_hb))
+                                    break
+                                except Exception:
+                                    continue
+                            if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(_hb_d.get('ts', 0)) < 300:
+                                _hb_ok = True
                     except Exception:
                         pass
-                    return False
+                    if _hb_ok:
+                        print(f"✅ 心跳後備: {ea_name} 運行中（心跳新鮮 — 圖表正確）")
+                    else:
+                        # 🚨 2026-08-12 FIX：寫失敗 steps（唔係「等待操作開始」）
+                        try:
+                            import json as _jlv
+                            _sf_lv = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                            _cur_lv = []
+                            try:
+                                if os.path.isfile(_sf_lv):
+                                    _cur_lv = _jlv.load(open(_sf_lv, 'r', encoding='utf-8'))
+                                    if not isinstance(_cur_lv, list):
+                                        _cur_lv = []
+                            except Exception:
+                                _cur_lv = []
+                            _cur_lv = [s for s in _cur_lv if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+                            if not any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_lv):
+                                _cur_lv.append({'text': f'驗證 {ea_name} 啟動失敗（圖表不符）', 'status': 'done'})
+                            with open(_sf_lv, 'w', encoding='utf-8') as _f:
+                                _jlv.dump(_cur_lv, _f, ensure_ascii=False)
+                        except Exception:
+                            pass
+                        return False
         except Exception:
             pass
         # 🚨 2026-08-12 FIX：所有操作完成（圖表平鋪/市場報價/log 驗證）→ 最後先寫 steps 全部 done（確定出現 — active 即刻 false — 撳確定唔會再彈）
