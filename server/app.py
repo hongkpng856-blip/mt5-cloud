@@ -486,6 +486,7 @@ def ensure_mt5_running():
 # Auto-trade status: background thread refresh so dashboard never blocks
 _auto_trade_cache = {"result": [], "timestamp": 0}
 _auto_trade_lock = threading.Lock()
+_last_deploy_time = {}  # 🚨 2026-08-12：防重複部署（同一 EA 30 秒內唔可以再 deploy）
 
 def _refresh_auto_trade_cache(user):
     """background thread: update auto_trade_cache without blocking dashboard"""
@@ -1304,6 +1305,16 @@ def api_ea_install_local(filename):
                     import time as _ct
                     common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
                     os.makedirs(common_files, exist_ok=True)
+                    # 🚨 2026-08-12 FIX：寫前刪已有嘅同 EA compile_cmd（唔好排隊多個 → watcher 逐個處理 → 「自動再撈」）
+                    try:
+                        for _cfn in os.listdir(common_files):
+                            if _cfn.startswith(f'compile_cmd_{base}_') and _cfn.endswith('.json'):
+                                try:
+                                    os.remove(os.path.join(common_files, _cfn))
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass
                     cmd_path = os.path.join(common_files, f'compile_cmd_{base}_{int(_ct.time())}.json')
                     with open(cmd_path, 'w') as f:
                         json.dump({
@@ -1991,6 +2002,14 @@ def handle_deploy_ea(data):
 @login_required
 def api_deploy():
     """HTTP deploy (唔靠 Socket.IO，更可靠)"""
+    # 🚨 2026-08-12 FIX：防重複部署（同一 EA 30 秒內唔可以再 deploy — 前端 double-click / 重複觸發 → 兩個 deploy_cmd → 「完成又彈又執行」）
+    global _last_deploy_time
+    try:
+        _now_dp = time.time()
+        if _last_deploy_time.get(ea_name_cached := request.json.get('ea_name', ''), 0) and _now_dp - _last_deploy_time.get(ea_name_cached, 0) < 30:
+            return jsonify({"success": False, "error": f"{ea_name_cached} 30 秒內已部署過（防重複）"}), 429
+    except Exception:
+        pass
     # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
     data = request.json
@@ -1999,6 +2018,7 @@ def api_deploy():
     tf = data.get('tf', 'H1')
     magic = data.get('magic', '240701')
     lot = data.get('lot', '1.00')
+    _last_deploy_time[ea_name] = time.time()
     
     # Save EA config first
     config = json.loads(current_user.ea_config or '{}')

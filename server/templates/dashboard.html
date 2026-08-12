@@ -1588,6 +1588,20 @@ async function deployEA(eaName, symbol, tf, magic, lot) {
 }
 
 async function doDeployEA(eaName, symbol, tf, magic, lot) {
+    // 🚨 2026-08-12 FIX：防重入（double-click / 重複觸發 → 兩個 deploy_cmd → watcher 逐個處理 → 「完成又彈又執行」）
+    if (window._deploying) {
+        showLog('⚠️ 上一個部署仲進行緊，請等完成', 'log-warn');
+        return;
+    }
+    window._deploying = true;
+    try {
+        await _doDeployEA_inner(eaName, symbol, tf, magic, lot);
+    } finally {
+        setTimeout(function(){ window._deploying = false; }, 5000);  // 5 秒後解鎖（部署流程通常 <5s 提交）
+    }
+}
+
+async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
     showControlModal('正在部署 ' + eaName + '，請稍候...');
     // 🚨 2026-08-10：更新配對庫 hidden select（保存部署揀咗嘅 symbol — 之後顯示返）
     const symSel = document.querySelector(`.ea-sym[data-ea="${eaName}"]`);

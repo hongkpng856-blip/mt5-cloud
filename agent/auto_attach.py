@@ -1268,7 +1268,7 @@ def _clear_steps():
     except Exception:
         pass
 
-def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
+def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
     """🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航熱鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
     唔使 double-click Navigator（6093 對 double-click 唔 work）"""
@@ -1288,6 +1288,24 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             return False
         print(f"🎯 用熱鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+        # 🚨 2026-08-12 FIX：部署前檢查有冇 pending compile_cmd（配對後未編譯 — 等編譯完成先部署 — 唔會「部署完又彈編譯視窗」）
+        try:
+            _cf_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            for _wc in range(20):  # 最多等 40 秒
+                _pending_compile = False
+                if os.path.isdir(_cf_dir):
+                    for _fn in os.listdir(_cf_dir):
+                        if _fn.startswith('compile_cmd_') and ea_name in _fn and _fn.endswith('.json'):
+                            _pending_compile = True
+                            break
+                if not _pending_compile:
+                    break
+                _chk_abort()
+                time.sleep(2)
+            if _pending_compile:
+                print(f"⚠️ compile_cmd 等咗 40 秒仲未完成 — 繼續部署（.ex5 可能未生成）")
+        except Exception:
+            pass
         # 🚨 2026-08-12 FIX：steps 喺函數開頭寫（開圖表之前 — 用戶撳部署即刻見到「部署進行中」）
         # 🚨 2026-08-12 FIX2：直接覆寫（唔用 _update_steps 累積 — 新任務開始清舊任務 steps — spec：唔跨任務累積）
         # 🚨 2026-08-12 FIX3：保留「重啟 MT5」3 步（部署前 ensure_hotkey 重啟寫嘅 — 唔好洗走 — 完整流程）
@@ -1363,63 +1381,64 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
         #    1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
         _SYM_DOWN = {'EURUSD': 0, 'GBPUSD': 1, 'USDCHF': 2, 'USDJPY': 3,
                      'USDCNH': 4, 'AUDUSD': 5, 'NZDUSD': 6, 'USDCAD': 7}
-        try:
-            _sk('%f')
-            time.sleep(1.5)
-            _sk('{ENTER}')
-            time.sleep(1.5)
-            # 🚨 2026-08-10 根治（v3）：打字揀 symbol（取代 Down×N — 位置唔可靠/active 問題）
-            # 方法二實測成功：Ctrl+A 全選 → 打字 symbol → Enter（揀中）→ Enter（開圖表）
-            # → 圖表一定係目標 symbol → 開完自動 active → 熱鍵附加正確
-            # 🚨 2026-08-10 用戶要求：用返 Down×N（打字完全唔準確 — 每次開 AMD 圖表 — Down×N 位置固定 10/10 實測）
-            _sym = (symbol or 'EURUSD').upper()
-            _down_n = _SYM_DOWN.get(_sym, 0)
-            if _down_n > 0:
-                _sk('{DOWN}' * _down_n)
+        if open_chart:
+            try:
+                _sk('%f')
                 time.sleep(1.5)
-            _sk('{ENTER}')
-            time.sleep(3)
-            print(f"📋 已開新圖表（Down×{_down_n} — {_sym}）")
-            # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
-            # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
-            try:
-                import ctypes as _c9
-                _u9 = _c9.windll.user32
-                _chart_title = ''
-                @_c9.WINFUNCTYPE(_c9.c_bool, _c9.c_size_t, _c9.c_size_t)
-                def _cb9(hwnd, _):
-                    nonlocal _chart_title
-                    _cls = _c9.create_unicode_buffer(80)
-                    _u9.GetClassNameW(_c9.c_void_p(hwnd), _cls, 80)
-                    if 'Chart' in _cls.value or 'MetaTrader' in _cls.value:
-                        _buf = _c9.create_unicode_buffer(120)
-                        _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, 120)
-                        _tt = _buf.value
-                        if _tt and _sym[:3] in _tt:
-                            _chart_title = _tt
-                            return False  # 停
-                    return True
-                for _w in _app.windows():
-                    try:
-                        _u9.EnumChildWindows(_c9.c_void_p(int(_w.element_info.handle)), _cb9, 0)
-                    except Exception:
-                        pass
+                _sk('{ENTER}')
+                time.sleep(1.5)
+                # 🚨 2026-08-10 根治（v3）：打字揀 symbol（取代 Down×N — 位置唔可靠/active 問題）
+                # 方法二實測成功：Ctrl+A 全選 → 打字 symbol → Enter（揀中）→ Enter（開圖表）
+                # → 圖表一定係目標 symbol → 開完自動 active → 熱鍵附加正確
+                # 🚨 2026-08-10 用戶要求：用返 Down×N（打字完全唔準確 — 每次開 AMD 圖表 — Down×N 位置固定 10/10 實測）
+                _sym = (symbol or 'EURUSD').upper()
+                _down_n = _SYM_DOWN.get(_sym, 0)
+                if _down_n > 0:
+                    _sk('{DOWN}' * _down_n)
+                    time.sleep(1.5)
+                _sk('{ENTER}')
+                time.sleep(3)
+                print(f"📋 已開新圖表（Down×{_down_n} — {_sym}）")
+                # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
+                # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
+                try:
+                    import ctypes as _c9
+                    _u9 = _c9.windll.user32
+                    _chart_title = ''
+                    @_c9.WINFUNCTYPE(_c9.c_bool, _c9.c_size_t, _c9.c_size_t)
+                    def _cb9(hwnd, _):
+                        nonlocal _chart_title
+                        _cls = _c9.create_unicode_buffer(80)
+                        _u9.GetClassNameW(_c9.c_void_p(hwnd), _cls, 80)
+                        if 'Chart' in _cls.value or 'MetaTrader' in _cls.value:
+                            _buf = _c9.create_unicode_buffer(120)
+                            _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, 120)
+                            _tt = _buf.value
+                            if _tt and _sym[:3] in _tt:
+                                _chart_title = _tt
+                                return False  # 停
+                        return True
+                    for _w in _app.windows():
+                        try:
+                            _u9.EnumChildWindows(_c9.c_void_p(int(_w.element_info.handle)), _cb9, 0)
+                        except Exception:
+                            pass
+                        if _chart_title:
+                            break
                     if _chart_title:
-                        break
-                if _chart_title:
-                    print(f"   ✅ 圖表標題驗證: {_chart_title[:40]}")
-                else:
-                    print(f"   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）")
+                        print(f"   ✅ 圖表標題驗證: {_chart_title[:40]}")
+                    else:
+                        print(f"   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）")
+                except Exception:
+                    pass
+                try:
+                    _steps[0]['status'] = 'done'
+                    _steps[1]['status'] = 'doing'
+                    _update_steps(_steps)
+                except Exception:
+                    pass
             except Exception:
                 pass
-            try:
-                _steps[0]['status'] = 'done'
-                _steps[1]['status'] = 'doing'
-                _update_steps(_steps)
-            except Exception:
-                pass
-        except Exception:
-            pass
         # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
         # send 快捷鍵
         _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 唔好誤判成功）
@@ -1563,16 +1582,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
             print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
-        # 🚨 2026-08-12 FIX：附加完成 → step 3 done + step 4 doing → delay → 全部 done（確定出現）
-        try:
-            _steps[2]['status'] = 'done'
-            _steps[3]['status'] = 'doing'
-            _update_steps(_steps)
-            time.sleep(0.8)
-            _steps[3]['status'] = 'done'
-            _update_steps(_steps)
-        except Exception:
-            pass
+        # 🚨 2026-08-12 FIX：steps done 搬去函數最尾（所有操作完成後先寫 — 否則用戶見 steps done 撳確定 → active 仲 true → 即刻彈多一次）
         # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
         try:
             _sk('%r')
@@ -1642,6 +1652,24 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                     except Exception:
                         pass
                     return False
+        except Exception:
+            pass
+        # 🚨 2026-08-12 FIX：所有操作完成（圖表平鋪/市場報價/log 驗證）→ 最後先寫 steps 全部 done（確定出現 — active 即刻 false — 撳確定唔會再彈）
+        try:
+            _steps[2]['status'] = 'done'
+            _steps[3]['status'] = 'doing'
+            _update_steps(_steps)
+            time.sleep(0.8)
+            _steps[3]['status'] = 'done'
+            _update_steps(_steps)
+            # 🚨 即刻寫 ai_control.json active:false（唔等外層 release — 否則用戶撳確定時 active 仲 true → 即刻彈多一次）
+            try:
+                import json as _jst
+                _stf = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server', 'static', 'detector', 'ai_control.json'))
+                with open(_stf, 'w', encoding='utf-8') as _f:
+                    _jst.dump({'active': False, 'program': '', 'time': time.time()}, _f, ensure_ascii=False)
+            except Exception:
+                pass
         except Exception:
             pass
         return True
@@ -1793,11 +1821,11 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         else:
             success = attach_ea_navigator(ea_name, mt5_pid)
         if not success:
-            # 🚨 2026-08-10 部署穩定性：fallback 改「熱鍵重試 ×2」（Navigator 6093 免疫 — 註定失敗 — 唔好浪費時間）
-            print(f"⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2）...")
+            # 🚨 2026-08-12 FIX：重試時唔開新圖表（open_chart=False — 重用現有圖表 — 之前每次重試開新圖表 → 「開好多圖表」）
+            print(f"⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2，唔再開新圖表）...")
             for _rt2 in range(2):
                 check_abort()
-                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
+                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol, open_chart=False)
                 if success:
                     break
                 time.sleep(2)

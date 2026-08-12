@@ -867,9 +867,16 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
 
                 # F7 compile
                 send_keys('{F7}')
-                _t.sleep(8)
+                # 🚨 2026-08-12 FIX：編譯等待期間每 2 秒 check_abort（緊急停止即時中止 — 之前等 8 秒 block → 冇反應）
+                _compile_done = False
+                for _cc in range(8):  # 最多 16 秒（8 次 × 2 秒）
+                    check_abort()  # 🚨 緊急停止 → 即刻 raise
+                    _t.sleep(2)
+                    if os.path.exists(ex5_path):
+                        _compile_done = True
+                        break
 
-                if os.path.exists(ex5_path):
+                if _compile_done or os.path.exists(ex5_path):
                     return True
 
                 # 可能仲有「外部修改」dialog → 處理後再試

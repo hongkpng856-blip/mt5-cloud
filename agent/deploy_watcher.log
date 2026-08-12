@@ -387,3 +387,192 @@
    🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
    ✅ [注入器] Bollinger_Band.mq5 已注入控制層
 🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+
+===== [2026-08-12 17:38:45] watcher 啟動 =====
+
+========================================================
+  👀 MT5 Cloud Deploy Watcher
+========================================================
+  Server:      http://localhost:5001
+  Agent ID:    DEV00001
+  Watching:    C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\Common\Files/deploy_cmd_*.json
+  Auto-attach: C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py
+  Interval:    3s
+========================================================
+  Starting watcher...
+  ✓ AI 控制警告視窗已預先就緒（隱藏）
+  ✓ Navigator refresh worker 已啟動
+  ✓ Deploy worker 已啟動
+🔄 [WATCHER] deploy worker 已重生（死咗自動開返）
+
+📥 [WATCHER] New deploy command: deploy_cmd_MACD_Cross_1786527702.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_MACD_Cross_1786527702.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_MACD_Cross_1786527702.json
+🤖 AI 正在部署 MACD_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 M⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+] Deploying: MACD_Cross → EURUSD H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\pythonw.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea MACD_Cross --symbol EURUSD --tf H1 --magic 240701 --lot 1
+   Exit code: 0
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\MACD_Cross_EURUSD_H1.tpl (2406 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 用熱鍵 ^5 附加 MACD_Cross...
+   📋 已開新圖表（Down×0 — EURUSD）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ MACD_Cross 附加成功（心跳存在）
+   ✅ log 驗證: MACD_Cross 喺 EURUSD 啟動（正確圖表）
+   🟢 AutoTrading is already ON
+   ✅ EA log: PD	0	17:42:03.534	MACD_Cross (EURUSD,H1)	✅ MACD_Cross 已啟動！策略：MACD 交叉
+   ✅ MACD_Cross MT5 log 顯示已啟動（市場收市冇 tick — 心跳後備確認）
+   🎉 SUCCESS: MACD_Cross is running on EURUSD H1!
+   🎉 MACD_Cross 已成功 attach!
+📜 [WATCHER] activity log 已寫: MACD_Cross 部署完成（attach 成功）
+[deploy_notify] 控制結束
+   📡 Server report: ✅ MACD_Cross
+
+📥 [WATCHER] New deploy command: deploy_cmd_MACD_Cross_1786527985.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_MACD_Cross_1786527985.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_MACD_Cross_1786527985.json
+🤖 AI 正在部署 MACD_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: MACD_Cross → GBPUSD H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\pythonw.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea MACD_Cross --symbol GBPUSD --tf H1 --magic 240701 --lot 1
+   Exit code: 0
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\MACD_Cross_GBPUSD_H1.tpl (2406 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 用熱鍵 ^5 附加 MACD_Cross...
+   📋 已開新圖表（Down×1 — GBPUSD）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ MACD_Cross 附加成功（心跳存在）
+   ❌ log 驗證: MACD_Cross 冇喺 GBPUSD 啟動（可能開錯圖表 — 返回失敗）
+   ⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2）...
+   🎯 用熱鍵 ^5 附加 MACD_Cross...
+   📋 已開新圖表（Down×1 — GBPUSD）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ MACD_Cross 附加成功（心跳存在）
+   ❌ log 驗證: MACD_Cross 冇喺 GBPUSD 啟動（可能開錯圖表 — 返回失敗）
+   🎯 用熱鍵 ^5 附加 MACD_Cross...
+   📋 已開新圖表（Down×1 — GBPUSD）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ MACD_Cross 附加成功（心跳存在）
+   ✅ log 驗證: MACD_Cross 喺 GBPUSD 啟動（正確圖表）
+   🟢 AutoTrading is already ON
+   ✅ EA log: NK	0	17:47:10.840	MACD_Cross (GBPUSD,H1)	✅ MACD_Cross 已啟動！策略：MACD 交叉
+   ✅ MACD_Cross MT5 log 顯示已啟動（市場收市冇 tick — 心跳後備確認）
+   🎉 SUCCESS: MACD_Cross is running on GBPUSD H1!
+   🎉 MACD_Cross 已成功 attach!
+📜 [WATCHER] activity log 已寫: MACD_Cross 部署完成（attach 成功）
+[deploy_notify] 控制結束
+   📡 Server report: ✅ MACD_Cross
+
+===== [2026-08-12 17:48:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:49:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:50:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:51:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:52:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:53:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:54:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:55:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:56:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:57:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:58:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 17:59:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 18:00:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 18:01:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 18:02:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 3880) — 退出（單實例守衛）
+
+===== [2026-08-12 18:03:46] watcher 啟動 =====
+
+========================================================
+  👀 MT5 Cloud Deploy Watcher
+========================================================
+  Server:      http://localhost:5001
+  Agent ID:    DEV00001
+  Watching:    C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\Common\Files/deploy_cmd_*.json
+  Auto-attach: C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py
+  Interval:    3s
+========================================================
+  Starting watcher...
+  ✓ AI 控制警告視窗已預先就緒（隱藏）
+  ✓ Navigator refresh worker 已啟動
+  ✓ Deploy worker 已啟動
+🔄 [WATCHER] deploy worker 已重生（死咗自動開返）
+
+📥 [WATCHER] New deploy command: deploy_cmd_Breakout_1786529431.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Breakout_1786529431.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Breakout_1786529431.json
+🤖 AI 正在部署 Breakout 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Breakout → EURUSD H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\pythonw.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Breakout --symbol EURUSD --tf H1 --magic 240701 --lot 1
+   Exit code: 0
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Breakout_EURUSD_H1.tpl (2398 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 用熱鍵 ^4 附加 Breakout...
+   📋 已開新圖表（Down×0 — EURUSD）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ Breakout 附加成功（心跳存在）
+   ✅ log 驗證: Breakout 喺 EURUSD 啟動（正確圖表）
+   🟢 AutoTrading is already ON
+   ✅ EA log: LK	0	18:10:52.596	Breakout (EURUSD,H1)	✅ Breakout 已啟動！策略：區間突破
+   ✅ Breakout MT5 log 顯示已啟動（市場收市冇 tick — 心跳後備確認）
+   🎉 SUCCESS: Breakout is running on EURUSD H1!
+   🎉 Breakout 已成功 attach!
+📜 [WATCHER] activity log 已寫: Breakout 部署完成（attach 成功）
+[deploy_notify] 控制結束
+   📡 Server report: ✅ Breakout
+
+===== [2026-08-12 18:11:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 14368) — 退出（單實例守衛）
+
+===== [2026-08-12 18:12:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 14368) — 退出（單實例守衛）
+
+===== [2026-08-12 18:13:46] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 14368) — 退出（單實例守衛）
