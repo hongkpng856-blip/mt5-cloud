@@ -27268,3 +27268,22 @@
 {"time": 1786520790.6150682, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786520802.2441118, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
 {"time": 1786520835.8577845, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786520866.6792545, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786520873.6758318, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786520897.4636316, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786520928.2700868, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786520959.0577366, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786520989.8274941, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521020.6052423, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521051.39581, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521082.190031, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521090.3533375, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786521090.5096378, "action": "deploy", "ea": "Bollinger_Band", "message": "Bollinger_Band 部署 → EURUSD H1", "source": "server"}
+{"time": 1786521114.6822863, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521145.4761534, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521162.7503192, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786521176.3166459, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521207.1592138, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521233.01616, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786521237.9429364, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786521268.7505627, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

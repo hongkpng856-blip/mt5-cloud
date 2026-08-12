@@ -1193,8 +1193,8 @@ def _update_steps(steps):
                     old = []
         except Exception:
             old = []
-        # 合併：舊步驟保留（同名更新 status）— 新步驟加落去（累積）
-        merged = list(old)
+        # 🚨 2026-08-12 FIX：移除 placeholder「等待操作開始…」（_clear_steps 寫嘅）— 有新步驟就唔好殘留
+        merged = [s for s in old if isinstance(s, dict) and s.get('text') != '等待操作開始…']
         for ns in steps:
             found = False
             for i, os_ in enumerate(merged):

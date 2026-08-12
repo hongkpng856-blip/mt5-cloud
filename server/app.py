@@ -1396,7 +1396,8 @@ def api_ea_install_local(filename):
                         {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
                         {'text': '配對失敗（compile 失敗）', 'status': 'done'},
                     ], _f, ensure_ascii=False)
-                os.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
+                # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
+                os.replace(_sf_in + '.tmp', _sf_in)
             # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
             _sf_show = os.path.join(_adir_in2, '.ai_control.show')
             if os.path.exists(_sf_show):
@@ -1590,18 +1591,35 @@ def _restart_mt5():
     try:
         import subprocess as _sp
         import json as _j
-        # 警告視窗（電腦版 — 寫 flag）
+        # 警告視窗（電腦版 — 寫 flag）— 🚨 2026-08-12 FIX：累積模式（唔覆蓋現有 steps — 部署前重啟 MT5 唔會洗走部署流程）+ 完成後唔刪 steps（spec：steps 永不刪除）
         try:
             _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             with open(os.path.join(_ad, '.ai_control.show'), 'w', encoding='utf-8') as _f:
                 _f.write('🔄 重啟 MT5 中（載入熱鍵）— 請稍候約 1 分鐘')
-            with open(os.path.join(_ad, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
-                _j.dump([{"text": "關閉 MT5", "status": "doing"},
-                         {"text": "載入熱鍵設定", "status": "pending"},
-                         {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
-            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
-            os.replace(os.path.join(_ad, '.ai_control.steps') + '.tmp',
-                       os.path.join(_ad, '.ai_control.steps'))
+            _sf_rt = os.path.join(_ad, '.ai_control.steps')
+            _cur_rt = []
+            try:
+                if os.path.isfile(_sf_rt):
+                    _cur_rt = _j.load(open(_sf_rt, 'r', encoding='utf-8'))
+                    if not isinstance(_cur_rt, list):
+                        _cur_rt = []
+            except Exception:
+                _cur_rt = []
+            _cur_rt = [s for s in _cur_rt if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+            # append 重啟 MT5 3 步（同名更新）
+            for _rstep in [{"text": "關閉 MT5", "status": "doing"},
+                           {"text": "載入熱鍵設定", "status": "pending"},
+                           {"text": "重新啟動 MT5", "status": "pending"}]:
+                _found = False
+                for _s in _cur_rt:
+                    if _s.get('text') == _rstep['text']:
+                        _s['status'] = _rstep['status']
+                        _found = True
+                        break
+                if not _found:
+                    _cur_rt.append(_rstep)
+            with open(_sf_rt, 'w', encoding='utf-8') as _f2:
+                _j.dump(_cur_rt, _f2, ensure_ascii=False)
         except Exception:
             pass
         _sp.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
@@ -1609,13 +1627,24 @@ def _restart_mt5():
         mt5_exe = os.environ.get('MT5_EXE_PATH', r'C:\Program Files\MetaTrader 5\terminal64.exe')
         _sp.Popen([mt5_exe])
         time.sleep(55)
-        # 完成 → 清警告
+        # 🚨 2026-08-12 FIX：完成 → 唔刪除 steps（spec：steps 永不刪除 — 刪除 → 網頁空白/彈）— 只更新 3 步全部 done
         try:
             _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-            for _fn in ('.ai_control.show', '.ai_control.steps'):
-                _fp = os.path.join(_ad, _fn)
-                if os.path.exists(_fp):
-                    os.remove(_fp)
+            _sf_rt2 = os.path.join(_ad, '.ai_control.steps')
+            _cur_rt2 = []
+            try:
+                if os.path.isfile(_sf_rt2):
+                    _cur_rt2 = _j.load(open(_sf_rt2, 'r', encoding='utf-8'))
+                    if not isinstance(_cur_rt2, list):
+                        _cur_rt2 = []
+            except Exception:
+                _cur_rt2 = []
+            for _s in _cur_rt2:
+                if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5'):
+                    _s['status'] = 'done'
+            if _cur_rt2:
+                with open(_sf_rt2, 'w', encoding='utf-8') as _f:
+                    _j.dump(_cur_rt2, _f, ensure_ascii=False)
         except Exception:
             pass
         print("[hotkeys] MT5 已重啟（reload 熱鍵）")
