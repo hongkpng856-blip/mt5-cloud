@@ -27912,3 +27912,16 @@
 {"time": 1786535593.917129, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786535604.7786422, "action": "unknown", "ea": "Grid_Trading", "message": "Grid_Trading 部署失敗（attach 失敗）", "source": "watcher"}
 {"time": 1786535624.6337373, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535655.3869696, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535686.0827959, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535716.831196, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535738.3359702, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786535738.4608276, "action": "deploy", "ea": "Bollinger_Band", "message": "Bollinger_Band 部署 → EURUSD H1", "source": "server"}
+{"time": 1786535747.5390377, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535778.2848873, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535797.1580229, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786535809.0021236, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535831.5780504, "action": "deploy", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 部署 → EURUSD H1", "source": "server"}
+{"time": 1786535839.7365975, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786535883.1242862, "action": "unknown", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786535883.9547822, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

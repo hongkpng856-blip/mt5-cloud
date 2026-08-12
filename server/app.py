@@ -2090,6 +2090,24 @@ def api_deploy():
     except Exception:
         pass
 
+    # 🚨 2026-08-12 FIX：即刻寫 SHOW_FLAG + steps（部署 XXX doing）— 唔好等 auto_attach（watcher poll 3 秒 + 啟動）
+    # （否則視窗顯示舊任務殘留 steps → 1 秒後先變新 — 用戶投訴「一開始顯示舊步驟」）
+    try:
+        import json as _jdp
+        _adir_dp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+        os.makedirs(_adir_dp, exist_ok=True)
+        with open(os.path.join(_adir_dp, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+            _f.write(f'部署 {ea_name}')
+        with open(os.path.join(_adir_dp, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+            _jdp.dump([
+                {'text': f'部署 {ea_name}（{symbol.upper()}）', 'status': 'doing'},
+                {'text': f'開新圖表（{symbol.upper()}）', 'status': 'pending'},
+                {'text': f'附加 {ea_name}', 'status': 'pending'},
+                {'text': '驗證心跳/MT5 log', 'status': 'pending'},
+            ], _f, ensure_ascii=False)
+    except Exception:
+        pass
+
     # Write deploy command file (watcher will pick it up)
     import time as _wt
     common_files = os.path.join(os.environ.get('APPDATA', ''),
