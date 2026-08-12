@@ -1029,7 +1029,8 @@ def process_pause_cmd(fp):
                 pass
             time.sleep(0.8)  # 每步停留（網頁 poll 捕到「進行中」）
 
-        _prog_steps([f'開始剷除 {ea_name}'], '檢查圖表（有冇 EA 運行）')
+        # 🚨 2026-08-12 FIX：步驟順序反映實際動作 — auto_attach --remove（移除圖表）期間顯示「移除圖表 EA 進行中」（唔係「檢查圖表」）
+        _prog_steps([f'開始剷除 {ea_name}'], '移除圖表 EA')
         try:
             result = subprocess.run(
                 [sys.executable, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
@@ -1043,8 +1044,8 @@ def process_pause_cmd(fp):
                     print(f"   {ls}")
         except subprocess.TimeoutExpired:
             print(f"   ⚠️ 暫停 {ea_name} timeout")
-        # 🚨 2026-08-12：逐步（auto_attach 完成 → 檢查/移除 done → 刪檔 doing → …）
-        _prog_steps(['檢查圖表（有冇 EA 運行）', '移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
+        # 🚨 2026-08-12：逐步（auto_attach 完成 → 移除 done → 刪檔 doing → …）
+        _prog_steps(['移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
         _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理配對設定 + 釋放熱鍵')
         _prog_steps(['清理配對設定 + 釋放熱鍵'], '完成剷除')
         _prog_steps(['完成剷除'])

@@ -100,7 +100,12 @@ def build_window(root):
     root._done_btn = tk.Button(root._btn_frame, text='確定', font=('Microsoft JhengHei', 12, 'bold'),
                                fg='#fff', bg='#34d399', activebackground='#10b981', activeforeground='#fff',
                                relief='flat', bd=0, cursor='hand2', width=10, pady=6)
-    root._done_btn.configure(command=lambda: root.withdraw())
+    # 🚨 2026-08-12 FIX：確定撳咗 → withdraw + reset shown（否則下次 flag 寫 → if not shown False → 唔 deiconify → 視窗永遠隱藏 →「冇出現警告視窗」）
+    def _done_close():
+        global shown
+        root.withdraw()
+        shown = False
+    root._done_btn.configure(command=_done_close)
 
     # 初始隱藏（等 flag）
     root.withdraw()
@@ -109,6 +114,7 @@ def build_window(root):
 
 def emergency_stop(root):
     """緊急停止 — 寫 flag（watcher/auto_attach 會 check）+ 隱藏視窗"""
+    global shown
     try:
         with open(os.path.join(AGENT_DIR, '.ai_control.abort'), 'w', encoding='utf-8') as f:
             f.write('1')
@@ -116,6 +122,7 @@ def emergency_stop(root):
     except Exception:
         pass
     root.withdraw()
+    shown = False  # 🚨 2026-08-12 FIX：reset shown（下次 flag 可以再顯示）
 
 
 def read_steps():
@@ -231,12 +238,29 @@ def main():
                         else:
                             root._status_label.config(text='已完成', fg='#34d399')
             else:
-                # flag 冇 — 視窗唔自動關（用戶撳確定先關）— 保持現狀
-                if shown and _all_done_shown:
-                    pass  # 保持（確定顯示 — 等用戶撳）
+                # flag 冇 — 視窗唔自動關（用戶撳確定先關）— 🚨 2026-08-12 FIX：都要 render（steps 完成後顯示「已完成」+ 確定 — 唔停留舊內容）
+                if shown:
+                    render_steps(root, steps)
+                    if all_done and not _all_done_shown:
+                        _all_done_shown = True
+                        root._stop_btn.pack_forget()
+                        root._done_btn.pack(fill='x')
+                        if has_fail:
+                            root._status_label.config(text='已完成（有失敗步驟）', fg='#f87171')
+                        else:
+                            root._status_label.config(text='已完成', fg='#34d399')
         except tk.TclError:
             break
-        except Exception:
+        except Exception as _e:
+            # 🚨 2026-08-12 FIX：唔好食晒 exception — 記錄（診斷「可視化步驟停咗」）
+            try:
+                import traceback as _tb2
+                print(f'[alert_worker] loop error: {_e}', flush=True)
+                with open(os.path.join(AGENT_DIR, 'alert_worker.log'), 'a', encoding='utf-8') as _f:
+                    _f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {_e}\n{_tb2.format_exc()}\n")
+            except Exception:
+                pass
+            time.sleep(0.5)
             continue
 
 

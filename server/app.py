@@ -1119,6 +1119,12 @@ def api_ea_remove_local(filename):
             # 🚨 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → 檔案消失 → 網頁閃）
     except Exception as e_del:
         print(f"[DEBUG] remove-local steps write failed: {e_del}")
+    # 🚨 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + 用戶見到「開始剷除進行中」先開始刪除 — 步驟唔會瞬間完成）
+    try:
+        import time as _tdel
+        _tdel.sleep(1.5)
+    except Exception:
+        pass
     # 安全檢查：檔名只可以係字母數字底線（防 path traversal）
     # 🚨 2026-08-08：接受帶 .mq5/.ex5 副檔名（前端可能傳帶副檔名嘅名）
     import re as _re
@@ -1225,6 +1231,13 @@ def api_ea_install_local(filename):
     except Exception as _ein_err:
         print(f"[DEBUG] install-local steps write failed: {_ein_err}", flush=True)
 
+    # 🚨 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + 用戶見到「開始配對進行中」先開始複製 — 步驟唔會瞬間完成）
+    try:
+        import time as _td
+        _td.sleep(1.5)
+    except Exception:
+        pass
+
     # 1. 搵檔案喺邊個目錄（社群 → 用戶 → 官方）
     # ⚠️ filename 可能冇副檔名（前端傳 baseName）→ 自動試 .mq5 / .ex5
     src_path = None
@@ -1276,6 +1289,12 @@ def api_ea_install_local(filename):
                 import json as _jc3
                 _adir_ic = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
                 _sf_ic = os.path.join(_adir_ic, '.ai_control.steps')
+                # 🚨 2026-08-12 FIX：複製完成前停留 1 秒（「複製進行中」顯示耐啲 — 用戶睇到工作過程 — 唔會瞬間完成）
+                try:
+                    import time as _td2
+                    _td2.sleep(1)
+                except Exception:
+                    pass
                 _cur_ic = []
                 try:
                     if os.path.isfile(_sf_ic):
@@ -1287,6 +1306,18 @@ def api_ea_install_local(filename):
                 for _s in _cur_ic:
                     if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案到本機（MT5Cloud_EA）'):
                         _s['status'] = 'done'
+                # 🚨 2026-08-12 FIX：如果唔使編譯（.ex5 已存在且新過 .mq5）→ 即刻完成「編譯」+「完成配對」（唔停留 pending — 「兩步就停」根治）
+                try:
+                    _ex5_ic = os.path.join(ea_folder, os.path.splitext(dest_name)[0] + '.ex5')
+                    _mq5_ic = target
+                    _need_compile = dest_name.lower().endswith('.mq5') and (
+                        not os.path.exists(_ex5_ic) or os.path.getmtime(_ex5_ic) < os.path.getmtime(_mq5_ic))
+                    if not _need_compile:
+                        for _s2 in _cur_ic:
+                            if isinstance(_s2, dict) and _s2.get('text') in (f'編譯 {os.path.splitext(dest_name)[0]}.mq5 → .ex5', '完成配對'):
+                                _s2['status'] = 'done'
+                except Exception:
+                    pass
                 with open(_sf_ic, 'w', encoding='utf-8') as _f:
                     _jc3.dump(_cur_ic, _f, ensure_ascii=False)
             except Exception:
