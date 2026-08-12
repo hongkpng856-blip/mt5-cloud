@@ -3,7 +3,7 @@
 # 獨立 process（讀 .ai_control.show / .ai_control.steps flag）
 # 設計原則：
 #   1. 穩定 — 固定大小、唔自動關、唔抽搐、唔殘留
-#   2. 清晰 — 標題「遙距控制」+ 操作名 + 步驟（累積）
+#   2. 清晰 — 標題「遠端控制」+ 操作名 + 步驟（累積）
 #   3. 成功/失敗一目了然（綠/紅 + 文字）
 #   4. 按鈕二選一：操作期間緊急停止 / 完成後確定（撳先關）
 # ============================================================
@@ -36,17 +36,18 @@ _last_sig = None
 
 
 def build_window(root):
-    """建立警告視窗（右下角固定位置 — 唔遮 MT5 操作區）"""
-    root.title('AI 控制中')
+    """建立警告視窗（右下角固定位置 — 唔遮 MT5 操作區）
+    2026-08-12 UI 專業化：統一間距（16px 網格）+ 自訂警告 icon（唔用 default tkinter）"""
+    root.title('AI 遠端控制')
     root.attributes('-topmost', True)
-    # 固定大小（唔自動 resize — 唔抽搐）
-    W, H = 360, 400
+    # 固定大小（專業 UI — 步驟區夠空間；2026-08-12：410 — 用戶「唔好留咁多空白」）
+    W, H = 380, 410
     try:
         sw = root.winfo_screenwidth()
         sh = root.winfo_screenheight()
-        root.geometry(f'{W}x{H}+{sw - W - 20}+{sh - H - 80}')
+        root.geometry(f'{W}x{H}+{sw - W - 24}+{sh - H - 96}')
     except Exception:
-        root.geometry(f'{W}x{H}+1200+580')
+        root.geometry(f'{W}x{H}+1200+560')
     root.resizable(False, False)
     # 🚨 2026-08-11：鎖死最小+最大（內容驅動自動 resize 根治 — 用戶話視窗大細抖動仲有）
     root.minsize(W, H)
@@ -56,45 +57,57 @@ def build_window(root):
     # 背景
     root.configure(bg='#1e1e2e')
 
-    # 自訂 icon（emerald — 唔用 default tkinter 羽毛）
+    # 自訂 icon（⚠️ 2026-08-12 專業化：綠色圓形 + 白色「!」警告符號 — 唔用 default tkinter 羽毛 / 像素圖案）
     try:
-        img = tk.PhotoImage(width=32, height=32)
-        for y in range(32):
-            for x in range(32):
-                img.put('#34d399' if (x + y) % 3 != 0 else '#1e1e2e', (x, y))
-        root.iconphoto(True, img)
+        from PIL import Image, ImageDraw, ImageTk
+        _img = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
+        _d = ImageDraw.Draw(_img)
+        _d.ellipse((4, 4, 60, 60), fill='#34d399')
+        _d.polygon([(32, 14), (50, 46), (14, 46)], fill='#1e1e2e')
+        _d.rectangle((29, 26, 35, 38), fill='#34d399')
+        _d.rectangle((29, 42, 35, 46), fill='#34d399')
+        root.iconphoto(True, ImageTk.PhotoImage(_img))
+        root._icon_ref = _img  # 保持 reference（防 GC）
     except Exception:
-        pass
+        # fallback：無 PIL — 用 tk 畫簡潔 icon
+        try:
+            img = tk.PhotoImage(width=32, height=32)
+            for y in range(32):
+                for x in range(32):
+                    img.put('#34d399' if (x + y) % 3 != 0 else '#1e1e2e', (x, y))
+            root.iconphoto(True, img)
+        except Exception:
+            pass
 
-    # 頂部色條
+    # 頂部色條（強調色）
     bar = tk.Frame(root, bg='#34d399', height=4)
     bar.pack(fill='x')
 
-    # 標題行
+    # 標題行（統一間距 16px）
     head = tk.Frame(root, bg='#1e1e2e')
-    head.pack(fill='x', padx=14, pady=(10, 2))
-    tk.Label(head, text='🤖', font=('Segoe UI Emoji', 20), bg='#1e1e2e').pack(side='left')
-    tk.Label(head, text='遙距控制', font=('Microsoft JhengHei', 15, 'bold'), fg='#e2e8f0', bg='#1e1e2e').pack(side='left', padx=8)
+    head.pack(fill='x', padx=16, pady=(12, 4))
+    tk.Label(head, text='⛨', font=('Segoe UI Symbol', 18), fg='#34d399', bg='#1e1e2e').pack(side='left')
+    tk.Label(head, text='遠端控制', font=('Microsoft JhengHei', 15, 'bold'), fg='#e2e8f0', bg='#1e1e2e').pack(side='left', padx=8)
 
-    # 操作名（併入步驟第一條 — 呢度顯示「狀態」）
-    root._status_label = tk.Label(root, text='處理中…', font=('Microsoft JhengHei', 13, 'bold'), fg='#fbbf24', bg='#1e1e2e', anchor='w')
-    root._status_label.pack(fill='x', padx=14, pady=(2, 2))
+    # 狀態 label（統一間距）
+    root._status_label = tk.Label(root, text='執行中…', font=('Microsoft JhengHei', 13, 'bold'), fg='#fbbf24', bg='#1e1e2e', anchor='w')
+    root._status_label.pack(fill='x', padx=16, pady=(4, 4))
 
     # 分隔線
-    tk.Frame(root, bg='#2d2d44', height=1).pack(fill='x', padx=10, pady=4)
+    tk.Frame(root, bg='#2d2d44', height=1).pack(fill='x', padx=12, pady=6)
 
-    # 步驟列表
+    # 步驟列表（統一間距 16px）
     root._steps_frame = tk.Frame(root, bg='#1e1e2e')
-    root._steps_frame.pack(fill='both', expand=True, padx=14, pady=4)
+    root._steps_frame.pack(fill='both', expand=True, padx=16, pady=6)
 
     # 按鈕區（固定底部 — 唔亂跳）
     root._btn_frame = tk.Frame(root, bg='#1e1e2e')
-    root._btn_frame.pack(fill='x', padx=14, pady=(2, 12))
+    root._btn_frame.pack(fill='x', padx=16, pady=(4, 14))
 
     # 緊急停止（操作期間顯示）
     root._stop_btn = tk.Button(root._btn_frame, text='緊急停止', font=('Microsoft JhengHei', 12, 'bold'),
                                fg='#fff', bg='#ef4444', activebackground='#dc2626', activeforeground='#fff',
-                               relief='flat', bd=0, cursor='hand2', width=10, pady=6)
+                               relief='flat', bd=0, cursor='hand2', width=10, pady=8)
     root._stop_btn.configure(command=lambda: emergency_stop(root))
     # 確定（完成後顯示 — 撳先關）
     root._done_btn = tk.Button(root._btn_frame, text='確定', font=('Microsoft JhengHei', 12, 'bold'),
@@ -190,11 +203,12 @@ def main():
             root.update_idletasks()
             root.update()
             # 🚨 2026-08-11 修：只喺「偏離」先修正（唔係每 round set — 之前每 round set 觸發 re-layout 抖動；唔 set 又會內容少時縮細）
+            # 2026-08-12 UI 專業化：新尺寸 380×410
             try:
                 _w = root.winfo_width()
                 _h = root.winfo_height()
-                if _h < 400 or _w < 360:
-                    root.geometry(f'360x400+{root.winfo_screenwidth() - 360 - 20}+{root.winfo_screenheight() - 400 - 80}')
+                if _h < 410 or _w < 380:
+                    root.geometry(f'380x410+{root.winfo_screenwidth() - 380 - 24}+{root.winfo_screenheight() - 410 - 96}')
             except Exception:
                 pass
             time.sleep(0.4)

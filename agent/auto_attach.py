@@ -68,7 +68,7 @@ def do_restart_mt5():
     try:
         _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
         with open(_rf, 'w', encoding='utf-8') as _f:
-            _f.write('🔄 重啟 MT5 中（熱鍵載入）— 請稍候約 1 分鐘')
+            _f.write('🔄 重啟 MT5 中（快捷鍵載入）— 請稍候約 1 分鐘')
         _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
         try:
             import json as _j2
@@ -84,9 +84,9 @@ def do_restart_mt5():
             _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != '等待操作開始…']
             # 🚨 2026-08-12 FIX：重啟 3 步放最前（之前 append 尾 → 步驟順序「部署 4 步 + 重啟 3 步」亂 — 重啟應該喺部署前）
             _RESTART3 = [{"text": "關閉 MT5", "status": "doing"},
-                         {"text": "載入熱鍵設定", "status": "pending"},
+                         {"text": "載入快捷鍵設定", "status": "pending"},
                          {"text": "重新啟動 MT5", "status": "pending"}]
-            _cur_rst = [s for s in _cur_rst if s.get('text') not in ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5')]
+            _cur_rst = [s for s in _cur_rst if s.get('text') not in ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5')]
             _cur_rst = _RESTART3 + _cur_rst
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _j2.dump(_cur_rst, _f2, ensure_ascii=False)
@@ -98,7 +98,7 @@ def do_restart_mt5():
     import ctypes as _ct
     
     # 🚨 2026-08-08：先關閉全部圖表（MT5 關機記住圖表 → 開機 restore — 圖表會累積）
-    # 關閉圖表先 → MT5 開機乾淨（冇 restore）→ 部署開新圖表唔會累積
+    # 關閉圖表先 → MT5 開機乾淨（冇 restore）→ 部署建立新圖表唔會累積
     try:
         import subprocess as _sp
         _out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
@@ -155,7 +155,7 @@ def do_restart_mt5():
                 except Exception:
                     _cur_rst2 = []
                 for _s in _cur_rst2:
-                    if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5'):
+                    if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5'):
                         _s['status'] = 'done'
                 if _cur_rst2:
                     with open(_sf, 'w', encoding='utf-8') as _f3:
@@ -965,7 +965,7 @@ def pin_window(hwnd, x, y, w, h):
 # 唔係 MT5 就跳過（唔會撳到 TG Scheduler / 記事本 / 其他視窗）
 
 def pin_deskin_away():
-    """將 DeskIn（遙距控制視窗）移去右上角 — 唔遮 MT5 圖表/Navigator 操作區域
+    """將 DeskIn（遠端控制視窗）移去右上角 — 唔遮 MT5 圖表/Navigator 操作區域
     ⚠️ 2026-08 實測：DeskIn 視窗遮住圖表 (560,222)-(1360,817) → 所有 click 俾佢食咗！
     操作前 call（DeskIn 存在就移走）— 大眾化：用螢幕實際解析度計位置（唔 hardcode 1400）"""
     import ctypes
@@ -1168,7 +1168,7 @@ def ensure_navigator_unified(mt5_pid):
 
 
 def load_hotkey_map():
-    """讀熱鍵 mapping（EA 名 → pywinauto 快捷鍵格式）— 讀 MT5 hotkeys.ini（權威來源）
+    """讀快捷鍵 mapping（EA 名 → pywinauto 快捷鍵格式）— 讀 MT5 hotkeys.ini（權威來源）
     hotkeys.ini: [experts] "Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+1"
     Ctrl+1 → ^1, Ctrl+Alt+1 → ^!1"""
     import json as _json
@@ -1263,8 +1263,8 @@ def _clear_steps():
         pass
 
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
-    """🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
-    每隻 EA 喺「導航熱鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
+    """🎯 快捷鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
+    每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
     唔使 double-click Navigator（6093 對 double-click 唔 work）"""
     try:
         import ctypes as _ct
@@ -1278,9 +1278,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         hotkeys = load_hotkey_map()
         combo = hotkeys.get(ea_name)
         if not combo:
-            print(f"⚠️ {ea_name} 未有熱鍵設定（agent/hotkeys.json）")
+            print(f"⚠️ {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
             return False
-        print(f"🎯 用熱鍵 {combo} 附加 {ea_name}...")
+        print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
         # 🚨 2026-08-12 FIX：部署前檢查有冇 pending compile_cmd（配對後未編譯 — 等編譯完成先部署 — 唔會「部署完又彈編譯視窗」）
         try:
@@ -1305,9 +1305,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         # 🚨 2026-08-12 FIX3：保留「重啟 MT5」3 步（部署前 ensure_hotkey 重啟寫嘅 — 唔好洗走 — 完整流程）
         _steps = [
             {"text": f"部署 {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
-            {"text": f"開新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
-            {"text": f"附加 {ea_name}（熱鍵 {combo}）", "status": "pending"},
-            {"text": "驗證心跳/MT5 log", "status": "pending"},
+            {"text": f"建立新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
+            {"text": f"附加 {ea_name}（快捷鍵 {combo}）", "status": "pending"},
+            {"text": "驗證運行狀態", "status": "pending"},
         ]
         try:
             import json as _jdep
@@ -1321,7 +1321,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             except Exception:
                 _prev_dep = []
             # 保留「重啟 MT5」3 步（已完成嘅留低 — 部署流程一部分）+ 過濾舊任務/等待
-            _RESTART_TEXTS = ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5')
+            _RESTART_TEXTS = ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5')
             _kept = [s for s in _prev_dep if isinstance(s, dict) and s.get('text') in _RESTART_TEXTS]
             with open(_sf_dep, 'w', encoding='utf-8') as _fdep:
                 _jdep.dump(_kept + _steps, _fdep, ensure_ascii=False)
@@ -1369,7 +1369,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             time.sleep(1)
         except Exception:
             pass
-        # 🆕 開新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
+        # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
         # ✅ 正確方法（用戶發現）：Alt+F → Enter → 新圖表 dialog → Down×N 揀 symbol → Enter
         # ⚠️ Ctrl+N 係「導航開關」唔係開圖表！symbol 位置（用戶提供）：
         #    1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
@@ -1383,7 +1383,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 time.sleep(1.5)
                 # 🚨 2026-08-10 根治（v3）：打字揀 symbol（取代 Down×N — 位置唔可靠/active 問題）
                 # 方法二實測成功：Ctrl+A 全選 → 打字 symbol → Enter（揀中）→ Enter（開圖表）
-                # → 圖表一定係目標 symbol → 開完自動 active → 熱鍵附加正確
+                # → 圖表一定係目標 symbol → 開完自動 active → 快捷鍵附加正確
                 # 🚨 2026-08-10 用戶要求：用返 Down×N（打字完全唔準確 — 每次開 AMD 圖表 — Down×N 位置固定 10/10 實測）
                 _sym = (symbol or 'EURUSD').upper()
                 _down_n = _SYM_DOWN.get(_sym, 0)
@@ -1392,7 +1392,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     time.sleep(1.5)
                 _sk('{ENTER}')
                 time.sleep(3)
-                print(f"📋 已開新圖表（Down×{_down_n} — {_sym}）")
+                print(f"📋 已建立新圖表（Down×{_down_n} — {_sym}）")
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
@@ -1435,7 +1435,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 pass
         # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
         # send 快捷鍵
-        _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 唔好誤判成功）
+        _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
         _sk(combo)
         time.sleep(3)
         def _bm_click(_btn):
@@ -1491,7 +1491,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                 except Exception:
                                     pass
                         elif any(_k in _t for _k in (ea_name, '1.00', '2.00', '3.00', '.ex5')):
-                            _saw_props = True  # 🚨 Properties 彈出過（熱鍵有效）
+                            _saw_props = True  # 🚨 Properties 彈出過（快捷鍵有效）
                             _dw = _app.window(handle=_h)
                             for _b in _dw.children(class_name='Button'):
                                 try:
@@ -1532,9 +1532,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
                 break
 
-        # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 重試熱鍵 ×2）
+        # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
         if not _saw_props:
-            print(f"⚠️ 熱鍵 {combo} 冇彈出 Properties（重試中）...")
+            print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試中）...")
             for _rt in range(2):
                 _chk_abort()
                 _sk(combo)
@@ -1568,14 +1568,14 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     break
                 time.sleep(2)
             if not _saw_props:
-                print(f"❌ 熱鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（熱鍵可能未 load）")
+                print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
         if os.path.isfile(hb):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
-            print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
+            print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
         # 🚨 2026-08-12 FIX：steps done 搬去函數最尾（所有操作完成後先寫 — 否則用戶見 steps done 撳確定 → active 仲 true → 即刻彈多一次）
         # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
         try:
@@ -1690,7 +1690,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             pass
         return True
     except Exception as e:
-        print(f"⚠️ 熱鍵附加失敗: {e}")
+        print(f"⚠️ 快捷鍵附加失敗: {e}")
         return False
 
 
@@ -1829,16 +1829,16 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # 2026-08 還原：今日下午加 pin_deskin_away 之後 crash — 暫時唔用（穩定版冇呢個）
         check_abort()
         
-        # Step 3: Attach EA（🎯 熱鍵優先 — 2026-08：6093 double-click 唔 work）
-        # 有熱鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
+        # Step 3: Attach EA（🎯 快捷鍵優先 — 2026-08：6093 double-click 唔 work）
+        # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
         hotkeys = load_hotkey_map()
         if ea_name in hotkeys:
             success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         else:
             success = attach_ea_navigator(ea_name, mt5_pid)
         if not success:
-            # 🚨 2026-08-12 FIX：重試時唔開新圖表（open_chart=False — 重用現有圖表 — 之前每次重試開新圖表 → 「開好多圖表」）
-            print(f"⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2，唔再開新圖表）...")
+            # 🚨 2026-08-12 FIX：重試時唔建立新圖表（open_chart=False — 重用現有圖表 — 之前每次重試建立新圖表 → 「開好多圖表」）
+            print(f"⚠️ 快捷鍵方法失敗 — 自動重試快捷鍵（×2，唔再建立新圖表）...")
             for _rt2 in range(2):
                 check_abort()
                 success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol, open_chart=False)
@@ -1846,7 +1846,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                     break
                 time.sleep(2)
         if not success:
-            print("⚠️ 熱鍵重試後都失敗（不再試 Navigator — 6093 免疫）")
+            print("⚠️ 快捷鍵重試後都失敗（不再試 Navigator — 6093 免疫）")
         
         if not success:
             print("❌ Failed to attach EA")

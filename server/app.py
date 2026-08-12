@@ -118,7 +118,7 @@ def api_activity():
     entries.reverse()  # 最新喺最前
     if not include_db:
         entries = [e for e in entries if e.get('action') != 'db_update']
-    return jsonify({'activities': entries})  # 全部顯示 — log 唔會剷除
+    return jsonify({'activities': entries})  # 全部顯示 — log 唔會刪除
 import os
 _async_mode = 'eventlet' if os.environ.get('RENDER', '') else 'threading'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=_async_mode, logger=False, engineio_logger=False)
@@ -273,7 +273,7 @@ def logout():
 @login_required
 def api_ea_config():
     if request.method == 'GET':
-        # 🚨 2026-08-11：直接 SQL 讀 DB（SQLAlchemy session 有隔離問題 — current_user.ea_config 返回舊值含已剷除 EA）
+        # 🚨 2026-08-11：直接 SQL 讀 DB（SQLAlchemy session 有隔離問題 — current_user.ea_config 返回舊值含已刪除 EA）
         try:
             import sqlite3 as _sq2
             _dbp2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'server', 'instance', 'mt5cloud.db')
@@ -333,11 +333,11 @@ def api_ea_config():
 @login_required
 def api_ea_config_delete(ea_name):
     """刪除一個 EA 嘅配對
-    ⚠️ 用戶要求（2026-08）：剷除配對庫 EA = 連埋 MT5 圖表嘅 EA 一齊移除
+    ⚠️ 用戶要求（2026-08）：刪除配對庫 EA = 連埋 MT5 圖表嘅 EA 一齊移除
     → 寫 pause_cmd 俾 watcher（auto_attach --remove 移除圖表 EA）"""
-    # ⚠️ 系統檔案保護（Controller — 唔可以剷除）
+    # ⚠️ 系統檔案保護（Controller — 唔可以刪除）
     if ea_name == 'Controller':
-        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以剷除"}), 403
+        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以刪除"}), 403
     # 確保 MT5 開住（移除圖表需要）
     ensure_mt5_running()
     # 寫 pause_cmd（watcher 用現有 process_pause_cmd 移除圖表 EA — 重用機制）
@@ -362,7 +362,7 @@ def api_ea_config_delete(ea_name):
             del config[key]
     current_user.ea_config = json.dumps(config)
     db.session.commit()
-    # 🎯 剷除 → 釋放熱鍵（2026-08 用戶設計：剷除後熱鍵一齊移除 + 位置放返）
+    # 🎯 刪除 → 釋放快捷鍵（2026-08 用戶設計：刪除後快捷鍵一齊移除 + 位置放返）
     try:
         release_hotkey(ea_name)
     except Exception:
@@ -373,7 +373,7 @@ def api_ea_config_delete(ea_name):
 
 @app.route('/api/ea-config/<ea_name>/purge', methods=['POST'])
 def api_ea_config_purge(ea_name):
-    """Watcher 專用：電腦（MT5）剷除 EA 後，自動移除配對 config（配對庫即刻消失）
+    """Watcher 專用：電腦（MT5）刪除 EA 後，自動移除配對 config（配對庫即刻消失）
     認證：agent_id 參數（DEV00001）— watcher 用
     """
     import re as _re
@@ -949,7 +949,7 @@ def api_ea_library_refresh():
                                     local_bases.add(os.path.splitext(fn)[0])
         except Exception:
             pass
-        # 🚨 自動清殘留 config：網頁已配對 + 本機完全冇檔案（冇 .mq5 冇 .ex5）→ 刪 config（電腦剷除後自動同步）
+        # 🚨 自動清殘留 config：網頁已配對 + 本機完全冇檔案（冇 .mq5 冇 .ex5）→ 刪 config（電腦刪除後自動同步）
         # 🚨 2026-08-11 修：清所有用戶（唔止 current_user — 殘留喺其它帳號）
         try:
             # 🚨 獨立 sqlite3 連接（SQLAlchemy session 喺 request 內有隔離問題 — 直接 sqlite3 最穩陣）
@@ -980,7 +980,7 @@ def api_ea_library_refresh():
                         cleaned_total += len(to_del)
                 if cleaned_total:
                     _conn.commit()
-                    print(f"[refresh] 自動清理 {cleaned_total} 個殘留 config key（本機已剷除）", flush=True)
+                    print(f"[refresh] 自動清理 {cleaned_total} 個殘留 config key（本機已刪除）", flush=True)
                 _conn.close()
         except Exception as _ce:
             print(f"[refresh] 自動清理失敗: {_ce}", flush=True)
@@ -1093,11 +1093,11 @@ def api_ea_download(filename):
 @app.route('/api/ea-library/remove-local/<filename>', methods=['POST'])
 @login_required
 def api_ea_remove_local(filename):
-    """剷除本機 MT5 已安裝嘅 EA 檔案（MQL5/Experts/*.ex5 + *.mq5）"""
-    # ⚠️ 系統檔案保護（Controller — 唔可以剷除）
+    """刪除本機 MT5 已安裝嘅 EA 檔案（MQL5/Experts/*.ex5 + *.mq5）"""
+    # ⚠️ 系統檔案保護（Controller — 唔可以刪除）
     base_only = filename.split('.')[0]
     if base_only == 'Controller':
-        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以剷除"}), 403
+        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以刪除"}), 403
     # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
     # 🚨 2026-08-10：網頁 delete 唔經 watcher → 要喺呢度寫 steps（唔會殘留上一個操作字眼 — 用戶投訴）
@@ -1105,21 +1105,21 @@ def api_ea_remove_local(filename):
         import json as _jdel
         _adir_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         with open(os.path.join(_adir_del, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-            _f.write(f'剷除 {base_only}')
+            _f.write(f'刪除 {base_only}')
         with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
             # 🚨 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
             _jdel.dump([
-                {'text': f'開始剷除 {base_only}', 'status': 'doing'},
-                {'text': '檢查圖表（有冇 EA 運行）', 'status': 'pending'},
+                {'text': f'開始刪除 {base_only}', 'status': 'doing'},
+                {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
                 {'text': '移除圖表 EA', 'status': 'pending'},
                 {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
-                {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
-                {'text': '完成剷除', 'status': 'pending'},
+                {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
+                {'text': '完成刪除', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
             # 🚨 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → 檔案消失 → 網頁閃）
     except Exception as e_del:
         print(f"[DEBUG] remove-local steps write failed: {e_del}")
-    # 🚨 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + 用戶見到「開始剷除進行中」先開始刪除 — 步驟唔會瞬間完成）
+    # 🚨 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + 用戶見到「開始刪除進行中」先開始刪除 — 步驟唔會瞬間完成）
     try:
         import time as _tdel
         _tdel.sleep(1.5)
@@ -1155,7 +1155,7 @@ def api_ea_remove_local(filename):
                         return jsonify({"success": False, "error": str(e)}), 500
 
     if removed:
-        # 🚨 2026-08-10：網頁 delete 完成 → steps 全部 done（警告視窗顯示「完成剷除」+ 確定）
+        # 🚨 2026-08-10：網頁 delete 完成 → steps 全部 done（警告視窗顯示「完成刪除」+ 確定）
         # 🚨 2026-08-12：讀現有 steps（6 步）→ 全部 done（唔覆蓋 2 行 — 活動記錄式保持）
         try:
             import json as _jdel2
@@ -1171,17 +1171,17 @@ def api_ea_remove_local(filename):
             # 🚨 2026-08-12 修：唔寫 done（DELETE config 會寫 pause_cmd → watcher 接手逐步 — 雙重寫 steps → 覆蓋 → 網頁彈嚟彈去）
             # 只係確保 steps 有內容（等 watcher 接手逐步完成）
             if not _del_steps:
-                _del_steps = [{'text': f'開始剷除 {base_only}', 'status': 'doing'},
-                              {'text': '檢查圖表（有冇 EA 運行）', 'status': 'pending'},
+                _del_steps = [{'text': f'開始刪除 {base_only}', 'status': 'doing'},
+                              {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
                               {'text': '移除圖表 EA', 'status': 'pending'},
                               {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
-                              {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
-                              {'text': '完成剷除', 'status': 'pending'}]
+                              {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
+                              {'text': '完成刪除', 'status': 'pending'}]
             with open(_sf_del, 'w', encoding='utf-8') as _f:
                 _jdel2.dump(_del_steps, _f, ensure_ascii=False)
         except Exception:
             pass
-        # 寫「網頁剷除」標記 → watcher 偵測到刪除時知道來源（唔會誤判做電腦剷除）
+        # 寫「網頁刪除」標記 → watcher 偵測到刪除時知道來源（唔會誤判做電腦刪除）
         try:
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             os.makedirs(common_files, exist_ok=True)
@@ -1211,17 +1211,17 @@ def api_ea_install_local(filename):
     # 0. 寫「處理中」log — 用戶想知系統有冇處理緊
     _base0 = os.path.splitext(filename)[0]
     log_activity('ea_install', f'{_base0} 配對處理中...', ea=_base0)
-    # 🚨 2026-08-10：配對（install-local）警告視窗流程（同部署/剷除一致 — MODULE_INDEX 規範）
+    # 🚨 2026-08-10：配對（install-local）警告視窗流程（同部署/刪除一致 — MODULE_INDEX 規範）
     try:
         import json as _jin
         _adir_in = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         with open(os.path.join(_adir_in, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'配對 {_base0}')
         with open(os.path.join(_adir_in, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
-            # 🚨 2026-08-12 FIX：配對詳細步驟（活動記錄式 — 同剷除一致 — 唔會同 watcher 編譯步驟唔對應）
+            # 🚨 2026-08-12 FIX：配對詳細步驟（活動記錄式 — 同刪除一致 — 唔會同 watcher 編譯步驟唔對應）
             _jin.dump([
                 {'text': f'開始配對 {_base0}', 'status': 'doing'},
-                {'text': '複製檔案到本機（MT5Cloud_EA）', 'status': 'pending'},
+                {'text': '複製檔案至本機（MT5Cloud_EA）', 'status': 'pending'},
                 {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
                 {'text': '完成配對', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
@@ -1304,7 +1304,7 @@ def api_ea_install_local(filename):
                 except Exception:
                     _cur_ic = []
                 for _s in _cur_ic:
-                    if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案到本機（MT5Cloud_EA）'):
+                    if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案至本機（MT5Cloud_EA）'):
                         _s['status'] = 'done'
                 # 🚨 2026-08-12 FIX：如果唔使編譯（.ex5 已存在且新過 .mq5）→ 即刻完成「編譯」+「完成配對」（唔停留 pending — 「兩步就停」根治）
                 try:
@@ -1418,11 +1418,11 @@ def api_ea_install_local(filename):
 
     log_activity('ea_install', f'{os.path.splitext(filename)[0]} 已安裝到本機 MT5' + (
         '（compile 成功）' if compile_ok else '（compile 失敗）' if compile_ok is False and filename.lower().endswith('.mq5') else ''), ea=os.path.splitext(filename)[0])
-    # 🎯 配對 → 分配熱鍵（2026-08 用戶設計：添加時 set 熱鍵 — 唔重複）
+    # 🎯 配對 → 分配快捷鍵（2026-08 用戶設計：添加時 set 快捷鍵 — 唔重複）
     try:
         _hk = assign_hotkey(os.path.splitext(filename)[0])
         if _hk:
-            print(f"[install-local] {os.path.splitext(filename)[0]} 熱鍵: {_hk}")
+            print(f"[install-local] {os.path.splitext(filename)[0]} 快捷鍵: {_hk}")
     except Exception:
         pass
     # 🚨 2026-08-10：配對完成 → steps（檢查 compile_ok — 失敗唔好話成功 — 用戶投訴）
@@ -1531,7 +1531,7 @@ def _write_hotkeys_ini(experts, indicators):
 
 
 def _alloc_hotkey(experts):
-    """分配下一個可用熱鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）"""
+    """分配下一個可用快捷鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）"""
     used = set(experts.values())
     candidates = [f'Ctrl+{i}' for i in range(1, 10)] + ['Ctrl+0'] + \
                  [f'Ctrl+Alt+{i}' for i in range(1, 10)] + ['Ctrl+Alt+0']
@@ -1542,7 +1542,7 @@ def _alloc_hotkey(experts):
 
 
 def assign_hotkey(ea_name):
-    """配對時分配熱鍵 + 寫入 hotkeys.ini（MT5 立即認得 — 唔使 GUI）"""
+    """配對時分配快捷鍵 + 寫入 hotkeys.ini（MT5 立即認得 — 唔使 GUI）"""
     try:
         experts, indicators, _ = _read_hotkeys_ini()
         # 已存在就保留（唔重複分配）
@@ -1551,7 +1551,7 @@ def assign_hotkey(ea_name):
                 return v
         combo = _alloc_hotkey(experts)
         if not combo:
-            print(f"[hotkeys] 冇可用熱鍵（太多 EA）")
+            print(f"[hotkeys] 冇可用快捷鍵（太多 EA）")
             return None
         # 路徑：Experts\MT5Cloud_EA\<EA>.ex5
         experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
@@ -1565,7 +1565,7 @@ def assign_hotkey(ea_name):
 
 
 def release_hotkey(ea_name):
-    """剷除時移除熱鍵（釋放位置）"""
+    """刪除時移除快捷鍵（釋放位置）"""
     try:
         experts, indicators, _ = _read_hotkeys_ini()
         removed = False
@@ -1575,7 +1575,7 @@ def release_hotkey(ea_name):
                 removed = True
         if removed:
             _write_hotkeys_ini(experts, indicators)
-            print(f"[hotkeys] {ea_name} 熱鍵已移除（位置釋放）")
+            print(f"[hotkeys] {ea_name} 快捷鍵已移除（位置釋放）")
         return removed
     except Exception as e:
         print(f"[hotkeys] release 失敗: {e}")
@@ -1583,7 +1583,7 @@ def release_hotkey(ea_name):
 
 
 def get_hotkey(ea_name):
-    """攞 EA 嘅熱鍵（auto_attach 用 — 讀 hotkeys.ini 權威來源）"""
+    """攞 EA 嘅快捷鍵（auto_attach 用 — 讀 hotkeys.ini 權威來源）"""
     try:
         experts, _, _ = _read_hotkeys_ini()
         for k, v in experts.items():
@@ -1612,7 +1612,7 @@ def _mt5_start_time():
 
 
 def _hotkeys_need_reload():
-    """hotkeys.ini 有冇新過 MT5 啟動（有 = 熱鍵未 load — 要重啟 MT5）"""
+    """hotkeys.ini 有冇新過 MT5 啟動（有 = 快捷鍵未 load — 要重啟 MT5）"""
     try:
         p = _mt5_hotkeys_ini()
         if not p or not os.path.isfile(p):
@@ -1628,7 +1628,7 @@ def _hotkeys_need_reload():
 
 
 def _restart_mt5():
-    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 用戶實測：熱鍵要重啟先 load
+    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 用戶實測：快捷鍵要重啟先 load
     🚨 2026-08-10：重啟期間顯示警告視窗（MT5 關閉都有 — 用戶要知道操作緊）"""
     try:
         import subprocess as _sp
@@ -1637,7 +1637,7 @@ def _restart_mt5():
         try:
             _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             with open(os.path.join(_ad, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write('🔄 重啟 MT5 中（載入熱鍵）— 請稍候約 1 分鐘')
+                _f.write('🔄 重啟 MT5 中（載入快捷鍵）— 請稍候約 1 分鐘')
             _sf_rt = os.path.join(_ad, '.ai_control.steps')
             _cur_rt = []
             try:
@@ -1650,7 +1650,7 @@ def _restart_mt5():
             _cur_rt = [s for s in _cur_rt if isinstance(s, dict) and s.get('text') != '等待操作開始…']
             # append 重啟 MT5 3 步（同名更新）
             for _rstep in [{"text": "關閉 MT5", "status": "doing"},
-                           {"text": "載入熱鍵設定", "status": "pending"},
+                           {"text": "載入快捷鍵設定", "status": "pending"},
                            {"text": "重新啟動 MT5", "status": "pending"}]:
                 _found = False
                 for _s in _cur_rt:
@@ -1682,14 +1682,14 @@ def _restart_mt5():
             except Exception:
                 _cur_rt2 = []
             for _s in _cur_rt2:
-                if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5'):
+                if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5'):
                     _s['status'] = 'done'
             if _cur_rt2:
                 with open(_sf_rt2, 'w', encoding='utf-8') as _f:
                     _j.dump(_cur_rt2, _f, ensure_ascii=False)
         except Exception:
             pass
-        print("[hotkeys] MT5 已重啟（reload 熱鍵）")
+        print("[hotkeys] MT5 已重啟（reload 快捷鍵）")
         return True
     except Exception as e:
         print(f"[hotkeys] 重啟 MT5 失敗: {e}")
@@ -1700,11 +1700,11 @@ def _restart_mt5():
 @login_required
 
 def ensure_hotkey_for_ea(ea_name):
-    """部署前確保 EA 有熱鍵（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 設定嘅新 EA 熱鍵會冇）
-    冇熱鍵 → 分配 + 關 MT5 → 寫 → 開（reload）→ 返回 True（已就緒）"""
+    """部署前確保 EA 有快捷鍵（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 設定嘅新 EA 快捷鍵會冇）
+    冇快捷鍵 → 分配 + 關 MT5 → 寫 → 開（reload）→ 返回 True（已就緒）"""
     try:
         experts, indicators, _ = _read_hotkeys_ini()
-        # 已有熱鍵
+        # 已有快捷鍵
         for k, v in experts.items():
             if ea_name in k:
                 return True
@@ -2083,8 +2083,8 @@ def api_deploy():
             "message": "請手動完成首次部署（1 秒）：MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！"
         })
 
-    # 🎯 熱鍵確保（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 嘅熱鍵會冇）
-    # 部署前檢查 EA 有冇熱鍵 — 冇就分配 + 重啟 MT5 reload
+    # 🎯 快捷鍵確保（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 嘅快捷鍵會冇）
+    # 部署前檢查 EA 有冇快捷鍵 — 冇就分配 + 重啟 MT5 reload
     try:
         ensure_hotkey_for_ea(ea_name)
     except Exception:
@@ -2101,9 +2101,9 @@ def api_deploy():
         with open(os.path.join(_adir_dp, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
             _jdp.dump([
                 {'text': f'部署 {ea_name}（{symbol.upper()}）', 'status': 'doing'},
-                {'text': f'開新圖表（{symbol.upper()}）', 'status': 'pending'},
+                {'text': f'建立新圖表（{symbol.upper()}）', 'status': 'pending'},
                 {'text': f'附加 {ea_name}', 'status': 'pending'},
-                {'text': '驗證心跳/MT5 log', 'status': 'pending'},
+                {'text': '驗證運行狀態', 'status': 'pending'},
             ], _f, ensure_ascii=False)
     except Exception:
         pass

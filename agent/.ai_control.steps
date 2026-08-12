@@ -1,1 +1,1 @@
-[{"text": "關閉 MT5", "status": "done"}, {"text": "載入熱鍵設定", "status": "done"}, {"text": "重新啟動 MT5", "status": "done"}, {"text": "部署 Parabolic_SAR（EURUSD）", "status": "done"}, {"text": "開新圖表（EURUSD）", "status": "done"}, {"text": "附加 Parabolic_SAR（熱鍵 ^4）", "status": "done"}, {"text": "驗證心跳/MT5 log", "status": "done"}]
+[{"text": "開始刪除 Breakout", "status": "done"}, {"text": "檢查圖表（是否有 EA 運行）", "status": "done"}, {"text": "移除圖表 EA", "status": "done"}, {"text": "刪除本機檔案（.mq5/.ex5）", "status": "done"}, {"text": "清理設定並釋放快捷鍵", "status": "done"}, {"text": "完成刪除", "status": "done"}]

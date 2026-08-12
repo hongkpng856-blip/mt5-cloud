@@ -330,13 +330,13 @@ def get_experts_snapshot():
         return None
 
 
-# 最近網頁操作記錄（base -> timestamp）— 網頁安裝/剷除會產生多個檔案變化（.mq5 + .ex5），
+# 最近網頁操作記錄（base -> timestamp）— 網頁安裝/刪除會產生多個檔案變化（.mq5 + .ex5），
 # 用 60 秒窗口令後續變化都計做同一來源
 _web_action_window = {}
 
 
 def _purge_config(ea_name):
-    """電腦（MT5）剷除 EA 後，自動移除配對 config → 配對庫即刻消失"""
+    """電腦（MT5）刪除 EA 後，自動移除配對 config → 配對庫即刻消失"""
     try:
         import urllib.request as _ur
         agent_id = os.environ.get('AGENT_ID', 'DEV00001')
@@ -345,7 +345,7 @@ def _purge_config(ea_name):
         with _ur.urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read().decode('utf-8'))
         if data.get('success'):
-            print(f"🗑️ [WATCHER] 已自動移除 {ea_name} 配對（電腦剷除）")
+            print(f"🗑️ [WATCHER] 已自動移除 {ea_name} 配對（電腦刪除）")
         else:
             print(f"   ⚠️ purge config 失敗: {data.get('error')}")
     except Exception as e:
@@ -383,7 +383,7 @@ def _notify_ea_change(change_type, ea_name):
                     pass
 
         # 統一去重窗口：同一 base + 同 type 60 秒內只出一次通知
-        # （網頁安裝 .mq5 + .ex5 兩次 added；電腦剷除 .mq5 + .ex5 兩次 deleted）
+        # （網頁安裝 .mq5 + .ex5 兩次 added；電腦刪除 .mq5 + .ex5 兩次 deleted）
         win_key = f'{ea_name}|{change_type}'
         last = _web_action_window.get(win_key)
         if last is not None and now - last < 60:
@@ -397,7 +397,7 @@ def _notify_ea_change(change_type, ea_name):
             msg = f'{ea_name} 已於{source}新增至 MT5'
         elif change_type == 'deleted':
             msg = f'{ea_name} 已於{source}刪除'
-            # 電腦剷除 → 自動移除配對 config（配對庫即刻消失）
+            # 電腦刪除 → 自動移除配對 config（配對庫即刻消失）
             if source == '電腦':
                 _purge_config(ea_name)
         else:
@@ -526,7 +526,7 @@ def check_experts_changes():
                 changed.append(k)
 
         # 分類：新增（之前冇而家有）/ 刪除（之前有而家冇）
-        # 通知 + activity log 永遠寫（唔受 AI 控制守衛影響 — 用戶剷除 EA 要即時知）
+        # 通知 + activity log 永遠寫（唔受 AI 控制守衛影響 — 用戶刪除 EA 要即時知）
         for k in changed:
             base = k.rsplit('.', 1)[0] if '.' in k else k
             if k in snap and k not in old_snap:
@@ -621,7 +621,7 @@ def process_compile_cmd(fp):
             if not _cur:
                 # 冇現有 steps（直接 compile — 唔經 install-local）→ 建完整流程
                 _cur = [{'text': f'開始配對 {base}', 'status': 'done'},
-                        {'text': '複製檔案到本機（MT5Cloud_EA）', 'status': 'done'},
+                        {'text': '複製檔案至本機（MT5Cloud_EA）', 'status': 'done'},
                         {'text': f'編譯 {base}.mq5 → .ex5', 'status': 'doing'},
                         {'text': '完成配對', 'status': 'pending'}]
             else:
@@ -990,20 +990,20 @@ def process_pause_cmd(fp):
             return
         print(f"⏸️ [WATCHER] 暫停 {ea_name}（移除圖表 EA）...")
         sys.stdout.flush()
-        # 🚨 2026-08-10：剷除警告視窗流程（剷除係「新任務」→ 清舊步驟 — 同任務內累積）
+        # 🚨 2026-08-10：刪除警告視窗流程（刪除係「新任務」→ 清舊步驟 — 同任務內累積）
         try:
             import json as _jp
             _adir = os.path.dirname(os.path.abspath(__file__))
             with open(os.path.join(_adir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write(f'剷除 {ea_name}')
+                _f.write(f'刪除 {ea_name}')
             _sf = os.path.join(_adir, '.ai_control.steps')
             # 🚨 2026-08-12：詳細步驟（活動記錄式 — 每一步清楚：未完成 → 完成 — 用戶要求）
-            _old = [{'text': f'開始剷除 {ea_name}', 'status': 'doing'},
-                    {'text': '檢查圖表（有冇 EA 運行）', 'status': 'pending'},
+            _old = [{'text': f'開始刪除 {ea_name}', 'status': 'doing'},
+                    {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
                     {'text': '移除圖表 EA', 'status': 'pending'},
                     {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
-                    {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
-                    {'text': '完成剷除', 'status': 'pending'}]
+                    {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
+                    {'text': '完成刪除', 'status': 'pending'}]
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _jp.dump(_old, _f2, ensure_ascii=False)
         except Exception:
@@ -1030,7 +1030,7 @@ def process_pause_cmd(fp):
             time.sleep(0.8)  # 每步停留（網頁 poll 捕到「進行中」）
 
         # 🚨 2026-08-12 FIX：步驟順序反映實際動作 — auto_attach --remove（移除圖表）期間顯示「移除圖表 EA 進行中」（唔係「檢查圖表」）
-        _prog_steps([f'開始剷除 {ea_name}'], '移除圖表 EA')
+        _prog_steps([f'開始刪除 {ea_name}'], '移除圖表 EA')
         try:
             result = subprocess.run(
                 [sys.executable, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
@@ -1046,16 +1046,16 @@ def process_pause_cmd(fp):
             print(f"   ⚠️ 暫停 {ea_name} timeout")
         # 🚨 2026-08-12：逐步（auto_attach 完成 → 移除 done → 刪檔 doing → …）
         _prog_steps(['移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
-        _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理配對設定 + 釋放熱鍵')
-        _prog_steps(['清理配對設定 + 釋放熱鍵'], '完成剷除')
-        _prog_steps(['完成剷除'])
+        _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
+        _prog_steps(['清理設定並釋放快捷鍵'], '完成刪除')
+        _prog_steps(['完成刪除'])
         # 通知 server
         try:
             _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
                                   'message': f'{ea_name} 已暫停（EA 已從圖表移除）', 'source': 'watcher'})
         except Exception:
             pass
-        # 🚨 2026-08-10：剷除完成 → 步驟全部 done（累積更新）
+        # 🚨 2026-08-10：刪除完成 → 步驟全部 done（累積更新）
         try:
             import json as _jp2
             _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
