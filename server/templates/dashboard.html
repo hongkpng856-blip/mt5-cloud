@@ -582,6 +582,7 @@
     <!-- EA Library - 平台提供 + 社群提供 -->
                 <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);margin-bottom:12px">
                 <div class="card-title"><i class="icon-package" style="color:var(--accent)"></i> EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
+                <button class="btn" onclick="refreshPairingLibrary()" style="margin-left:auto;padding:2px 10px;font-size:11px" title="手動刷新 EA 倉庫 + 配對庫所有狀態"><i class="icon-refresh-cw" style="font-size:11px"></i> 刷新狀態</button>
                 <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;margin-left:auto"><i class="icon-upload"></i> 上傳 EA 去社群庫</button>
                 <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
                 </div>
@@ -611,7 +612,7 @@
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th><i class="icon-activity" style="font-size:11px"></i> 狀態</th><th>Magic</th><th>Symbol</th><th>TF</th><th><i class="icon-activity" style="font-size:11px"></i> Signal</th><th>SMA10</th><th>SMA30</th><th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades</th><th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win</th><th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L</th><th><i class="icon-pencil" style="font-size:11px"></i> Lots</th><th></th>
+                    <th>EA</th><th>來源</th><th><i class="icon-activity" style="font-size:11px"></i> 狀態</th><th>Magic</th><th>Symbol</th><th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades</th><th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win</th><th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L</th><th><i class="icon-pencil" style="font-size:11px"></i> Lots</th><th></th>
                 </tr></thead>
                 <tbody id="eaTableBody"><tr><td colspan="14" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
             </table>
@@ -871,7 +872,7 @@ async function loadEAConfig() {
             </td></tr>`;
         } else {
             allEAs.forEach(name => {
-            let sym = eaMappings[name] || allSymbols[0];
+            let sym = eaMappings[name] || '';  // 🚨 2026-08-12 FIX：未配對 → 空（顯示「—」）— 之前 allSymbols[0] 誤導
             let magic = eaMappings[name+'_magic'] || '240701';
 
             // Auto-assign magic+symbol from available combos if not yet configured
@@ -905,33 +906,37 @@ async function loadEAConfig() {
                     <div style="font-size:9px;color:#8b949e;margin-top:1px">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':(eaMappings[name]?'停止中':'未配對')}</div>
                     ${runtimeStatus[name]?`<div style="font-size:9px;color:${runtimeStatus[name]==='running'?'var(--success)':runtimeStatus[name]==='stopped'?'var(--text-dim)':'#d29922'};margin-top:1px" title="控制層心跳">${runtimeStatus[name]==='running'?'❤ 心跳運行':runtimeStatus[name]==='stopped'?'● 已停止':'◇ 無心跳'}</div>`:''}
                 </td>
-                <td><select class="ea-magic" data-ea="${name}" style="width:85px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 4px;font-size:12px">${(analysisData&&analysisData.all_magics||['240701']).map(m => `<option ${m===magic?'selected':''} value="${m}">Magic ${m}</option>`).join('')}</select></td>
+                <td style="text-align:center;font-size:12px;color:${eaMappings[name]?'var(--text)':'var(--text-dim)'}">${eaMappings[name]?('Magic '+magic):'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
                 <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
                     <span>${sym||'—'}</span>
                     <select class="ea-sym" data-ea="${name}" style="display:none">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select>
+                    <input type="hidden" class="ea-tf" data-ea="${name}" value="${tf}">
                 </td>
-                <td><select class="ea-tf" data-ea="${name}">${['M1','M5','M15','M30','H1','H4','D1','W1','MN1'].map(t => `<option ${t===tf?'selected':''}>${t}</option>`).join('')}</select></td>
-                <td style="text-align:center;font-weight:600">${getSignalHtml(name, sym, tf)}</td>
-                <td style="text-align:center;color:var(--text-muted);font-size:12px">${detectorSignals[name]?detectorSignals[name].sma10:'—'}</td>
-                <td style="text-align:center;color:var(--text-muted);font-size:12px">${detectorSignals[name]?detectorSignals[name].sma30:'—'}</td>
                 <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
                 <td style="white-space:nowrap">
-                    <button class="btn" style="padding:2px 8px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:96px">
+                    <button class="btn" style="padding:3px 6px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i></button>`:''}
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i>':'<i class="icon-play" style="font-size:11px"></i>'}</button>`:''}
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name.split('.')[0]}')" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i></button>`:''}
                     ${isSystem?'<span style="font-size:10px;color:#58a6ff;margin-left:2px" title="系統控制中樞 — 自動運行"><i class="icon-shield-check" style="font-size:11px"></i></span>':''}
+                    </div>
                 </td>
             </tr>`;
         });
 
         } // end else
 
+        // 🚨 2026-08-12：保存 scroll 位置（配對庫表格重寫 → scroll 唔跳 — 用戶「scroll 唔順暢」）
+        const _tb2 = document.getElementById('eaTableBody');
+        const _sb2 = _tb2 ? _tb2.closest('.scroll-box') : null;
+        const _st2 = _sb2 ? _sb2.scrollTop : 0;
         document.getElementById('eaTableBody').innerHTML = html;
         document.getElementById('eaCount').textContent = allEAs.length;
+        if (_sb2) _sb2.scrollTop = _st2;
     } catch(e) { console.error(e); }
 }
 
@@ -1094,7 +1099,7 @@ function _updateEAData() {
         const tr = sel.closest('tr');
         if (!tr) return;
         const cells = tr.querySelectorAll('td');
-        // Indices: 0=EA,1=來源,2=Magic,3=Symbol,4=TF,5=Trades,6=Win,7=P&L
+        // Indices（2026-08-12 刪 TF/SMA10/SMA30/Signal 後）: 0=EA,1=來源,2=狀態,3=Magic,4=Symbol,5=Trades,6=Win,7=P&L
         if (cells[5]) {
             const t = eaData.trades || 0;
             cells[5].textContent = t > 0 ? t : '—';
@@ -1342,33 +1347,60 @@ loadEALibrary();
 fetchEAInventory();
 fetchNotifications();
 fetchActivity();
-setInterval(loadDashboard, 5000);
-setInterval(loadEAConfig, 10000);  // 配對庫列表+數量自己 poll（唔靠 fetchEAInventory）
-setInterval(loadAnalysis, 10000);
-setInterval(loadEALibrary, 30000);
-setInterval(fetchEAInventory, 10000);
-setInterval(fetchNotifications, 5000);
-setInterval(fetchActivity, 10000);
+setInterval(loadDashboard, 30000);  // 🚨 2026-08-12：30 秒（之前 5 秒 — 統計卡唔使咁密 — scroll 卡根源之一）
+setInterval(loadEAConfig, 60000);   // 🚨 2026-08-12：60 秒（之前 10 秒 — 配對庫表格 render 太頻繁 → scroll 卡）
+setInterval(loadAnalysis, 30000);   // 🚨 2026-08-12：30 秒（之前 10 秒）
+setInterval(loadEALibrary, 120000); // 🚨 2026-08-12：120 秒（之前 30 秒 — EA 倉庫表格重寫 → scroll 卡 — 用「重新整理」手動刷新）
+setInterval(fetchEAInventory, 60000); // 🚨 2026-08-12：60 秒（之前 10 秒）
+setInterval(fetchNotifications, 30000); // 🚨 2026-08-12：30 秒（之前 5 秒）
+setInterval(fetchActivity, 60000);  // 🚨 2026-08-12：60 秒（之前 10 秒）
 setInterval(pollAiControl, 700);  // 🚨 2026-08-12：poll 加快（2 秒 → 0.7 秒 — 捕到每步逐步 — 內容平滑更新唔「彈」）網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
 
 // 🚨 2026-08-11：配對庫「重新整理」— 即刻刷新 + 警告視窗流程（成功確定 / 失敗紅色+原因+確定）
 async function refreshPairingLibrary() {
-    // 🚨 即刻彈 modal（唔靠 poll — refresh 太快捕唔到 active）
+    // 🚨 2026-08-12：逐步顯示（刷新邊一項 + 成唔成功 — 用戶要求）
+    const mkSteps = (states) => [
+        {'text': '開始重新整理', 'status': states[0]},
+        {'text': '掃描本機 EA 檔案', 'status': states[1]},
+        {'text': '清理殘留配對設定', 'status': states[2]},
+        {'text': '同步配對設定', 'status': states[3]},
+        {'text': '刷新本機運行狀態', 'status': states[4]},
+        {'text': '刷新 EA 倉庫', 'status': states[5]},
+        {'text': '完成重新整理', 'status': states[6]},
+    ];
+    const updSteps = async (states, sig) => {
+        try { await fetch('/api/control-steps', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({steps: mkSteps(states), sig: sig || '重新整理配對庫'}) }); } catch(e) {}
+    };
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    // 即刻彈 modal（唔靠 poll — refresh 太快捕唔到 active）
     showControlModal('重新整理配對庫', '正在刷新最新 EA 資訊...');
     try {
+        await updSteps(['doing','pending','pending','pending','pending','pending','pending']);
         const res = await fetch('/api/ea-library/refresh', { method: 'POST' });
         const data = await res.json().catch(() => ({}));
         if (data.success) {
+            await updSteps(['done','done','done','pending','pending','pending','pending']);
             // 🚨 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「已加入」/「移去配對」正確）
             // 🚨 2026-08-11 修：fetchEAInventory 要 await（之前冇 await → loadEALibrary 用舊 eaDeployStatus → detect 唔到已加入）
-            if (typeof loadEAConfig === 'function') await loadEAConfig();      // 攞 eaMappings（已配對）
-            if (typeof fetchEAInventory === 'function') await fetchEAInventory();   // 攞 eaDeployStatus（本機狀態）
-            if (typeof loadEALibrary === 'function') await loadEALibrary();   // 渲染 EA 倉庫（狀態正確）
+            if (typeof loadEAConfig === 'function') {
+                try { await loadEAConfig(); await updSteps(['done','done','done','done','pending','pending','pending']); await sleep(500); }
+                catch(e) { await updSteps(['done','done','done','done','pending','pending','pending']); }
+            }
+            if (typeof fetchEAInventory === 'function') {
+                try { await fetchEAInventory(); await updSteps(['done','done','done','done','done','pending','pending']); await sleep(500); }
+                catch(e) { await updSteps(['done','done','done','done','done','pending','pending']); }
+            }
+            if (typeof loadEALibrary === 'function') {
+                try { await loadEALibrary(); } catch(e) {}
+            }
+            await updSteps(['done','done','done','done','done','done','done']);
             if (typeof showLog === 'function') showLog('已重新整理配對庫（攞最新資訊）', 'log-info');
         } else {
+            await updSteps(['done','done','done','pending','pending','pending','done']);
             if (typeof showLog === 'function') showLog('❌ 重新整理失敗: ' + (data.error || 'unknown'), 'log-error');
         }
     } catch(e) {
+        try { await updSteps(['done','done','done','pending','pending','pending','done']); } catch(e2) {}
         if (typeof showLog === 'function') showLog('❌ 重新整理失敗: ' + e.message, 'log-error');
     }
     // 完成 → steps 有 done（poll 顯示確定 — 唔自動關）
@@ -1410,7 +1442,11 @@ async function loadEALibrary() {
             </tr>`;
         });
         const offTable = document.querySelector('#officialTable tbody');
+        // 🚨 2026-08-12：保存 scroll 位置（render 重寫表格 → scroll 唔跳 — 用戶「scroll 唔順暢」）
+        const _sb = offTable ? offTable.closest('.scroll-box') : null;
+        const _st = _sb ? _sb.scrollTop : 0;
         if (offTable) offTable.innerHTML = oHtml || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">—</td></tr>';
+        if (_sb) _sb.scrollTop = _st;
 
         // 社群提供嘅 EA（Developer 上傳）— 只顯示，唔會自動加入（自動加入會令刪除咗嘅 EA 復活）
         const communityFiles = (data.files || []).filter(f => f.type === 'community');

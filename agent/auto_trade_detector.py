@@ -17,7 +17,7 @@ from socketserver import ThreadingMixIn
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server', 'instance', 'mt5cloud.db')
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
 DB_PATH = os.path.normpath(DB_PATH)
 TF_MAP = {'M1': 1, 'M5': 5, 'M15': 15, 'M30': 30, 'H1': 60, 'H4': 240, 'D1': 1440, 'W1': 10080, 'MN1': 43200}
 

@@ -58,7 +58,7 @@ def _write(experts, indicators):
 
 # 已配對 EA（DB config）
 import sqlite3
-db = 'server/instance/mt5cloud.db'
+db = 'instance/mt5cloud.db'
 conn = sqlite3.connect(db)
 cur = conn.cursor()
 cur.execute("SELECT ea_config FROM user WHERE username='dev'")

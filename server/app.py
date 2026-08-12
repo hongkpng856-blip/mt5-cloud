@@ -48,10 +48,27 @@ def log_activity(action, message, ea='', source='server'):
         pass
 
 
-@app.route('/api/control-steps', methods=['GET'])
+@app.route('/api/control-steps', methods=['GET', 'POST'])
 @login_required
 def api_control_steps():
-    """🚨 2026-08-10：攞操作步驟（警告視窗顯示 — 一排排）"""
+    """🚨 2026-08-10：攞操作步驟（警告視窗顯示 — 一排排）
+    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔成功）"""
+    if request.method == 'POST':
+        try:
+            import time as _tw
+            data = request.json or {}
+            steps_in = data.get('steps')
+            sig = data.get('sig', '')
+            agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            if sig:
+                with open(os.path.join(agent_dir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                    _f.write(sig)
+            if isinstance(steps_in, list):
+                with open(os.path.join(agent_dir, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                    json.dump(steps_in, _f, ensure_ascii=False)
+            return jsonify({"success": True})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
     try:
         agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         steps_file = os.path.join(agent_dir, '.ai_control.steps')
@@ -276,7 +293,7 @@ def api_ea_config():
         # 🚨 2026-08-11：直接 SQL 讀 DB（SQLAlchemy session 有隔離問題 — current_user.ea_config 返回舊值含已刪除 EA）
         try:
             import sqlite3 as _sq2
-            _dbp2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'server', 'instance', 'mt5cloud.db')
+            _dbp2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'mt5cloud.db')
             _c2 = _sq2.connect(_dbp2)
             _c2.row_factory = _sq2.Row
             _r2 = _c2.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
@@ -923,14 +940,34 @@ def api_ea_library_refresh():
     try:
         with open(os.path.join(_adir_rf, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write('重新整理配對庫')
+        # 🚨 2026-08-12：詳細步驟（刷新邊一項 + 成唔成功 — 用戶要求）
         with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
             _jrf.dump([
-                {'text': '重新整理配對庫 進行中…', 'status': 'doing'},
+                {'text': '開始重新整理', 'status': 'doing'},
+                {'text': '掃描本機 EA 檔案', 'status': 'pending'},
+                {'text': '清理殘留配對設定', 'status': 'pending'},
+                {'text': '同步配對設定', 'status': 'pending'},
+                {'text': '刷新本機運行狀態', 'status': 'pending'},
+                {'text': '刷新 EA 倉庫', 'status': 'pending'},
                 {'text': '完成重新整理', 'status': 'pending'},
             ], _f, ensure_ascii=False)
         # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
         os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
                    os.path.join(_adir_rf, '.ai_control.steps'))
+    except Exception:
+        pass
+    # 🚨 2026-08-12：步驟 1 done + 步驟 2 doing（掃描本機 EA — 停留 0.8s 用戶見到）
+    try:
+        import time as _tw2
+        _tw2.sleep(0.8)
+        _st2 = _jrf.load(open(os.path.join(_adir_rf, '.ai_control.steps'), 'r', encoding='utf-8'))
+        for _s2 in _st2:
+            if _s2.get('text') == '開始重新整理':
+                _s2['status'] = 'done'
+            elif _s2.get('text') == '掃描本機 EA 檔案':
+                _s2['status'] = 'doing'
+        with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+            _jrf.dump(_st2, _f, ensure_ascii=False)
     except Exception:
         pass
     try:
@@ -954,7 +991,7 @@ def api_ea_library_refresh():
         try:
             # 🚨 獨立 sqlite3 連接（SQLAlchemy session 喺 request 內有隔離問題 — 直接 sqlite3 最穩陣）
             import sqlite3 as _sq
-            _db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'server', 'instance', 'mt5cloud.db')
+            _db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'mt5cloud.db')
             if os.path.isfile(_db_path):
                 _conn = _sq.connect(_db_path)
                 _cur = _conn.cursor()
