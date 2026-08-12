@@ -596,18 +596,38 @@ def process_compile_cmd(fp):
 
         print(f"   🔨 Compiling {base}.mq5 → .ex5（GUI 方式）{'（重試 ' + str(retries + 1) + '/3）' if retries > 0 else ''}...")
         sys.stdout.flush()
-        # 🚨 2026-08-10：配對（compile）警告視窗流程（編譯進行中 → 完成 — 用戶要求）
-        # 編譯係「新任務」→ 清舊任務步驟（同任務內累積 — 用戶要求）
+        # 🚨 2026-08-12 FIX：編譯 = 配對流程嘅一步（唔覆寫 install-local 步驟 — 改為更新「編譯」步驟 doing）
         try:
             import json as _jc
             _adir = os.path.dirname(os.path.abspath(__file__))
             with open(os.path.join(_adir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write(f'編譯 {base}')
+                _f.write(f'配對 {base}')
             _sf = os.path.join(_adir, '.ai_control.steps')
-            _old = [{'text': f'開始編譯 {base} 進行中…', 'status': 'doing'},
-                    {'text': '完成編譯', 'status': 'pending'}]
+            _cur = []
+            try:
+                if os.path.isfile(_sf):
+                    _cur = _jc.load(open(_sf, 'r', encoding='utf-8'))
+                    if not isinstance(_cur, list):
+                        _cur = []
+            except Exception:
+                _cur = []
+            # 對應 install-local 嘅步驟（冇就 append 新步驟）
+            def _upd(_list, _text, _status):
+                for _s in _list:
+                    if isinstance(_s, dict) and _s.get('text') == _text:
+                        _s['status'] = _status
+                        return
+                _list.append({'text': _text, 'status': _status})
+            if not _cur:
+                # 冇現有 steps（直接 compile — 唔經 install-local）→ 建完整流程
+                _cur = [{'text': f'開始配對 {base}', 'status': 'done'},
+                        {'text': '複製檔案到本機（MT5Cloud_EA）', 'status': 'done'},
+                        {'text': f'編譯 {base}.mq5 → .ex5', 'status': 'doing'},
+                        {'text': '完成配對', 'status': 'pending'}]
+            else:
+                _upd(_cur, f'編譯 {base}.mq5 → .ex5', 'doing')
             with open(_sf, 'w', encoding='utf-8') as _f2:
-                _jc.dump(_old, _f2, ensure_ascii=False)
+                _jc.dump(_cur, _f2, ensure_ascii=False)
         except Exception:
             pass
         # ⚠️ 控制層注入（網頁操控 EA — CONTROL_LAYER_DESIGN.md）：
@@ -640,7 +660,7 @@ def process_compile_cmd(fp):
             return
         if ok:
             print(f"   ✅ Compiled: {base}.ex5 ({os.path.getsize(ex5_path)} bytes)")
-            # 🚨 配對完成 → 步驟全部 done（累積更新 — 唔覆蓋 — 用戶要求）
+            # 🚨 2026-08-12 FIX：編譯完成 → 「編譯」done + 「完成配對」done（累積更新 — 唔覆蓋）
             try:
                 import json as _jc2
                 _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
@@ -653,8 +673,10 @@ def process_compile_cmd(fp):
                 except Exception:
                     _old2 = []
                 for _s in _old2:
-                    if isinstance(_s, dict) and '編譯' in _s.get('text', ''):
-                        _s['status'] = 'done'
+                    if isinstance(_s, dict):
+                        _t = _s.get('text', '')
+                        if '編譯' in _t or _t == '完成配對':
+                            _s['status'] = 'done'
                 with open(_sf2, 'w', encoding='utf-8') as _f:
                     _jc2.dump(_old2, _f, ensure_ascii=False)
             except Exception:

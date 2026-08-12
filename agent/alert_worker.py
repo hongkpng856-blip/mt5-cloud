@@ -11,11 +11,23 @@ import os
 import sys
 import json
 import time
+import socket
 import tkinter as tk
 
 AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 SHOW_FLAG = os.path.join(AGENT_DIR, '.ai_control.show')
 STEPS_FLAG = os.path.join(AGENT_DIR, '.ai_control.steps')
+
+# 🚨 2026-08-12：單實例守衛（防雙視窗 — 用戶投訴「兩個相同嘅嘢」）
+# 用 bind port 5004（同 detector 5003 模式一致 — process 死咗 port 自動釋放）
+_SINGLE_PORT = 5004
+try:
+    _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    _sock.bind(('127.0.0.1', _SINGLE_PORT))
+    _sock.listen(1)
+except OSError:
+    print(f'⚠️ :{_SINGLE_PORT} 已有 alert_worker 運行緊，呢個 instance 退出（單實例守衛）')
+    sys.exit(0)
 
 # 窗口狀態
 shown = False

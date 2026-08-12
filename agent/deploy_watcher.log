@@ -186,5 +186,204 @@
 🔄 Navigator refreshed (right-click → 刷新) at (271,835)
    ✅ Navigator refreshed (in-process)
 
-===== [2026-08-12 15:17:41] watcher 啟動 =====
-⚠️ 已有 watcher 行緊 (PID 12116) — 退出（單實例守衛）
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786519117.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Bollinger_Band.ex5 (12452 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Fibonacci_1786519857.json
+   🔨 Compiling Fibonacci.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Fibonacci.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Fibonacci 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Fibonacci.ex5 (11684 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/Fibonacci added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Fibonacci.mq5, MT5Cloud_EA/Fibonacci.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_Fibonacci_1786519899.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Fibonacci_1786519899.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Fibonacci_1786519899.json
+🤖 AI 正在部署 Fibonacci 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Fibonacci → USDCHF H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\pythonw.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Fibonacci --symbol USDCHF --tf H1 --magic 240701 --lot 1
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Correlation 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Correlation 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Ichimoku 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Ichimoku 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Mean_Reversion 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Mean_Reversion 已於電腦新增至 MT5
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Fibonacci_USDCHF_H1.tpl (2402 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 用熱鍵 ^1 附加 Fibonacci...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=6440
+   📋 已開新圖表（Down×2 — USDCHF）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+   ✅ 已撳「確定」（Properties）
+   ✅ Fibonacci 附加成功（心跳存在）
+   ❌ log 驗證: Fibonacci 冇喺 USDCHF 啟動（可能開錯圖表 — 返回失敗）
+   ⚠️ 熱鍵方法失敗 — 自動重試熱鍵（×2）...
+   🎯 用熱鍵 ^1 附加 Fibonacci...
+   ⚠️ 熱鍵附加失敗: Process with PID=3344 not found!
+   🎯 用熱鍵 ^1 附加 Fibonacci...
+   ⚠️ 熱鍵附加失敗: Process with PID=3344 not found!
+   ⚠️ 熱鍵重試後都失敗（不再試 Navigator — 6093 免疫）
+   ❌ Failed to attach EA
+   ❌ Fibonacci attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: Fibonacci 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ Fibonacci
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786520224.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Bollinger_Band.ex5 (11348 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已更新
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786520286.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Bollinger_Band.ex5 (11654 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已更新
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 —⚠️ 已�🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786520333.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Bollinger_Band.ex5 (11444 bytes)
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band modified 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786520509.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Bollinger_Band.ex5 (11424 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已更新
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786520577.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Bollinger_Band.ex5 (11554 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已更新
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_Bollinger_Band_1786520647.json
+   🔨 Compiling Bollinger_Band.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Bollinger_Band.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Bollinger_Band 開始控制電腦（警告視窗已彈出）

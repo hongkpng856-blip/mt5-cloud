@@ -927,7 +927,9 @@ def api_ea_library_refresh():
                 {'text': '重新整理配對庫 進行中…', 'status': 'doing'},
                 {'text': '完成重新整理', 'status': 'pending'},
             ], _f, ensure_ascii=False)
-            _os_replace_0.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
+        # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
+        os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
+                   os.path.join(_adir_rf, '.ai_control.steps'))
     except Exception:
         pass
     try:
@@ -1006,7 +1008,9 @@ def api_ea_library_refresh():
                     {'text': '重新整理配對庫 進行中…', 'status': 'done'},
                     {'text': '完成重新整理', 'status': 'done'},
                 ], _f, ensure_ascii=False)
-                _os_replace_1.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
+            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
+            os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
+                       os.path.join(_adir_rf, '.ai_control.steps'))
             _sf_show = os.path.join(_adir_rf, '.ai_control.show')
             if os.path.exists(_sf_show):
                 os.remove(_sf_show)
@@ -1026,8 +1030,10 @@ def api_ea_library_refresh():
                 _jrf.dump([
                     {'text': '重新整理配對庫 進行中…', 'status': 'done'},
                     {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
-                _os_replace_2.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 ], _f, ensure_ascii=False)
+            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
+            os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
+                       os.path.join(_adir_rf, '.ai_control.steps'))
             _sf_show = os.path.join(_adir_rf, '.ai_control.show')
             if os.path.exists(_sf_show):
                 os.remove(_sf_show)
@@ -1205,13 +1211,18 @@ def api_ea_install_local(filename):
         with open(os.path.join(_adir_in, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'配對 {_base0}')
         with open(os.path.join(_adir_in, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
+            # 🚨 2026-08-12 FIX：配對詳細步驟（活動記錄式 — 同剷除一致 — 唔會同 watcher 編譯步驟唔對應）
             _jin.dump([
-                {'text': f'配對 {_base0} 進行中…', 'status': 'doing'},
+                {'text': f'開始配對 {_base0}', 'status': 'doing'},
+                {'text': '複製檔案到本機（MT5Cloud_EA）', 'status': 'pending'},
+                {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
                 {'text': '完成配對', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
-            _os_replace_4.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
-    except Exception:
-        pass
+        # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
+        os.replace(os.path.join(_adir_in, '.ai_control.steps') + '.tmp',
+                   os.path.join(_adir_in, '.ai_control.steps'))
+    except Exception as _ein_err:
+        print(f"[DEBUG] install-local steps write failed: {_ein_err}", flush=True)
 
     # 1. 搵檔案喺邊個目錄（社群 → 用戶 → 官方）
     # ⚠️ filename 可能冇副檔名（前端傳 baseName）→ 自動試 .mq5 / .ex5
@@ -1259,6 +1270,26 @@ def api_ea_install_local(filename):
         try:
             _sh.copy2(src_path, target)
             installed.append(target)
+            # 🚨 2026-08-12 FIX：複製完成 → 更新 steps（開始配對 done + 複製檔案 done — 活動記錄式）
+            try:
+                import json as _jc3
+                _adir_ic = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+                _sf_ic = os.path.join(_adir_ic, '.ai_control.steps')
+                _cur_ic = []
+                try:
+                    if os.path.isfile(_sf_ic):
+                        _cur_ic = _jc3.load(open(_sf_ic, 'r', encoding='utf-8'))
+                        if not isinstance(_cur_ic, list):
+                            _cur_ic = []
+                except Exception:
+                    _cur_ic = []
+                for _s in _cur_ic:
+                    if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案到本機（MT5Cloud_EA）'):
+                        _s['status'] = 'done'
+                with open(_sf_ic, 'w', encoding='utf-8') as _f:
+                    _jc3.dump(_cur_ic, _f, ensure_ascii=False)
+            except Exception:
+                pass
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
 
@@ -1568,7 +1599,9 @@ def _restart_mt5():
                 _j.dump([{"text": "關閉 MT5", "status": "doing"},
                          {"text": "載入熱鍵設定", "status": "pending"},
                          {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
-                _os_replace_5.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
+            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
+            os.replace(os.path.join(_ad, '.ai_control.steps') + '.tmp',
+                       os.path.join(_ad, '.ai_control.steps'))
         except Exception:
             pass
         _sp.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
