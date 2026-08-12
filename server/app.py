@@ -1109,7 +1109,7 @@ def api_ea_remove_local(filename):
                 {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
                 {'text': '完成剷除', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
-            os.replace(_f2.name, _f2.name[:-4])  # 🚨 原子：寫完先 replace
+            # 🚨 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → 檔案消失 → 網頁閃）
     except Exception as e_del:
         print(f"[DEBUG] remove-local steps write failed: {e_del}")
     # 安全檢查：檔名只可以係字母數字底線（防 path traversal）

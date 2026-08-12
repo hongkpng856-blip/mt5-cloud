@@ -6,6 +6,7 @@
 - Port 5003 提供 HTTP endpoint + CORS
 """
 import json
+import sys
 import time
 import threading
 import sqlite3

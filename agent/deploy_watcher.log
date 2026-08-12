@@ -111,3 +111,80 @@
 📜 [WATCHER] activity log 已寫: Seasonal 部署失敗（attach 失敗）
 [deploy_notify] 控制結束
    📡 Server report: ❌ Seasonal
+
+===== [2026-08-12 14:52:40] watcher 啟動 =====
+
+========================================================
+  👀 MT5 Cloud Deploy Watcher
+========================================================
+  Server:      http://localhost:5001
+  Agent ID:    DEV00001
+  Watching:    C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\Common\Files/deploy_cmd_*.json
+  Auto-attach: C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py
+  Interval:    3s
+========================================================
+  Starting watcher...
+  ✓ AI 控制警告視窗已預先就緒（隱藏）
+  ✓ Navigator refresh worker 已啟動
+  ✓ Deploy worker 已啟動
+🔄 [WATCHER] deploy worker 已重生（死咗自動開返）
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.ex5, MT5Cloud_EA/Bollinger_Band.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+⏸️ [WATCHER] Pause command: pause_cmd_Bollinger_Band_1786518728.json
+⏸️ [WATCHER] 暫停 Bollinger_Band（移除圖表 EA）...
+   Exit: 0
+   🛡️  [CONTROL] 暫停 Bollinger_Band 開始控制電腦（警告視窗已彈出）
+   ℹ️ Bollinger_Band：圖表未開（冇 EA 運行）— 唔使移除，直接完成
+   ✅ 暫停 Bollinger_Band 成功
+📜 [WATCHER] activity log 已寫: Bollinger_Band 已暫停（EA 已從圖表移除）
+
+🔨 [WATCHER] Compile command: compile_cmd_Breakout_1786518988.json
+   🔨 Compiling Breakout.mq5 → .ex5（GUI 方式）...
+   ✅ [注入器] Breakout.mq5 已注入控制層
+🛡️  [CONTROL] 編譯 Breakout 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: Breakout.ex5 (11830 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Breakout.ex5, MT5Cloud_EA/Bollinger_Band.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+
+⏸️ [WATCHER] Pause command: pause_cmd_Breakout_1786519023.json
+⏸️ [WATCHER] 暫停 Breakout（移除圖表 EA）...
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+   Exit: 0
+   🛡️  [CONTROL] 暫停 Breakout 開始控制電腦（警告視窗已彈出）
+   ℹ️ Breakout：圖表未開（冇 EA 運行）— 唔使移除，直接完成
+   ✅ 暫停 Breakout 成功
+📜 [WATCHER] activity log 已寫: Breakout 已暫停（EA 已從圖表移除）
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/Breakout deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Breakout.ex5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+📌 Navigator 已統一位置（(0,100) 384x940 — 最大）
+🔄 Navigator refreshed (right-click → 刷新) at (271,835)
+   ✅ Navigator refreshed (in-process)
+
+===== [2026-08-12 15:17:41] watcher 啟動 =====
+⚠️ 已有 watcher 行緊 (PID 12116) — 退出（單實例守衛）
