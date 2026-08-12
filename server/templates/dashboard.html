@@ -481,7 +481,7 @@
             <div class="ai-control-prog" id="aiControlProg" style="margin-top:10px">處理中…</div>
             <div class="ai-control-desc" id="aiControlDesc">請勿移動滑鼠或按鍵盤！</div>
             <!-- 操作步驟（累積 — [進行中]/[完成]/[等待]）-->
-            <div class="ai-control-steps" id="aiControlSteps" style="margin-top:10px;text-align:left;font-size:12px;color:var(--text-dim);min-height:120px;max-height:160px;overflow-y:auto;"></div>
+            <div class="ai-control-steps" id="aiControlSteps" style="margin-top:10px;text-align:left;font-size:13px;line-height:1.7;color:var(--text-dim);min-height:140px;max-height:240px;overflow-y:auto;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:8px;"></div>
             <button class="ai-control-stop" id="aiControlStopBtn" onclick="emergencyStop()">
                 <i class="icon-alert-octagon"></i> 緊急停止
             </button>
@@ -1167,40 +1167,47 @@ async function pollAiControl() {
         if (sr.ok) {
             const data = await sr.json();
             const steps = Array.isArray(data) ? data : (data.steps || []);
+            const stepsMtime = data.mtime ? (data.mtime * 1000) : 0;
             
             if (sc && steps.length > 0) {
-                // 2. Render steps — 簡單 innerHTML（內容一樣唔重寫）
-                var html = '';
-                var hasDoing = false, hasFail = false;
-                for (var i = 0; i < steps.length; i++) {
-                    var s = steps[i], st = s.status || 'pending', txt = s.text || '';
-                    var mk, cl;
-                    if (txt.indexOf('失敗') >= 0) { mk = '失敗'; cl = '#f87171'; hasFail = true; }
-                    else if (st === 'doing') { mk = '進行中'; cl = '#fbbf24'; hasDoing = true; }
-                    else if (st === 'done') { mk = '完成'; cl = '#34d399'; }
-                    else { mk = '等待'; cl = '#71717a'; }
-                    html += '<div style="padding:2px 0;font-size:12px;color:' + cl + '">[' + mk + '] ' + txt + '</div>';
-                }
-                // 內容一樣 skip（避免 innerHTML 重寫 → 閃）
-                if (sc._lastHtml === html) { /* skip */ }
-                else { sc._lastHtml = html; sc.innerHTML = html; }
-                
-                // 3. 按鈕 — 統一處理
-                if (stopBtn) stopBtn.style.display = (hasDoing || hasFail) ? 'inline-flex' : 'none';
-                if (closeBtn) {
-                    var allDone = steps.every(function(s){ return s.status === 'done'; });
-                    closeBtn.style.display = (allDone && !hasDoing) ? 'inline-block' : 'none';
-                }
-                // 4. 標題
-                if (prog) {
-                    if (hasFail) { prog.textContent = '失敗'; prog.style.color = '#f87171'; prog.style.display = 'block'; }
-                    else if (hasDoing) { prog.textContent = '執行中'; prog.style.color = '#fbbf24'; prog.style.display = 'block'; }
-                    else { prog.textContent = '已完成'; prog.style.color = '#34d399'; prog.style.display = 'block'; }
+                // 🚨 2026-08-12 FIX：steps mtime 舊過「modal 彈出時間」→ 舊任務殘留（唔顯示 — 保持等待）
+                // （remove-local 寫 steps 前 — poll 會讀到上一個任務 steps → 「彈幾個不知名步驟」！）
+                if (window._modalShownAt && stepsMtime && stepsMtime < window._modalShownAt) {
+                    // 舊殘留 — 唔 render（保持現有內容）
+                } else {
+                    // 2. Render steps — 簡單 innerHTML（內容一樣唔重寫）
+                    var html = '';
+                    var hasDoing = false, hasFail = false;
+                    for (var i = 0; i < steps.length; i++) {
+                        var s = steps[i], st = s.status || 'pending', txt = s.text || '';
+                        var mk, cl;
+                        if (txt.indexOf('失敗') >= 0) { mk = '失敗'; cl = '#f87171'; hasFail = true; }
+                        else if (st === 'doing') { mk = '進行中'; cl = '#fbbf24'; hasDoing = true; }
+                        else if (st === 'done') { mk = '完成'; cl = '#34d399'; }
+                        else { mk = '等待'; cl = '#71717a'; }
+                        html += '<div style="padding:3px 0;font-size:13px;line-height:1.6;color:' + cl + '"><span style="font-weight:600;margin-right:6px">[' + mk + ']</span>' + txt + '</div>';
+                    }
+                    // 內容一樣 skip（避免 innerHTML 重寫 → 閃）
+                    if (sc._lastHtml === html) { /* skip */ }
+                    else { sc._lastHtml = html; sc.innerHTML = html; }
+                    
+                    // 3. 按鈕 — 統一處理
+                    if (stopBtn) stopBtn.style.display = (hasDoing || hasFail) ? 'inline-flex' : 'none';
+                    if (closeBtn) {
+                        var allDone = steps.every(function(s){ return s.status === 'done'; });
+                        closeBtn.style.display = (allDone && !hasDoing) ? 'inline-block' : 'none';
+                    }
+                    // 4. 標題
+                    if (prog) {
+                        if (hasFail) { prog.textContent = '失敗'; prog.style.color = '#f87171'; prog.style.display = 'block'; }
+                        else if (hasDoing) { prog.textContent = '執行中'; prog.style.color = '#fbbf24'; prog.style.display = 'block'; }
+                        else { prog.textContent = '已完成'; prog.style.color = '#34d399'; prog.style.display = 'block'; }
+                    }
                 }
             } else if (sc && steps.length === 0) {
                 // 冇 steps → 顯示等待（唔清空！舊內容保留）
                 if (sc.children.length === 0) {
-                    sc.innerHTML = '<div style="padding:2px 0;font-size:12px;color:#71717a">[等待] 等待操作開始…</div>';
+                    sc.innerHTML = '<div style="padding:3px 0;font-size:13px;color:#71717a"><span style="font-weight:600;margin-right:6px">[等待]</span>等待操作開始…</div>';
                 }
             }
         }

@@ -116,34 +116,21 @@ def release():
             os.remove(LOCK_FILE)
     except Exception:
         pass
-    # 最少顯示時間 + idle timeout（唔依賴 tk after，watcher 環境可靠）
-    # 1. 最少顯示 MIN_SHOW_SECONDS（動作太快都唔會「彈一下」）
-    # 2. 之後再等 IDLE_CLOSE_SECONDS — 期間有新動作（lock 檔再出現）→ 續命（視窗保持，動作連續唔彈下彈下）
-    # 3. 冇新動作 → 關閉（動作完成 ≈ 視窗關閉，同步）
-    deadline = time.time() + MIN_SHOW_SECONDS
-    while time.time() < deadline:
-        if os.path.exists(LOCK_FILE):
-            return  # 新動作接手 — 視窗保持
-        if os.path.exists(STOP_FILE):
-            break  # 緊急停止 — 即刻關
-        time.sleep(0.2)
-    idle_deadline = time.time() + IDLE_CLOSE_SECONDS
-    while time.time() < idle_deadline:
-        if os.path.exists(LOCK_FILE):
-            return  # 新動作接手（如 compile 後嘅 refresh）— 續命
-        if os.path.exists(STOP_FILE):
-            break
-        time.sleep(0.2)
+    # 🚨 2026-08-12 FIX：即刻寫 active:false + 關視窗（唔等 5 秒 — 網頁 modal 靠確定撳先關，唔會「彈一下消失」）
+    # 之前等 MIN_SHOW(3s)+IDLE(2s) → 完成後網頁一直 active:true → modal「不停出現」→ 用戶 refresh 先消失（「冇確定就關閉」）
+    try:
+        _hide_window()
+        _write_status(False)  # 網站 poll 到就關警告視窗
+    except Exception:
+        pass
+    # 清 stop flag（完成後唔殘留）
     try:
         if os.path.exists(STOP_FILE):
             os.remove(STOP_FILE)
     except Exception:
         pass
-    _hide_window()
-    _write_status(False)  # 網站 poll 到就關警告視窗
-    # 🚨 2026-08-10 修：唔好喺 release 清 steps（完成後用戶未撳確定 — 步驟字句要保留顯示 — 用戶投訴）
-    # 清 steps 已經喺「下一個任務入口」做（compile/部署/剷除開始 — 自動清舊任務）
     print("🛡️  [CONTROL] 控制結束，警告視窗已關閉")
+    # 清 steps 已經喺「下一個任務入口」做（compile/部署/剷除開始 — 自動清舊任務）
 
 
 def _ensure_window_thread():

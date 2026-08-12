@@ -72,12 +72,30 @@ def do_restart_mt5():
         _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
         try:
             import json as _j2
-            with open(_sf + '.tmp', 'w', encoding='utf-8') as _f2:
-                _j2.dump([{"text": "關閉 MT5", "status": "doing"},
-                          {"text": "載入熱鍵設定", "status": "pending"},
-                          {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
-            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
-            os.replace(_sf + '.tmp', _sf)
+            # 🚨 2026-08-12 FIX：累積模式（保留現有 steps — 部署入口已寫 4 步 — 唔好覆寫走）
+            _cur_rst = []
+            try:
+                if os.path.isfile(_sf):
+                    _cur_rst = _j2.load(open(_sf, 'r', encoding='utf-8'))
+                    if not isinstance(_cur_rst, list):
+                        _cur_rst = []
+            except Exception:
+                _cur_rst = []
+            _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+            # append 重啟 3 步（同名更新）
+            for _rst in [{"text": "關閉 MT5", "status": "doing"},
+                         {"text": "載入熱鍵設定", "status": "pending"},
+                         {"text": "重新啟動 MT5", "status": "pending"}]:
+                _fnd = False
+                for _s in _cur_rst:
+                    if _s.get('text') == _rst['text']:
+                        _s['status'] = _rst['status']
+                        _fnd = True
+                        break
+                if not _fnd:
+                    _cur_rst.append(_rst)
+            with open(_sf, 'w', encoding='utf-8') as _f2:
+                _j2.dump(_cur_rst, _f2, ensure_ascii=False)
         except Exception:
             pass
     except Exception:
@@ -127,19 +145,27 @@ def do_restart_mt5():
     if pid:
         # Extra wait for Navigator to fully load + refresh
         time.sleep(10)
-        # 🚨 2026-08-10：重啟完成 → 清警告 flag（視窗關閉）
+        # 🚨 2026-08-12 FIX：重啟完成 → 唔好寫「等待操作開始」覆寫（保留現有 steps — 更新重啟 3 步 done — 完整流程唔消失）
         try:
             _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
             if os.path.exists(_rf):
                 os.remove(_rf)
             _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
             if os.path.exists(_sf):
-                # 🚨 2026-08-12：寫「等待操作開始…」（唔係空 [] — 空 → 網頁彈嚟彈去）
                 import json as _j3
-                with open(_sf + '.tmp', 'w', encoding='utf-8') as _f3:
-                    _j3.dump([{'text': '等待操作開始…', 'status': 'pending'}], _f3)
-                # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
-                os.replace(_sf + '.tmp', _sf)
+                _cur_rst2 = []
+                try:
+                    _cur_rst2 = _j3.load(open(_sf, 'r', encoding='utf-8'))
+                    if not isinstance(_cur_rst2, list):
+                        _cur_rst2 = []
+                except Exception:
+                    _cur_rst2 = []
+                for _s in _cur_rst2:
+                    if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5'):
+                        _s['status'] = 'done'
+                if _cur_rst2:
+                    with open(_sf, 'w', encoding='utf-8') as _f3:
+                        _j3.dump(_cur_rst2, _f3, ensure_ascii=False)
         except Exception:
             pass
         print(f"✅ MT5 restarted, PID={pid}")
@@ -764,7 +790,25 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         pass
     
     print(f"❌ {ea_name} attach failed after {max_retries} attempts")
-    _clear_steps()
+    # 🚨 2026-08-12 FIX：失敗 → 寫「附加失敗」steps（唔係「等待操作開始」— 用戶要知道失敗 + 確定/緊急停止）
+    try:
+        import json as _jfl
+        _sf_fl = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+        _cur_fl = []
+        try:
+            if os.path.isfile(_sf_fl):
+                _cur_fl = _jfl.load(open(_sf_fl, 'r', encoding='utf-8'))
+                if not isinstance(_cur_fl, list):
+                    _cur_fl = []
+        except Exception:
+            _cur_fl = []
+        _cur_fl = [s for s in _cur_fl if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+        if not any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_fl):
+            _cur_fl.append({'text': f'附加 {ea_name} 失敗', 'status': 'done'})
+        with open(_sf_fl, 'w', encoding='utf-8') as _f:
+            _jfl.dump(_cur_fl, _f, ensure_ascii=False)
+    except Exception:
+        pass
     return False
 
 
@@ -1244,6 +1288,34 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             return False
         print(f"🎯 用熱鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+        # 🚨 2026-08-12 FIX：steps 喺函數開頭寫（開圖表之前 — 用戶撳部署即刻見到「部署進行中」）
+        # 🚨 2026-08-12 FIX2：直接覆寫（唔用 _update_steps 累積 — 新任務開始清舊任務 steps — spec：唔跨任務累積）
+        # 🚨 2026-08-12 FIX3：保留「重啟 MT5」3 步（部署前 ensure_hotkey 重啟寫嘅 — 唔好洗走 — 完整流程）
+        _steps = [
+            {"text": f"部署 {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
+            {"text": f"開新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
+            {"text": f"附加 {ea_name}（熱鍵 {combo}）", "status": "pending"},
+            {"text": "驗證心跳/MT5 log", "status": "pending"},
+        ]
+        try:
+            import json as _jdep
+            _sf_dep = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+            _prev_dep = []
+            try:
+                if os.path.isfile(_sf_dep):
+                    _prev_dep = _jdep.load(open(_sf_dep, 'r', encoding='utf-8'))
+                    if not isinstance(_prev_dep, list):
+                        _prev_dep = []
+            except Exception:
+                _prev_dep = []
+            # 保留「重啟 MT5」3 步（已完成嘅留低 — 部署流程一部分）+ 過濾舊任務/等待
+            _RESTART_TEXTS = ('關閉 MT5', '載入熱鍵設定', '重新啟動 MT5')
+            _kept = [s for s in _prev_dep if isinstance(s, dict) and s.get('text') in _RESTART_TEXTS]
+            with open(_sf_dep, 'w', encoding='utf-8') as _fdep:
+                _jdep.dump(_kept + _steps, _fdep, ensure_ascii=False)
+        except Exception:
+            pass
+        time.sleep(0.8)  # 🚨 網頁 poll 捕到「部署」進行中
         # 🚨 2026-08-10 部署穩定性：一次過 reload（hotkeys.ini mtime > MT5 啟動 → 外部寫入未 load — reload 一次）
         # 唔好每次部署同步 reload（之前 server ensure_hotkey sleep 50+55 = 卡 105 秒 — 「第一次冇反應」）
         try:
@@ -1348,16 +1420,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                 pass
         except Exception:
             pass
-        # 🚨 2026-08-10：警告視窗步驟（一排排 — 同任務內累積）
-        # 部署係「新任務」→ 清舊任務步驟（唔同任務唔累積 — 用戶要求）
-        _clear_steps()
-        _steps = [
-            {"text": f"部署 {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
-            {"text": f"開新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
-            {"text": f"附加 {ea_name}（熱鍵 {combo}）", "status": "pending"},
-            {"text": "驗證心跳/MT5 log", "status": "pending"},
-        ]
-        _update_steps(_steps)
+        # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
         # send 快捷鍵
         _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 熱鍵冇效 — 唔好誤判成功）
         _sk(combo)
@@ -1426,6 +1489,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                                                 _steps[1]['status'] = 'done'
                                                 _steps[2]['status'] = 'doing'
                                                 _update_steps(_steps)
+                                                time.sleep(0.8)  # 🚨 2026-08-12：每步停留（網頁捕到「附加」進行中）
                                             except Exception:
                                                 pass
                                             acted = True
@@ -1499,6 +1563,16 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
             print(f"✅ {ea_name} 熱鍵附加流程完成（心跳等 tick）")
+        # 🚨 2026-08-12 FIX：附加完成 → step 3 done + step 4 doing → delay → 全部 done（確定出現）
+        try:
+            _steps[2]['status'] = 'done'
+            _steps[3]['status'] = 'doing'
+            _update_steps(_steps)
+            time.sleep(0.8)
+            _steps[3]['status'] = 'done'
+            _update_steps(_steps)
+        except Exception:
+            pass
         # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
         try:
             _sk('%r')
@@ -1548,7 +1622,25 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD'):
                     print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（正確圖表）")
                 else:
                     print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 返回失敗）")
-                    _clear_steps()
+                    # 🚨 2026-08-12 FIX：寫失敗 steps（唔係「等待操作開始」）
+                    try:
+                        import json as _jlv
+                        _sf_lv = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                        _cur_lv = []
+                        try:
+                            if os.path.isfile(_sf_lv):
+                                _cur_lv = _jlv.load(open(_sf_lv, 'r', encoding='utf-8'))
+                                if not isinstance(_cur_lv, list):
+                                    _cur_lv = []
+                        except Exception:
+                            _cur_lv = []
+                        _cur_lv = [s for s in _cur_lv if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+                        if not any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_lv):
+                            _cur_lv.append({'text': f'驗證 {ea_name} 啟動失敗（圖表不符）', 'status': 'done'})
+                        with open(_sf_lv, 'w', encoding='utf-8') as _f:
+                            _jlv.dump(_cur_lv, _f, ensure_ascii=False)
+                    except Exception:
+                        pass
                     return False
         except Exception:
             pass
