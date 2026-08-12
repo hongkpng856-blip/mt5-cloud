@@ -510,6 +510,14 @@ def _refresh_auto_trade_cache(user):
             if status_account:
                 with _auto_trade_lock:
                     _auto_trade_cache["account_info"] = status_data.get("account_info", {'login': status_account})
+                # 🚨 2026-08-12：save to DB agent.account_info（dashboard HTML template needs it）
+                try:
+                    agent = Agent.query.filter_by(user_id=user.id).first()
+                    if agent and not agent.account_info or agent.account_info == '{}':
+                        agent.account_info = json.dumps(status_data.get("account_info", {'login': status_account}))
+                        db.session.commit()
+                except Exception:
+                    pass
     except Exception as e:
         print(f"[DEBUG] auto_trade_status read failed: {e}")
         pass
@@ -532,9 +540,12 @@ def api_dashboard():
     now = _t.time()
     global _auto_trade_cache
     if now - _auto_trade_cache["timestamp"] > 30:
-        # Spawn background thread — don't block dashboard!
-        import threading as _th
-        _th.Thread(target=_refresh_auto_trade_cache, args=(current_user,), daemon=True).start()
+        # 🚨 2026-08-12：first call → sync（background thread fails silently）
+        if _auto_trade_cache["timestamp"] == 0:
+            _refresh_auto_trade_cache(current_user)
+        else:
+            import threading as _th
+            _th.Thread(target=_refresh_auto_trade_cache, args=(current_user,), daemon=True).start()
     
     with _auto_trade_lock:
         cache_result = _auto_trade_cache["result"]
@@ -912,11 +923,11 @@ def api_ea_library_refresh():
         with open(os.path.join(_adir_rf, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write('重新整理配對庫')
         with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
-            _os_replace_0.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             _jrf.dump([
                 {'text': '重新整理配對庫 進行中…', 'status': 'doing'},
                 {'text': '完成重新整理', 'status': 'pending'},
             ], _f, ensure_ascii=False)
+            _os_replace_0.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
     except Exception:
         pass
     try:
@@ -991,11 +1002,11 @@ def api_ea_library_refresh():
         # 成功 → steps done（完成重新整理）
         try:
             with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
-                _os_replace_1.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 _jrf.dump([
                     {'text': '重新整理配對庫 進行中…', 'status': 'done'},
                     {'text': '完成重新整理', 'status': 'done'},
                 ], _f, ensure_ascii=False)
+                _os_replace_1.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             _sf_show = os.path.join(_adir_rf, '.ai_control.show')
             if os.path.exists(_sf_show):
                 os.remove(_sf_show)
@@ -1012,10 +1023,10 @@ def api_ea_library_refresh():
         # 失敗 → steps 顯示失敗原因（紅色）+ 確定（唔需要緊急停止）
         try:
             with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
-                _os_replace_2.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 _jrf.dump([
                     {'text': '重新整理配對庫 進行中…', 'status': 'done'},
                     {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
+                _os_replace_2.replace(_f.name, _f.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 ], _f, ensure_ascii=False)
             _sf_show = os.path.join(_adir_rf, '.ai_control.show')
             if os.path.exists(_sf_show):
@@ -1088,8 +1099,7 @@ def api_ea_remove_local(filename):
         _adir_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         with open(os.path.join(_adir_del, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'剷除 {base_only}')
-        with open(os.path.join(_adir_del, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
-            _os_replace_3.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
+        with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
             # 🚨 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
             _jdel.dump([
                 {'text': f'開始剷除 {base_only}', 'status': 'doing'},
@@ -1099,8 +1109,9 @@ def api_ea_remove_local(filename):
                 {'text': '清理配對設定 + 釋放熱鍵', 'status': 'pending'},
                 {'text': '完成剷除', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
-    except Exception:
-        pass
+            os.replace(_f2.name, _f2.name[:-4])  # 🚨 原子：寫完先 replace
+    except Exception as e_del:
+        print(f"[DEBUG] remove-local steps write failed: {e_del}")
     # 安全檢查：檔名只可以係字母數字底線（防 path traversal）
     # 🚨 2026-08-08：接受帶 .mq5/.ex5 副檔名（前端可能傳帶副檔名嘅名）
     import re as _re
@@ -1194,11 +1205,11 @@ def api_ea_install_local(filename):
         with open(os.path.join(_adir_in, '.ai_control.show'), 'w', encoding='utf-8') as _f:
             _f.write(f'配對 {_base0}')
         with open(os.path.join(_adir_in, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
-            _os_replace_4.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
             _jin.dump([
                 {'text': f'配對 {_base0} 進行中…', 'status': 'doing'},
                 {'text': '完成配對', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
+            _os_replace_4.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
     except Exception:
         pass
 
@@ -1554,10 +1565,10 @@ def _restart_mt5():
             with open(os.path.join(_ad, '.ai_control.show'), 'w', encoding='utf-8') as _f:
                 _f.write('🔄 重啟 MT5 中（載入熱鍵）— 請稍候約 1 分鐘')
             with open(os.path.join(_ad, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
-                _os_replace_5.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
                 _j.dump([{"text": "關閉 MT5", "status": "doing"},
                          {"text": "載入熱鍵設定", "status": "pending"},
                          {"text": "重新啟動 MT5", "status": "pending"}], _f2, ensure_ascii=False)
+                _os_replace_5.replace(_f2.name, _f2.name[:-4])  # 🚨 原子寫入（tmp → 正式）
         except Exception:
             pass
         _sp.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
