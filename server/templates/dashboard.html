@@ -543,35 +543,17 @@
 <div id="toastContainer"></div>
     <h1 style="margin-bottom:20px;font-size:18px;font-weight:600;letter-spacing:-0.02em">Dashboard</h1>
 
-    <!-- Agent Status -->
+    <!-- Agent Status（2026-08-12 簡潔化：Account 合併 Server — 刪 Agent ID/Binding — 用戶要求唔好佔咁大） -->
     <div class="card">
         <div class="card-title"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></div>
         <div class="stat-row">
-            <div class="stat-box"><div class="label">Agent ID</div><div class="value" id="agentId" style="font-size:14px">—</div></div>
-            <div class="stat-box"><div class="label">Account</div><div class="value" id="accountLogin" style="font-size:14px">—</div></div>
-            <div class="stat-box"><div class="label">Server</div><div class="value" id="accountServer" style="font-size:14px">—</div></div>
+            <div class="stat-box"><div class="label">Account</div><div class="value" id="accountLogin" style="font-size:14px">— <span id="accountServer" style="font-size:11px;color:#8b949e"></span></div></div>
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
-            <div class="stat-box"><div class="label">Binding</div><div class="value" id="bindingStatus">— <button id="bindBtn" onclick="toggleBind()" style="font-size:11px;padding:2px 8px;margin-left:4px;cursor:pointer"><i class="icon-link"></i> 綁定</button></div></div>
-            <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount">0</div></div>
+            <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount" title="MT5 帳戶當前持倉數量（EA 開緊嘅單）">0</div></div>
         </div>
     </div>
 
-<!-- 活動記錄（持久化 — refresh 後依然存在） -->
-<div class="card">
-    <div class="card-title"><i class="icon-history" style="color:var(--accent)"></i> 活動記錄 <span class="badge badge-gray" id="activityCount">0</span>
-        <label style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);cursor:pointer" title="顯示/隱藏「已更新資料庫」恆常記錄">
-            <input type="checkbox" id="showDbUpdates" style="accent-color:#10b981" onchange="toggleDbUpdates()"> 顯示資料庫更新
-        </label>
-        <button class="btn btn-sm" onclick="fetchActivity()" title="重新整理"><i class="icon-refresh-cw"></i></button>
-    </div>
-    <div class="scroll-box" style="max-height:280px">
-        <table class="ea-table" id="activityTable">
-            <thead><tr><th><i class="icon-clock" style="font-size:11px"></i> 時間</th><th>動作</th><th>詳情</th></tr></thead>
-            <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody>
-        </table>
-    </div>
-</div>
 
 <!-- 🚨 2026-08-11：EA 倉庫 + 我的配對庫 放喺一個大 card（重新整理掣喺大 card） -->
 <div class="card" style="margin-bottom:16px">
@@ -603,18 +585,14 @@
             <label class="btn" style="cursor:pointer"><i class="icon-upload"></i> 上傳自己嘅 EA
                 <input type="file" id="eaUploadInput" accept=".mq5,.ex5" style="display:none" onchange="uploadEA()">
             </label>
-            <span style="display:flex;align-items:center;gap:4px;margin-left:auto">
-                <span style="font-size:12px;color:var(--text-muted)">Lots:</span>
-                <input type="number" id="defaultLot" value="1.00" min="0.01" max="100" step="0.01" style="width:55px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:13px;text-align:center">
-                <button class="btn" onclick="applyAllLots()" style="padding:4px 10px;font-size:12px"><i class="icon-copy"></i> 全部</button>
-            </span>
+
         </div>
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th><i class="icon-activity" style="font-size:11px"></i> 狀態</th><th>Magic</th><th>Symbol</th><th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades</th><th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win</th><th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L</th><th><i class="icon-pencil" style="font-size:11px"></i> Lots</th><th></th>
+                    <th>EA</th><th>來源</th><th><i class="icon-activity" style="font-size:11px"></i> 狀態</th><th>Magic</th><th>Symbol</th><th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades</th><th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win</th><th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L</th><th></th>
                 </tr></thead>
-                <tbody id="eaTableBody"><tr><td colspan="14" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
+                <tbody id="eaTableBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -635,6 +613,23 @@
         <div class="card-title"><i class="icon-network" style="color:var(--accent)"></i> Correlation Matrix</div>
         <div style="overflow-x:auto"><table class="ea-table corr-table" id="corrTable"></table></div>
     </div>
+
+    <!-- 活動記錄（2026-08-12：main 內最底 — 跟返上邊 card 距離） -->
+    <div class="card">
+        <div class="card-title"><i class="icon-history" style="color:var(--accent)"></i> 活動記錄 <span class="badge badge-gray" id="activityCount">0</span>
+            <label style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);cursor:pointer" title="顯示/隱藏「已更新資料庫」恆常記錄">
+                <input type="checkbox" id="showDbUpdates" style="accent-color:#10b981" onchange="toggleDbUpdates()"> 顯示資料庫更新
+            </label>
+            <button class="btn btn-sm" onclick="fetchActivity()" title="重新整理"><i class="icon-refresh-cw"></i></button>
+        </div>
+        <div class="scroll-box" style="max-height:280px">
+            <table class="ea-table" id="activityTable">
+                <thead><tr><th><i class="icon-clock" style="font-size:11px"></i> 時間</th><th>動作</th><th>詳情</th></tr></thead>
+                <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
@@ -839,7 +834,9 @@ async function loadEAConfig() {
         );
 
         const dl = eaMappings['_default_lot'] || 1.00;
-        document.getElementById('defaultLot').value = dl;
+        // 🚨 2026-08-12 FIX：defaultLot input 已刪（Lots 欄位移除）— null check（之前 null.value → 炸 → 配對庫唔 render！）
+        const _dlEl = document.getElementById('defaultLot');
+        if (_dlEl) _dlEl.value = dl;
 
         // 已刪除嘅 EA
         const removed = eaMappings['_removed'] || [];
@@ -906,7 +903,7 @@ async function loadEAConfig() {
                     <div style="font-size:9px;color:#8b949e;margin-top:1px">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':(eaMappings[name]?'停止中':'未配對')}</div>
                     ${runtimeStatus[name]?`<div style="font-size:9px;color:${runtimeStatus[name]==='running'?'var(--success)':runtimeStatus[name]==='stopped'?'var(--text-dim)':'#d29922'};margin-top:1px" title="控制層心跳">${runtimeStatus[name]==='running'?'❤ 心跳運行':runtimeStatus[name]==='stopped'?'● 已停止':'◇ 無心跳'}</div>`:''}
                 </td>
-                <td style="text-align:center;font-size:12px;color:${eaMappings[name]?'var(--text)':'var(--text-dim)'}">${eaMappings[name]?('Magic '+magic):'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
+                <td style="text-align:center;font-size:12px;color:${eaMappings[name]?'var(--text)':'var(--text-dim)'}">${eaMappings[name]?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
                 <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
                     <span>${sym||'—'}</span>
                     <select class="ea-sym" data-ea="${name}" style="display:none">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select>
@@ -915,7 +912,6 @@ async function loadEAConfig() {
                 <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
-                <td><input type="number" class="ea-lot" data-ea="${name}" value="${lot}" min="0.01" max="100" step="0.01"></td>
                 <td style="white-space:nowrap">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:96px">
                     <button class="btn" style="padding:3px 6px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
@@ -947,13 +943,16 @@ function applyAllLots() {
 
 async function saveEAConfig() {
     const mappings = {};
-    mappings['_default_lot'] = parseFloat(document.getElementById('defaultLot').value) || 1.00;
+    // 🚨 2026-08-12 FIX：defaultLot input 已刪（Lots 欄位移除）— null check（之前 null.value → 炸 → config 冇寫入！）
+    const _dlE2 = document.getElementById('defaultLot');
+    mappings['_default_lot'] = _dlE2 ? (parseFloat(_dlE2.value) || 1.00) : 1.00;
     document.querySelectorAll('.ea-sym').forEach(sel => {
         const name = sel.dataset.ea;
         mappings[name] = sel.value;
         mappings[name+'_magic'] = document.querySelector('.ea-magic[data-ea="'+name+'"]').value || '240701';
         mappings[name+'_tf'] = document.querySelector(`.ea-tf[data-ea="${name}"]`).value;
-        mappings[name+'_lot'] = parseFloat(document.querySelector(`.ea-lot[data-ea="${name}"]`).value) || 1.00;
+        var _lotEl = document.querySelector('.ea-lot[data-ea="'+name+'"]');
+        mappings[name+'_lot'] = _lotEl ? (parseFloat(_lotEl.value) || 1.00) : 1.00;
     });
     await fetch('/api/ea-config', {
         method: 'POST',
@@ -989,37 +988,53 @@ async function loadDashboard() {
     try {
         const res = await fetch('/api/dashboard');
         const d = await res.json();
-        document.getElementById('agentId').textContent = d.agent_id || '—';
-        document.getElementById('accountLogin').textContent = d.account?.login || '—';
-        document.getElementById('accountServer').textContent = d.account?.server || '—';
-        document.getElementById('balance').textContent = d.account ? '$'+Number(d.account.balance).toLocaleString() : '—';
-        document.getElementById('equity').textContent = d.account ? '$'+Number(d.account.equity).toLocaleString() : '—';
+        // 🚨 2026-08-12：Agent card 簡潔化（刪 agentId/binding）— 全部元素 null check（HTML cache 舊版冇 accountServer → 之前炸 → Balance/Equity 唔更新）
+        const _idEl = document.getElementById('agentId');
+        if (_idEl) _idEl.textContent = d.agent_id || '—';
+        const _alEl = document.getElementById('accountLogin');
+        if (_alEl) _alEl.textContent = d.account?.login || '—';
+        const _asEl = document.getElementById('accountServer');
+        if (_asEl) _asEl.textContent = d.account?.server || '—';
+        const _balEl = document.getElementById('balance');
+        if (_balEl) _balEl.textContent = d.account ? '$'+Number(d.account.balance).toLocaleString() : '—';
+        const _eqEl = document.getElementById('equity');
+        if (_eqEl) _eqEl.textContent = d.account ? '$'+Number(d.account.equity).toLocaleString() : '—';
 
-        // Binding status
+        // Binding status（2026-08-12：Agent card 簡潔化 — binding 區塊已刪 — 保留邏輯（null check — 手機/舊版相容））
         const bindEl = document.getElementById('bindingStatus');
         const bindBtn = document.getElementById('bindBtn');
-        if (d.bound_account) {
-            if (d.account_matched) {
-                bindEl.innerHTML = '<i class="icon-check-circle" style="color:var(--success)"></i> ' + d.bound_account + ' <button onclick="toggleBind()" style="font-size:11px;padding:2px 8px;cursor:pointer">解除</button>';
-                bindBtn.style.display = 'none';
+        if (bindEl && bindBtn) {
+            if (d.bound_account) {
+                if (d.account_matched) {
+                    bindEl.innerHTML = '<i class="icon-check-circle" style="color:var(--success)"></i> ' + d.bound_account + ' <button onclick="toggleBind()" style="font-size:11px;padding:2px 8px;cursor:pointer">解除</button>';
+                    bindBtn.style.display = 'none';
+                } else {
+                    bindEl.innerHTML = '<i class="icon-alert-triangle" style="color:var(--accent-orange)"></i> 綁定: ' + d.bound_account + ' (當前: ' + (d.account?.login||'無') + ')';
+                    bindBtn.style.display = 'inline';
+                }
             } else {
-                bindEl.innerHTML = '<i class="icon-alert-triangle" style="color:var(--accent-orange)"></i> 綁定: ' + d.bound_account + ' (當前: ' + (d.account?.login||'無') + ')';
-                bindBtn.style.display = 'inline';
+                bindEl.innerHTML = '— <button onclick="toggleBind()" style="font-size:11px;padding:2px 8px;margin-left:4px;cursor:pointer"><i class="icon-link"></i> 綁定</button>';
             }
-        } else {
-            bindEl.innerHTML = '— <button onclick="toggleBind()" style="font-size:11px;padding:2px 8px;margin-left:4px;cursor:pointer"><i class="icon-link"></i> 綁定</button>';
         }
 
         const badge = document.getElementById('statusBadge');
-        if (d.status === 'connected' || d.status === 'running') {
-            badge.textContent = 'Online'; badge.className = 'badge badge-green';
-            heartbeats = d.ea_heartbeats || {};
-        } else {
-            badge.textContent = 'Offline'; badge.className = 'badge badge-red';
+        if (badge) {
+            if (d.status === 'connected' || d.status === 'running') {
+                badge.textContent = 'Online'; badge.className = 'badge badge-green';
+                heartbeats = d.ea_heartbeats || {};
+            } else {
+                badge.textContent = 'Offline'; badge.className = 'badge badge-red';
+            }
         }
 
-        document.getElementById('posCount').textContent = (d.positions||[]).length;
-    } catch(e) {}
+        const _pcEl = document.getElementById('posCount');
+        if (_pcEl) _pcEl.textContent = (d.positions||[]).length;
+    } catch(e) {
+        // 🚨 2026-08-12：顯示 error（之前靜默吞 — Balance/Equity「—」搵唔到原因）
+        console.error('[loadDashboard]', e);
+        const _be = document.getElementById('statusBadge');
+        if (_be) _be.textContent = 'Err: ' + e.message;
+    }
 
     // === Auto-Trade Detector (獨立進程 :5003 — 唯一 detect 來源) ===
     fetchAutoTradeStatus();
@@ -1197,6 +1212,10 @@ function hideControlModal() {
 // Poll AI 控制狀態（watcher/agent 操控電腦時 → 網站都彈警告視窗；完成 → 關）
 // 網站動作完成後唔即刻 hide — 由呢度統一控制（動作真正做完先消失）
 async function pollAiControl() {
+    // 🚨 2026-08-12：modal 隱藏 → 唔 poll（setInterval 2 秒照常 — 慳 CPU — scroll lag 根治）
+    if (!aiControlVisible) {
+        return;
+    }
     try {
         // 1. 讀 steps
         const sr = await fetch('/api/control-steps?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
@@ -1354,7 +1373,7 @@ setInterval(loadEALibrary, 120000); // 🚨 2026-08-12：120 秒（之前 30 秒
 setInterval(fetchEAInventory, 60000); // 🚨 2026-08-12：60 秒（之前 10 秒）
 setInterval(fetchNotifications, 30000); // 🚨 2026-08-12：30 秒（之前 5 秒）
 setInterval(fetchActivity, 60000);  // 🚨 2026-08-12：60 秒（之前 10 秒）
-setInterval(pollAiControl, 700);  // 🚨 2026-08-12：poll 加快（2 秒 → 0.7 秒 — 捕到每步逐步 — 內容平滑更新唔「彈」）網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
+setInterval(pollAiControl, 2000);  // 🚨 2026-08-12：2 秒（之前 700ms — 冇 modal 都轟炸 → lag；pollAiControl 內部顯示時先加速）網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
 
 // 🚨 2026-08-11：配對庫「重新整理」— 即刻刷新 + 警告視窗流程（成功確定 / 失敗紅色+原因+確定）
 async function refreshPairingLibrary() {
