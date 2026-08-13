@@ -1675,6 +1675,36 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         if _hb_ok:
                             print(f"✅ 心跳後備（第二次）: {ea_name} 運行中 — 圖表正確")
                     if not _hb_ok:
+                        # 🚨 2026-08-13 FIX：心跳後備都失敗 → 再等 5 秒重試 log 驗證（log 寫入延遲 — Ichimoku 案例：圖表成功但 log 未寫 → 誤判「圖表不符」）
+                        # （Ichimoku 冇心跳 code — 心跳後備永遠失敗 — 但 log 最終會寫「已啟動」— 第二次 log 驗證）
+                        time.sleep(5)
+                        try:
+                            import glob as _g5
+                            _latest2 = None
+                            _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                            for _d3 in os.listdir(_lg2):
+                                _lgd2 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+                                if os.path.isdir(_lgd2):
+                                    for _f5 in _g5.glob(os.path.join(_lgd2, '*.log')):
+                                        if _latest2 is None or os.path.getmtime(_f5) > os.path.getmtime(_latest2):
+                                            _latest2 = _f5
+                            if _latest2:
+                                _raw2 = open(_latest2, 'rb').read()
+                                _txt2 = None
+                                for _enc2 in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
+                                    try:
+                                        _txt2 = _raw2.decode(_enc2); break
+                                    except Exception:
+                                        continue
+                                if _txt2:
+                                    for _line2 in _txt2.splitlines():
+                                        if ea_name in _line2 and _target_sym in _line2 and ('已启动' in _line2 or '已啟動' in _line2):
+                                            _hb_ok = True
+                                            print(f"✅ log 驗證（第二次）: {ea_name} 喺 {_target_sym} 啟動 — 圖表正確")
+                                            break
+                        except Exception:
+                            pass
+                    if not _hb_ok:
                         # 🚨 2026-08-12 FIX：寫失敗 steps（唔係「等待操作開始」）
                         try:
                             import json as _jlv

@@ -145,8 +145,8 @@
         .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
         .badge-gray { background: var(--bg-muted); color: var(--text-secondary); }
         .badge-blue { background: rgba(59,130,246,0.15); color: var(--info); }
-        .badge-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }  /* 🚨 2026-08-13：測試 EA badge */
-        /* 🚨 2026-08-13：狀態 hover 提示 — 用 JS 動態 tooltip（position:fixed — 唔受 card/scroll-box overflow 遮 — 第一行都唔會被剪） */
+    .badge-orange { background: rgba(245,158,11,0.15); color: #f59e0b; } /* 2026-08-13：測試 EA badge */
+    /* 2026-08-13：狀態 hover 提示 — 用 JS 動態 tooltip（position:fixed — 唔受 card/scroll-box overflow 遮 — 第一行都唔會被剪） */
         .status-tip { cursor: help; display: inline-block; }
 
         /* ─── Stats ─── */
@@ -372,7 +372,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             width: 380px;  /* 2026-08-12 UI 專業化：同電腦版一致（380px） */
-            min-height: 420px;  /* 🚨 2026-08-11：固定最小高度（內容變化唔會縮細/變大 → 抖動根治）；2026-08-12：420px（用戶「唔好留咁多空白」） */
+      min-height: 420px; /* 2026-08-11：固定最小高度（內容變化唔會縮細/變大 → 抖動根治）；2026-08-12：420px（用戶「唔好留咁多空白」） */
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
@@ -396,7 +396,7 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            margin-top: 16px;  /* 🚨 2026-08-12：同上面步驟區分開（用戶要求） */
+      margin-top: 16px; /* 2026-08-12：同上面步驟區分開（用戶要求） */
         }
         .ai-control-stop:hover { background: #b91c1c; }
         .ai-control-stop:disabled { background: #7f1d1d; cursor: wait; }
@@ -431,10 +431,10 @@
             .ea-table select { max-width: 80px; font-size: 10px; }
             .ea-table input { width: 40px; font-size: 10px; }
             .scroll-box { max-height: 300px; overflow-x: auto; }
-            /* 🚨 2026-08-12：768px 以下 modal 寬度 fit（平板/手機 — 唔會 380px 爆出畫面） */
+      /* 2026-08-12：768px 以下 modal 寬度 fit（平板/手機 — 唔會 380px 爆出畫面） */
             .ai-control-box { width: calc(100vw - 32px); max-width: 380px; }
         }
-        /* ─── 📱 手機版（2026-08-12 重新設計 — 提高可閱讀性）─── */
+    /* ─── 手機版（2026-08-12 重新設計 — 提高可閱讀性）─── */
         @media (max-width: 480px) {
             .main { padding: 12px; }
             .card { padding: 14px; margin-bottom: 12px; }
@@ -763,19 +763,19 @@ socket.on('install_result', (data) => {
     if (msg === _lastLog) return; // skip duplicate
     _lastLog = msg;
     if (data.status === 'ok') {
-        showLog('✅ ' + msg, 'log-success');
+    showLog(' '+ msg, 'log-success');
     } else if (data.status === 'sent') {
-        showLog('📡 已發送指令: ' + data.ea, 'log-info');
+    showLog(' 已發送指令: '+ data.ea, 'log-info');
     } else if (data.status === 'info') {
         showLog(msg, 'log-info');
     } else {
-        showLog('❌ ' + (msg || data.ea || 'unknown'), 'log-error');
+    showLog(' '+ (msg || data.ea || 'unknown'), 'log-error');
     }
 });
 
 // === EA Config ===
 let eaMappings = {};
-let runtimeStatus = {};  // ⚠️ 控制層心跳狀態（running/stopped/unknown）
+let runtimeStatus = {}; // 控制層心跳狀態（running/stopped/unknown）
 let allSymbols = [];
 let analysisData = null;
 let heartbeats = {};
@@ -794,8 +794,8 @@ function getSignalHtml(name, sym, tf) {
 
 async function fetchEAInventory() {
     try {
-        // 🚨 2026-08-11 修：移除 AbortSignal.timeout(8000)（可能 timeout → eaDeployStatus 空 → 「已加入」判斷錯）
-        // 🚨 2026-08-11 修：唔再 call loadEALibrary/loadEAConfig（每次 render 成個表格 → scroll 卡 — 佢哋自己 poll）
+    // 2026-08-11 修：移除 AbortSignal.timeout(8000)（可能 timeout → eaDeployStatus 空 → 「已加入」判斷錯）
+    // 2026-08-11 修：唔再 call loadEALibrary/loadEAConfig（每次 render 成個表格 → scroll 卡 — 佢哋自己 poll）
         const res = await fetch('/static/detector/ea_inventory.json?t=' + Date.now());
         const d = await res.json();
         if (d.error) throw new Error(d.error);
@@ -820,7 +820,7 @@ async function loadEAConfig() {
         const res = await fetch('/api/ea-config');
         const data = await res.json();
         eaMappings = data.mappings || {};
-        runtimeStatus = data.runtime_status || {};  // ⚠️ 控制層心跳狀態（running/stopped/unknown）
+    runtimeStatus = data.runtime_status || {}; // 控制層心跳狀態（running/stopped/unknown）
         allSymbols = data.all_symbols || ['EURUSD','GBPUSD','USDJPY','XAUUSD'];
 
         // 搵出已配對嘅 EA（config 入邊有 symbol 嘅就係）
@@ -830,7 +830,7 @@ async function loadEAConfig() {
         );
 
         const dl = eaMappings['_default_lot'] || 1.00;
-        // 🚨 2026-08-12 FIX：defaultLot input 已刪（Lots 欄位移除）— null check（之前 null.value → 炸 → 配對庫唔 render！）
+    // 2026-08-12 FIX：defaultLot input 已刪（Lots 欄位移除）— null check（之前 null.value → 炸 → 配對庫唔 render！）
         const _dlEl = document.getElementById('defaultLot');
         if (_dlEl) _dlEl.value = dl;
 
@@ -840,11 +840,11 @@ async function loadEAConfig() {
         // 過濾：只要未刪除嘅 + 本機有檔案（detector inventory）— MT5 刪除咗就自動消失
         const activeEAs = pairedEAs.filter(name => !removed.includes(name) && eaDeployStatus[name]);
 
-        // 🚨 2026-08-11：配對庫顯示「本機 EA」（未配對都顯示 — 用戶想要）+ 每行有狀態標記（已配對/未配對 — 唔會誤會）
+    // 2026-08-11：配對庫顯示「本機 EA」（未配對都顯示 — 用戶想要）+ 每行有狀態標記（已配對/未配對 — 唔會誤會）
         const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n));
         const allEAs = [...new Set([...activeEAs, ...localEA])];
 
-        // 排序：🟢 運行中喺上面，⚪ 停止中喺下面；已配對優先
+    // 排序： 運行中喺上面， 停止中喺下面；已配對優先
         allEAs.sort((a, b) => {
             const da = (eaDeployStatus[a] && eaDeployStatus[a].deployed) ? 1 : 0;
             const db = (eaDeployStatus[b] && eaDeployStatus[b].deployed) ? 1 : 0;
@@ -865,9 +865,11 @@ async function loadEAConfig() {
             </td></tr>`;
         } else {
             allEAs.forEach(name => {
-            // 🚨 2026-08-13 FIX：用「心跳」判斷 — 冇心跳 → Symbol/Magic 都顯示「—」（用戶提議：冇心跳=唔知運行緊咩 → 唔顯示值）
+      // 2026-08-13 FIX：用「心跳」判斷 — 冇心跳 → Symbol/Magic 都顯示「—」（用戶提議：冇心跳=唔知運行緊咩 → 唔顯示值）
             // （之前用 deployed（熱鍵）— 但係有熱鍵都可能冇運行 → 誤顯示 symbol — 心跳先係「實際運行」）
-            const _alive = runtimeStatus[name] === 'running';
+            // 🚨 2026-08-14：Symbol/Magic 顯示用「已部署」判斷（唔係心跳）— Ichimoku 案例：冇心跳但部署咗（圖表有 EA）→ 顯示 config 真實值
+            // （running/starting/no_hb/unknown = 部署咗 → 顯示；unpaired/undefined = 未部署 →「—」）
+            const _alive = !!(runtimeStatus[name] && runtimeStatus[name] !== 'unpaired');
             let sym = _alive ? (eaMappings[name] || '') : '';
             let magic = eaMappings[name+'_magic'] || '240701';
 
@@ -876,7 +878,7 @@ async function loadEAConfig() {
             const status = eaMappings[name+'_status'] || 'running';
             const isRunning = status === 'running';
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
-            // ⚠️ 系統檔案（Controller — 網頁控制中樞 — 唔可以刪除/暫停）
+      // 系統檔案（Controller — 網頁控制中樞 — 唔可以刪除/暫停）
             const isSystem = name === 'Controller';
 
             // 從 analysis 攞 data（match by magic+symbol）
@@ -910,11 +912,11 @@ async function loadEAConfig() {
                 <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
                 <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td style="white-space:nowrap">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:96px">
-                    <button class="btn" style="padding:3px 6px;font-size:11px;color:#58a6ff;border-color:#58a6ff" onclick="deployEA('${name}','${sym}','${tf}','${magic}','${lot}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i></button>
-                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#d29922;border-color:#d29922" onclick="showReport('${magic}','${sym}')" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i></button>`:''}
-                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;${isRunning?'color:#d29922;border-color:#d29922':'color:#3fb950;border-color:#3fb950'}" onclick="toggleEA('${name}')" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i>':'<i class="icon-play" style="font-size:11px"></i>'}</button>`:''}
-                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px;color:#f85149;border-color:#f85149" onclick="deleteEA('${name.split('.')[0]}')" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i></button>`:''}
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:150px">
+                    <button class="btn" style="padding:2px 8px;font-size:11px" onclick="showSymbolPicker('${name}','${tf||'H1'}','${magic||''}','${lot||'1.00'}','${sym||''}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i> 部署</button>
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-file-chart-column&quot; style=&quot;color:var(--accent)&quot;></i> 診斷報告', '顯示 <b>${name}</b> 嘅診斷報告（Magic: ${magic||'—'} / Symbol: ${sym||'—'}）？', () => showReport('${magic}','${sym}'))" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i> 報告</button>`:''}
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-pause&quot; style=&quot;color:var(--accent)&quot;></i> ${isRunning?'暫停':'繼續'} EA', '${isRunning?'<b>'+name+'</b> 將從圖表移除（停止交易）— 配置保留，可隨時「繼續」恢復。':'<b>'+name+'</b> 將重新附加至圖表（恢復交易）— 使用原有配置。'}', () => toggleEA('${name}'))" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i> 暫停':'<i class="icon-play" style="font-size:11px"></i> 繼續'}</button>`:''}
+          ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-trash-2&quot; style=&quot;color:var(--danger)&quot;></i> 刪除 EA', '確定刪除 <b>${name}</b>？<br><br>將刪除：<br>• 本機檔案（.mq5 / .ex5）<br>• 配對設定（Symbol / Magic / 時間框架）<br><br>此操作不可恢復 — 需重新配對方可使用。', () => deleteEA('${name.split('.')[0]}'))" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i> 刪除</button>`:''}
                     ${isSystem?'<span style="font-size:10px;color:#58a6ff;margin-left:2px" title="系統控制中樞 — 自動運行"><i class="icon-shield-check" style="font-size:11px"></i></span>':''}
                     </div>
                 </td>
@@ -923,7 +925,7 @@ async function loadEAConfig() {
 
         } // end else
 
-        // 🚨 2026-08-12：保存 scroll 位置（配對庫表格重寫 → scroll 唔跳 — 用戶「scroll 唔順暢」）
+    // 2026-08-12：保存 scroll 位置（配對庫表格重寫 → scroll 唔跳 — 用戶「scroll 唔順暢」）
         const _tb2 = document.getElementById('eaTableBody');
         const _sb2 = _tb2 ? _tb2.closest('.scroll-box') : null;
         const _st2 = _sb2 ? _sb2.scrollTop : 0;
@@ -940,7 +942,7 @@ function applyAllLots() {
 
 async function saveEAConfig() {
     const mappings = {};
-    // 🚨 2026-08-12 FIX：defaultLot input 已刪（Lots 欄位移除）— null check（之前 null.value → 炸 → config 冇寫入！）
+  // 2026-08-12 FIX：defaultLot input 已刪（Lots 欄位移除）— null check（之前 null.value → 炸 → config 冇寫入！）
     const _dlE2 = document.getElementById('defaultLot');
     mappings['_default_lot'] = _dlE2 ? (parseFloat(_dlE2.value) || 1.00) : 1.00;
     document.querySelectorAll('.ea-sym').forEach(sel => {
@@ -956,7 +958,7 @@ async function saveEAConfig() {
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({mappings})
     });
-    showLog('✅ EA config saved!');
+  showLog(' EA config saved!');
 
     // 如果 Agent 在線，自動發送安裝指令
     const dashRes = await fetch('/api/dashboard');
@@ -965,7 +967,7 @@ async function saveEAConfig() {
         const eaNames = Array.from(document.querySelectorAll('.ea-sym')).map(s => s.dataset.ea);
         socket.emit('agent_install_ea', { agent_id: dashData.agent_id, ea_name: 'all', ea_list: eaNames });
     } else {
-        showLog('💡 Agent 離線，連線後會自動同步安裝 EA ✅', 'log-warn');
+    showLog(' Agent 離線，連線後會自動同步安裝 EA ', 'log-warn');
     }
 }
 
@@ -985,7 +987,7 @@ async function loadDashboard() {
     try {
         const res = await fetch('/api/dashboard');
         const d = await res.json();
-        // 🚨 2026-08-12：Agent card 簡潔化（刪 agentId/binding）— 全部元素 null check（HTML cache 舊版冇 accountServer → 之前炸 → Balance/Equity 唔更新）
+    // 2026-08-12：Agent card 簡潔化（刪 agentId/binding）— 全部元素 null check（HTML cache 舊版冇 accountServer → 之前炸 → Balance/Equity 唔更新）
         const _idEl = document.getElementById('agentId');
         if (_idEl) _idEl.textContent = d.agent_id || '—';
         const _alEl = document.getElementById('accountLogin');
@@ -1027,7 +1029,7 @@ async function loadDashboard() {
         const _pcEl = document.getElementById('posCount');
         if (_pcEl) _pcEl.textContent = (d.positions||[]).length;
     } catch(e) {
-        // 🚨 2026-08-12：顯示 error（之前靜默吞 — Balance/Equity「—」搵唔到原因）
+    // 2026-08-12：顯示 error（之前靜默吞 — Balance/Equity「—」搵唔到原因）
         console.error('[loadDashboard]', e);
         const _be = document.getElementById('statusBadge');
         if (_be) _be.textContent = 'Err: ' + e.message;
@@ -1176,25 +1178,25 @@ async function fetchNotifications() {
 // === AI 控制警告視窗（網站版）===
 let aiControlVisible = false;  // 追蹤視窗狀態（避免重複 show/hide 閃爍）
 let minShowUntil = 0;  // 最少顯示時間（防「彈一下」就消失）
-let manualDeployActive = false;  // ⚠️ 手動部署鎖定：pollAiControl 唔可以關閉（完成先關）
+let manualDeployActive = false; // 手動部署鎖定：pollAiControl 唔可以關閉（完成先關）
 function showControlModal(actionDesc, detailMsg) {
     const modal = document.getElementById('aiControlModal');
     const prog = document.getElementById('aiControlProg');
     const desc = document.getElementById('aiControlDesc');
-    // 🚨 2026-08-11：新操作彈出 → 清舊內容（唔殘留上一個操作資訊 + 按鈕正常 — 用戶投訴）
+  // 2026-08-11：新操作彈出 → 清舊內容（唔殘留上一個操作資訊 + 按鈕正常 — 用戶投訴）
     const sc0 = document.getElementById('aiControlSteps');
     if (sc0) sc0.innerHTML = '';
     const stop0 = document.getElementById('aiControlStopBtn');
     if (stop0) { stop0.style.display = 'inline-flex'; stop0.disabled = false; }
     const close0 = document.getElementById('aiControlCloseBtn');
     if (close0) close0.style.display = 'none';
-    // 🚨 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表 — 同電腦版一致）
+  // 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表 — 同電腦版一致）
     if (prog) { prog.style.display = 'none'; prog.textContent = actionDesc || '正在處理'; prog.style.color = 'inherit'; }
     if (desc) desc.textContent = detailMsg || '請勿操作鍵盤或滑鼠！';
     if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
-    // 🚨 2026-08-11：記錄「當前任務」時間戳（poll 用嚟判斷舊 steps 唔顯示 — 新任務開始唔殘留上一個操作）
+  // 2026-08-11：記錄「當前任務」時間戳（poll 用嚟判斷舊 steps 唔顯示 — 新任務開始唔殘留上一個操作）
     window._modalShownAt = Date.now();
-    // 🚨 2026-08-12：新任務開始 → 清空步驟區 + 顯示「等待操作開始」
+  // 2026-08-12：新任務開始 → 清空步驟區 + 顯示「等待操作開始」
     // 等 poll 讀到「新 steps」（steps 含當前 EA 名）先 render — 唔會顯示舊任務殘留 → 流程閃
     if (sc0) sc0.innerHTML = '<div style="padding:2px 0;color:#71717a;font-size:12px">[等待] 等待操作開始…</div>';
     window._stepsShow = false;  // poll 第一次見新 steps → 顯示
@@ -1209,7 +1211,7 @@ function hideControlModal() {
 // Poll AI 控制狀態（watcher/agent 操控電腦時 → 網站都彈警告視窗；完成 → 關）
 // 網站動作完成後唔即刻 hide — 由呢度統一控制（動作真正做完先消失）
 async function pollAiControl() {
-    // 🚨 2026-08-12：modal 隱藏 → 唔 poll（setInterval 2 秒照常 — 慳 CPU — scroll lag 根治）
+  // 2026-08-12：modal 隱藏 → 唔 poll（setInterval 2 秒照常 — 慳 CPU — scroll lag 根治）
     if (!aiControlVisible) {
         return;
     }
@@ -1227,7 +1229,7 @@ async function pollAiControl() {
             const stepsMtime = data.mtime ? (data.mtime * 1000) : 0;
             
             if (sc && steps.length > 0) {
-                // 🚨 2026-08-12 FIX：steps mtime 舊過「modal 彈出時間」→ 舊任務殘留（唔顯示 — 保持等待）
+        // 2026-08-12 FIX：steps mtime 舊過「modal 彈出時間」→ 舊任務殘留（唔顯示 — 保持等待）
                 // （remove-local 寫 steps 前 — poll 會讀到上一個任務 steps → 「彈幾個不知名步驟」！）
                 if (window._modalShownAt && stepsMtime && stepsMtime < window._modalShownAt) {
                     // 舊殘留 — 唔 render（保持現有內容）
@@ -1293,9 +1295,9 @@ function emergencyStop() {
         try {
             const res = await fetch('/api/control-guard/stop', { method: 'POST' });
             const d = await res.json();
-            showToast((d.success ? '🛑 緊急停止已觸發！AI 操作會即刻中止' : '❌ 緊急停止失敗: ' + (d.error || '')), 'deleted');
+      showToast((d.success ? ' 緊急停止已觸發！AI 操作會即刻中止' : ' 緊急停止失敗: '+ (d.error || '')), 'deleted');
         } catch(e) {
-            showToast('❌ 緊急停止失敗: ' + e.message, 'deleted');
+      showToast(' 緊急停止失敗: '+ e.message, 'deleted');
         }
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="icon-alert-octagon"></i> 緊急停止'; }
     })();
@@ -1363,18 +1365,18 @@ loadEALibrary();
 fetchEAInventory();
 fetchNotifications();
 fetchActivity();
-setInterval(loadDashboard, 30000);  // 🚨 2026-08-12：30 秒（之前 5 秒 — 統計卡唔使咁密 — scroll 卡根源之一）
-setInterval(loadEAConfig, 60000);   // 🚨 2026-08-12：60 秒（之前 10 秒 — 配對庫表格 render 太頻繁 → scroll 卡）
-setInterval(loadAnalysis, 30000);   // 🚨 2026-08-12：30 秒（之前 10 秒）
-setInterval(loadEALibrary, 120000); // 🚨 2026-08-12：120 秒（之前 30 秒 — EA 倉庫表格重寫 → scroll 卡 — 用「重新整理」手動刷新）
-setInterval(fetchEAInventory, 60000); // 🚨 2026-08-12：60 秒（之前 10 秒）
-setInterval(fetchNotifications, 30000); // 🚨 2026-08-12：30 秒（之前 5 秒）
-setInterval(fetchActivity, 60000);  // 🚨 2026-08-12：60 秒（之前 10 秒）
-setInterval(pollAiControl, 2000);  // 🚨 2026-08-12：2 秒（之前 700ms — 冇 modal 都轟炸 → lag；pollAiControl 內部顯示時先加速）網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
+setInterval(loadDashboard, 30000); // 2026-08-12：30 秒（之前 5 秒 — 統計卡唔使咁密 — scroll 卡根源之一）
+setInterval(loadEAConfig, 60000);  // 2026-08-12：60 秒（之前 10 秒 — 配對庫表格 render 太頻繁 → scroll 卡）
+setInterval(loadAnalysis, 30000);  // 2026-08-12：30 秒（之前 10 秒）
+setInterval(loadEALibrary, 120000); // 2026-08-12：120 秒（之前 30 秒 — EA 倉庫表格重寫 → scroll 卡 — 用「重新整理」手動刷新）
+setInterval(fetchEAInventory, 60000); // 2026-08-12：60 秒（之前 10 秒）
+setInterval(fetchNotifications, 30000); // 2026-08-12：30 秒（之前 5 秒）
+setInterval(fetchActivity, 60000); // 2026-08-12：60 秒（之前 10 秒）
+setInterval(pollAiControl, 2000); // 2026-08-12：2 秒（之前 700ms — 冇 modal 都轟炸 → lag；pollAiControl 內部顯示時先加速）網站警告視窗由 ai_control.json 驅動（電腦操控都彈）
 
-// 🚨 2026-08-11：配對庫「重新整理」— 即刻刷新 + 警告視窗流程（成功確定 / 失敗紅色+原因+確定）
+// 2026-08-11：配對庫「重新整理」— 即刻刷新 + 警告視窗流程（成功確定 / 失敗紅色+原因+確定）
 async function refreshPairingLibrary() {
-    // 🚨 2026-08-12：逐步顯示（刷新邊一項 + 成唔成功 — 用戶要求）
+  // 2026-08-12：逐步顯示（刷新邊一項 + 成唔成功 — 用戶要求）
     const mkSteps = (states) => [
         {'text': '開始重新整理', 'status': states[0]},
         {'text': '掃描本機 EA 檔案', 'status': states[1]},
@@ -1396,8 +1398,8 @@ async function refreshPairingLibrary() {
         const data = await res.json().catch(() => ({}));
         if (data.success) {
             await updSteps(['done','done','done','pending','pending','pending','pending']);
-            // 🚨 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「已加入」/「移去配對」正確）
-            // 🚨 2026-08-11 修：fetchEAInventory 要 await（之前冇 await → loadEALibrary 用舊 eaDeployStatus → detect 唔到已加入）
+      // 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「已加入」/「移去配對」正確）
+      // 2026-08-11 修：fetchEAInventory 要 await（之前冇 await → loadEALibrary 用舊 eaDeployStatus → detect 唔到已加入）
             if (typeof loadEAConfig === 'function') {
                 try { await loadEAConfig(); await updSteps(['done','done','done','done','pending','pending','pending']); await sleep(500); }
                 catch(e) { await updSteps(['done','done','done','done','pending','pending','pending']); }
@@ -1413,11 +1415,11 @@ async function refreshPairingLibrary() {
             if (typeof showLog === 'function') showLog('已重新整理配對庫（攞最新資訊）', 'log-info');
         } else {
             await updSteps(['done','done','done','pending','pending','pending','done']);
-            if (typeof showLog === 'function') showLog('❌ 重新整理失敗: ' + (data.error || 'unknown'), 'log-error');
+      if (typeof showLog === 'function') showLog(' 重新整理失敗: '+ (data.error || 'unknown'), 'log-error');
         }
     } catch(e) {
         try { await updSteps(['done','done','done','pending','pending','pending','done']); } catch(e2) {}
-        if (typeof showLog === 'function') showLog('❌ 重新整理失敗: ' + e.message, 'log-error');
+    if (typeof showLog === 'function') showLog(' 重新整理失敗: '+ e.message, 'log-error');
     }
     // 完成 → steps 有 done（poll 顯示確定 — 唔自動關）
 }
@@ -1425,12 +1427,12 @@ async function refreshPairingLibrary() {
 // === EA Library ===
 async function loadEALibrary() {
     try {
-        // 🚨 2026-08-11 修：唔再自動 call loadEAConfig（loadEAConfig 本身每 10 秒 poll — 已經同步 — 避免每次 render 配對庫表格 → scroll 卡）
-        // 🚨 2026-08-11：cache-busting（強制攞最新 — 唔用瀏覽器 cache）
+    // 2026-08-11 修：唔再自動 call loadEAConfig（loadEAConfig 本身每 10 秒 poll — 已經同步 — 避免每次 render 配對庫表格 → scroll 卡）
+    // 2026-08-11：cache-busting（強制攞最新 — 唔用瀏覽器 cache）
         const res = await fetch('/api/ea-library?t=' + Date.now());
         const data = await res.json();
 
-        // 🚨 2026-08-11：自己攞本機狀態（唔靠 fetchEAInventory 全局 — 確保「已加入」判斷一定準 — 用戶投訴）
+    // 2026-08-11：自己攞本機狀態（唔靠 fetchEAInventory 全局 — 確保「已加入」判斷一定準 — 用戶投訴）
         let localSet = {};
         try {
             const invRes = await fetch('/static/detector/ea_inventory.json?t=' + Date.now());
@@ -1442,12 +1444,12 @@ async function loadEALibrary() {
         const official = (data.files || []).filter(f => f.type === 'official');
         document.getElementById('officialCount').textContent = official.length;
         let oHtml = '';
-        // 🚨 2026-08-13：排序 — 真實 EA 喺前，測試 EA（TestHB_*）喺後（分開測試用同真實）
+    // 2026-08-13：排序 — 真實 EA 喺前，測試 EA（TestHB_*）喺後（分開測試用同真實）
         official.sort((a, b) => ((a.name.startsWith('TestHB')) ? 1 : 0) - ((b.name.startsWith('TestHB')) ? 1 : 0));
         official.forEach(f => {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-            const isTest = baseName.startsWith('TestHB');  // 🚨 2026-08-13：測試 EA 標記
-            // 🚨 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
+      const isTest = baseName.startsWith('TestHB'); // 2026-08-13：測試 EA 標記
+      // 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
             // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
             const localHas = !!(eaDeployStatus[baseName] || localSet[baseName]);                  // 本機有檔案
@@ -1461,7 +1463,7 @@ async function loadEALibrary() {
             </tr>`;
         });
         const offTable = document.querySelector('#officialTable tbody');
-        // 🚨 2026-08-12：保存 scroll 位置（render 重寫表格 → scroll 唔跳 — 用戶「scroll 唔順暢」）
+    // 2026-08-12：保存 scroll 位置（render 重寫表格 → scroll 唔跳 — 用戶「scroll 唔順暢」）
         const _sb = offTable ? offTable.closest('.scroll-box') : null;
         const _st = _sb ? _sb.scrollTop : 0;
         if (offTable) offTable.innerHTML = oHtml || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">—</td></tr>';
@@ -1512,18 +1514,18 @@ async function addEAToPairing(baseName, fileName, source) {
         });
         installData = await installRes.json();
         if (!installData.success) {
-            showLog('❌ 安裝失敗: ' + (installData.error || 'unknown'), 'log-error');
+      showLog(' 安裝失敗: '+ (installData.error || 'unknown'), 'log-error');
             return;
         }
     } catch(e) {
-        showLog('❌ 安裝失敗: ' + e.message, 'log-error');
+    showLog(' 安裝失敗: '+ e.message, 'log-error');
         return;
     }
 
     // Double-check 結果：compile 失敗要警告用戶 + 提供重試
     if (installData.compile_ok === false) {
-        showLog('⚠️ ' + fileName + ' 已複製至本機，但編譯失敗 — MT5 可能未顯示！', 'log-warn');
-        // 🚨 2026-08-10：移除原生 confirm（撳取消後狀態混亂 → 兩個按鈕 + 抽搐 — 用戶投訴）
+    showLog(' '+ fileName + ' 已複製至本機，但編譯失敗 — MT5 可能未顯示！', 'log-warn');
+    // 2026-08-10：移除原生 confirm（撳取消後狀態混亂 → 兩個按鈕 + 抽搐 — 用戶投訴）
         // 直接失敗流程（警告視窗顯示「編譯失敗」+ 緊急停止 — 用戶自己決定）
         return;
     }
@@ -1569,9 +1571,9 @@ async function addEAToPairing(baseName, fileName, source) {
         loadEALibrary();
         loadEAConfig();
         fetchEAInventory();
-        showLog('✅ ' + fileName + ' 已安裝到本機 + 加入配對庫！', 'log-success');
+    showLog(' '+ fileName + ' 已安裝到本機 + 加入配對庫！', 'log-success');
     } else {
-        showLog('❌ 加入失敗', 'log-error');
+    showLog(' 加入失敗', 'log-error');
     }
     // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
 }
@@ -1586,38 +1588,38 @@ async function retryCompile(baseName) {
         });
         const data = await res.json();
         if (data.compile_ok) {
-            showLog('✅ ' + baseName + ' 重試 compile 成功！', 'log-success');
+      showLog(' '+ baseName + ' 重試 compile 成功！', 'log-success');
             loadEALibrary();
             loadEAConfig();
             fetchEAInventory();
             setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 2000);
         } else {
-            showLog('❌ ' + baseName + ' 重試 compile 失敗: ' + (data.message || '未知錯誤'), 'log-error');
+      showLog(' '+ baseName + ' 重試 compile 失敗: '+ (data.message || '未知錯誤'), 'log-error');
         }
     } catch(e) {
-        showLog('❌ 重試失敗: ' + e.message, 'log-error');
+    showLog(' 重試失敗: '+ e.message, 'log-error');
     }
     // 唔即刻 hide — 由 pollAiControl 控制
 }
 
 async function deleteEA(eaName) {
-    // 🚨 2026-08-12 修：移除瀏覽器原生 confirm（「確定要刪除？」彈出 → 同警告視窗交替 → 「彈」！— 影片實據：f_007 捕捉到原生 confirm）
+  // 2026-08-12 修：移除瀏覽器原生 confirm（「確定要刪除？」彈出 → 同警告視窗交替 → 「彈」！— 影片實據：f_007 捕捉到原生 confirm）
     // 直接刪除 — 警告視窗會顯示「開始刪除 XXX」流程（用戶睇到做緊咩 — 唔需要原生確認框）
     showControlModal('正在刪除 ' + eaName + '，請稍候...');
     try {
         // 1. 刪除本機 MQL5/Experts 檔案
         const delRes = await fetch(`/api/ea-library/remove-local/${eaName}`, { method: 'POST' });
         const delData = await delRes.json().catch(() => ({}));
-        // 🚨 2026-08-08：remove-local 一定要成功先刪 config（防半刪除狀態 — 檔案喺 config 冇）
+    // 2026-08-08：remove-local 一定要成功先刪 config（防半刪除狀態 — 檔案喺 config 冇）
         if (!delRes.ok || !delData.success) {
-            showLog(`❌ 刪除檔案失敗: ${delData.error || delRes.status}（檔案未刪除 — 保留配對設定）`, 'log-error');
+      showLog(` 刪除檔案失敗: ${delData.error || delRes.status}（檔案未刪除 — 保留配對設定）`, 'log-error');
             hideControlModal();
             return;
         }
         // 2. 移除 DB config
         const res = await fetch(`/api/ea-config/${eaName}`, { method: 'DELETE' });
         if (res.ok) {
-            showLog(`🗑️ ${eaName} 已刪除（檔案+設定）`, 'log-error');
+      showLog(` ${eaName} 已刪除（檔案+設定）`, 'log-error');
             // 先等 config 更新（eaMappings）再渲染 EA 倉庫 — 唔可以並行（會用舊值顯示「已加入」）
             await loadEAConfig();
             loadEALibrary();
@@ -1632,7 +1634,7 @@ async function toggleEA(eaName) {
         const res = await fetch(`/api/ea-config/${eaName}/toggle`, { method: 'POST' });
         if (res.ok) {
             const data = await res.json();
-            showLog(`${data.status==='paused'?'⏸️ 已暫停':'▶️ 已繼續'} ${eaName}`, data.status==='paused'?'log-warn':'log-success');
+      showLog(`${data.status==='paused'?'⏸ 已暫停':'▶ 已繼續'} ${eaName}`, data.status==='paused'?'log-warn':'log-success');
             loadEAConfig();
         }
     } catch(e) { console.error(e); }
@@ -1640,7 +1642,7 @@ async function toggleEA(eaName) {
 
 // ═══ 品種選擇 modal（2026-08-07：部署前揀交易品種）═══
 let _pendingDeploy = null;
-// 🚨 2026-08-10：只限「確定位置」嘅 symbol（auto_attach _SYM_DOWN 有 Down×N 位置 — 用戶重新確認）
+// 2026-08-10：只限「確定位置」嘅 symbol（auto_attach _SYM_DOWN 有 Down×N 位置 — 用戶重新確認）
 // 1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
 const SYMBOL_OPTIONS = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH', 'AUDUSD'];
 
@@ -1649,7 +1651,7 @@ function showSymbolPicker(eaName, tf, magic, lot, defaultSym) {
     document.getElementById('symbolPickerTitle').innerHTML = '<i class="icon-robot" style="color:var(--accent)"></i> ' + eaName + ' → <span style="color:var(--text-dim)">' + (tf || 'H1') + '</span>';
     const sel = document.getElementById('symbolPickerSelect');
     sel.innerHTML = '';
-    // 🚨 2026-08-10：只顯示確定位置嘅 symbol（唔好 allSymbols 全部 — 揀咗部署唔到）
+  // 2026-08-10：只顯示確定位置嘅 symbol（唔好 allSymbols 全部 — 揀咗部署唔到）
     SYMBOL_OPTIONS.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s;
@@ -1679,9 +1681,9 @@ async function deployEA(eaName, symbol, tf, magic, lot) {
 }
 
 async function doDeployEA(eaName, symbol, tf, magic, lot) {
-    // 🚨 2026-08-12 FIX：防重入（double-click / 重複觸發 → 兩個 deploy_cmd → watcher 逐個處理 → 「完成又彈又執行」）
+  // 2026-08-12 FIX：防重入（double-click / 重複觸發 → 兩個 deploy_cmd → watcher 逐個處理 → 「完成又彈又執行」）
     if (window._deploying) {
-        showLog('⚠️ 上一個部署仲進行緊，請等完成', 'log-warn');
+    showLog(' 上一個部署仲進行緊，請等完成', 'log-warn');
         return;
     }
     window._deploying = true;
@@ -1694,7 +1696,7 @@ async function doDeployEA(eaName, symbol, tf, magic, lot) {
 
 async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
     showControlModal('正在部署 ' + eaName + '，請稍候...');
-    // 🚨 2026-08-10：更新配對庫 hidden select（保存部署揀咗嘅 symbol — 之後顯示返）
+  // 2026-08-10：更新配對庫 hidden select（保存部署揀咗嘅 symbol — 之後顯示返）
     const symSel = document.querySelector(`.ea-sym[data-ea="${eaName}"]`);
     if (symSel) symSel.value = symbol;
     // Step 3: HTTP API deploy (更可靠，唔靠 Socket.IO)
@@ -1704,7 +1706,7 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
     const dashRes = await fetch('/api/dashboard');
     const dashData = await dashRes.json();
     if (dashData.status !== 'connected' && dashData.status !== 'running') {
-        showLog('❌ Agent 離線，無法部署', 'log-error');
+    showLog(' Agent 離線，無法部署', 'log-error');
         hideControlModal();
         return;
     }
@@ -1724,14 +1726,14 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
         });
         const deployData = await deployRes.json();
         if (deployData.success) {
-            // ⚠️ 手動首次部署（Controller）：警告視窗彈出（含指引 + 緊急停止）→
+      // 手動首次部署（Controller）：警告視窗彈出（含指引 + 緊急停止）→
             // 用戶手動 double-click → 心跳出現 → 警告視窗自動關閉
             if (deployData.manual_action) {
                 manualDeployActive = true;  // 鎖定 — pollAiControl 唔可以關閉
                 const closeBtn = document.getElementById('aiControlCloseBtn');
                 if (closeBtn) closeBtn.style.display = 'block';  // 顯示「關閉視窗」（完成/取消可以自己關）
                 showControlModal('請手動完成首次部署（1 秒）', 'MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！');
-                showLog('📌 ' + deployData.message, 'log-info');
+        showLog(' '+ deployData.message, 'log-info');
                 // 心跳 poll：每 2 秒檢查 Controller 心跳 — running → 完成 + 關閉
                 const manualStart = Date.now();
                 const manualPoll = setInterval(async () => {
@@ -1742,7 +1744,7 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
                         if (st === 'running') {
                             clearInterval(manualPoll);
                             manualDeployActive = false;
-                            showToast('✅ Controller 已運行 — 全自動化已啟動！', 'added');
+              showToast(' Controller 已運行 — 全自動化已啟動！', 'added');
                             hideControlModal();
                         } else if (Date.now() - manualStart > 300000) {
                             clearInterval(manualPoll);
@@ -1754,14 +1756,14 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
                 }, 2000);
                 return;
             }
-            showLog(`🚀 ${deployData.message}`, 'log-info');
+      showLog(` ${deployData.message}`, 'log-info');
             // 警告視窗要保持到部署真正完成（watcher auto_attach 完成先關）
             await waitDeployDone(eaName);
         } else {
-            showLog('❌ 部署失敗: ' + (deployData.error || 'Unknown'), 'log-error');
+      showLog(' 部署失敗: '+ (deployData.error || 'Unknown'), 'log-error');
         }
     } catch(e) {
-        showLog('❌ 部署錯誤: ' + e.message, 'log-error');
+    showLog(' 部署錯誤: '+ e.message, 'log-error');
     }
     // 唔即刻 hide — 由 pollAiControl 控制
 }
@@ -1777,7 +1779,7 @@ async function waitDeployDone(eaName, maxWaitMs = 120000) {
             const recent = (d.activities || []).slice(0, 15);
             const done = recent.find(a => a.action === 'deploy_result' && a.ea === eaName);
             if (done) {
-                showLog(done.message.includes('成功') ? '✅ ' + done.message : '❌ ' + done.message,
+        showLog(done.message.includes('成功') ? ' '+ done.message : ' '+ done.message,
                     done.message.includes('成功') ? 'log-success' : 'log-error');
                 break;
             }
@@ -1795,9 +1797,9 @@ async function toggleBind() {
     });
     const d = await res.json();
     if (d.success) {
-        showLog('✅ 已綁定 Account: ' + d.bound_account, 'log-success');
+    showLog(' 已綁定 Account: '+ d.bound_account, 'log-success');
     } else {
-        showLog('❌ ' + (d.error || '綁定失敗'), 'log-error');
+    showLog(' '+ (d.error || '綁定失敗'), 'log-error');
     }
     loadDashboard();
 }
@@ -1815,12 +1817,12 @@ async function uploadEA() {
         if (data.success) {
             // Double-check：compile 結果要話俾用戶知（唔可以假成功）
             if (data.compile_ok === false) {
-                const shouldRetry = confirm('⚠️ ' + data.filename + ' 已上傳，但編譯失敗！\nMT5 可能未顯示 — 要立即重試編譯嗎？');
+        const shouldRetry = confirm(' '+ data.filename + ' 已上傳，但編譯失敗！\nMT5 可能未顯示 — 要立即重試編譯嗎？');
                 if (shouldRetry) {
                     retryCompile(data.filename.replace(/\.(mq5|ex5)$/i, ''));
                 }
             } else {
-                alert('✅ ' + data.filename + ' 上傳成功！' + (data.installed_local ? '\n已自動安裝到本機 MT5 配對庫（已編譯 ✅）' : ''));
+        alert(' '+ data.filename + ' 上傳成功！'+ (data.installed_local ? '\n已自動安裝到本機 MT5 配對庫（已編譯 ）' : ''));
             }
             loadEALibrary();
             loadEAConfig();
@@ -1829,10 +1831,10 @@ async function uploadEA() {
                 setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 2000);
             }
         } else {
-            alert('❌ ' + (data.error || 'Upload failed'));
+      alert(' '+ (data.error || 'Upload failed'));
         }
     } catch(e) {
-        alert('❌ Upload error: ' + e.message);
+    alert(' Upload error: '+ e.message);
     }
     // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
     input.value = '';
@@ -1848,13 +1850,13 @@ async function devUploadEA() {
         const res = await fetch('/api/ea-library/dev-upload', { method: 'POST', body: form });
         const data = await res.json();
         if (data.success) {
-            alert(`✅ 社群 EA 上傳成功：${data.filename}`);
+      alert(` 社群 EA 上傳成功：${data.filename}`);
             loadEALibrary();
         } else {
-            alert('❌ ' + (data.error || 'Upload failed'));
+      alert(' '+ (data.error || 'Upload failed'));
         }
     } catch(e) {
-        alert('❌ Upload error: ' + e.message);
+    alert(' Upload error: '+ e.message);
     }
     input.value = '';
 }
@@ -1870,7 +1872,7 @@ async function devUploadEA() {
     } catch(e) {}
 })();
 
-// 🚨 2026-08-13：狀態 hover tooltip（JS 動態 — position:fixed — 唔受 card/scroll-box overflow 遮）
+// 2026-08-13：狀態 hover tooltip（JS 動態 — position:fixed — 唔受 card/scroll-box overflow 遮）
 // （CSS tooltip 第一行被 scroll-box 裁剪 — 改用 fixed tooltip div — 自動調整方向：向上冇位 → 向下）
 let _statusTipEl = null;
 function _showStatusTip(el) {
@@ -1904,6 +1906,38 @@ document.addEventListener('mouseover', function(e) {
 document.addEventListener('mouseout', function(e) {
     if (e.target.closest('.status-tip')) _hideStatusTip();
 });
+
+// 2026-08-13：通用確認視窗（四粒按鈕撳落去 → 顯示詳細資訊 → 確定先做動作）
+let _confirmCb = null;
+function showConfirm(title, detailHtml, onConfirm) {
+    _confirmCb = onConfirm;
+    document.getElementById('confirmTitle').innerHTML = title;
+    document.getElementById('confirmDetails').innerHTML = detailHtml;
+    document.getElementById('confirmModal').style.display = 'block';
+}
+function closeConfirm() {
+    _confirmCb = null;
+    document.getElementById('confirmModal').style.display = 'none';
+}
+function confirmOk() {
+    const cb = _confirmCb;
+    closeConfirm();
+    if (cb) cb();
+}
 </script>
+<!-- 🚨 2026-08-13：通用確認視窗（四粒按鈕 — 詳細資訊 + 確定先做動作） -->
+<div id="confirmModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1001;overflow-y:auto" onclick="if(event.target===this)closeConfirm()">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;margin:15vh auto;max-width:420px;padding:24px;position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h2 id="confirmTitle" style="font-size:16px;font-weight:600"><i class="icon-alert-triangle" style="color:var(--accent)"></i> 確認操作</h2>
+            <button onclick="closeConfirm()" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer"><i class="icon-x"></i></button>
+        </div>
+        <div id="confirmDetails" style="font-size:13px;line-height:1.7;color:var(--text);background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin-bottom:20px"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn" onclick="closeConfirm()" style="padding:6px 16px;font-size:12px">取消</button>
+            <button class="btn btn-green" onclick="confirmOk()" style="padding:6px 16px;font-size:12px"><i class="icon-check-circle" style="font-size:12px"></i> 確定</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

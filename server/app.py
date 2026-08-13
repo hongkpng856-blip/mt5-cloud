@@ -309,12 +309,14 @@ def api_ea_config():
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             # 🚨 2026-08-13：讀熱鍵（hotkeys.ini — 部署記錄 — 判斷「啱啱部署等心跳」vs「冇心跳機制」）
             _hk_has = set()
+            _hk_mtime = 0
             try:
                 import re as _re_hk
                 _hk_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
                 for _d2 in os.listdir(_hk_path):
                     _hkf = os.path.join(_hk_path, _d2, 'config', 'hotkeys.ini')
                     if os.path.isfile(_hkf):
+                        _hk_mtime = os.path.getmtime(_hkf)
                         _hk_c = open(_hkf, 'r', encoding='utf-16-le', errors='ignore').read()
                         for _m2 in _re_hk.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
                             _hk_has.add(_m2.group(1))
@@ -337,10 +339,13 @@ def api_ea_config():
                 sf = os.path.join(common_files, f'state_{ea}.json')
                 hb_txt = os.path.join(common_files, f'hb_{ea}.txt')
                 # 🚨 2026-08-13：冇任何心跳檔案（state/hb 都唔存在）
-                # 判斷：有熱鍵（部署過）→ 'starting'（等心跳 — 部署後心跳寫入自動變 running — 唔好話「沒有心跳設定」誤導）
-                #       冇熱鍵（未部署）→ 'unpaired'（未配對 — 未部署唔知有冇心跳 — Seasonal 案例：部署前話「沒有心跳設定」但部署後有心跳！）
+                # 判斷：有熱鍵（部署過）→ 啱啱部署（hotkeys.ini 新 — <10 分鐘）→ 'starting'（等心跳）；部署好耐都冇心跳 → 'no_hb'（冇心跳設定 — Ichimoku 案例）
+                #       冇熱鍵（未部署）→ 'unpaired'（未配對 — 未部署唔知有冇心跳 — Seasonal 案例）
                 if not os.path.isfile(sf) and not os.path.isfile(hb_txt):
-                    runtime[ea] = 'starting' if ea in _hk_has else 'unpaired'
+                    if ea in _hk_has:
+                        runtime[ea] = 'starting' if (time.time() - _hk_mtime < 600) else 'no_hb'
+                    else:
+                        runtime[ea] = 'unpaired'
                     continue
                 st = 'unknown'
                 if os.path.isfile(sf):
