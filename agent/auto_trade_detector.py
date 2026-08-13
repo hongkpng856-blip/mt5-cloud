@@ -11,6 +11,7 @@ import time
 import threading
 import sqlite3
 import os
+import re  # 🚨 2026-08-13：熱鍵掃描用（deployed 判斷）
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
@@ -201,27 +202,35 @@ def scan_ea_inventory():
                         'path': path
                     }
 
-    # 讀最近 MT5 log 搵部署中（attach）記錄 — 用最近修改嘅 log 檔
+    # 🚨 2026-08-13 改：deployed 判斷用熱鍵（hotkeys.ini — 實際部署配置 — 唔靠歷史 log）
+    # （歷史 log 永遠有舊記錄 → 刪除咗/未部署嘅 EA 都話已部署 — 用戶質疑「點解偵測到 EURUSD」）
+    # 熱鍵有 = 部署過（配對時分配 — 刪除時 release）— 比 log 準確
     attached = {}
     try:
-        log_dir = os.path.join(data_dir, 'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Logs')
-        import re
-        if os.path.isdir(log_dir):
-            # 搵最近 3 個 log 檔（今日/昨日/前日）
-            log_files = sorted(
-                [os.path.join(log_dir, f) for f in os.listdir(log_dir) if f.endswith('.log')],
-                key=os.path.getmtime, reverse=True
-            )[:3]
-            for log_file in log_files:
-                try:
+        hk_path = os.path.join(data_dir, 'D0E8209F77C8CF37AD8BF550E51FF075', 'config', 'hotkeys.ini')
+        if os.path.isfile(hk_path):
+            with open(hk_path, 'r', encoding='utf-16-le', errors='ignore') as f:
+                hk_content = f.read()
+            for m in re.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', hk_content):
+                ea_name = m.group(1)
+                attached.setdefault(ea_name, {})
+        # 熱鍵有 — 再配合 log 攞 symbol/tf（只係 fallback 資訊 — 唔用嚟判斷 deployed）
+        try:
+            log_dir = os.path.join(data_dir, 'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Logs')
+            if os.path.isdir(log_dir):
+                log_files = sorted(
+                    [os.path.join(log_dir, f) for f in os.listdir(log_dir) if f.endswith('.log')],
+                    key=os.path.getmtime, reverse=True
+                )[:3]
+                for log_file in log_files:
                     with open(log_file, encoding='utf-16-le', errors='ignore') as f:
                         content = f.read()
-                    # 格式: EA_NAME (SYMBOL,TF) 或 EA_NAME (SYMBOL,TF,MAGIC)
                     for m in re.finditer(r'([A-Za-z_][A-Za-z0-9_]*)\s*\(([A-Za-z0-9._]+),([A-Za-z0-9]+)', content):
                         ea_name, symbol, tf = m.group(1), m.group(2), m.group(3)
-                        attached[ea_name] = {'symbol': symbol, 'tf': tf}
-                except Exception:
-                    continue
+                        if ea_name in attached and 'symbol' not in attached[ea_name]:
+                            attached[ea_name] = {'symbol': symbol, 'tf': tf}
+        except Exception:
+            pass
     except Exception as e:
         attached = {'_error': str(e)}
 

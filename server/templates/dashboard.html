@@ -869,17 +869,12 @@ async function loadEAConfig() {
             </td></tr>`;
         } else {
             allEAs.forEach(name => {
-            let sym = eaMappings[name] || '';  // 🚨 2026-08-12 FIX：未配對 → 空（顯示「—」）— 之前 allSymbols[0] 誤導
+            // 🚨 2026-08-13 FIX：用「心跳」判斷 — 冇心跳 → Symbol/Magic 都顯示「—」（用戶提議：冇心跳=唔知運行緊咩 → 唔顯示值）
+            // （之前用 deployed（熱鍵）— 但係有熱鍵都可能冇運行 → 誤顯示 symbol — 心跳先係「實際運行」）
+            const _alive = runtimeStatus[name] === 'running';
+            let sym = _alive ? (eaMappings[name] || '') : '';
             let magic = eaMappings[name+'_magic'] || '240701';
 
-            // Auto-assign magic+symbol from available combos if not yet configured
-            if (!eaMappings[name] && combos.length > 0) {
-                const combo = combos[comboIndex % combos.length];
-                const [m, s] = combo.split('_', 2);
-                magic = m;
-                sym = s;
-                comboIndex++;
-            }
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
             const status = eaMappings[name+'_status'] || 'running';
@@ -899,11 +894,11 @@ async function loadEAConfig() {
                 <td><b>${name}</b></td>
                 <td><span style="font-size:10px" class="${isSystem?'badge badge-blue':isOfficial?'badge badge-green':'badge badge-gray'}">${isSystem?'系統':isOfficial?'官方':(eaMappings[name]?'自訂':'本機')}</span></td>
                 <td style="text-align:center;white-space:nowrap">
-                    <div style="font-size:14px;${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'color:var(--success)':'color:var(--text-dim)'}" title="${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':(eaMappings[name]?'停止中':'未配對')}">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'<i class="icon-circle" style="color:var(--success);font-size:10px"></i>':'<i class="icon-circle" style="color:var(--text-dim);font-size:10px"></i>'}</div>
-                    <div style="font-size:9px;color:#8b949e;margin-top:1px">${eaDeployStatus[name]&&eaDeployStatus[name].deployed?'運行中':(eaMappings[name]?'停止中':'未配對')}</div>
-                    ${runtimeStatus[name]?`<div style="font-size:9px;color:${runtimeStatus[name]==='running'?'var(--success)':runtimeStatus[name]==='stopped'?'var(--text-dim)':'#d29922'};margin-top:1px" title="控制層心跳">${runtimeStatus[name]==='running'?'❤ 心跳運行':runtimeStatus[name]==='stopped'?'● 已停止':'◇ 無心跳'}</div>`:''}
+                    ${runtimeStatus[name]==='running'
+                        ? '<div style="font-size:11px;color:var(--success);font-weight:600"><i class="icon-heart" style="font-size:10px"></i> 心跳運行</div>'
+                        : '<div style="font-size:11px;color:var(--danger);font-weight:600" title="本機有檔案但冇配對落圖表 / 心跳停咗"><i class="icon-x-circle" style="font-size:10px"></i> 沒有心跳</div>'}
                 </td>
-                <td style="text-align:center;font-size:12px;color:${eaMappings[name]?'var(--text)':'var(--text-dim)'}">${eaMappings[name]?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
+                <td style="text-align:center;font-size:12px;color:${_alive?'var(--text)':'var(--text-dim)'}">${_alive?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
                 <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
                     <span>${sym||'—'}</span>
                     <select class="ea-sym" data-ea="${name}" style="display:none">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select>

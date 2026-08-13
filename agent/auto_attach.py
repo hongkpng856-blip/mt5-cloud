@@ -1599,7 +1599,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         try:
             import glob as _g4
             # 🚨 等 OnInit 行 + log 寫入（撳確定後即刻讀 — log 未寫 → 誤判失敗 — Breakout 案例）
-            time.sleep(4)
+            # 🚨 2026-08-13 FIX：4 秒 → 8 秒（MT5 重啟後 EA 初始化 + log/心跳寫入要時間 — Parabolic_SAR 案例：用戶見成功但驗證話「圖表不符」— log 其實有記錄）
+            time.sleep(8)
             _lg = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             _latest = None
             for _d in os.listdir(_lg):
@@ -1648,6 +1649,26 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     if _hb_ok:
                         print(f"✅ 心跳後備: {ea_name} 運行中（心跳新鮮 — 圖表正確）")
                     else:
+                        # 🚨 2026-08-13 FIX：心跳後備失敗 → 再等 5 秒重試（EA 初始化延遲 — 心跳檔案未寫 → 誤判失敗 — Parabolic_SAR 案例）
+                        print(f"⏳ 心跳後備第一次失敗 — 等 5 秒再試（EA 可能仲初始化緊）...")
+                        time.sleep(5)
+                        _hb_ok = False
+                        try:
+                            if os.path.isfile(_hb_f):
+                                _hb_d = None
+                                for _enc_hb in ('utf-16', 'utf-8', 'cp1252'):
+                                    try:
+                                        _hb_d = _jhbl.load(open(_hb_f, 'r', encoding=_enc_hb))
+                                        break
+                                    except Exception:
+                                        continue
+                                if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(_hb_d.get('ts', 0)) < 300:
+                                    _hb_ok = True
+                        except Exception:
+                            pass
+                        if _hb_ok:
+                            print(f"✅ 心跳後備（第二次）: {ea_name} 運行中 — 圖表正確")
+                    if not _hb_ok:
                         # 🚨 2026-08-12 FIX：寫失敗 steps（唔係「等待操作開始」）
                         try:
                             import json as _jlv
