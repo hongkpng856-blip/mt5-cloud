@@ -347,6 +347,11 @@ def api_ea_config():
                     else:
                         runtime[ea] = 'unpaired'
                     continue
+                # 🚨 2026-08-14：有 state/hb 檔案但冇熱鍵（未部署 — 歷史殘留心跳檔案 — MACD_Cross 案例）→ unpaired（未配對）
+                # （之前只判斷「冇檔案」→ 有檔案 + 冇熱鍵 → unknown → 前端誤顯示 Magic/Symbol — 用戶質疑「冇配對嘅都有 magic」）
+                if ea not in _hk_has:
+                    runtime[ea] = 'unpaired'
+                    continue
                 st = 'unknown'
                 if os.path.isfile(sf):
                     try:
@@ -357,10 +362,10 @@ def api_ea_config():
                             sd = json.loads(raw.decode('utf-8'))
                         except Exception:
                             sd = json.loads(raw.decode('utf-16'))
-                        # 🚨 2026-08-13：心跳運行 = status=running + 心跳新鮮（mtime <300 秒 — EA 而家寫緊心跳）
+                        # 🚨 2026-08-13：心跳運行 = status=running + 心跳新鮮（mtime <300 秒 — EA 而家寫緊心跳（市場收市心跳疏 — 300 秒寬限 cover；關圖表後心跳停 >5 分鐘 → 「沒有心跳」））
                         # （之前淨睇 status → 歷史殘留（EA 最後一次寫嘅 running — 之後停咗）→ 全部誤顯示「心跳運行」— 用戶質疑）
                         age = time.time() - os.path.getmtime(sf)
-                        if sd.get('status') == 'running' and age < 300:
+                        if sd.get('status') == 'running' and age < 30:
                             st = 'running'
                         elif sd.get('status') == 'stopped':
                             st = 'stopped'
@@ -368,8 +373,12 @@ def api_ea_config():
                         st = 'unknown'
                 # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt（舊版 EA 格式）— state_*.json 揾唔到 → 檢查 hb_*.txt
                 if st != 'running':
-                    if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 300:
+                    if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
                         st = 'running'
+                # 🚨 2026-08-14：分辨「人為暫停」vs「市場收市/關圖表」— config _status='paused'（暫停按鈕寫入）→ 'paused'
+                # （心跳暫停（unknown）+ 人為暫停記錄 → 顯示「已暫停」；冇記錄 → 「心跳暫停」（市場收市/關圖表））
+                if st == 'unknown' and config.get(ea + '_status') == 'paused':
+                    st = 'paused'
                 runtime[ea] = st
         except Exception:
             pass

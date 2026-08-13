@@ -900,7 +900,9 @@ async function loadEAConfig() {
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="EA 尚未部署至圖表（未配置快捷鍵）— 未開始運行。完成部署後將顯示實際狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 未配對</span>'
                         : runtimeStatus[name]==='no_hb'
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="此 EA 未配置心跳功能（不會寫入心跳檔案）— 無法偵測運行狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 沒有心跳設定</span>'
-                        : '<span class="status-tip" style="font-size:11px;color:var(--danger);font-weight:600" data-tip="EA 心跳已停止。可能原因：EA 已終止／圖表未附加 EA／市場休市導致心跳暫停（不代表 EA 故障）。"><i class="icon-x-circle" style="font-size:10px"></i> 沒有心跳</span>'}
+                        : runtimeStatus[name]==='paused'
+                        ? '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="此 EA 已由你暫停（已按「暫停」— EA 已從圖表移除 — 停止交易）。按「繼續」可恢復運行。"><i class="icon-pause" style="font-size:10px"></i> 已暫停</span>'
+                        : '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="EA 心跳暫停 — 心跳檔案超過 30 秒未有更新。可能原因：市場休市導致心跳暫停（不代表 EA 故障）／圖表未附加 EA／EA 已終止。恢復運行後自動轉為「心跳運行」。"><i class="icon-pause-circle" style="font-size:10px"></i> 心跳暫停</span>'}
                 </td>
                 <td style="text-align:center;font-size:12px;color:${_alive?'var(--text)':'var(--text-dim)'}">${_alive?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
                 <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">

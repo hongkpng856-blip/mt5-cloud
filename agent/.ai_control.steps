@@ -1,1 +1,1 @@
-[{"text": "開始重新整理", "status": "done"}, {"text": "掃描本機 EA 檔案", "status": "done"}, {"text": "清理殘留配對設定", "status": "done"}, {"text": "同步配對設定", "status": "done"}, {"text": "刷新本機運行狀態", "status": "done"}, {"text": "刷新 EA 倉庫", "status": "done"}, {"text": "完成重新整理", "status": "done"}]
+[{"text": "開始刪除 Bollinger_Band", "status": "done"}, {"text": "檢查圖表（是否有 EA 運行）", "status": "done"}, {"text": "移除圖表 EA", "status": "done"}, {"text": "刪除本機檔案（.mq5/.ex5）", "status": "done"}, {"text": "清理設定並釋放快捷鍵", "status": "done"}, {"text": "完成刪除", "status": "done"}]
