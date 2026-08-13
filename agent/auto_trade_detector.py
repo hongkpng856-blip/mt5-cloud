@@ -370,6 +370,19 @@ def loop():
     loop_count = 0
     while True:
         try:
+            # 🚨 2026-08-14：rescan.flag（網頁「重新整理」寫入）→ 即刻掃描 — 唔等 5 秒週期
+            try:
+                _rs_flag = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', 'rescan.flag')
+                if os.path.isfile(_rs_flag):
+                    try:
+                        os.remove(_rs_flag)
+                    except Exception:
+                        pass
+                    compute_signals()
+                    write_static_json()
+                    continue
+            except Exception:
+                pass
             compute_signals()
             write_static_json()
             # 每 30 秒記錄一次「已更新資料庫」（6 次 x 5 秒掃描）

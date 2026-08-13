@@ -32153,3 +32153,96 @@
 {"time": 1786661821.0190256, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
 {"time": 1786661831.124312, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786661861.8452027, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786661892.5074291, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786661923.2170367, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786661953.9091313, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786661984.577287, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662015.2691338, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662045.9895222, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662076.6339874, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662107.3024695, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662137.9615552, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662196.0765073, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662226.9640968, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662258.016927, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662288.9152374, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662319.7982142, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662350.6882908, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662381.6132033, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662412.5032353, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662443.4362903, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662474.3363416, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662505.2220454, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662536.116801, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662567.0347157, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662597.940299, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662628.8513908, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662659.7399466, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662690.5826452, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662721.4467835, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662752.3066466, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662783.2470052, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662791.998607, "action": "deploy", "ea": "Breakout", "message": "Breakout 部署 → USDJPY H1", "source": "server"}
+{"time": 1786662814.179879, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662845.1213806, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662846.7703047, "action": "unknown", "ea": "Breakout", "message": "Breakout 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786662876.029802, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662907.0988462, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662925.0601423, "action": "deploy", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 部署 → EURUSD H1", "source": "server"}
+{"time": 1786662938.0145495, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662968.9566836, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786662983.6158233, "action": "unknown", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786663000.022767, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663030.970018, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663061.8834774, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663092.793671, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663108.8465796, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → AUDUSD H1", "source": "server"}
+{"time": 1786663124.047014, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663126.5596812, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786663148.663649, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → AUDUSD H1", "source": "server"}
+{"time": 1786663155.1273837, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663168.8281083, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786663186.0486097, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663217.0198414, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663222.5742946, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → AUDUSD H1", "source": "server"}
+{"time": 1786663247.9586487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663279.0002074, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663282.4402483, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786663309.935812, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663341.0784242, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663352.288113, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786663372.0653243, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663403.188605, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663434.1475325, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663465.0774825, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663496.0103674, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663527.0882783, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663558.3316796, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663582.6319795, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → AUDUSD H1", "source": "server"}
+{"time": 1786663589.2647748, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663620.194013, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663643.8138473, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786663651.1145973, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663682.3359017, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663713.3801787, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663744.2766228, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663775.200823, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663806.1178865, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663837.2236173, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663868.1740916, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663899.1157558, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663930.0527925, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663960.9850504, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786663986.1927626, "action": "deploy", "ea": "Grid_Trading", "message": "Grid_Trading 部署 → USDJPY H1", "source": "server"}
+{"time": 1786663991.9323559, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664022.8619215, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664046.4910731, "action": "unknown", "ea": "Grid_Trading", "message": "Grid_Trading 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786664053.7771525, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664085.0238693, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664115.9430494, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664119.7505307, "action": "deploy", "ea": "Fibonacci", "message": "Fibonacci 部署 → USDJPY H1", "source": "server"}
+{"time": 1786664152.419382, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664176.8417995, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786664183.3427126, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664214.5637267, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664245.4808447, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

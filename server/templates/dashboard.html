@@ -817,7 +817,8 @@ async function fetchEAInventory() {
 
 async function loadEAConfig() {
     try {
-        const res = await fetch('/api/ea-config');
+        // 🚨 2026-08-14：加 cache-busting（之前冇 → 瀏覽器 cache 舊 data → 撳「重新整理」後 refresh-status 已更新但 loadEAConfig 攞舊 → 覆蓋 → 「過咗一陣先更新」）
+        const res = await fetch('/api/ea-config?t=' + Date.now());
         const data = await res.json();
         eaMappings = data.mappings || {};
     runtimeStatus = data.runtime_status || {}; // 控制層心跳狀態（running/stopped/unknown）
@@ -902,6 +903,8 @@ async function loadEAConfig() {
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="此 EA 未配置心跳功能（不會寫入心跳檔案）— 無法偵測運行狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 沒有心跳設定</span>'
                         : runtimeStatus[name]==='paused'
                         ? '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="此 EA 已由你暫停（已按「暫停」— EA 已從圖表移除 — 停止交易）。按「繼續」可恢復運行。"><i class="icon-pause" style="font-size:10px"></i> 已暫停</span>'
+                        : runtimeStatus[name]==='chart_removed'
+                        ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="MT5 記錄此 EA 已從圖表移除（關閉圖表／移除 EA）。如要恢復請按「部署」。"><i class="icon-x-circle" style="font-size:10px"></i> 圖表移除</span>'
                         : '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="EA 心跳暫停 — 心跳檔案超過 30 秒未有更新。可能原因：市場休市導致心跳暫停（不代表 EA 故障）／圖表未附加 EA／EA 已終止。恢復運行後自動轉為「心跳運行」。"><i class="icon-pause-circle" style="font-size:10px"></i> 心跳暫停</span>'}
                 </td>
                 <td style="text-align:center;font-size:12px;color:${_alive?'var(--text)':'var(--text-dim)'}">${_alive?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
@@ -963,7 +966,7 @@ async function saveEAConfig() {
   showLog(' EA config saved!');
 
     // 如果 Agent 在線，自動發送安裝指令
-    const dashRes = await fetch('/api/dashboard');
+    const dashRes = await fetch('/api/dashboard?t=' + Date.now());
     const dashData = await dashRes.json();
     if (dashData.status === 'connected' || dashData.status === 'running') {
         const eaNames = Array.from(document.querySelectorAll('.ea-sym')).map(s => s.dataset.ea);
@@ -987,7 +990,7 @@ function showLog(msg, cls='log-success') {
 // === Dashboard ===
 async function loadDashboard() {
     try {
-        const res = await fetch('/api/dashboard');
+        const res = await fetch('/api/dashboard?t=' + Date.now());
         const d = await res.json();
     // 2026-08-12：Agent card 簡潔化（刪 agentId/binding）— 全部元素 null check（HTML cache 舊版冇 accountServer → 之前炸 → Balance/Equity 唔更新）
         const _idEl = document.getElementById('agentId');
@@ -1067,7 +1070,7 @@ async function fetchAutoTradeStatus() {
 // === Analysis ===
 async function loadAnalysis() {
     try {
-        const res = await fetch('/api/analysis');
+        const res = await fetch('/api/analysis?t=' + Date.now());
         if (!res.ok) return;
         analysisData = await res.json();
         if (analysisData.error) return;
@@ -1406,6 +1409,21 @@ async function refreshPairingLibrary() {
                 try { await loadEAConfig(); await updSteps(['done','done','done','done','pending','pending','pending']); await sleep(500); }
                 catch(e) { await updSteps(['done','done','done','done','pending','pending','pending']); }
             }
+            // 🚨 2026-08-14：即時狀態檢查（向電腦發訊息 — check 心跳/熱鍵/本機檔案 — 唔等 detector 週期 — 用戶要求）
+            await updSteps(['done','done','done','done','doing','pending','pending']);
+            try {
+                const rsRes = await fetch('/api/refresh-status', { method: 'POST' });
+                const rsData = await rsRes.json().catch(() => ({}));
+                if (rsData.success && rsData.runtime_status && typeof runtimeStatus === 'object') {
+                    runtimeStatus = Object.assign({}, runtimeStatus, rsData.runtime_status);
+                }
+                await updSteps(['done','done','done','done','done','pending','pending']);
+            } catch(e) {
+                await updSteps(['done','done','done','done','done','pending','pending']);
+            }
+            await sleep(500);
+            // 重新 render 配對庫（用最新 runtime_status — loadEAConfig 會 fetch + render）
+            if (typeof loadEAConfig === 'function') { try { await loadEAConfig(); } catch(e2) {} }
             if (typeof fetchEAInventory === 'function') {
                 try { await fetchEAInventory(); await updSteps(['done','done','done','done','done','pending','pending']); await sleep(500); }
                 catch(e) { await updSteps(['done','done','done','done','done','pending','pending']); }
@@ -1533,7 +1551,7 @@ async function addEAToPairing(baseName, fileName, source) {
     }
 
     // Step 2: 寫 config（symbol/magic/tf/lot）
-    const res = await fetch('/api/ea-config');
+    const res = await fetch('/api/ea-config?t=' + Date.now());
     const data = await res.json();
     let mappings = data.mappings || {};
     const dl = mappings['_default_lot'] || 1.00;
@@ -1705,7 +1723,7 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
     await saveEAConfig();
     
     // Step 2: Check agent status
-    const dashRes = await fetch('/api/dashboard');
+    const dashRes = await fetch('/api/dashboard?t=' + Date.now());
     const dashData = await dashRes.json();
     if (dashData.status !== 'connected' && dashData.status !== 'running') {
     showLog(' Agent 離線，無法部署', 'log-error');
@@ -1866,7 +1884,7 @@ async function devUploadEA() {
 // 顯示 dev upload button（如果係 dev 帳號）
 (async function() {
     try {
-        const res = await fetch('/api/dashboard');
+        const res = await fetch('/api/dashboard?t=' + Date.now());
         const d = await res.json();
         if (d.agent_id === 'DEV00001') {
             document.getElementById('devUploadBtn').style.display = 'inline-block';

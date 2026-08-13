@@ -305,6 +305,34 @@ def api_ea_config():
         # running（ts 新鮮 <30 秒）/ stopped / unknown（冇檔或過期）
         # ⚠️ 2026-08 修：config 冇 _status key（只有 ea_name/ea_lot/ea_magic/ea_tf）→ 唔可以靠 _status 尾
         runtime = {}
+        # 🚨 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（已啟動/已停止/removed — 圖表實際狀態）
+        _log_last = {}
+        try:
+            import glob as _gl2
+            _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            _latest2 = None
+            for _d3 in os.listdir(_lg2):
+                _lgd3 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+                if os.path.isdir(_lgd3):
+                    for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
+                        if _latest2 is None or os.path.getmtime(_f3) > os.path.getmtime(_latest2):
+                            _latest2 = _f3
+            if _latest2:
+                _raw2 = open(_latest2, 'rb').read()
+                _txt2 = None
+                for _enc2 in ('utf-16', 'utf-8', 'cp1252'):
+                    try:
+                        _txt2 = _raw2.decode(_enc2); break
+                    except Exception:
+                        continue
+                if _txt2:
+                    import re as _re2
+                    for _line2 in _txt2.splitlines():
+                        _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已啟動|已停止|removed)', _line2)
+                        if _m2:
+                            _log_last[_m2.group(1)] = _m2.group(2)
+        except Exception:
+            pass
         try:
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             # 🚨 2026-08-13：讀熱鍵（hotkeys.ini — 部署記錄 — 判斷「啱啱部署等心跳」vs「冇心跳機制」）
@@ -379,6 +407,9 @@ def api_ea_config():
                 # （心跳暫停（unknown）+ 人為暫停記錄 → 顯示「已暫停」；冇記錄 → 「心跳暫停」（市場收市/關圖表））
                 if st == 'unknown' and config.get(ea + '_status') == 'paused':
                     st = 'paused'
+                # 🚨 2026-08-14：log 最後「已停止/removed」→ 圖表冇 EA（關圖表/移除 — 即刻反映 — 唔使等心跳停）
+                if st == 'unknown' and _log_last.get(ea) in ('已停止', 'removed'):
+                    st = 'chart_removed'
                 runtime[ea] = st
         except Exception:
             pass
@@ -1126,6 +1157,117 @@ def api_ea_library_refresh():
         except Exception:
             pass
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/refresh-status', methods=['POST'])
+@login_required
+def api_refresh_status():
+    """🚨 2026-08-14：重新整理按鈕 → 即時檢查電腦狀態（心跳/熱鍵/本機檔案）→ 返回網頁更新
+    唔等 detector 週期 — 撳「重新整理」即刻掃描（用戶要求：「向電腦發送訊息 check 而家所有狀態」）"""
+    import re as _rrs
+    common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+    # 1. 觸發 detector 即刻重掃（rescan.flag — detector 睇到即刻掃描 EA 檔案 — 唔等 5 秒週期）
+    try:
+        with open(os.path.join(common_files, 'rescan.flag'), 'w', encoding='utf-8') as _f:
+            _f.write(str(time.time()))
+    except Exception:
+        pass
+    # 2. 熱鍵（已部署集合）
+    _hk_has = set()
+    _hk_mtime = 0
+    try:
+        _hk_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        for _d2 in os.listdir(_hk_path):
+            _hkf = os.path.join(_hk_path, _d2, 'config', 'hotkeys.ini')
+            if os.path.isfile(_hkf):
+                _hk_mtime = os.path.getmtime(_hkf)
+                _hk_c = open(_hkf, 'r', encoding='utf-16-le', errors='ignore').read()
+                for _m2 in _rrs.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
+                    _hk_has.add(_m2.group(1))
+                break
+    except Exception:
+        pass
+    # 3. 即時心跳掃描（state/hb — 30 秒新鮮 = running）
+    runtime = {}
+    # 🚨 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（圖表實際狀態）
+    _log_last = {}
+    try:
+        import glob as _gl2
+        _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        _latest2 = None
+        for _d3 in os.listdir(_lg2):
+            _lgd3 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+            if os.path.isdir(_lgd3):
+                for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
+                    if _latest2 is None or os.path.getmtime(_f3) > os.path.getmtime(_latest2):
+                        _latest2 = _f3
+        if _latest2:
+            _raw2 = open(_latest2, 'rb').read()
+            _txt2 = None
+            for _enc2 in ('utf-16', 'utf-8', 'cp1252'):
+                try:
+                    _txt2 = _raw2.decode(_enc2); break
+                except Exception:
+                    continue
+            if _txt2:
+                import re as _re2
+                for _line2 in _txt2.splitlines():
+                    _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已啟動|已停止|removed)', _line2)
+                    if _m2:
+                        _log_last[_m2.group(1)] = _m2.group(2)
+    except Exception:
+        pass
+    try:
+        config = json.loads(current_user.ea_config or '{}')
+        for key in config:
+            base = key
+            for suffix in ('_lot', '_magic', '_tf', '_status'):
+                if key.endswith(suffix):
+                    base = key[:-len(suffix)]
+                    break
+            if base.startswith('_') or base in ('_lot', '_magic', '_tf', '_status'):
+                continue
+            if not base:
+                continue
+            sf = os.path.join(common_files, f'state_{base}.json')
+            hb_txt = os.path.join(common_files, f'hb_{base}.txt')
+            has_hb_file = os.path.isfile(sf) or os.path.isfile(hb_txt)
+            if not has_hb_file:
+                if base in _hk_has:
+                    runtime[base] = 'starting' if (time.time() - _hk_mtime < 600) else 'no_hb'
+                else:
+                    runtime[base] = 'unpaired'
+                continue
+            if base not in _hk_has:
+                runtime[base] = 'unpaired'
+                continue
+            st = 'unknown'
+            if os.path.isfile(sf):
+                try:
+                    with open(sf, 'rb') as f:
+                        raw = f.read()
+                    try:
+                        sd = json.loads(raw.decode('utf-8'))
+                    except Exception:
+                        sd = json.loads(raw.decode('utf-16'))
+                    if sd.get('status') == 'running' and time.time() - os.path.getmtime(sf) < 30:
+                        st = 'running'
+                    elif sd.get('status') == 'stopped':
+                        st = 'stopped'
+                except Exception:
+                    st = 'unknown'
+            if st != 'running':
+                if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
+                    st = 'running'
+            if st == 'unknown' and config.get(base + '_status') == 'paused':
+                st = 'paused'
+            if st == 'unknown' and _log_last.get(base) in ('已停止', 'removed'):
+                st = 'chart_removed'
+            runtime[base] = st
+    except Exception:
+        pass
+    return jsonify({'success': True, 'runtime_status': runtime, 'deployed': sorted(_hk_has)})
+
 
 @app.route('/api/ea-library/dev-upload', methods=['POST'])
 @login_required
