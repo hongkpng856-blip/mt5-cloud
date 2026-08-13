@@ -145,6 +145,7 @@
         .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
         .badge-gray { background: var(--bg-muted); color: var(--text-secondary); }
         .badge-blue { background: rgba(59,130,246,0.15); color: var(--info); }
+        .badge-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }  /* 🚨 2026-08-13：測試 EA badge */
 
         /* ─── Stats ─── */
         .stat-row {
@@ -1446,15 +1447,18 @@ async function loadEALibrary() {
         const official = (data.files || []).filter(f => f.type === 'official');
         document.getElementById('officialCount').textContent = official.length;
         let oHtml = '';
+        // 🚨 2026-08-13：排序 — 真實 EA 喺前，測試 EA（TestHB_*）喺後（分開測試用同真實）
+        official.sort((a, b) => ((a.name.startsWith('TestHB')) ? 1 : 0) - ((b.name.startsWith('TestHB')) ? 1 : 0));
         official.forEach(f => {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
+            const isTest = baseName.startsWith('TestHB');  // 🚨 2026-08-13：測試 EA 標記
             // 🚨 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
             // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
             const localHas = !!(eaDeployStatus[baseName] || localSet[baseName]);                  // 本機有檔案
             const added = localHas;
             oHtml += `<tr>
-                <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">平台提供</span></td>
+                <td><b>${f.name}</b> <span class="badge ${isTest?'badge-orange':'badge-green'}" style="font-size:10px">${isTest?'測試':'平台提供'}</span></td>
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
                 <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
                     : (webHas ? '<span style="color:#f59e0b;font-size:11px"><i class="icon-alert-triangle"></i> 已加入（本機冇檔案）</span>'
