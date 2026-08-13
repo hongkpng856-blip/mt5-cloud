@@ -30669,3 +30669,42 @@
 {"time": 1786617431.0321333, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786617461.7257016, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786617492.423879, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617523.1061928, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617553.769244, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617584.4256542, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617615.0920367, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617645.733113, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617676.3730285, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617707.0033305, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617737.6461139, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617768.2980921, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617798.95824, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617829.6127465, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617860.3781378, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617879.1467044, "action": "ea_install", "ea": "Seasonal", "message": "Seasonal 配對處理中...", "source": "server"}
+{"time": 1786617881.1337457, "action": "added", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786617891.1054256, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617905.7138846, "action": "ea_install", "ea": "Seasonal", "message": "Seasonal 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786617906.5591757, "action": "modified", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已更新", "source": "watcher"}
+{"time": 1786617921.8386059, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617942.04074, "action": "deploy", "ea": "Seasonal", "message": "Seasonal 部署 → USDJPY H1", "source": "server"}
+{"time": 1786617952.6267889, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786617985.889861, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618000.1095386, "action": "unknown", "ea": "Seasonal", "message": "Seasonal 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786618016.6414566, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618047.3558629, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618078.066154, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618108.8255525, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618134.8557034, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786618139.5230472, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618170.2413895, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618200.9706378, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618231.663826, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618262.3656063, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618293.0903661, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618323.8125284, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618354.5364285, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618385.2475863, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618415.9699564, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618446.687098, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786618477.3867846, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

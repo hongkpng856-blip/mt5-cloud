@@ -898,6 +898,8 @@ async function loadEAConfig() {
                         ? '<div style="font-size:11px;color:var(--success);font-weight:600"><i class="icon-heart" style="font-size:10px"></i> 心跳運行</div>'
                         : runtimeStatus[name]==='starting'
                         ? '<div style="font-size:11px;color:#f59e0b;font-weight:600" title="啱啱部署 — 等 EA 寫心跳"><i class="icon-loader" style="font-size:10px"></i> 等待心跳</div>'
+                        : runtimeStatus[name]==='unpaired'
+                        ? '<div style="font-size:11px;color:var(--text-muted);font-weight:600" title="未部署 — 冇熱鍵/圖表"><i class="icon-minus-circle" style="font-size:10px"></i> 未配對</div>'
                         : runtimeStatus[name]==='no_hb'
                         ? '<div style="font-size:11px;color:var(--text-muted);font-weight:600" title="呢隻 EA 冇心跳設定（唔會寫心跳檔案）"><i class="icon-minus-circle" style="font-size:10px"></i> 沒有心跳設定</div>'
                         : '<div style="font-size:11px;color:var(--danger);font-weight:600" title="本機有檔案但冇配對落圖表 / 心跳停咗"><i class="icon-x-circle" style="font-size:10px"></i> 沒有心跳</div>'}

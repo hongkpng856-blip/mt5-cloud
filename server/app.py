@@ -337,13 +337,10 @@ def api_ea_config():
                 sf = os.path.join(common_files, f'state_{ea}.json')
                 hb_txt = os.path.join(common_files, f'hb_{ea}.txt')
                 # 🚨 2026-08-13：冇任何心跳檔案（state/hb 都唔存在）
-                # 判斷：有部署記錄（熱鍵有）→ 啱啱部署/等待心跳（'starting' — 心跳寫入後自動變 running）
-                #       冇部署記錄 → EA 冇心跳機制（Correlation/Ichimoku）→ 'no_hb'（前端顯示「沒有心跳設定」）
+                # 判斷：有熱鍵（部署過）→ 'starting'（等心跳 — 部署後心跳寫入自動變 running — 唔好話「沒有心跳設定」誤導）
+                #       冇熱鍵（未部署）→ 'unpaired'（未配對 — 未部署唔知有冇心跳 — Seasonal 案例：部署前話「沒有心跳設定」但部署後有心跳！）
                 if not os.path.isfile(sf) and not os.path.isfile(hb_txt):
-                    if ea in _hk_has:
-                        runtime[ea] = 'starting'
-                    else:
-                        runtime[ea] = 'no_hb'
+                    runtime[ea] = 'starting' if ea in _hk_has else 'unpaired'
                     continue
                 st = 'unknown'
                 if os.path.isfile(sf):
