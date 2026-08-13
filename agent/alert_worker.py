@@ -114,10 +114,16 @@ def build_window(root):
                                fg='#fff', bg='#34d399', activebackground='#10b981', activeforeground='#fff',
                                relief='flat', bd=0, cursor='hand2', width=10, pady=6)
     # 🚨 2026-08-12 FIX：確定撳咗 → withdraw + reset shown（否則下次 flag 寫 → if not shown False → 唔 deiconify → 視窗永遠隱藏 →「冇出現警告視窗」）
+    # 🚨 2026-08-13 FIX：確定 → 刪 SHOW_FLAG（.ai_control.show — 唔刪 → 下一 round poll has_flag=True → 又彈出嚟！「確定完又彈」根源）
     def _done_close():
         global shown
         root.withdraw()
         shown = False
+        try:
+            if os.path.isfile(SHOW_FLAG):
+                os.remove(SHOW_FLAG)
+        except Exception:
+            pass
     root._done_btn.configure(command=_done_close)
 
     # 初始隱藏（等 flag）
@@ -136,6 +142,12 @@ def emergency_stop(root):
         pass
     root.withdraw()
     shown = False  # 🚨 2026-08-12 FIX：reset shown（下次 flag 可以再顯示）
+    # 🚨 2026-08-13 FIX：緊急停止都刪 SHOW_FLAG（唔刪 → 下一 round poll has_flag=True → 又彈出嚟）
+    try:
+        if os.path.isfile(SHOW_FLAG):
+            os.remove(SHOW_FLAG)
+    except Exception:
+        pass
 
 
 def read_steps():

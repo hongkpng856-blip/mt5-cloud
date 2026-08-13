@@ -307,6 +307,20 @@ def api_ea_config():
         runtime = {}
         try:
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            # 🚨 2026-08-13：讀熱鍵（hotkeys.ini — 部署記錄 — 判斷「啱啱部署等心跳」vs「冇心跳機制」）
+            _hk_has = set()
+            try:
+                import re as _re_hk
+                _hk_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                for _d2 in os.listdir(_hk_path):
+                    _hkf = os.path.join(_hk_path, _d2, 'config', 'hotkeys.ini')
+                    if os.path.isfile(_hkf):
+                        _hk_c = open(_hkf, 'r', encoding='utf-16-le', errors='ignore').read()
+                        for _m2 in _re_hk.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
+                            _hk_has.add(_m2.group(1))
+                        break
+            except Exception:
+                pass
             ea_names = set()
             for key in config:
                 base = key
@@ -314,10 +328,23 @@ def api_ea_config():
                     if key.endswith(suffix):
                         base = key[:-len(suffix)]
                         break
+                # 🚨 2026-08-13：過濾 `_` 開頭（_default_lot / _removed — 唔係 EA）
+                if base.startswith('_'):
+                    continue
                 if base and base not in ('_lot', '_magic', '_tf', '_status'):
                     ea_names.add(base)
             for ea in ea_names:
                 sf = os.path.join(common_files, f'state_{ea}.json')
+                hb_txt = os.path.join(common_files, f'hb_{ea}.txt')
+                # 🚨 2026-08-13：冇任何心跳檔案（state/hb 都唔存在）
+                # 判斷：有部署記錄（熱鍵有）→ 啱啱部署/等待心跳（'starting' — 心跳寫入後自動變 running）
+                #       冇部署記錄 → EA 冇心跳機制（Correlation/Ichimoku）→ 'no_hb'（前端顯示「沒有心跳設定」）
+                if not os.path.isfile(sf) and not os.path.isfile(hb_txt):
+                    if ea in _hk_has:
+                        runtime[ea] = 'starting'
+                    else:
+                        runtime[ea] = 'no_hb'
+                    continue
                 st = 'unknown'
                 if os.path.isfile(sf):
                     try:
@@ -328,14 +355,19 @@ def api_ea_config():
                             sd = json.loads(raw.decode('utf-8'))
                         except Exception:
                             sd = json.loads(raw.decode('utf-16'))
-                        # ⚠️ 新鮮度用檔案 mtime（MQL5 TimeCurrent 係 broker time — 同系統時差）
+                        # 🚨 2026-08-13：心跳運行 = status=running + 心跳新鮮（mtime <300 秒 — EA 而家寫緊心跳）
+                        # （之前淨睇 status → 歷史殘留（EA 最後一次寫嘅 running — 之後停咗）→ 全部誤顯示「心跳運行」— 用戶質疑）
                         age = time.time() - os.path.getmtime(sf)
-                        if sd.get('status') == 'stopped':
-                            st = 'stopped'
-                        elif age < 30:
+                        if sd.get('status') == 'running' and age < 300:
                             st = 'running'
+                        elif sd.get('status') == 'stopped':
+                            st = 'stopped'
                     except Exception:
                         st = 'unknown'
+                # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt（舊版 EA 格式）— state_*.json 揾唔到 → 檢查 hb_*.txt
+                if st != 'running':
+                    if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 300:
+                        st = 'running'
                 runtime[ea] = st
         except Exception:
             pass
