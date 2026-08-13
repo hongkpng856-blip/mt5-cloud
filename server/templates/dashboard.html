@@ -546,7 +546,7 @@
 <div id="toastContainer"></div>
     <h1 style="margin-bottom:20px;font-size:18px;font-weight:600;letter-spacing:-0.02em">Dashboard</h1>
 
-    <!-- Agent Status（2026-08-12 簡潔化：Account 合併 Server — 刪 Agent ID/Binding — 用戶要求唔好佔咁大） -->
+    <!-- Agent Status + Performance（2026-08-13 融合：Agent 4 格 + Performance 4 格 → 一張卡） -->
     <div class="card">
         <div class="card-title"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></div>
         <div class="stat-row">
@@ -554,6 +554,10 @@
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
             <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount" title="MT5 帳戶當前持倉數量（EA 開緊嘅單）">0</div></div>
+            <div class="stat-box"><div class="label">Trades</div><div class="value" id="anTrades">—</div></div>
+            <div class="stat-box"><div class="label">Win Rate</div><div class="value" id="anWinRate" style="color:#3fb950">—</div></div>
+            <div class="stat-box"><div class="label">Profit Factor</div><div class="value" id="anPF">—</div></div>
+            <div class="stat-box"><div class="label">Total P&L</div><div class="value" id="anProfit">—</div></div>
         </div>
     </div>
 
@@ -600,17 +604,6 @@
         </div>
     </div>
 </div>
-    <!-- Analysis -->
-    <div class="card">
-        <div class="card-title"><i class="icon-bar-chart-3" style="color:var(--accent)"></i> Performance</div>
-        <div class="stat-row" id="summaryStats">
-            <div class="stat-box"><div class="label">Trades</div><div class="value" id="anTrades">—</div></div>
-            <div class="stat-box"><div class="label">Win Rate</div><div class="value" id="anWinRate" style="color:#3fb950">—</div></div>
-            <div class="stat-box"><div class="label">Profit Factor</div><div class="value" id="anPF">—</div></div>
-            <div class="stat-box"><div class="label">Total P&L</div><div class="value" id="anProfit">—</div></div>
-        </div>
-    </div>
-
     <!-- Correlation -->
     <div class="card">
         <div class="card-title"><i class="icon-network" style="color:var(--accent)"></i> Correlation Matrix</div>
