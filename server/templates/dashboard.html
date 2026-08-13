@@ -146,6 +146,8 @@
         .badge-gray { background: var(--bg-muted); color: var(--text-secondary); }
         .badge-blue { background: rgba(59,130,246,0.15); color: var(--info); }
         .badge-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }  /* 🚨 2026-08-13：測試 EA badge */
+        /* 🚨 2026-08-13：狀態 hover 提示 — 用 JS 動態 tooltip（position:fixed — 唔受 card/scroll-box overflow 遮 — 第一行都唔會被剪） */
+        .status-tip { cursor: help; display: inline-block; }
 
         /* ─── Stats ─── */
         .stat-row {
@@ -896,14 +898,14 @@ async function loadEAConfig() {
                 <td><span style="font-size:10px" class="${isSystem?'badge badge-blue':isOfficial?'badge badge-green':'badge badge-gray'}">${isSystem?'系統':isOfficial?'官方':(eaMappings[name]?'自訂':'本機')}</span></td>
                 <td style="text-align:center;white-space:nowrap">
                     ${runtimeStatus[name]==='running'
-                        ? '<div style="font-size:11px;color:var(--success);font-weight:600"><i class="icon-heart" style="font-size:10px"></i> 心跳運行</div>'
+                        ? '<span class="status-tip" style="font-size:11px;color:var(--success);font-weight:600" data-tip="EA 運行中 — 心跳檔案於 5 分鐘內持續更新，已成功附加至圖表並正常運作。"><i class="icon-heart" style="font-size:10px"></i> 心跳運行</span>'
                         : runtimeStatus[name]==='starting'
-                        ? '<div style="font-size:11px;color:#f59e0b;font-weight:600" title="啱啱部署 — 等 EA 寫心跳"><i class="icon-loader" style="font-size:10px"></i> 等待心跳</div>'
+                        ? '<span class="status-tip" style="font-size:11px;color:#f59e0b;font-weight:600" data-tip="EA 已部署（快捷鍵已配置）但心跳尚未寫入 — 通常為剛完成部署，EA 初始化中。心跳寫入後將自動轉為「心跳運行」。"><i class="icon-loader" style="font-size:10px"></i> 等待心跳</span>'
                         : runtimeStatus[name]==='unpaired'
-                        ? '<div style="font-size:11px;color:var(--text-muted);font-weight:600" title="未部署 — 冇熱鍵/圖表"><i class="icon-minus-circle" style="font-size:10px"></i> 未配對</div>'
+                        ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="EA 尚未部署至圖表（未配置快捷鍵）— 未開始運行。完成部署後將顯示實際狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 未配對</span>'
                         : runtimeStatus[name]==='no_hb'
-                        ? '<div style="font-size:11px;color:var(--text-muted);font-weight:600" title="呢隻 EA 冇心跳設定（唔會寫心跳檔案）"><i class="icon-minus-circle" style="font-size:10px"></i> 沒有心跳設定</div>'
-                        : '<div style="font-size:11px;color:var(--danger);font-weight:600" title="本機有檔案但冇配對落圖表 / 心跳停咗"><i class="icon-x-circle" style="font-size:10px"></i> 沒有心跳</div>'}
+                        ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="此 EA 未配置心跳功能（不會寫入心跳檔案）— 無法偵測運行狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 沒有心跳設定</span>'
+                        : '<span class="status-tip" style="font-size:11px;color:var(--danger);font-weight:600" data-tip="EA 心跳已停止。可能原因：EA 已終止／圖表未附加 EA／市場休市導致心跳暫停（不代表 EA 故障）。"><i class="icon-x-circle" style="font-size:10px"></i> 沒有心跳</span>'}
                 </td>
                 <td style="text-align:center;font-size:12px;color:${_alive?'var(--text)':'var(--text-dim)'}">${_alive?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
                 <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
@@ -1874,6 +1876,41 @@ async function devUploadEA() {
         }
     } catch(e) {}
 })();
+
+// 🚨 2026-08-13：狀態 hover tooltip（JS 動態 — position:fixed — 唔受 card/scroll-box overflow 遮）
+// （CSS tooltip 第一行被 scroll-box 裁剪 — 改用 fixed tooltip div — 自動調整方向：向上冇位 → 向下）
+let _statusTipEl = null;
+function _showStatusTip(el) {
+    if (!_statusTipEl) {
+        _statusTipEl = document.createElement('div');
+        _statusTipEl.style.cssText = 'position:fixed;z-index:999999;background:#1f2937;border:1px solid #374151;color:#e5e7eb;font-size:11px;line-height:1.5;padding:8px 10px;border-radius:8px;max-width:240px;box-shadow:0 4px 12px rgba(0,0,0,0.4);pointer-events:none;white-space:normal;display:none;';
+        document.body.appendChild(_statusTipEl);
+    }
+    _statusTipEl.textContent = el.getAttribute('data-tip') || '';
+    _statusTipEl.style.display = 'block';
+    const r = el.getBoundingClientRect();
+    const tw = _statusTipEl.offsetWidth;
+    const th = _statusTipEl.offsetHeight;
+    // 水平置中喺 cell — 唔超出視窗
+    let left = r.left + r.width / 2 - tw / 2;
+    if (left < 8) left = 8;
+    if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+    // 垂直：向上顯示 — 唔夠位（第一行）→ 向下
+    let top = r.top - th - 8;
+    if (top < 8) top = r.bottom + 8;
+    _statusTipEl.style.left = left + 'px';
+    _statusTipEl.style.top = top + 'px';
+}
+function _hideStatusTip() {
+    if (_statusTipEl) _statusTipEl.style.display = 'none';
+}
+document.addEventListener('mouseover', function(e) {
+    const t = e.target.closest('.status-tip');
+    if (t) _showStatusTip(t);
+});
+document.addEventListener('mouseout', function(e) {
+    if (e.target.closest('.status-tip')) _hideStatusTip();
+});
 </script>
 </body>
 </html>
