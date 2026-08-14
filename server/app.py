@@ -403,13 +403,13 @@ def api_ea_config():
                 if st != 'running':
                     if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
                         st = 'running'
+                # 🚨 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表即刻「圖表移除」— 唔使等心跳停 30 秒）
+                # （log 最後「已停止/removed」= 圖表冇 EA — 心跳新鮮都只係 EA 停止前殘留 → chart_removed）
+                if _log_last.get(ea) in ('已停止', 'removed'):
+                    st = 'chart_removed'
                 # 🚨 2026-08-14：分辨「人為暫停」vs「市場收市/關圖表」— config _status='paused'（暫停按鈕寫入）→ 'paused'
-                # （心跳暫停（unknown）+ 人為暫停記錄 → 顯示「已暫停」；冇記錄 → 「心跳暫停」（市場收市/關圖表））
                 if st == 'unknown' and config.get(ea + '_status') == 'paused':
                     st = 'paused'
-                # 🚨 2026-08-14：log 最後「已停止/removed」→ 圖表冇 EA（關圖表/移除 — 即刻反映 — 唔使等心跳停）
-                if st == 'unknown' and _log_last.get(ea) in ('已停止', 'removed'):
-                    st = 'chart_removed'
                 runtime[ea] = st
         except Exception:
             pass
@@ -1259,11 +1259,37 @@ def api_refresh_status():
             if st != 'running':
                 if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
                     st = 'running'
+            # 🚨 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表即刻「圖表移除」）
+            if _log_last.get(base) in ('已停止', 'removed'):
+                st = 'chart_removed'
             if st == 'unknown' and config.get(base + '_status') == 'paused':
                 st = 'paused'
-            if st == 'unknown' and _log_last.get(base) in ('已停止', 'removed'):
-                st = 'chart_removed'
             runtime[base] = st
+    except Exception:
+        pass
+    # 4. 🚨 2026-08-14 自癒（重新整理時 — 部署/安裝都可能觸發「彈返」— 用戶撳重新整理 → 自動清）
+    try:
+        import time as _trs
+        _data_dir_rs = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        _cfg_rs = json.loads(current_user.ea_config or '{}')
+        _cfg_rs_eas = set(k.rsplit('_', 1)[0] for k in _cfg_rs if not k.startswith('_'))
+        for _d_rs in os.listdir(_data_dir_rs):
+            _ea_dir_rs = os.path.join(_data_dir_rs, _d_rs, 'MQL5', 'Experts', 'MT5Cloud_EA')
+            if not os.path.isdir(_ea_dir_rs):
+                continue
+            for _fn_rs in sorted(os.listdir(_ea_dir_rs)):
+                if not _fn_rs.endswith(('.mq5', '.ex5')):
+                    continue
+                _b_rs = os.path.splitext(_fn_rs)[0]
+                if _b_rs in _cfg_rs_eas:
+                    continue  # config 有（正常 — 唔好亂刪）
+                _fp_rs = os.path.join(_ea_dir_rs, _fn_rs)
+                if time.time() - os.path.getctime(_fp_rs) < 120:  # 2 分鐘內出現 = 彈返
+                    try:
+                        os.remove(_fp_rs)
+                        print(f"[API] 重新整理自癒: 已刪除彈返嘅 {_fn_rs}", flush=True)
+                    except Exception:
+                        pass
     except Exception:
         pass
     return jsonify({'success': True, 'runtime_status': runtime, 'deployed': sorted(_hk_has)})
@@ -1375,6 +1401,27 @@ def api_ea_remove_local(filename):
                         removed.append(target)
                     except Exception as e:
                         return jsonify({"success": False, "error": str(e)}), 500
+
+    # 🚨 2026-08-14 FIX（用戶案例：刪除後本機檔案「彈返」）：刪除後 Double-check — 確認檔案真係刪除
+    # （之前淨係刪完就話成功 — 用戶發現「安裝 Fibonacci → 全部 EA 彈返」— 加確認 + 記錄）
+    _residual = []
+    for exp_dir in experts_dirs:
+        for search_dir in (os.path.join(exp_dir, 'MT5Cloud_EA'), exp_dir):
+            for ext in ('.ex5', '.mq5'):
+                target = os.path.join(search_dir, base_only + ext)
+                if os.path.isfile(target):
+                    _residual.append(target)
+    if _residual:
+        print(f"[remove-local] ⚠️ 刪除後偵測到殘留檔案（可能被鎖/自動恢復）: {_residual}", flush=True)
+        # 再試一次（MT5 可能鎖住 — 稍等再刪）
+        import time as _rtry
+        _rtry.sleep(1.5)
+        for t2 in _residual:
+            try:
+                os.remove(t2)
+                print(f"[remove-local] 重試刪除成功: {os.path.basename(t2)}", flush=True)
+            except Exception as e2:
+                print(f"[remove-local] ❌ 重試刪除失敗（檔案仍存在 — 用戶要手動刪或重啟 MT5）: {t2} ({e2})", flush=True)
 
     if removed:
         # 🚨 2026-08-10：網頁 delete 完成 → steps 全部 done（警告視窗顯示「完成刪除」+ 確定）
@@ -1505,6 +1552,38 @@ def api_ea_install_local(filename):
             continue  # 已經喺度
         try:
             _sh.copy2(src_path, target)
+            # 🚨 2026-08-14：核心模板 — 複製後自動注入心跳 code（1 秒心跳 — 新 EA 自動有 — 唔使手動加）
+            # （EA 庫版本冇心跳 code → 部署後永遠「沒有心跳設定」— 自動注入解決）
+            if dest_name.endswith('.mq5'):
+                try:
+                    import re as _re_hb
+                    _c_hb = open(target, encoding='utf-8', errors='ignore').read()
+                    if '__mt5c_process' not in _c_hb and 'EventSetTimer' not in _c_hb:
+                        _hb_mod = '''
+// ---- MT5 Cloud 心跳（自動注入 2026-08-14 — 每秒寫心跳）----
+string __mt5c_state_file = "";
+void __mt5c_process() {
+   if(__mt5c_state_file == "") __mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
+   int h = FileOpen(__mt5c_state_file, FILE_WRITE|FILE_TXT|FILE_COMMON);
+   if(h != INVALID_HANDLE) {
+      FileWrite(h, StringFormat("{\\"ea\\":\\"%s\\",\\"status\\":\\"running\\",\\"ts\\":%d}", MQLInfoString(MQL_PROGRAM_NAME), (int)TimeCurrent()));
+      FileClose(h);
+   }
+}
+// ---- 心跳結束 ----
+'''
+                        _c_hb = _c_hb.rstrip() + '\n' + _hb_mod + '\n'
+                        # OnInit 掛鉤（EventSetTimer — return(INIT_SUCCEEDED) 前）
+                        _c_hb2 = _re_hb.sub(r'(\s*)return\s*\(\s*INIT_SUCCEEDED\s*\)\s*;', r'\1   EventSetTimer(1);\n\1   return(INIT_SUCCEEDED);', _c_hb, count=1)
+                        # OnTimer 掛鉤（調用 __mt5c_process — OnDeinit 前）
+                        _c_hb2 = _c_hb2.replace('void OnDeinit(const int reason)', 'void OnTimer()\n{\n   __mt5c_process();\n}\n\nvoid OnDeinit(const int reason)', 1)
+                        # OnDeinit EventKillTimer（Print 已停止 前）
+                        _c_hb2 = _re_hb.sub(r'(\s*)if\(EnableLog\) Print\("🛑', r'\1   EventKillTimer();\n\1   if(EnableLog) Print("🛑', _c_hb2, count=1)
+                        if _c_hb2 != _c_hb:
+                            open(target, 'w', encoding='utf-8').write(_c_hb2)
+                            print(f"[API] ⚡ 已注入 1 秒心跳 code: {dest_name}", flush=True)
+                except Exception as _ehb:
+                    print(f"[API] ⚠️ 心跳注入失敗（唔影響配對）: {_ehb}", flush=True)
             installed.append(target)
             # 🚨 2026-08-12 FIX：複製完成 → 更新 steps（開始配對 done + 複製檔案 done — 活動記錄式）
             try:
@@ -1587,6 +1666,51 @@ def api_ea_install_local(filename):
             except Exception as e:
                 print(f"[install-local] compile 指令寫入失敗: {e}")
         break  # 只複製去第一個 Experts 目錄
+
+    # 🚨 2026-08-14 FIX（用戶案例：安裝 Fibonacci → 全部 EA「彈返」）：複製監察
+    # 偵測「install-local 之後有冇非預期 EA 檔案出現」（ctime 08:19:55 批量複製 — 源頭未明 — 加監察下次捉到）
+    try:
+        import time as _tmon
+        _mon_ea_dir = os.path.join(experts_dirs[0], 'MT5Cloud_EA') if experts_dirs else None
+        if _mon_ea_dir and os.path.isdir(_mon_ea_dir):
+            _before = set(os.listdir(_mon_ea_dir))
+            # 等 3 秒（watcher 可能即刻處理 compile — 期間有冇額外複製）
+            _tmon.sleep(3)
+            _after = set(os.listdir(_mon_ea_dir))
+            _unexpected = sorted(_after - _before - {dest_name, os.path.splitext(dest_name)[0] + '.ex5'})
+            if _unexpected:
+                print(f"[install-local] ⚠️ 複製監察: 安裝 {dest_name} 後偵測到非預期 EA 出現: {_unexpected}", flush=True)
+            else:
+                print(f"[install-local] 複製監察: 安裝 {dest_name} 後冇額外 EA（正常）", flush=True)
+    except Exception as _eme:
+        print(f"[install-local] ⚠️ 複製監察失敗: {_eme}", flush=True)
+
+    # 🚨 2026-08-14 自癒：偵測「彈返」— ctime 新（120 秒內出現）+ config 冇（已刪除）→ 自動刪除
+    # （用戶案例：刪除晒 EA → 安裝 Fibonacci → 全部「彈返」— 源頭未明（環境層面）— 自癒自動清理彈返檔案）
+    try:
+        import time as _thb
+        _cfg_hb = json.loads(current_user.ea_config or '{}')
+        _cfg_hb_eas = set(k.rsplit('_', 1)[0] for k in _cfg_hb if not k.startswith('_'))
+        _ea_dir_hb = os.path.join(experts_dirs[0], 'MT5Cloud_EA') if experts_dirs else None
+        if _ea_dir_hb and os.path.isdir(_ea_dir_hb):
+            for _fn_hb in sorted(os.listdir(_ea_dir_hb)):
+                if not _fn_hb.endswith(('.mq5', '.ex5')):
+                    continue
+                # 🚨 2026-08-14 FIX：排除「今次安裝嘅 EA」（自癒喺 config 寫入前執行 — 誤刪啱啱安裝嘅 → compile「找不到檔案」→ 用戶見 Windows 錯誤）
+                if _fn_hb == dest_name or _fn_hb == os.path.splitext(dest_name)[0] + '.ex5':
+                    continue
+                _b_hb = os.path.splitext(_fn_hb)[0]
+                if _b_hb in _cfg_hb_eas:
+                    continue  # config 有（正常配對 — 唔好亂刪）
+                _fp_hb = os.path.join(_ea_dir_hb, _fn_hb)
+                if time.time() - os.path.getctime(_fp_hb) < 120:  # 2 分鐘內出現 = 彈返
+                    try:
+                        os.remove(_fp_hb)
+                        print(f"[install-local] 自癒: 已刪除彈返嘅 {_fn_hb}（config 冇 + 啱啱出現）", flush=True)
+                    except Exception as _ehb2:
+                        print(f"[install-local] ⚠️ 自癒刪除失敗: {_fn_hb} ({_ehb2})", flush=True)
+    except Exception as _ehb3:
+        print(f"[install-local] ⚠️ 自癒檢查失敗: {_ehb3}", flush=True)
 
     # 4. 寫 config（預設值 — 前端會覆蓋）
     try:
@@ -2396,7 +2520,36 @@ def api_deploy():
     db.session.commit()
     print(f"[API] Deploy: {ea_name} -> {symbol} {tf} (command file written)")
     log_activity('deploy', f'{ea_name} 部署 → {symbol} {tf}', ea=ea_name)
-    
+
+    # 🚨 2026-08-14 自癒（部署後）：部署都可能觸發「其他 EA 彈返」（用戶案例：部署 Hedge → 其他 EA 彈返）
+    # 部署後清「彈返」—— ctime 新（120 秒內）+ config 冇（已刪除）→ 自動刪除（排除今次部署嘅 EA）
+    try:
+        import time as _tdh
+        _data_dir_h = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        _cfg_h = json.loads(current_user.ea_config or '{}')
+        _cfg_h_eas = set(k.rsplit('_', 1)[0] for k in _cfg_h if not k.startswith('_'))
+        for _d_h in os.listdir(_data_dir_h):
+            _ea_dir_h = os.path.join(_data_dir_h, _d_h, 'MQL5', 'Experts', 'MT5Cloud_EA')
+            if not os.path.isdir(_ea_dir_h):
+                continue
+            for _fn_h in sorted(os.listdir(_ea_dir_h)):
+                if not _fn_h.endswith(('.mq5', '.ex5')):
+                    continue
+                if _fn_h == ea_name + '.mq5' or _fn_h == ea_name + '.ex5':
+                    continue  # 今次部署嘅 EA — 唔好刪
+                _b_h = os.path.splitext(_fn_h)[0]
+                if _b_h in _cfg_h_eas:
+                    continue  # config 有（正常 — 唔好亂刪）
+                _fp_h = os.path.join(_ea_dir_h, _fn_h)
+                if time.time() - os.path.getctime(_fp_h) < 120:  # 2 分鐘內出現 = 彈返
+                    try:
+                        os.remove(_fp_h)
+                        print(f"[API] 部署後自癒: 已刪除彈返嘅 {_fn_h}", flush=True)
+                    except Exception:
+                        pass
+    except Exception as _edh:
+        print(f"[API] ⚠️ 部署後自癒失敗: {_edh}", flush=True)
+
     return jsonify({"success": True, "message": f"🚀 Deploying {ea_name} -> {symbol} {tf}"})
 
 @app.route('/api/bind-account', methods=['POST'])

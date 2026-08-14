@@ -32246,3 +32246,587 @@
 {"time": 1786664183.3427126, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786664214.5637267, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786664245.4808447, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664276.4025605, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664307.3215647, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664338.523949, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664345.0550282, "action": "deploy", "ea": "Breakout", "message": "Breakout 部署 → USDJPY H1", "source": "server"}
+{"time": 1786664369.4715202, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664400.4193492, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664402.015154, "action": "unknown", "ea": "Breakout", "message": "Breakout 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786664431.3409922, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664462.4051504, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664493.3134775, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664524.2360554, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664555.169475, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664586.080341, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664616.9844196, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664641.7273264, "action": "deploy", "ea": "Fibonacci", "message": "Fibonacci 部署 → USDJPY H1", "source": "server"}
+{"time": 1786664647.9330795, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664678.8885624, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664700.2060573, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786664709.824804, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664740.8962724, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664771.9706652, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664802.876267, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664833.7956014, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664864.704957, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664895.602512, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664926.5164504, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664955.9785013, "action": "added", "ea": "MT5Cloud_EA/TestHB_Run", "message": "MT5Cloud_EA/TestHB_Run 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786664957.4307165, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786664988.3669357, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665002.0757685, "action": "deploy", "ea": "TestHB_Run", "message": "TestHB_Run 部署 → EURUSD H1", "source": "server"}
+{"time": 1786665024.4990156, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665055.4838011, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665081.4316225, "action": "unknown", "ea": "TestHB_Run", "message": "TestHB_Run 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786665086.4555452, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665117.413497, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665128.9391162, "action": "deploy", "ea": "TestHB_Run", "message": "TestHB_Run 部署 → EURUSD H1", "source": "server"}
+{"time": 1786665153.5413537, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665184.4843826, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665209.882593, "action": "unknown", "ea": "TestHB_Run", "message": "TestHB_Run 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786665215.4313984, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665246.3959672, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665277.3762488, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665308.3516974, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665339.3247116, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665370.304445, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665401.2960055, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665432.2434726, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665463.1857674, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665494.133135, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665518.3302102, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786665525.1097085, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665533.8928003, "action": "deploy", "ea": "Breakout", "message": "Breakout 部署 → EURUSD H1", "source": "server"}
+{"time": 1786665558.7938435, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665589.7508392, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665591.8671875, "action": "unknown", "ea": "Breakout", "message": "Breakout 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786665620.7642372, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665651.7433722, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665682.7602174, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665713.7270708, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665744.7153425, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665757.8958683, "action": "deploy", "ea": "Breakout", "message": "Breakout 部署 → EURUSD H1", "source": "server"}
+{"time": 1786665775.849195, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665806.8090103, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665816.0815842, "action": "unknown", "ea": "Breakout", "message": "Breakout 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786665838.109569, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665869.4038293, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665900.347406, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665931.3066466, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665962.2619019, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786665975.4638872, "action": "modified", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已更新", "source": "watcher"}
+{"time": 1786665975.467941, "action": "modified", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已更新", "source": "watcher"}
+{"time": 1786665975.47835, "action": "modified", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已更新", "source": "watcher"}
+{"time": 1786665975.4881105, "action": "modified", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已更新", "source": "watcher"}
+{"time": 1786665975.5004876, "action": "modified", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已更新", "source": "watcher"}
+{"time": 1786665975.5095248, "action": "modified", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已更新", "source": "watcher"}
+{"time": 1786665975.5230742, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786665975.5331125, "action": "modified", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已更新", "source": "watcher"}
+{"time": 1786665975.5437527, "action": "modified", "ea": "MT5Cloud_EA/Controller", "message": "MT5Cloud_EA/Controller 已更新", "source": "watcher"}
+{"time": 1786665975.5568442, "action": "modified", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已更新", "source": "watcher"}
+{"time": 1786665975.5668688, "action": "modified", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已更新", "source": "watcher"}
+{"time": 1786665975.57994, "action": "modified", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已更新", "source": "watcher"}
+{"time": 1786665975.5924942, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786665975.6041036, "action": "modified", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已更新", "source": "watcher"}
+{"time": 1786665975.6170394, "action": "modified", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已更新", "source": "watcher"}
+{"time": 1786665975.6281075, "action": "modified", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已更新", "source": "watcher"}
+{"time": 1786665993.2485132, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666024.2088501, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666035.7952223, "action": "modified", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已更新", "source": "watcher"}
+{"time": 1786666038.8042145, "action": "modified", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已更新", "source": "watcher"}
+{"time": 1786666044.8325038, "action": "modified", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已更新", "source": "watcher"}
+{"time": 1786666047.853519, "action": "modified", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已更新", "source": "watcher"}
+{"time": 1786666050.873971, "action": "modified", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已更新", "source": "watcher"}
+{"time": 1786666055.211737, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666086.1777718, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666117.1244712, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666148.11388, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666163.00086, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786666163.1472197, "action": "ea_install", "ea": "ATR_Stop", "message": "ATR_Stop 配對處理中...", "source": "server"}
+{"time": 1786666165.1674757, "action": "added", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666179.1014428, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666182.18914, "action": "ea_install", "ea": "ATR_Stop", "message": "ATR_Stop 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786666183.1473022, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786666201.192397, "action": "modified", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已更新", "source": "watcher"}
+{"time": 1786666210.1152656, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666241.0736325, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666272.0628846, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666303.211081, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666325.5242994, "action": "ea_delete", "ea": "Trend_Follow", "message": "Trend_Follow 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666325.635417, "action": "ea_delete", "ea": "Trend_Follow", "message": "Trend_Follow 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666334.185737, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666335.5848756, "action": "unknown", "ea": "Trend_Follow", "message": "Trend_Follow 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666337.6645465, "action": "deleted", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦刪除", "source": "watcher"}
+{"time": 1786666349.309162, "action": "ea_delete", "ea": "SMA_Cross", "message": "SMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666349.4233015, "action": "ea_delete", "ea": "SMA_Cross", "message": "SMA_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666357.7193482, "action": "unknown", "ea": "SMA_Cross", "message": "SMA_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666359.7915726, "action": "deleted", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786666365.1304302, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666366.0996864, "action": "ea_delete", "ea": "Price_Action", "message": "Price_Action 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666366.2102423, "action": "ea_delete", "ea": "Price_Action", "message": "Price_Action 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666376.86069, "action": "unknown", "ea": "Price_Action", "message": "Price_Action 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666378.9241502, "action": "deleted", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦刪除", "source": "watcher"}
+{"time": 1786666395.0094886, "action": "ea_delete", "ea": "Momentum", "message": "Momentum 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666395.1170957, "action": "ea_delete", "ea": "Momentum", "message": "Momentum 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666396.0852408, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666405.003804, "action": "unknown", "ea": "Momentum", "message": "Momentum 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666407.0867133, "action": "deleted", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦刪除", "source": "watcher"}
+{"time": 1786666411.8536751, "action": "ea_delete", "ea": "Mean_Reversion", "message": "Mean_Reversion 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666411.9637296, "action": "ea_delete", "ea": "Mean_Reversion", "message": "Mean_Reversion 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666421.1251795, "action": "unknown", "ea": "Mean_Reversion", "message": "Mean_Reversion 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666423.1951911, "action": "deleted", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦刪除", "source": "watcher"}
+{"time": 1786666427.0247972, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666428.0090966, "action": "ea_delete", "ea": "MACD_Cross", "message": "MACD_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666428.1339774, "action": "ea_delete", "ea": "MACD_Cross", "message": "MACD_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666437.286288, "action": "unknown", "ea": "MACD_Cross", "message": "MACD_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666439.3584175, "action": "deleted", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786666445.7235072, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666445.8617513, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666456.3877583, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666457.9036787, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666458.4331841, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786666463.4998703, "action": "ea_delete", "ea": "ATR_Stop", "message": "ATR_Stop 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666463.643598, "action": "ea_delete", "ea": "ATR_Stop", "message": "ATR_Stop 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666472.4996567, "action": "unknown", "ea": "ATR_Stop", "message": "ATR_Stop 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666474.5770001, "action": "deleted", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦刪除", "source": "watcher"}
+{"time": 1786666481.699222, "action": "ea_delete", "ea": "TestHB_Run", "message": "TestHB_Run 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666481.8606613, "action": "ea_delete", "ea": "TestHB_Run", "message": "TestHB_Run 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666488.7977479, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666491.6205735, "action": "unknown", "ea": "TestHB_Run", "message": "TestHB_Run 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666493.68098, "action": "deleted", "ea": "MT5Cloud_EA/TestHB_Run", "message": "MT5Cloud_EA/TestHB_Run 已於電腦刪除", "source": "watcher"}
+{"time": 1786666499.5635135, "action": "ea_delete", "ea": "Swing_Trader", "message": "Swing_Trader 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666499.6812253, "action": "ea_delete", "ea": "Swing_Trader", "message": "Swing_Trader 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666507.7355142, "action": "unknown", "ea": "Swing_Trader", "message": "Swing_Trader 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666509.8096204, "action": "deleted", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦刪除", "source": "watcher"}
+{"time": 1786666519.6569135, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666524.2815216, "action": "ea_delete", "ea": "Seasonal", "message": "Seasonal 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666524.4131005, "action": "ea_delete", "ea": "Seasonal", "message": "Seasonal 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666532.9727588, "action": "unknown", "ea": "Seasonal", "message": "Seasonal 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666535.0296261, "action": "deleted", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦刪除", "source": "watcher"}
+{"time": 1786666550.6566193, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666567.6016119, "action": "ea_delete", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666567.7894347, "action": "ea_delete", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666576.1525645, "action": "unknown", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666578.2344341, "action": "deleted", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦刪除", "source": "watcher"}
+{"time": 1786666581.5588388, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666590.5409951, "action": "ea_delete", "ea": "Ichimoku", "message": "Ichimoku 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666590.7224166, "action": "ea_delete", "ea": "Ichimoku", "message": "Ichimoku 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666601.3278008, "action": "unknown", "ea": "Ichimoku", "message": "Ichimoku 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666603.4189098, "action": "deleted", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦刪除", "source": "watcher"}
+{"time": 1786666612.4246128, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666613.4338043, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666613.5569453, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666623.5255225, "action": "unknown", "ea": "Grid_Trading", "message": "Grid_Trading 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666625.5899754, "action": "deleted", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦刪除", "source": "watcher"}
+{"time": 1786666629.3814285, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666629.490905, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666639.6313732, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666641.719936, "action": "deleted", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦刪除", "source": "watcher"}
+{"time": 1786666643.2886968, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666657.5213892, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666657.6499565, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666667.8338466, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666669.9033113, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786666674.1134846, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666685.2432508, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666685.3521757, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666695.9631772, "action": "unknown", "ea": "Breakout", "message": "Breakout 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666698.0302527, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786666704.9295363, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666733.3057892, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666733.4167335, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666735.735615, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666742.1504192, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666744.2042935, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786666751.7248466, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786666751.9104238, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786666761.3192608, "action": "unknown", "ea": "AgentHelper", "message": "AgentHelper 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786666763.3516912, "action": "deleted", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦刪除", "source": "watcher"}
+{"time": 1786666766.5396874, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666776.3191516, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 配對處理中...", "source": "server"}
+{"time": 1786666778.390272, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666796.866535, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786666797.3239074, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666797.4675186, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.4695182, "action": "added", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.4790304, "action": "added", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.4904726, "action": "added", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5017014, "action": "added", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5119188, "action": "added", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.525462, "action": "added", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5379977, "action": "added", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5476453, "action": "added", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5617342, "action": "added", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5707812, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5793676, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.5919204, "action": "added", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.6029737, "action": "added", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.6121686, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.6233628, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666797.633348, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786666828.245867, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666832.5819433, "action": "deploy", "ea": "Fibonacci", "message": "Fibonacci 部署 → EURUSD H1", "source": "server"}
+{"time": 1786666864.211724, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666886.6285365, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786666895.0059829, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666925.9800634, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666956.7975516, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786666987.732473, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667018.5263515, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667049.312888, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667080.1070776, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667110.950682, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667141.7563033, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667172.5542758, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667203.3963583, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667234.5337064, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667265.4218795, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667296.2372115, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667327.0344784, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667357.8178973, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667388.6317148, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667419.444775, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667450.2399826, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667481.0344594, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667511.8357387, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667542.6354198, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667573.4664476, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667604.2710822, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667635.0687876, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667665.8877993, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667696.6900523, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667727.4949234, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667758.2980769, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667789.1190972, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667819.9272673, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667850.7486644, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667881.5185075, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667912.3501663, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667943.1646342, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786667973.9739118, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668004.7520306, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668035.5799227, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668066.3895245, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668097.2318268, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668128.01107, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668158.834146, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668189.7373118, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668220.5320308, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668251.3123465, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668282.1059153, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668312.911618, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668343.7307, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668374.5411925, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668405.3560262, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668436.1700518, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668466.9956417, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668497.8138473, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668528.6061962, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668559.4078345, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668590.2194834, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668621.0277915, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668651.813557, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668657.3374672, "action": "ea_delete", "ea": "SMA_Cross", "message": "SMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786668660.520974, "action": "ea_install", "ea": "Stochastic", "message": "Stochastic 配對處理中...", "source": "server"}
+{"time": 1786668661.3414965, "action": "deleted", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786668679.4931645, "action": "added", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786668679.5047202, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786668679.5555174, "action": "ea_install", "ea": "Stochastic", "message": "Stochastic 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786668682.6524293, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668713.470968, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668718.4880877, "action": "ea_delete", "ea": "SMA_Cross", "message": "SMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786668744.322183, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668759.564769, "action": "ea_install", "ea": "RSI_Over", "message": "RSI_Over 配對處理中...", "source": "server"}
+{"time": 1786668772.6017606, "action": "ea_install", "ea": "RSI_Over", "message": "RSI_Over 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786668772.6814458, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786668772.6875036, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786668775.145831, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668806.047879, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668836.8780808, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668867.7168798, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668898.537721, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668929.3810503, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668960.1973164, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786668991.0310576, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669016.9671464, "action": "ea_delete", "ea": "SMA_Cross", "message": "SMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669019.1484275, "action": "ea_install", "ea": "Volume_Spike", "message": "Volume_Spike 配對處理中...", "source": "server"}
+{"time": 1786669021.3743563, "action": "deleted", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786669021.852795, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669052.6666567, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669069.7259955, "action": "ea_install", "ea": "Volume_Spike", "message": "Volume_Spike 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786669083.5116487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669114.3490956, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669145.2376745, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669168.9851868, "action": "ea_delete", "ea": "Trend_Follow", "message": "Trend_Follow 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669169.1133976, "action": "ea_delete", "ea": "Trend_Follow", "message": "Trend_Follow 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669176.0843284, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669177.9414332, "action": "unknown", "ea": "Trend_Follow", "message": "Trend_Follow 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669180.0206947, "action": "deleted", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦刪除", "source": "watcher"}
+{"time": 1786669186.1554148, "action": "ea_delete", "ea": "Swing_Trader", "message": "Swing_Trader 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669186.2818332, "action": "ea_delete", "ea": "Swing_Trader", "message": "Swing_Trader 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669197.1378736, "action": "unknown", "ea": "Swing_Trader", "message": "Swing_Trader 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669199.2241156, "action": "deleted", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦刪除", "source": "watcher"}
+{"time": 1786669203.4472218, "action": "ea_delete", "ea": "Seasonal", "message": "Seasonal 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669203.5580952, "action": "ea_delete", "ea": "Seasonal", "message": "Seasonal 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669206.9427083, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669213.3149216, "action": "unknown", "ea": "Seasonal", "message": "Seasonal 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669215.3772597, "action": "deleted", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦刪除", "source": "watcher"}
+{"time": 1786669227.7160933, "action": "ea_delete", "ea": "Price_Action", "message": "Price_Action 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669227.839608, "action": "ea_delete", "ea": "Price_Action", "message": "Price_Action 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669237.7804515, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669238.516852, "action": "unknown", "ea": "Price_Action", "message": "Price_Action 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669240.5920005, "action": "deleted", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦刪除", "source": "watcher"}
+{"time": 1786669260.579391, "action": "ea_delete", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669260.6907644, "action": "ea_delete", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669268.6299386, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669269.7517939, "action": "unknown", "ea": "Parabolic_SAR", "message": "Parabolic_SAR 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669271.8309183, "action": "deleted", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦刪除", "source": "watcher"}
+{"time": 1786669291.6366353, "action": "ea_delete", "ea": "Momentum", "message": "Momentum 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669291.7632973, "action": "ea_delete", "ea": "Momentum", "message": "Momentum 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669299.4612286, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669301.0035975, "action": "unknown", "ea": "Momentum", "message": "Momentum 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669303.0865548, "action": "deleted", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦刪除", "source": "watcher"}
+{"time": 1786669307.4878278, "action": "ea_delete", "ea": "Mean_Reversion", "message": "Mean_Reversion 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669307.5952952, "action": "ea_delete", "ea": "Mean_Reversion", "message": "Mean_Reversion 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669317.1995747, "action": "unknown", "ea": "Mean_Reversion", "message": "Mean_Reversion 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669319.2762647, "action": "deleted", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦刪除", "source": "watcher"}
+{"time": 1786669330.2725468, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669332.9244323, "action": "ea_delete", "ea": "MACD_Cross", "message": "MACD_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669333.0413778, "action": "ea_delete", "ea": "MACD_Cross", "message": "MACD_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669342.441981, "action": "unknown", "ea": "MACD_Cross", "message": "MACD_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669344.4968395, "action": "deleted", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786669355.9808571, "action": "ea_delete", "ea": "Ichimoku", "message": "Ichimoku 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669356.0974538, "action": "ea_delete", "ea": "Ichimoku", "message": "Ichimoku 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669361.0974207, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669364.623799, "action": "unknown", "ea": "Ichimoku", "message": "Ichimoku 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669366.7165797, "action": "deleted", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦刪除", "source": "watcher"}
+{"time": 1786669372.0659852, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669372.1731546, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669380.877221, "action": "unknown", "ea": "Grid_Trading", "message": "Grid_Trading 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669382.9557557, "action": "deleted", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦刪除", "source": "watcher"}
+{"time": 1786669387.0891151, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669387.2321515, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669391.9396336, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669397.046384, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669399.1254613, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786669404.187184, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669404.2929556, "action": "ea_delete", "ea": "Correlation", "message": "Correlation 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669413.260463, "action": "unknown", "ea": "Correlation", "message": "Correlation 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669415.2946634, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786669420.0198612, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669420.1968317, "action": "ea_delete", "ea": "Breakout", "message": "Breakout 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669422.7696931, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669429.616342, "action": "unknown", "ea": "Breakout", "message": "Breakout 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669431.6718142, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786669440.5709736, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669440.6783476, "action": "ea_delete", "ea": "Bollinger_Band", "message": "Bollinger_Band 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669448.7851753, "action": "unknown", "ea": "Bollinger_Band", "message": "Bollinger_Band 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669450.8289711, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786669453.614525, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669455.9061365, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669456.0205872, "action": "ea_delete", "ea": "AgentHelper", "message": "AgentHelper 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669464.96668, "action": "unknown", "ea": "AgentHelper", "message": "AgentHelper 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669467.0524645, "action": "deleted", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦刪除", "source": "watcher"}
+{"time": 1786669472.174812, "action": "ea_delete", "ea": "ATR_Stop", "message": "ATR_Stop 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669472.2844558, "action": "ea_delete", "ea": "ATR_Stop", "message": "ATR_Stop 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669481.1967108, "action": "unknown", "ea": "ATR_Stop", "message": "ATR_Stop 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669483.2676854, "action": "deleted", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦刪除", "source": "watcher"}
+{"time": 1786669484.4722204, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669489.8195884, "action": "ea_delete", "ea": "Stochastic", "message": "Stochastic 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669489.9307017, "action": "ea_delete", "ea": "Stochastic", "message": "Stochastic 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669500.388009, "action": "unknown", "ea": "Stochastic", "message": "Stochastic 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669502.4594467, "action": "deleted", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦刪除", "source": "watcher"}
+{"time": 1786669506.108625, "action": "ea_delete", "ea": "RSI_Over", "message": "RSI_Over 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669506.3306675, "action": "ea_delete", "ea": "RSI_Over", "message": "RSI_Over 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669515.297502, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669516.5976713, "action": "unknown", "ea": "RSI_Over", "message": "RSI_Over 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669518.684917, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786669531.3441305, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669531.453059, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669541.8006804, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669543.8611634, "action": "deleted", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦刪除", "source": "watcher"}
+{"time": 1786669546.0958898, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669574.8051798, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 配對處理中...", "source": "server"}
+{"time": 1786669576.9257107, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669577.0371096, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669607.8450487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669625.4264874, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 已安裝到本機 MT5（compile 失敗）", "source": "server"}
+{"time": 1786669638.6685681, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669661.725792, "action": "deleted", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦刪除", "source": "watcher"}
+{"time": 1786669669.4524784, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669700.237165, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669731.0393794, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669761.829365, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669777.4344726, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 配對處理中...", "source": "server"}
+{"time": 1786669792.6331627, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669792.8557427, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.8582711, "action": "added", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.8692858, "action": "added", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.8839514, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.8970149, "action": "added", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.910075, "action": "added", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.922139, "action": "added", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.9372332, "action": "added", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.9477794, "action": "added", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.964942, "action": "added", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.9780056, "action": "added", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669792.9905977, "action": "added", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.0036407, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.013222, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.0252373, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.0337744, "action": "added", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.0448303, "action": "added", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.055903, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.064963, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.0749907, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669793.476231, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786669823.4508429, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669854.2510872, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669885.0591936, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669895.5413244, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786669895.6549022, "action": "ea_delete", "ea": "Fibonacci", "message": "Fibonacci 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786669906.3752522, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786669908.4343321, "action": "deleted", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦刪除", "source": "watcher"}
+{"time": 1786669915.825272, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669926.2628648, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 配對處理中...", "source": "server"}
+{"time": 1786669939.2906356, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786669939.5399058, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669946.8306868, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669958.8723717, "action": "ea_install", "ea": "Hedge_Fund", "message": "Hedge_Fund 配對處理中...", "source": "server"}
+{"time": 1786669960.5866022, "action": "added", "ea": "MT5Cloud_EA/Hedge_Fund", "message": "MT5Cloud_EA/Hedge_Fund 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786669977.8099968, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786669977.9208379, "action": "ea_install", "ea": "Hedge_Fund", "message": "Hedge_Fund 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786670001.450102, "action": "deploy", "ea": "Hedge_Fund", "message": "Hedge_Fund 部署 → EURUSD H1", "source": "server"}
+{"time": 1786670008.612198, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670017.6884284, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670017.690457, "action": "added", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670017.7034316, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670017.7174225, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670017.7284293, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.7535717, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.7701674, "action": "added", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.7828524, "action": "added", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.7951143, "action": "added", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.8065438, "action": "added", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.8176258, "action": "added", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.8322332, "action": "added", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670020.8422325, "action": "added", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670023.8624196, "action": "added", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670023.8753934, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670023.883926, "action": "added", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670023.8939114, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670023.9075894, "action": "added", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670023.916597, "action": "added", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670053.6120167, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670055.877385, "action": "unknown", "ea": "Hedge_Fund", "message": "Hedge_Fund 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786670084.4459686, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670115.2442486, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670146.0844004, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670176.905217, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670195.4742029, "action": "ea_delete", "ea": "SMA_Cross", "message": "SMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786670197.0942886, "action": "ea_delete", "ea": "Grid_Trading", "message": "Grid_Trading 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786670199.2986147, "action": "ea_install", "ea": "Hedge_Fund", "message": "Hedge_Fund 配對處理中...", "source": "server"}
+{"time": 1786670200.4509091, "action": "deleted", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786670202.500839, "action": "deleted", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦刪除", "source": "watcher"}
+{"time": 1786670207.7532022, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670219.8359087, "action": "ea_install", "ea": "Hedge_Fund", "message": "Hedge_Fund 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786670220.6854491, "action": "added", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670220.6991363, "action": "modified", "ea": "MT5Cloud_EA/Hedge_Fund", "message": "MT5Cloud_EA/Hedge_Fund 已更新", "source": "watcher"}
+{"time": 1786670220.7104356, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670238.5749032, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670249.9946525, "action": "deploy", "ea": "Hedge_Fund", "message": "Hedge_Fund 部署 → EURUSD H1", "source": "server"}
+{"time": 1786670274.5321913, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670305.363168, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670306.4558609, "action": "unknown", "ea": "Hedge_Fund", "message": "Hedge_Fund 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786670336.2032685, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670367.1460788, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670398.0395389, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670429.0252306, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670459.965974, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670490.7694628, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670521.6073782, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670523.5463505, "action": "deleted", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦刪除", "source": "watcher"}
+{"time": 1786670525.5948484, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786670527.6734428, "action": "deleted", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦刪除", "source": "watcher"}
+{"time": 1786670529.7342582, "action": "deleted", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦刪除", "source": "watcher"}
+{"time": 1786670531.8112137, "action": "deleted", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦刪除", "source": "watcher"}
+{"time": 1786670533.8783376, "action": "deleted", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦刪除", "source": "watcher"}
+{"time": 1786670535.9573035, "action": "deleted", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦刪除", "source": "watcher"}
+{"time": 1786670538.0184224, "action": "deleted", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦刪除", "source": "watcher"}
+{"time": 1786670540.1077604, "action": "deleted", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦刪除", "source": "watcher"}
+{"time": 1786670542.1646273, "action": "deleted", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦刪除", "source": "watcher"}
+{"time": 1786670544.2496905, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786670546.3168151, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786670548.3706803, "action": "deleted", "ea": "MT5Cloud_EA/Hedge_Fund", "message": "MT5Cloud_EA/Hedge_Fund 已於電腦刪除", "source": "watcher"}
+{"time": 1786670550.4131334, "action": "deleted", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦刪除", "source": "watcher"}
+{"time": 1786670552.0315886, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670552.5057626, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786670554.587491, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786670556.658231, "action": "deleted", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786670558.7514868, "action": "deleted", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦刪除", "source": "watcher"}
+{"time": 1786670560.8334792, "action": "deleted", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦刪除", "source": "watcher"}
+{"time": 1786670562.898306, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786670567.9482963, "action": "deleted", "ea": "MT5Cloud_EA/Controller", "message": "MT5Cloud_EA/Controller 已於電腦刪除", "source": "watcher"}
+{"time": 1786670582.0667803, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670612.1013641, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670642.1375842, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670672.1978183, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670672.566707, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 配對處理中...", "source": "server"}
+{"time": 1786670685.607114, "action": "ea_install", "ea": "Fibonacci", "message": "Fibonacci 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786670686.1753514, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.1775782, "action": "added", "ea": "MT5Cloud_EA/Controller", "message": "MT5Cloud_EA/Controller 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.1917882, "action": "added", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2030118, "action": "added", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2120924, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.224908, "action": "added", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2380438, "action": "added", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2501066, "action": "added", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2632155, "action": "added", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2727487, "action": "added", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.28432, "action": "added", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.2983854, "action": "added", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.3099325, "action": "added", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.325525, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.3410938, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.3576932, "action": "added", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.370234, "action": "added", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.3812964, "action": "added", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.3968754, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.406417, "action": "added", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.4185164, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.4300494, "action": "added", "ea": "MT5Cloud_EA/Hedge_Fund", "message": "MT5Cloud_EA/Hedge_Fund 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670686.441628, "action": "added", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786670702.8793554, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670719.6018648, "action": "deploy", "ea": "Fibonacci", "message": "Fibonacci 部署 → EURUSD H1", "source": "server"}
+{"time": 1786670724.5753152, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786670726.6030612, "action": "deleted", "ea": "MT5Cloud_EA/Controller", "message": "MT5Cloud_EA/Controller 已於電腦刪除", "source": "watcher"}
+{"time": 1786670728.686216, "action": "deleted", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦刪除", "source": "watcher"}
+{"time": 1786670730.7730956, "action": "deleted", "ea": "MT5Cloud_EA/Trend_Follow", "message": "MT5Cloud_EA/Trend_Follow 已於電腦刪除", "source": "watcher"}
+{"time": 1786670732.8224702, "action": "deleted", "ea": "MT5Cloud_EA/Mean_Reversion", "message": "MT5Cloud_EA/Mean_Reversion 已於電腦刪除", "source": "watcher"}
+{"time": 1786670734.869777, "action": "deleted", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786670736.9165823, "action": "deleted", "ea": "MT5Cloud_EA/ATR_Stop", "message": "MT5Cloud_EA/ATR_Stop 已於電腦刪除", "source": "watcher"}
+{"time": 1786670738.8035297, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670739.0149786, "action": "deleted", "ea": "MT5Cloud_EA/Seasonal", "message": "MT5Cloud_EA/Seasonal 已於電腦刪除", "source": "watcher"}
+{"time": 1786670741.0963888, "action": "deleted", "ea": "MT5Cloud_EA/Swing_Trader", "message": "MT5Cloud_EA/Swing_Trader 已於電腦刪除", "source": "watcher"}
+{"time": 1786670743.1495116, "action": "deleted", "ea": "MT5Cloud_EA/Stochastic", "message": "MT5Cloud_EA/Stochastic 已於電腦刪除", "source": "watcher"}
+{"time": 1786670745.2180102, "action": "deleted", "ea": "MT5Cloud_EA/Price_Action", "message": "MT5Cloud_EA/Price_Action 已於電腦刪除", "source": "watcher"}
+{"time": 1786670747.2664323, "action": "deleted", "ea": "MT5Cloud_EA/Grid_Trading", "message": "MT5Cloud_EA/Grid_Trading 已於電腦刪除", "source": "watcher"}
+{"time": 1786670749.327217, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786670751.4209626, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786670753.4841144, "action": "deleted", "ea": "MT5Cloud_EA/Correlation", "message": "MT5Cloud_EA/Correlation 已於電腦刪除", "source": "watcher"}
+{"time": 1786670755.5627165, "action": "deleted", "ea": "MT5Cloud_EA/Ichimoku", "message": "MT5Cloud_EA/Ichimoku 已於電腦刪除", "source": "watcher"}
+{"time": 1786670757.6159434, "action": "deleted", "ea": "MT5Cloud_EA/Momentum", "message": "MT5Cloud_EA/Momentum 已於電腦刪除", "source": "watcher"}
+{"time": 1786670759.6869407, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786670761.752653, "action": "deleted", "ea": "MT5Cloud_EA/AgentHelper", "message": "MT5Cloud_EA/AgentHelper 已於電腦刪除", "source": "watcher"}
+{"time": 1786670763.8338637, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786670765.9006026, "action": "deleted", "ea": "MT5Cloud_EA/Hedge_Fund", "message": "MT5Cloud_EA/Hedge_Fund 已於電腦刪除", "source": "watcher"}
+{"time": 1786670767.967196, "action": "deleted", "ea": "MT5Cloud_EA/SMA_Cross", "message": "MT5Cloud_EA/SMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786670769.604689, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670775.881683, "action": "unknown", "ea": "Fibonacci", "message": "Fibonacci 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786670800.540209, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670831.3105557, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670862.089646, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670892.8852518, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670923.6779768, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786670954.47182, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
