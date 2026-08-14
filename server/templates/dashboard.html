@@ -877,7 +877,10 @@ async function loadEAConfig() {
             const tf = eaMappings[name+'_tf'] || 'H1';
             const lot = eaMappings[name+'_lot'] || dl;
             const status = eaMappings[name+'_status'] || 'running';
-            const isRunning = status === 'running';
+            // 🚨 2026-08-14 FIX：暫停/繼續用「實際狀態」（runtimeStatus）— config _status 可能殘留（暫停失敗 → EA 仲運行但 config paused → 誤導「繼續」）
+            const _rtNow = runtimeStatus[name];
+            const _reallyPaused = _rtNow === 'paused';
+            const isRunning = !_reallyPaused && (_rtNow === 'running' || _rtNow === 'unknown' || _rtNow === 'starting' || _rtNow === 'no_hb');
             const isOfficial = ["SMA_Cross","EMA_Cross","RSI_Over","MACD_Cross","Bollinger_Band","Stochastic","ADX_Trend","ATR_Stop","Ichimoku","Parabolic_SAR","Heikin_Ashi","Volume_Spike","Support_Resist","Price_Action","Breakout","Trend_Follow","Scalping_M1","Grid_Trading","Martingale","Hedge_Fund","News_Trader","Swing_Trader","Divergence","Multi_TimeFrame","Correlation","Mean_Reversion","Momentum","Fibonacci","Seasonal","Machine_Learn"].includes(name);
       // 系統檔案（Controller — 網頁控制中樞 — 唔可以刪除/暫停）
             const isSystem = name === 'Controller';
@@ -901,8 +904,6 @@ async function loadEAConfig() {
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="EA 尚未部署至圖表（未配置快捷鍵）— 未開始運行。完成部署後將顯示實際狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 未配對</span>'
                         : runtimeStatus[name]==='no_hb'
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="此 EA 未配置心跳功能（不會寫入心跳檔案）— 無法偵測運行狀態。"><i class="icon-minus-circle" style="font-size:10px"></i> 沒有心跳設定</span>'
-                        : runtimeStatus[name]==='paused'
-                        ? '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="此 EA 已由你暫停（已按「暫停」— EA 已從圖表移除 — 停止交易）。按「繼續」可恢復運行。"><i class="icon-pause" style="font-size:10px"></i> 已暫停</span>'
                         : runtimeStatus[name]==='chart_removed'
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="MT5 記錄此 EA 已從圖表移除（關閉圖表／移除 EA）。如要恢復請按「部署」。"><i class="icon-x-circle" style="font-size:10px"></i> 圖表移除</span>'
                         : '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="EA 心跳暫停 — 心跳檔案超過 30 秒未有更新。可能原因：市場休市導致心跳暫停（不代表 EA 故障）／圖表未附加 EA／EA 已終止。恢復運行後自動轉為「心跳運行」。"><i class="icon-pause-circle" style="font-size:10px"></i> 心跳暫停</span>'}
@@ -920,7 +921,6 @@ async function loadEAConfig() {
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:150px">
                     <button class="btn" style="padding:2px 8px;font-size:11px" onclick="showSymbolPicker('${name}','${tf||'H1'}','${magic||''}','${lot||'1.00'}','${sym||''}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i> 部署</button>
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-file-chart-column&quot; style=&quot;color:var(--accent)&quot;></i> 診斷報告', '顯示 <b>${name}</b> 嘅診斷報告（Magic: ${magic||'—'} / Symbol: ${sym||'—'}）？', () => showReport('${magic}','${sym}'))" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i> 報告</button>`:''}
-                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-pause&quot; style=&quot;color:var(--accent)&quot;></i> ${isRunning?'暫停':'繼續'} EA', '${isRunning?'<b>'+name+'</b> 將從圖表移除（停止交易）— 配置保留，可隨時「繼續」恢復。':'<b>'+name+'</b> 將重新附加至圖表（恢復交易）— 使用原有配置。'}', () => toggleEA('${name}'))" title="${isRunning?'暫停':'繼續'}">${isRunning?'<i class="icon-pause" style="font-size:11px"></i> 暫停':'<i class="icon-play" style="font-size:11px"></i> 繼續'}</button>`:''}
           ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-trash-2&quot; style=&quot;color:var(--danger)&quot;></i> 刪除 EA', '確定刪除 <b>${name}</b>？<br><br>將刪除：<br>• 本機檔案（.mq5 / .ex5）<br>• 配對設定（Symbol / Magic / 時間框架）<br><br>此操作不可恢復 — 需重新配對方可使用。', () => deleteEA('${name.split('.')[0]}'))" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i> 刪除</button>`:''}
                     ${isSystem?'<span style="font-size:10px;color:#58a6ff;margin-left:2px" title="系統控制中樞 — 自動運行"><i class="icon-shield-check" style="font-size:11px"></i></span>':''}
                     </div>
@@ -1649,18 +1649,9 @@ async function deleteEA(eaName) {
     // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
 }
 
-async function toggleEA(eaName) {
-    try {
-        const res = await fetch(`/api/ea-config/${eaName}/toggle`, { method: 'POST' });
-        if (res.ok) {
-            const data = await res.json();
-      showLog(`${data.status==='paused'?'⏸ 已暫停':'▶ 已繼續'} ${eaName}`, data.status==='paused'?'log-warn':'log-success');
-            loadEAConfig();
-        }
-    } catch(e) { console.error(e); }
-}
+// 🚨 2026-08-14 定案：用戶要求「統一 — 冇暫停」— toggleEA（暫停/繼續）已移除（配對庫 3 粒掣：部署/報告/刪除）
 
-// ═══ 品種選擇 modal（2026-08-07：部署前揀交易品種）═══
+
 let _pendingDeploy = null;
 // 2026-08-10：只限「確定位置」嘅 symbol（auto_attach _SYM_DOWN 有 Down×N 位置 — 用戶重新確認）
 // 1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD

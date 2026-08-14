@@ -1370,29 +1370,29 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         except Exception:
             pass
         # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
-        # ✅ 正確方法（用戶發現）：Alt+F → Enter → 新圖表 dialog → Down×N 揀 symbol → Enter
-        # ⚠️ Ctrl+N 係「導航開關」唔係開圖表！symbol 位置（用戶提供）：
-        #    1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
-        _SYM_DOWN = {'EURUSD': 0, 'GBPUSD': 1, 'USDCHF': 2, 'USDJPY': 3,
-                     'USDCNH': 4, 'AUDUSD': 5, 'NZDUSD': 6, 'USDCAD': 7}
+        # ✅ 用戶方法（2026-08-15 實測）：寫 json → 執行 OpenChart script（Alt+F → Enter → Ctrl+I → 腳本 → OpenChart）
+        # 開目標圖表（active — BRING_TO_TOP）→ 之後附加 EA 落 active 目標圖表
         if open_chart:
             try:
-                _sk('%f')
-                time.sleep(1.5)
-                _sk('{ENTER}')
-                time.sleep(1.5)
-                # 🚨 2026-08-10 根治（v3）：打字揀 symbol（取代 Down×N — 位置唔可靠/active 問題）
-                # 方法二實測成功：Ctrl+A 全選 → 打字 symbol → Enter（揀中）→ Enter（開圖表）
-                # → 圖表一定係目標 symbol → 開完自動 active → 快捷鍵附加正確
-                # 🚨 2026-08-10 用戶要求：用返 Down×N（打字完全唔準確 — 每次開 AMD 圖表 — Down×N 位置固定 10/10 實測）
-                _sym = (symbol or 'EURUSD').upper()
-                _down_n = _SYM_DOWN.get(_sym, 0)
-                if _down_n > 0:
-                    _sk('{DOWN}' * _down_n)
-                    time.sleep(1.5)
-                _sk('{ENTER}')
-                time.sleep(3)
-                print(f"📋 已建立新圖表（Down×{_down_n} — {_sym}）")
+                _sym = (symbol or '').upper()
+                # 寫 json（OpenChart script 讀呢個）
+                try:
+                    import json as _joc
+                    _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
+                    with open(_cmd_file, 'w', encoding='utf-8') as _f:
+                        _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper()}, _f)
+                except Exception:
+                    pass
+                # 執行 OpenChart script（Ctrl+I 方法 — 用戶實測 — _exec_open_chart_script 新版）
+                try:
+                    _oc_ok = _exec_open_chart_script()
+                    if not _oc_ok:
+                        # 重試一次
+                        time.sleep(1)
+                        _oc_ok = _exec_open_chart_script()
+                    print(f"📋 OpenChart script 已執行（開目標圖表: {_sym or 'EURUSD'} — active）" if _oc_ok else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
+                except Exception as _eoc:
+                    print(f"⚠️ 執行 OpenChart script 失敗: {_eoc}")
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
@@ -1937,6 +1937,86 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
 
 
 # ─── CLI ───
+def _exec_open_chart_script():
+    """🚨 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — 用戶實測方法）
+    取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
+    try:
+        import subprocess as _sp2
+        from pywinauto import Application as _App2
+        from pywinauto.keyboard import send_keys as _sk2
+        import ctypes as _ct2
+        out = _sp2.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True).stdout
+        _pid2 = None
+        for line in out.splitlines():
+            if isinstance(line, bytes):
+                line = line.decode('utf-8', errors='replace')
+            parts = [p.strip().strip('"') for p in line.split(',')]
+            if len(parts) >= 2 and parts[0] == 'terminal64.exe' and parts[1].isdigit():
+                _pid2 = int(parts[1])
+                break
+        if not _pid2:
+            return False
+        _app2 = _App2(backend='win32').connect(process=_pid2, timeout=8)
+        _main2 = _app2.window(class_name='MetaQuotes::MetaTrader::5.00')
+        # 確保 foreground
+        try:
+            _u2 = _ct2.windll.user32
+            _u2.SetForegroundWindow(_ct2.c_void_p(int(_main2.element_info.handle)))
+        except Exception:
+            pass
+        time.sleep(1)
+        # 🚨 2026-08-15：確保 json 存在（部署流程已寫 — 但係可能被清 — 空先寫預設，唔好覆寫正確 symbol）
+        try:
+            import json as _j2
+            _cmd2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', 'open_chart_cmd.json')
+            if not os.path.isfile(_cmd2) or os.path.getsize(_cmd2) == 0:
+                with open(_cmd2, 'w', encoding='utf-8') as _f2:
+                    _j2.dump({'symbol': 'EURUSD', 'tf': 'H1'}, _f2)
+        except Exception:
+            pass
+        # 🚨 用戶實測方法（2026-08-15）：熱鍵觸發 OpenChart_Helper（EA — Ctrl+4）
+        # 冇圖表 → 先 Alt+F → Enter → Enter（開空圖表 — EA 要掛喺圖表）
+        _has_chart2 = False
+        try:
+            for _d2 in _main2.descendants():
+                if _d2.element_info.class_name == 'MDIClient':
+                    _has_chart2 = len(_d2.children()) > 0
+                    break
+        except Exception:
+            pass
+        if not _has_chart2:
+            print("   📋 冇圖表 — 先開空圖表（Alt+F → Enter → Enter）")
+            _sk2('%f')
+            time.sleep(1.5)
+            _sk2('{ENTER}')
+            time.sleep(1.5)
+            _sk2('{ENTER}')
+            time.sleep(3)
+        # 熱鍵 Ctrl+4（OpenChart_Helper — 附加落圖表 → OnInit 讀 json → ChartOpen(symbol) → ExpertRemove）
+        _sk2('^4')
+        time.sleep(2.5)
+        # 撳「確定」（Properties dialog — EA 附加 → OnInit 執行）
+        _sk2('{ENTER}')
+        time.sleep(3)
+        # 驗證：log 有「OpenChart_Helper 已開新圖表」（OnInit 執行咗 — 圖表開咗）
+        try:
+            import glob as _g2
+            _ld2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
+                                'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Logs')
+            _fl2 = sorted(glob.glob(os.path.join(_ld2, '2026*.log')), key=os.path.getmtime, reverse=True)
+            if _fl2:
+                _cl2 = open(_fl2[0], encoding='utf-16-le', errors='ignore').read()
+                if 'OpenChart_Helper' in _cl2 and '已開新圖表' in _cl2:
+                    print("   ✅ OpenChart_Helper 已開圖表（log 確認）")
+                    return True
+        except Exception:
+            pass
+        return False
+    except Exception as _e2:
+        print(f"   ⚠️ _exec_open_chart_script 異常: {_e2}")
+        return False
+
+
 def remove_ea_from_chart(ea_name, mt5_pid=None):
     """真暫停：GUI 移除圖表上嘅 EA
     方法：right-click 圖表 → Alt+X 開「專家」dialog → 列表揀 EA → 「移除」按鈕
@@ -1987,6 +2067,40 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     
     # 0. 檢查圖表 window 有冇開 — 冇圖表 = 冇 EA 運行 = 唔使移除（2026-08 實測：MT5 restore 後圖表可能冇開）
     # 大眾化：圖表 title 格式係「SYMBOL,TF」（例如 EURUSD,H1 / GBPCAD,M15）— 用 ',' 判斷任何圖表
+    # 🚨 2026-08-14 FIX：圖表 window 檢查不可靠（圖表隱藏/最小化/標題讀唔到 → 誤判「圖表未開」→ 冇移除 → EA 仲運行）
+    # → 加 log 判斷：MT5 log 最後「已啟動」（冇「已停止」）→ EA 確實運行 → 一定要移除（唔好直接完成）
+    _ea_running_by_log = False
+    try:
+        import glob as _gl2
+        _lgd2 = os.path.join(os.path.dirname(os.path.dirname(MT5_PATH)) if False else os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal'))
+        _lat2 = None
+        for _d2 in os.listdir(_lgd2):
+            _logs2 = os.path.join(_lgd2, _d2, 'MQL5', 'Logs')
+            if os.path.isdir(_logs2):
+                for _f2 in _gl2.glob(os.path.join(_logs2, '2026*.log')):
+                    if _lat2 is None or os.path.getmtime(_f2) > os.path.getmtime(_lat2):
+                        _lat2 = _f2
+        if _lat2:
+            _raw2 = open(_lat2, 'rb').read()
+            _txt2 = None
+            for _enc2 in ('utf-16', 'utf-8', 'cp1252'):
+                try:
+                    _txt2 = _raw2.decode(_enc2)
+                    break
+                except Exception:
+                    continue
+            if _txt2:
+                import re as _re2
+                _last_state2 = None
+                for _ln2 in _txt2.splitlines():
+                    if re.search(rf'{re.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)', _ln2):
+                        if '已停止' in _ln2 or 'removed' in _ln2:
+                            _last_state2 = 'stopped'
+                        elif '已啟動' in _ln2:
+                            _last_state2 = 'started'
+                _ea_running_by_log = (_last_state2 == 'started')
+    except Exception:
+        pass
     has_chart = False
     for _w in app.windows():
         try:
@@ -1998,8 +2112,22 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         except Exception:
             pass
     if not has_chart:
-        print(f"ℹ️ {ea_name}：圖表未開（冇 EA 運行）— 唔使移除，直接完成")
-        return True
+        # 🚨 2026-08-14 FIX：心跳新鮮（state_<EA>.json / hb_<EA>.txt <30s）= EA 確實運行（最可靠）→ 圖表檢查錯 → 唔好直接完成 — 繼續移除流程
+        _hb_fresh = False
+        try:
+            _cfd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            for _hfn in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+                _hfp = os.path.join(_cfd, _hfn)
+                if os.path.isfile(_hfp) and time.time() - os.path.getmtime(_hfp) < 30:
+                    _hb_fresh = True
+        except Exception:
+            pass
+        if _ea_running_by_log or _hb_fresh:
+            print(f"⚠️ {ea_name}：圖表 window 檢查唔到但心跳/log 顯示運行緊（多圖表或隱藏）— 繼續移除流程")
+            has_chart = True
+        else:
+            print(f"ℹ️ {ea_name}：圖表未開（冇 EA 運行）— 唔使移除，直接完成")
+            return True
     
     # 1. right-click 圖表（用圖表 window（EURUSD,H1 Afx）實際 rect — 2026-08 實測：主視窗 offset 唔可靠，
     # 圖表係獨立 Afx window 而且可能好細/唔同位置；DeskIn/其他視窗遮住時 WindowFromPoint 會食錯）

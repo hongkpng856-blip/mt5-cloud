@@ -407,9 +407,7 @@ def api_ea_config():
                 # （log 最後「已停止/removed」= 圖表冇 EA — 心跳新鮮都只係 EA 停止前殘留 → chart_removed）
                 if _log_last.get(ea) in ('已停止', 'removed'):
                     st = 'chart_removed'
-                # 🚨 2026-08-14：分辨「人為暫停」vs「市場收市/關圖表」— config _status='paused'（暫停按鈕寫入）→ 'paused'
-                if st == 'unknown' and config.get(ea + '_status') == 'paused':
-                    st = 'paused'
+                # 🚨 2026-08-14 定案：用戶要求「統一 — 冇暫停」— 取消「已暫停」狀態（paused 判斷移除 — 心跳停 → unknown「心跳暫停」）
                 runtime[ea] = st
         except Exception:
             pass
@@ -437,7 +435,7 @@ def api_ea_config_delete(ea_name):
         os.makedirs(common_files, exist_ok=True)
         cmd_path = os.path.join(common_files, f'pause_cmd_{ea_name}_{int(time.time())}.json')
         with open(cmd_path, 'w', encoding='utf-8') as f:
-            json.dump({'ea_name': ea_name, 'action': 'remove'}, f, ensure_ascii=False)
+            json.dump({'ea_name': ea_name, 'action': 'delete'}, f, ensure_ascii=False)  # 🚨 2026-08-14：action=delete（watcher 顯示「刪除」文字）
         print(f"[ea-config-delete] 圖表移除指令已排隊: {os.path.basename(cmd_path)}")
     except Exception as e:
         print(f"[ea-config-delete] pause_cmd 寫入失敗: {e}")
@@ -489,6 +487,21 @@ def api_ea_config_purge(ea_name):
     log_activity('ea_delete', f'{ea_name} 已於電腦刪除（配對已自動移除）', ea=ea_name)
     return jsonify({"success": True, "removed": ea_name})
 
+@app.route('/api/ea-config/<ea_name>/status', methods=['POST'])
+@login_required
+def api_ea_config_status(ea_name):
+    """🚨 2026-08-14：設定 EA config 狀態（暫停失敗時前端還原 — 唔好誤導「已暫停」）"""
+    try:
+        config = json.loads(current_user.ea_config or '{}')
+        new_status = (request.json or {}).get('status', 'running')
+        config[ea_name + '_status'] = new_status
+        current_user.ea_config = json.dumps(config)
+        db.session.commit()
+        return jsonify({"success": True, "status": new_status})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/ea-config/<ea_name>/toggle', methods=['POST'])
 @login_required
 def api_ea_config_toggle(ea_name):
@@ -513,6 +526,29 @@ def api_ea_config_toggle(ea_name):
         import time as _ct
         common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
         os.makedirs(common_files, exist_ok=True)
+        # 🚨 2026-08-14 FIX：暫停/恢復都要彈警告視窗（之前冇 — 用戶投訴「網頁冇顯示警告視窗」）
+        try:
+            import json as _jtg
+            _adir_tg = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            with open(os.path.join(_adir_tg, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                _f.write(f'{"暫停" if new_status == "paused" else "恢復"} {ea_name}')
+            with open(os.path.join(_adir_tg, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                if new_status == 'paused':
+                    _jtg.dump([
+                        {'text': f'開始暫停 {ea_name}', 'status': 'doing'},
+                        {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
+                        {'text': '移除圖表 EA（停止交易）', 'status': 'pending'},
+                        {'text': '完成暫停（配置保留 — 可隨時恢復）', 'status': 'pending'},
+                    ], _f, ensure_ascii=False)
+                else:
+                    _jtg.dump([
+                        {'text': f'開始恢復 {ea_name}', 'status': 'doing'},
+                        {'text': '建立新圖表', 'status': 'pending'},
+                        {'text': f'附加 {ea_name}', 'status': 'pending'},
+                        {'text': '驗證運行狀態', 'status': 'pending'},
+                    ], _f, ensure_ascii=False)
+        except Exception:
+            pass
         if new_status == 'paused':
             # ⚠️ 控制層方案（CONTROL_LAYER_DESIGN.md）：暫停 → 寫 ctrl_<ea>.json {"cmd":"stop"}
             # EA（已注入控制層）讀到 → ExpertRemove() 自己移除 → 寫 stopped 心跳
@@ -523,7 +559,7 @@ def api_ea_config_toggle(ea_name):
             # 保留 pause_cmd 做後備（如果 EA 冇控制層 — watcher GUI 移除）
             pause_path = os.path.join(common_files, f'pause_cmd_{ea_name}_{int(_ct.time())}.json')
             with open(pause_path, 'w', encoding='utf-8') as f:
-                json.dump({'ea_name': ea_name, 'action': 'remove'}, f, ensure_ascii=False)
+                json.dump({'ea_name': ea_name, 'action': 'pause'}, f, ensure_ascii=False)  # 🚨 2026-08-14：action=pause（watcher 顯示「暫停」文字）
         else:
             # 恢復 → 重新部署（auto_attach 附加）
             symbol = config.get(ea_name, 'EURUSD')
@@ -535,6 +571,56 @@ def api_ea_config_toggle(ea_name):
                 json.dump({'ea_name': ea_name, 'symbol': symbol, 'tf': tf, 'magic': magic, 'lot': lot}, f, ensure_ascii=False)
     except Exception as e:
         print(f"[DEBUG] toggle cmd 寫入失敗: {e}")
+
+    # 🚨 2026-08-14 FIX：暫停後確認 — EA 真係移除先話成功（心跳停 + log「已停止」= 移除）
+    # （之前只用心跳停判斷 — 市場收市心跳都停 → 誤判成功 — 用戶投訴「顯示暫停但 MT5 冇暫停」）
+    if new_status == 'paused':
+        try:
+            import time as _tp
+            _tp.sleep(4)  # 等 EA 讀 ctrl_（ExpertRemove）
+            _sf_p = os.path.join(common_files, f'state_{ea_name}.json')
+            _hb_p = os.path.join(common_files, f'hb_{ea_name}.txt')
+            _hb_age = None
+            if os.path.isfile(_sf_p):
+                _hb_age = time.time() - os.path.getmtime(_sf_p)
+            elif os.path.isfile(_hb_p):
+                _hb_age = time.time() - os.path.getmtime(_hb_p)
+            # log 確認（EA 移除 → log「已停止」）
+            _log_stopped = False
+            try:
+                import glob as _glp
+                _lgp = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                _latp = None
+                for _d4 in os.listdir(_lgp):
+                    _lgd4 = os.path.join(_lgp, _d4, 'MQL5', 'Logs')
+                    if os.path.isdir(_lgd4):
+                        for _f4 in _glp.glob(os.path.join(_lgd4, '2026*.log')):
+                            if _latp is None or os.path.getmtime(_f4) > os.path.getmtime(_latp):
+                                _latp = _f4
+                if _latp:
+                    import re as _rep
+                    _rawp = open(_latp, 'rb').read()
+                    _txtp = None
+                    for _encp in ('utf-16', 'utf-8', 'cp1252'):
+                        try:
+                            _txtp = _rawp.decode(_encp)
+                            break
+                        except Exception:
+                            continue
+                    if _txtp:
+                        _log_stopped = any(
+                            _rep.search(rf'{re.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已停止|removed)', _ln)
+                            for _ln in _txtp.splitlines())
+            except Exception:
+                pass
+            _hb_stopped = _hb_age is not None and _hb_age >= 30
+            if not _hb_stopped or not _log_stopped:
+                # 心跳仲新鮮 或 log 冇「已停止」（市場收市心跳停 — EA 可能仲運行）→ 暫停失敗
+                print(f"[toggle] ⚠️ 暫停 {ea_name} 確認失敗（心跳停={_hb_stopped} log已停止={_log_stopped}）", flush=True)
+                return jsonify({"success": False, "status": "paused_failed", "error": f"暫停失敗 — EA 仍在圖表（可能未更新暫停支援）。請重新部署 {ea_name} 後再試。"}), 409
+            print(f"[toggle] ✅ 暫停 {ea_name} 確認成功（心跳停 + log 已停止）", flush=True)
+        except Exception as _te:
+            print(f"[toggle] ⚠️ 暫停確認異常（照返回成功）: {_te}", flush=True)
 
     return jsonify({"success": True, "status": new_status})
 
@@ -1560,10 +1646,39 @@ def api_ea_install_local(filename):
                     _c_hb = open(target, encoding='utf-8', errors='ignore').read()
                     if '__mt5c_process' not in _c_hb and 'EventSetTimer' not in _c_hb:
                         _hb_mod = '''
-// ---- MT5 Cloud 心跳（自動注入 2026-08-14 — 每秒寫心跳）----
+// ---- MT5 Cloud 心跳（自動注入 2026-08-14 — 每秒寫心跳 + 暫停指令檢查）----
+// 🚨 2026-08-15：交易品種參數（部署時自動寫入揀好嘅 symbol — EA 用呢個 symbol 交易/開圖表 — 唔理圖表本身）
+input string InpSymbol = "";
+string __mt5c_ctrl_file = "";
 string __mt5c_state_file = "";
 void __mt5c_process() {
-   if(__mt5c_state_file == "") __mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
+   if(__mt5c_ctrl_file == "") {
+      __mt5c_ctrl_file = "ctrl_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
+      __mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
+   }
+   // 🚨 2026-08-15 FIX：開目標圖表（只開一次 — static flag — 唔可以每次心跳都開！）
+   static bool __mt5c_chart_done = false;
+   if(!__mt5c_chart_done) {
+      __mt5c_chart_done = true;
+      if(InpSymbol != "" && Symbol() != InpSymbol) {
+         long _cid = ChartOpen(InpSymbol, PERIOD_CURRENT);
+         if(_cid > 0) { ChartSetInteger(_cid, CHART_BRING_TO_TOP, 0, true); Print("📈 已開目標圖表: ", InpSymbol); }
+      }
+   }
+   if(FileIsExist(__mt5c_ctrl_file, FILE_COMMON)) {
+      int h = FileOpen(__mt5c_ctrl_file, FILE_READ|FILE_TXT|FILE_COMMON);
+      if(h != INVALID_HANDLE) {
+         string c = FileReadString(h);
+         FileClose(h);
+         FileDelete(__mt5c_ctrl_file, FILE_COMMON);
+         if(StringFind(c, "stop") >= 0) {
+            int h2 = FileOpen(__mt5c_state_file, FILE_WRITE|FILE_TXT|FILE_COMMON);
+            if(h2 != INVALID_HANDLE) { FileWrite(h2, "{\\"status\\":\\"stopped\\"}"); FileClose(h2); }
+            ExpertRemove();
+            return;
+         }
+      }
+   }
    int h = FileOpen(__mt5c_state_file, FILE_WRITE|FILE_TXT|FILE_COMMON);
    if(h != INVALID_HANDLE) {
       FileWrite(h, StringFormat("{\\"ea\\":\\"%s\\",\\"status\\":\\"running\\",\\"ts\\":%d}", MQLInfoString(MQL_PROGRAM_NAME), (int)TimeCurrent()));

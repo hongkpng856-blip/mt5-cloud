@@ -81,6 +81,46 @@ def inject_control_layer(mq5_path):
 
         # 1. 防重複（已注入過就 skip）
         if '__mt5c_process' in src:
+            # 🚨 2026-08-14 FIX：已有 __mt5c_process 但冇 ctrl_ 檢查（核心模板版 — 暫停失效根源）→ 升級補加
+            if '__mt5c_ctrl_file' not in src:
+                print(f"   ⚠️ [注入器] {os.path.basename(mq5_path)} 有 __mt5c_process 但冇暫停檢查（ctrl_）→ 升級")
+                # 加變數
+                if 'string __mt5c_ctrl_file' not in src:
+                    src = src.replace('string __mt5c_state_file', 'string __mt5c_ctrl_file = "";\nstring __mt5c_state_file', 1)
+                # 喺 __mt5c_process 開頭（lazy init 後）加 ctrl_ 檢查
+                ctrl_check = '''
+   if(FileIsExist(__mt5c_ctrl_file, FILE_COMMON)) {
+      int h = FileOpen(__mt5c_ctrl_file, FILE_READ|FILE_TXT|FILE_COMMON);
+      if(h != INVALID_HANDLE) {
+         string c = FileReadString(h);
+         FileClose(h);
+         FileDelete(__mt5c_ctrl_file, FILE_COMMON);
+         if(StringFind(c, "stop") >= 0) {
+            int h2 = FileOpen(__mt5c_state_file, FILE_WRITE|FILE_TXT|FILE_COMMON);
+            if(h2 != INVALID_HANDLE) { FileWrite(h2, "{\\"status\\":\\"stopped\\"}"); FileClose(h2); }
+            ExpertRemove();
+            return;
+         }
+      }
+   }
+'''
+                # 插入位置：__mt5c_process 嘅 lazy init 之後（__mt5c_state_file 賦值之後、第一個 FileOpen 之前）
+                anchor = '__mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";'
+                if anchor in src:
+                    src = src.replace(anchor, anchor + ctrl_check, 1)
+                elif '__mt5c_state_file == ""' in src:
+                    # 另一種格式（lazy init 一行式）
+                    src = src.replace('if(__mt5c_state_file == "") __mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";',
+                                      'if(__mt5c_state_file == "") __mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";' + ctrl_check, 1)
+                else:
+                    # fallback：喺第一個 FileOpen(__mt5c_state_file 之前插入
+                    fo_anchor = 'FileOpen(__mt5c_state_file'
+                    if fo_anchor in src:
+                        src = src.replace(fo_anchor, ctrl_check + '   ' + fo_anchor, 1)
+                with open(mq5_path, 'w', encoding='utf-8-sig') as f:
+                    f.write(src)
+                print(f"   ✅ [注入器] {os.path.basename(mq5_path)} 已升級（補加暫停檢查）")
+                return True
             print(f"   ⏩ {os.path.basename(mq5_path)} 已注入控制層，skip")
             return True
 

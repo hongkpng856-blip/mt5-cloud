@@ -985,25 +985,32 @@ def process_pause_cmd(fp):
         with open(fp, 'r', encoding='utf-8') as f:
             data = json.load(f)
         ea_name = data.get('ea_name', '')
+        action = data.get('action', 'pause')  # 🚨 2026-08-14：pause=暫停 / delete=刪除（文字唔同 — 用戶投訴「刪除顯示暫停」）
         if not ea_name:
             os.remove(fp)
             return
-        print(f"⏸️ [WATCHER] 暫停 {ea_name}（移除圖表 EA）...")
+        _act_word = '暫停' if action != 'delete' else '刪除'
+        print(f"⏸️ [WATCHER] {_act_word} {ea_name}（移除圖表 EA）...")
         sys.stdout.flush()
-        # 🚨 2026-08-10：刪除警告視窗流程（刪除係「新任務」→ 清舊步驟 — 同任務內累積）
+        # 🚨 2026-08-14 FIX：暫停/刪除用唔同字眼（之前統一「暫停」— 刪除顯示錯）
         try:
             import json as _jp
             _adir = os.path.dirname(os.path.abspath(__file__))
             with open(os.path.join(_adir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write(f'刪除 {ea_name}')
+                _f.write(f'{_act_word} {ea_name}')
             _sf = os.path.join(_adir, '.ai_control.steps')
-            # 🚨 2026-08-12：詳細步驟（活動記錄式 — 每一步清楚：未完成 → 完成 — 用戶要求）
-            _old = [{'text': f'開始刪除 {ea_name}', 'status': 'doing'},
-                    {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
-                    {'text': '移除圖表 EA', 'status': 'pending'},
-                    {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
-                    {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
-                    {'text': '完成刪除', 'status': 'pending'}]
+            if action == 'delete':
+                # 刪除流程（完整刪除 — 檔案+設定）
+                _old = [{'text': f'開始刪除 {ea_name}', 'status': 'doing'},
+                        {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
+                        {'text': '移除圖表 EA（停止交易）', 'status': 'pending'},
+                        {'text': '完成刪除', 'status': 'pending'}]
+            else:
+                # 暫停流程（保留配置）
+                _old = [{'text': f'開始暫停 {ea_name}', 'status': 'doing'},
+                        {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
+                        {'text': '移除圖表 EA（停止交易）', 'status': 'pending'},
+                        {'text': '完成暫停（配置保留 — 可隨時恢復）', 'status': 'pending'}]
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _jp.dump(_old, _f2, ensure_ascii=False)
         except Exception:
@@ -1030,7 +1037,7 @@ def process_pause_cmd(fp):
             time.sleep(0.8)  # 每步停留（網頁 poll 捕到「進行中」）
 
         # 🚨 2026-08-12 FIX：步驟順序反映實際動作 — auto_attach --remove（移除圖表）期間顯示「移除圖表 EA 進行中」（唔係「檢查圖表」）
-        _prog_steps([f'開始刪除 {ea_name}'], '移除圖表 EA')
+        _prog_steps([f'開始暫停 {ea_name}'], '移除圖表 EA（停止交易）')
         try:
             result = subprocess.run(
                 [sys.executable, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
