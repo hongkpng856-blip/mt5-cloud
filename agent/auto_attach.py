@@ -1370,40 +1370,50 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         except Exception:
             pass
         # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
-        # ✅ B 方法（2026-08-15 用戶揀）：揀咗 symbol → 改 EA 源碼（InpSymbol）→ 編譯 → 附加真正 EA（熱鍵）
-        # EA 第一次心跳 → ChartOpen(InpSymbol) 開目標圖表（active）→ 交易用 InpSymbol（一定正確）
+        # ✅ 用戶方法（2026-08-15）：OpenChart script 熱鍵（Ctrl+O — 用戶 set 咗）— 開目標圖表 → 附加 EA 落去
+        # 流程：寫 json → 確保有圖表（熱鍵要圖表）→ Ctrl+O（OpenChart script 讀 json → ChartOpen 開目標圖表 active）→ 附加 EA（熱鍵 — 落 active）
         if open_chart:
             try:
                 _sym = (symbol or '').upper()
-                # ① 改 EA 源碼（InpSymbol = 部署 symbol）→ 重新編譯
-                if _sym:
+                # ① 寫 json（OpenChart script 讀呢個 — 一體化：symbol + ea + 模板名）
+                try:
+                    import json as _joc
+                    _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
+                    _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
+                    # 🚨 2026-08-15 一體化：確保模板存在（複製現有 <ea>_*.tpl 改 symbol — 模板含 <expert> 部分 — 套模板掛 EA）
                     try:
-                        import re as _re_sym
-                        import subprocess as _sp_sym
-                        _apd_sym = os.environ.get('APPDATA', '')
-                        for _d_sym in os.listdir(os.path.join(_apd_sym, 'MetaQuotes', 'Terminal')):
-                            _p_sym = os.path.join(_apd_sym, 'MetaQuotes', 'Terminal', _d_sym, 'MQL5', 'Experts', 'MT5Cloud_EA', ea_name + '.mq5')
-                            if os.path.isfile(_p_sym):
-                                _c_sym = open(_p_sym, encoding='utf-8', errors='ignore').read()
-                                if 'input string InpSymbol' in _c_sym:
-                                    _c_sym2 = _re_sym.sub(r'input string InpSymbol\s*=\s*"[^"]*";',
-                                                          f'input string InpSymbol = "{_sym}";', _c_sym, count=1)
-                                    if _c_sym2 != _c_sym:
-                                        open(_p_sym, 'w', encoding='utf-8').write(_c_sym2)
-                                        print(f"📝 已寫入 symbol 落 {ea_name}.mq5: InpSymbol={_sym}")
-                                        _me_sym = r'C:\Program Files\MetaTrader 5\MetaEditor64.exe'
-                                        try:
-                                            _sp_sym.run([_me_sym, '/compile:' + _p_sym, '/log'], timeout=60)
-                                            time.sleep(5)
-                                            print(f"🔨 已重新編譯（InpSymbol={_sym}）")
-                                        except Exception as _ec:
-                                            print(f"⚠️ 編譯失敗: {_ec}")
-                                else:
-                                    print(f"⚠️ {ea_name}.mq5 冇 InpSymbol input（舊版 — 唔改）")
+                        _tdir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                        for _dt_t in os.listdir(_tdir):
+                            _tp = os.path.join(_tdir, _dt_t, 'MQL5', 'Profiles', 'Templates')
+                            if os.path.isdir(_tp):
+                                _src_t = os.path.join(_tp, f"{ea_name}_EURUSD_H1.tpl")
+                                _dst_t = os.path.join(_tp, _tpl_name)
+                                if os.path.isfile(_src_t) and not os.path.isfile(_dst_t):
+                                    _tc = open(_src_t, encoding='utf-16-le', errors='ignore').read()
+                                    _tc = _tc.replace('symbol=EURUSD', f'symbol={_sym or "EURUSD"}')
+                                    open(_dst_t, 'w', encoding='utf-16-le').write(_tc)
+                                    print(f"📋 模板已生成: {_tpl_name}")
                                 break
-                    except Exception as _esym:
-                        print(f"⚠️ 改 symbol 失敗: {_esym}")
-                # ② 確保有圖表（熱鍵附加要圖表 active — EA 心跳先開到目標圖表）
+                    except Exception:
+                        pass
+                    with open(_cmd_file, 'w', encoding='utf-8') as _f:
+                        _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
+                                   'ea': ea_name, 'tpl': _tpl_name}, _f)
+                    # 🚨 2026-08-15 FIX：寫入後驗證（讀返確認 — json 舊值問題：部署 USDJPY 但 script 讀到舊 GBPUSD）
+                    try:
+                        _chk = _joc.load(open(_cmd_file, encoding='utf-8'))
+                        if _chk.get('symbol') != _sym:
+                            with open(_cmd_file, 'w', encoding='utf-8') as _f2:
+                                _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
+                                           'ea': ea_name, 'tpl': _tpl_name}, _f2)
+                            print(f"📋 json 重寫（驗證唔啱 → {_sym}）")
+                        else:
+                            print(f"📋 json 寫入驗證 OK: {_sym}")
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                # ② 確保有圖表（熱鍵要圖表 active — 用戶實測）
                 _has_chart_oc = False
                 try:
                     for _d_oc in win.descendants():
@@ -1413,14 +1423,39 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
                 if not _has_chart_oc:
-                    print("📋 冇圖表 — 開空圖表（Alt+F → Enter → Enter — EA 心跳會開目標圖表）")
+                    print("📋 冇圖表 — 開空圖表（Alt+F → Enter → Enter）")
                     _sk('%f')
                     time.sleep(1.5)
                     _sk('{ENTER}')
                     time.sleep(1.5)
                     _sk('{ENTER}')
                     time.sleep(3)
-                print(f"📋 EA 已配好 InpSymbol={_sym or '圖表'} — 心跳會自動開目標圖表")
+                # ③ Ctrl+O（OpenChart script 熱鍵 — 開目標圖表 active）
+                try:
+                    import ctypes as _ct_oc
+                    _u_oc = _ct_oc.windll.user32
+                    _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
+                    time.sleep(1)
+                except Exception:
+                    pass
+                _sk('^o')
+                time.sleep(4)
+                # 🚨 2026-08-15：確保 active 圖表係「啱啱開嘅」（Ctrl+O 開嘅圖表 — 通常 active — 但係有圖表平鋪/其它操作可能變咗 — 附加 EA 要落 active）
+                try:
+                    import ctypes as _ct_act
+                    _u_act = _ct_act.windll.user32
+                    # click 圖表區（主視窗中心 — 確保 active 係前景圖表）
+                    try:
+                        import pyautogui as _pg_act2
+                        _pg_act2.FAILSAFE = False
+                        _r_act = win.rectangle()
+                        _pg_act2.click(_r_act.left + _r_act.width() // 2, _r_act.top + _r_act.height() // 2)
+                    except Exception:
+                        pass
+                    time.sleep(0.8)
+                except Exception:
+                    pass
+                print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）")
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
@@ -1755,67 +1790,6 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         return False
         except Exception:
             pass
-        # 🚨 B1（2026-08-15 用戶揀）：心跳開咗目標圖表（active）→ 移除原圖表 EA → 再附加落 active 目標圖表
-        if open_chart and _sym:
-            try:
-                # ① 等心跳開圖表（EA 第一次心跳 ChartOpen(InpSymbol) — 目標圖表 active — BRING_TO_TOP）
-                time.sleep(4)
-                # ② 移除原圖表 EA（寫 ctrl_<EA>.json（stop）→ EA 心跳讀到 → ExpertRemove 自己移除）
-                try:
-                    _ctrl_b1 = os.path.join(COMMON_FILES, f'ctrl_{ea_name}.json')
-                    with open(_ctrl_b1, 'w', encoding='utf-8') as _f:
-                        _f.write('{"cmd":"stop"}')
-                    print(f"⏳ B1: 移除原圖表 EA（{ea_name} — 心跳讀到 ctrl_ 後自移除）")
-                    time.sleep(3)
-                    try:
-                        os.remove(_ctrl_b1)
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
-                # ③ 再附加 EA 落 active（目標圖表 — 心跳開咗 — active）
-                try:
-                    _sk(combo)  # 熱鍵（例如 Ctrl+1）— 落 active 目標圖表
-                    time.sleep(2.5)
-                    # 循環 dialog（Properties 確定 / 代替確認「是」）
-                    import ctypes as _ctb1
-                    _ub1 = _ctb1.windll.user32
-                    for _d1 in range(6):
-                        _btn_clicked = False
-                        def _cb_b1(_h, _x):
-                            nonlocal _btn_clicked
-                            if _ub1.IsWindowVisible(_h):
-                                _cc = _ctb1.create_unicode_buffer(64)
-                                _ub1.GetClassNameW(_h, _cc, 64)
-                                if '#32770' in _cc.value:
-                                    _lt = _ub1.GetWindowTextLengthW(_h)
-                                    _bt = _ctb1.create_unicode_buffer(_lt + 1)
-                                    _ub1.GetWindowTextW(_h, _bt, _lt + 1)
-                                    _title = _bt.value
-                                    if ea_name in _title or '代替' in _title or 'MetaTrader' in _title:
-                                        # 搵「確定/OK」或者「是/Yes」按鈕 — click
-                                        try:
-                                            _dw1 = _app.window(handle=_h)
-                                            for _bb in _dw1.children(class_name='Button'):
-                                                _btxt = _bb.window_text()
-                                                if '確定' in _btxt or 'OK' in _btxt or '是' in _btxt or 'Yes' in _btxt:
-                                                    _bb.click()
-                                                    _btn_clicked = True
-                                                    print(f"✅ B1: 已撳「{_btxt}」")
-                                                    break
-                                        except Exception:
-                                            pass
-                            return True
-                        _ub1.EnumWindows(_ctb1.WINFUNCTYPE(_ctb1.c_bool, _ctb1.c_void_p, _ctb1.c_void_p)(_cb_b1), None)
-                        if not _btn_clicked:
-                            break
-                        time.sleep(1.5)
-                    time.sleep(2)
-                    print(f"✅ B1: {ea_name} 已再附加落目標圖表（{_sym}）")
-                except Exception as _eb1:
-                    print(f"⚠️ B1 再附加失敗: {_eb1}")
-            except Exception as _eb1x:
-                print(f"⚠️ B1 異常: {_eb1x}")
         # 🚨 2026-08-12 FIX：所有操作完成（圖表平鋪/市場報價/log 驗證）→ 最後先寫 steps 全部 done（確定出現 — active 即刻 false — 撳確定唔會再彈）
         try:
             _steps[2]['status'] = 'done'

@@ -2632,6 +2632,15 @@ def api_deploy():
                 'source': 'api_deploy'
             }, f)
     
+    # 🚨 2026-08-15：網頁揀嘅 symbol 直接寫 open_chart_cmd.json（auto_attach 開圖表 — Ctrl+O 讀呢個 — 確保唔會開錯 symbol / json 被清問題）
+    try:
+        _ocp = os.path.join(common_files, 'open_chart_cmd.json')
+        with open(_ocp, 'w', encoding='utf-8') as _f:
+            json.dump({'symbol': symbol or 'EURUSD', 'tf': (tf or 'H1').upper()}, _f)
+        print(f"[API] open_chart_cmd.json 已寫: {symbol or 'EURUSD'} {tf or 'H1'}")
+    except Exception as _eocp:
+        print(f"[API] ⚠️ 寫 open_chart_cmd.json 失敗: {_eocp}")
+
     db.session.commit()
     print(f"[API] Deploy: {ea_name} -> {symbol} {tf} (command file written)")
     log_activity('deploy', f'{ea_name} 部署 → {symbol} {tf}', ea=ea_name)
