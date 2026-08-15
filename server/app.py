@@ -1545,9 +1545,63 @@ def api_ea_remove_local(filename):
                 f.write('1')
         except Exception:
             pass
+        # 🚨 2026-08-15 FIX（用戶：Magic/Symbol 剸除後再配對返嚟）：remove-local 都要刪 config + 釋放快捷鍵
+        # （之前只刪本機檔案 — config 殘留 → 重新配對 setdefault 舊值返嚟）
+        try:
+            config_del = json.loads(current_user.ea_config or '{}')
+            removed_del = config_del.get('_removed', [])
+            if base_only not in removed_del:
+                removed_del.append(base_only)
+            config_del['_removed'] = removed_del
+            for key in list(config_del.keys()):
+                if key == base_only or key.startswith(base_only + '_'):
+                    del config_del[key]
+            current_user.ea_config = json.dumps(config_del)
+            db.session.commit()
+            print(f"[remove-local] ✅ 已刪 config: {base_only}（Magic/Symbol 清除）", flush=True)
+        except Exception as _ecfg:
+            print(f"[remove-local] ⚠️ 刪 config 失敗: {_ecfg}", flush=True)
+        # 釋放快捷鍵（hotkeys.ini — 唔殘留）
+        try:
+            release_hotkey(base_only)
+            print(f"[remove-local] ✅ 已釋放快捷鍵: {base_only}", flush=True)
+        except Exception:
+            pass
         log_activity('ea_delete', f'{filename} 已於網頁刪除（本機檔案已刪除）', ea=filename)
         return jsonify({"success": True, "removed": removed})
     return jsonify({"success": False, "error": "EA not found in local Experts dir"}), 404
+
+def _log_bounce_back(filenames, ea_dir):
+    """🚨 2026-08-15：彈返監察日誌 — 記錄彈返事件（時間/檔案/內容特徵 — 追蹤源頭）
+    用戶要求：彈返 EA 要搵核心原因（唔可以由得佢出現）— 呢個日誌下次彈返時記錄線索"""
+    try:
+        import time as _tbb
+        entry = {
+            'time': _tbb.strftime('%Y-%m-%d %H:%M:%S'),
+            'files': [],
+        }
+        for fn in filenames:
+            fp = os.path.join(ea_dir, fn)
+            info = {'name': fn}
+            if os.path.isfile(fp):
+                st = os.stat(fp)
+                info['ctime'] = _tbb.strftime('%Y-%m-%d %H:%M:%S', _tbb.localtime(st.st_ctime))
+                info['size'] = st.st_size
+                try:
+                    c = open(fp, encoding='utf-8', errors='ignore').read(2000)
+                    info['has_heartbeat'] = '__mt5c_process' in c
+                    info['has_InpSymbol'] = 'InpSymbol' in c
+                    info['head'] = c[:80].replace('\n', ' ')
+                except Exception:
+                    pass
+            entry['files'].append(info)
+        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bounce_back_log.jsonl')
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+        print(f"[彈返監察] 已記錄: {entry['time']} {filenames}", flush=True)
+    except Exception as e:
+        print(f"[彈返監察] ⚠️ 記錄失敗: {e}")
+
 
 @app.route('/api/ea-library/install-local/<filename>', methods=['POST'])
 @login_required
@@ -1795,6 +1849,7 @@ void __mt5c_process() {
             _unexpected = sorted(_after - _before - {dest_name, os.path.splitext(dest_name)[0] + '.ex5'})
             if _unexpected:
                 print(f"[install-local] ⚠️ 複製監察: 安裝 {dest_name} 後偵測到非預期 EA 出現: {_unexpected}", flush=True)
+                _log_bounce_back(_unexpected, _mon_ea_dir)
             else:
                 print(f"[install-local] 複製監察: 安裝 {dest_name} 後冇額外 EA（正常）", flush=True)
     except Exception as _eme:

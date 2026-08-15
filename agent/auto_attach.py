@@ -1391,8 +1391,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                 if os.path.isfile(_src_t) and not os.path.isfile(_dst_t):
                                     _tc = open(_src_t, encoding='utf-16-le', errors='ignore').read()
                                     _tc = _tc.replace('symbol=EURUSD', f'symbol={_sym or "EURUSD"}')
+                                    # 🚨 2026-08-15 FIX：模板 <expert> path 指向根目錄（Experts\EA.ex5）— 但 EA 喺 MT5Cloud_EA 子目錄 → 套模板搵唔到 → EA 掛唔到！
+                                    # 改 path → Experts\MT5Cloud_EA\<EA>.ex5（指向正確位置）
+                                    _tc = _tc.replace(f'path=Experts\\{ea_name}.ex5',
+                                                      f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5')
                                     open(_dst_t, 'w', encoding='utf-16-le').write(_tc)
-                                    print(f"📋 模板已生成: {_tpl_name}")
+                                    print(f"📋 模板已生成: {_tpl_name}（path 已修正 → MT5Cloud_EA）")
                                 break
                     except Exception:
                         pass
@@ -1430,32 +1434,76 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     time.sleep(1.5)
                     _sk('{ENTER}')
                     time.sleep(3)
-                # ③ Ctrl+O（OpenChart script 熱鍵 — 開目標圖表 active）
+                # ③ Ctrl+L（OpenChart script 熱鍵 — 用戶改咗 — 一體化：開圖表 + 套模板掛 EA — 20:29 實測成功）
+                # 🚨 2026-08-15：一定要「先開新圖表」先 work（用戶實測 — 熱鍵要圖表 active）— 上面 ② 已確保有圖表
+                # 🚨 2026-08-15 FIX：send 用 pyautogui（真實 keydown/keyup — 同用戶手動一樣 — pywinauto send_keys 送唔到/MT5 唔當熱鍵 — 用戶肉眼證實 pyautogui work）
                 try:
                     import ctypes as _ct_oc
                     _u_oc = _ct_oc.windll.user32
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                except Exception:
-                    pass
-                _sk('^o')
-                time.sleep(4)
-                # 🚨 2026-08-15：確保 active 圖表係「啱啱開嘅」（Ctrl+O 開嘅圖表 — 通常 active — 但係有圖表平鋪/其它操作可能變咗 — 附加 EA 要落 active）
-                try:
-                    import ctypes as _ct_act
-                    _u_act = _ct_act.windll.user32
-                    # click 圖表區（主視窗中心 — 確保 active 係前景圖表）
+                    # click 圖表區（focus 圖表 — 熱鍵要 focus 圖表先 work — 用戶手動就係咁）
                     try:
-                        import pyautogui as _pg_act2
-                        _pg_act2.FAILSAFE = False
-                        _r_act = win.rectangle()
-                        _pg_act2.click(_r_act.left + _r_act.width() // 2, _r_act.top + _r_act.height() // 2)
+                        import pyautogui as _pg_oc
+                        _pg_oc.FAILSAFE = False
+                        _r_oc = win.rectangle()
+                        _pg_oc.click(_r_oc.left + _r_oc.width() // 2, _r_oc.top + _r_oc.height() // 2)
+                        time.sleep(0.8)
                     except Exception:
                         pass
-                    time.sleep(0.8)
                 except Exception:
                     pass
-                print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）")
+                # 🚨 熱鍵 reload 檢查：send Ctrl+L（pyautogui）→ 冇彈「選項/導航熱鍵」+ 有圖表先算成功（script 執行 — 開圖表）
+                _oc_ok2 = False
+                for _ocr in range(2):
+                    try:
+                        import pyautogui as _pg_oc2
+                        _pg_oc2.FAILSAFE = False
+                        _pg_oc2.hotkey('ctrl', 'l')
+                    except Exception:
+                        _sk('^l')
+                    time.sleep(3.5)
+                    # 檢查有冇彈「選項/導航熱鍵」dialog（Alt+Q 未 load 嘅標誌）
+                    _opt_dlg = False
+                    try:
+                        def _cb_opt(_h2, _x2):
+                            nonlocal _opt_dlg
+                            if _u_oc.IsWindowVisible(_h2):
+                                _c2 = ctypes.create_unicode_buffer(64)
+                                _u_oc.GetClassNameW(_h2, _c2, 64)
+                                if '#32770' in _c2.value:
+                                    _l2 = _u_oc.GetWindowTextLengthW(_h2)
+                                    _b2 = ctypes.create_unicode_buffer(_l2 + 1)
+                                    _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
+                                    if '選項' in _b2.value or 'Option' in _b2.value or '熱鍵' in _b2.value:
+                                        _opt_dlg = True
+                            return True
+                        _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_opt), None)
+                    except Exception:
+                        pass
+                    if _opt_dlg:
+                        print("⚠️ Alt+Q 彈咗視窗（script 熱鍵未 load）— 關閉 + 重啟 MT5 reload 熱鍵")
+                        try:
+                            _sk('{ESC}')
+                            time.sleep(1)
+                        except Exception:
+                            pass
+                        # 重啟 MT5（reload 熱鍵）
+                        import subprocess as _sp_oc
+                        try:
+                            _sp_oc.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                            time.sleep(4)
+                            _sp_oc.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
+                            time.sleep(25)
+                            print("✅ MT5 已重啟（reload 熱鍵）")
+                        except Exception as _eoc_r:
+                            print(f"⚠️ 重啟失敗: {_eoc_r}")
+                        continue
+                    else:
+                        _oc_ok2 = True
+                        break
+                time.sleep(1)
+                print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）" if _oc_ok2 else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:

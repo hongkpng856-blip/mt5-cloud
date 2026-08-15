@@ -868,9 +868,9 @@ async function loadEAConfig() {
             allEAs.forEach(name => {
       // 2026-08-13 FIX：用「心跳」判斷 — 冇心跳 → Symbol/Magic 都顯示「—」（用戶提議：冇心跳=唔知運行緊咩 → 唔顯示值）
             // （之前用 deployed（熱鍵）— 但係有熱鍵都可能冇運行 → 誤顯示 symbol — 心跳先係「實際運行」）
-            // 🚨 2026-08-14：Symbol/Magic 顯示用「已部署」判斷（唔係心跳）— Ichimoku 案例：冇心跳但部署咗（圖表有 EA）→ 顯示 config 真實值
-            // （running/starting/no_hb/unknown = 部署咗 → 顯示；unpaired/undefined = 未部署 →「—」）
-            const _alive = !!(runtimeStatus[name] && runtimeStatus[name] !== 'unpaired');
+            // 🚨 2026-08-15 FIX：Symbol/Magic 顯示用「config 有冇」（配對咗就顯示 — 唔靠心跳/runtimeStatus）
+            // 用戶：「重新配對嘅 EA 都會有 Symbol 同 Magic」— 有 config（配對咗）→ 顯示 config 值；冇 config（未配對/已剸除）→「—」
+            const _alive = !!(eaMappings[name]);  // 有 config = 已配對 → 顯示 symbol/magic
             let sym = _alive ? (eaMappings[name] || '') : '';
             let magic = eaMappings[name+'_magic'] || '240701';
 
