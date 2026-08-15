@@ -1755,6 +1755,67 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         return False
         except Exception:
             pass
+        # 🚨 B1（2026-08-15 用戶揀）：心跳開咗目標圖表（active）→ 移除原圖表 EA → 再附加落 active 目標圖表
+        if open_chart and _sym:
+            try:
+                # ① 等心跳開圖表（EA 第一次心跳 ChartOpen(InpSymbol) — 目標圖表 active — BRING_TO_TOP）
+                time.sleep(4)
+                # ② 移除原圖表 EA（寫 ctrl_<EA>.json（stop）→ EA 心跳讀到 → ExpertRemove 自己移除）
+                try:
+                    _ctrl_b1 = os.path.join(COMMON_FILES, f'ctrl_{ea_name}.json')
+                    with open(_ctrl_b1, 'w', encoding='utf-8') as _f:
+                        _f.write('{"cmd":"stop"}')
+                    print(f"⏳ B1: 移除原圖表 EA（{ea_name} — 心跳讀到 ctrl_ 後自移除）")
+                    time.sleep(3)
+                    try:
+                        os.remove(_ctrl_b1)
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                # ③ 再附加 EA 落 active（目標圖表 — 心跳開咗 — active）
+                try:
+                    _sk(combo)  # 熱鍵（例如 Ctrl+1）— 落 active 目標圖表
+                    time.sleep(2.5)
+                    # 循環 dialog（Properties 確定 / 代替確認「是」）
+                    import ctypes as _ctb1
+                    _ub1 = _ctb1.windll.user32
+                    for _d1 in range(6):
+                        _btn_clicked = False
+                        def _cb_b1(_h, _x):
+                            nonlocal _btn_clicked
+                            if _ub1.IsWindowVisible(_h):
+                                _cc = _ctb1.create_unicode_buffer(64)
+                                _ub1.GetClassNameW(_h, _cc, 64)
+                                if '#32770' in _cc.value:
+                                    _lt = _ub1.GetWindowTextLengthW(_h)
+                                    _bt = _ctb1.create_unicode_buffer(_lt + 1)
+                                    _ub1.GetWindowTextW(_h, _bt, _lt + 1)
+                                    _title = _bt.value
+                                    if ea_name in _title or '代替' in _title or 'MetaTrader' in _title:
+                                        # 搵「確定/OK」或者「是/Yes」按鈕 — click
+                                        try:
+                                            _dw1 = _app.window(handle=_h)
+                                            for _bb in _dw1.children(class_name='Button'):
+                                                _btxt = _bb.window_text()
+                                                if '確定' in _btxt or 'OK' in _btxt or '是' in _btxt or 'Yes' in _btxt:
+                                                    _bb.click()
+                                                    _btn_clicked = True
+                                                    print(f"✅ B1: 已撳「{_btxt}」")
+                                                    break
+                                        except Exception:
+                                            pass
+                            return True
+                        _ub1.EnumWindows(_ctb1.WINFUNCTYPE(_ctb1.c_bool, _ctb1.c_void_p, _ctb1.c_void_p)(_cb_b1), None)
+                        if not _btn_clicked:
+                            break
+                        time.sleep(1.5)
+                    time.sleep(2)
+                    print(f"✅ B1: {ea_name} 已再附加落目標圖表（{_sym}）")
+                except Exception as _eb1:
+                    print(f"⚠️ B1 再附加失敗: {_eb1}")
+            except Exception as _eb1x:
+                print(f"⚠️ B1 異常: {_eb1x}")
         # 🚨 2026-08-12 FIX：所有操作完成（圖表平鋪/市場報價/log 驗證）→ 最後先寫 steps 全部 done（確定出現 — active 即刻 false — 撳確定唔會再彈）
         try:
             _steps[2]['status'] = 'done'
