@@ -1370,29 +1370,57 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         except Exception:
             pass
         # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
-        # ✅ 用戶方法（2026-08-15 實測）：寫 json → 執行 OpenChart script（Alt+F → Enter → Ctrl+I → 腳本 → OpenChart）
-        # 開目標圖表（active — BRING_TO_TOP）→ 之後附加 EA 落 active 目標圖表
+        # ✅ B 方法（2026-08-15 用戶揀）：揀咗 symbol → 改 EA 源碼（InpSymbol）→ 編譯 → 附加真正 EA（熱鍵）
+        # EA 第一次心跳 → ChartOpen(InpSymbol) 開目標圖表（active）→ 交易用 InpSymbol（一定正確）
         if open_chart:
             try:
                 _sym = (symbol or '').upper()
-                # 寫 json（OpenChart script 讀呢個）
+                # ① 改 EA 源碼（InpSymbol = 部署 symbol）→ 重新編譯
+                if _sym:
+                    try:
+                        import re as _re_sym
+                        import subprocess as _sp_sym
+                        _apd_sym = os.environ.get('APPDATA', '')
+                        for _d_sym in os.listdir(os.path.join(_apd_sym, 'MetaQuotes', 'Terminal')):
+                            _p_sym = os.path.join(_apd_sym, 'MetaQuotes', 'Terminal', _d_sym, 'MQL5', 'Experts', 'MT5Cloud_EA', ea_name + '.mq5')
+                            if os.path.isfile(_p_sym):
+                                _c_sym = open(_p_sym, encoding='utf-8', errors='ignore').read()
+                                if 'input string InpSymbol' in _c_sym:
+                                    _c_sym2 = _re_sym.sub(r'input string InpSymbol\s*=\s*"[^"]*";',
+                                                          f'input string InpSymbol = "{_sym}";', _c_sym, count=1)
+                                    if _c_sym2 != _c_sym:
+                                        open(_p_sym, 'w', encoding='utf-8').write(_c_sym2)
+                                        print(f"📝 已寫入 symbol 落 {ea_name}.mq5: InpSymbol={_sym}")
+                                        _me_sym = r'C:\Program Files\MetaTrader 5\MetaEditor64.exe'
+                                        try:
+                                            _sp_sym.run([_me_sym, '/compile:' + _p_sym, '/log'], timeout=60)
+                                            time.sleep(5)
+                                            print(f"🔨 已重新編譯（InpSymbol={_sym}）")
+                                        except Exception as _ec:
+                                            print(f"⚠️ 編譯失敗: {_ec}")
+                                else:
+                                    print(f"⚠️ {ea_name}.mq5 冇 InpSymbol input（舊版 — 唔改）")
+                                break
+                    except Exception as _esym:
+                        print(f"⚠️ 改 symbol 失敗: {_esym}")
+                # ② 確保有圖表（熱鍵附加要圖表 active — EA 心跳先開到目標圖表）
+                _has_chart_oc = False
                 try:
-                    import json as _joc
-                    _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
-                    with open(_cmd_file, 'w', encoding='utf-8') as _f:
-                        _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper()}, _f)
+                    for _d_oc in win.descendants():
+                        if _d_oc.element_info.class_name == 'MDIClient':
+                            _has_chart_oc = len(_d_oc.children()) > 0
+                            break
                 except Exception:
                     pass
-                # 執行 OpenChart script（Ctrl+I 方法 — 用戶實測 — _exec_open_chart_script 新版）
-                try:
-                    _oc_ok = _exec_open_chart_script()
-                    if not _oc_ok:
-                        # 重試一次
-                        time.sleep(1)
-                        _oc_ok = _exec_open_chart_script()
-                    print(f"📋 OpenChart script 已執行（開目標圖表: {_sym or 'EURUSD'} — active）" if _oc_ok else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
-                except Exception as _eoc:
-                    print(f"⚠️ 執行 OpenChart script 失敗: {_eoc}")
+                if not _has_chart_oc:
+                    print("📋 冇圖表 — 開空圖表（Alt+F → Enter → Enter — EA 心跳會開目標圖表）")
+                    _sk('%f')
+                    time.sleep(1.5)
+                    _sk('{ENTER}')
+                    time.sleep(1.5)
+                    _sk('{ENTER}')
+                    time.sleep(3)
+                print(f"📋 EA 已配好 InpSymbol={_sym or '圖表'} — 心跳會自動開目標圖表")
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
@@ -1965,17 +1993,8 @@ def _exec_open_chart_script():
         except Exception:
             pass
         time.sleep(1)
-        # 🚨 2026-08-15：確保 json 存在（部署流程已寫 — 但係可能被清 — 空先寫預設，唔好覆寫正確 symbol）
-        try:
-            import json as _j2
-            _cmd2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', 'open_chart_cmd.json')
-            if not os.path.isfile(_cmd2) or os.path.getsize(_cmd2) == 0:
-                with open(_cmd2, 'w', encoding='utf-8') as _f2:
-                    _j2.dump({'symbol': 'EURUSD', 'tf': 'H1'}, _f2)
-        except Exception:
-            pass
-        # 🚨 用戶實測方法（2026-08-15）：熱鍵觸發 OpenChart_Helper（EA — Ctrl+4）
-        # 冇圖表 → 先 Alt+F → Enter → Enter（開空圖表 — EA 要掛喺圖表）
+        # 🚨 2026-08-15：熱鍵附加 EA — 要「圖表 active」（真正 EA 部署都係先開圖表先 send 熱鍵）
+        # 冇圖表 → 開一個空圖表（Alt+F → Enter → Enter）— 有圖表 → 確保 active（click 一下）
         _has_chart2 = False
         try:
             for _d2 in _main2.descendants():
@@ -1985,33 +2004,64 @@ def _exec_open_chart_script():
         except Exception:
             pass
         if not _has_chart2:
-            print("   📋 冇圖表 — 先開空圖表（Alt+F → Enter → Enter）")
+            print("   📋 冇圖表 — 開空圖表（Alt+F → Enter → Enter）")
             _sk2('%f')
             time.sleep(1.5)
             _sk2('{ENTER}')
             time.sleep(1.5)
             _sk2('{ENTER}')
             time.sleep(3)
+        else:
+            # 有圖表 — 確保 active（click 圖表中心）
+            try:
+                import pyautogui as _pg_act
+                _pg_act.FAILSAFE = False
+                _r2 = _main2.rectangle()
+                _pg_act.click(_r2.left + _r2.width() // 2, _r2.top + _r2.height() // 2)
+            except Exception:
+                pass
+            time.sleep(0.8)
         # 熱鍵 Ctrl+4（OpenChart_Helper — 附加落圖表 → OnInit 讀 json → ChartOpen(symbol) → ExpertRemove）
-        _sk2('^4')
-        time.sleep(2.5)
-        # 撳「確定」（Properties dialog — EA 附加 → OnInit 執行）
-        _sk2('{ENTER}')
-        time.sleep(3)
-        # 驗證：log 有「OpenChart_Helper 已開新圖表」（OnInit 執行咗 — 圖表開咗）
+        # 🚨 2026-08-15：改用 pyautogui（真實 keydown/keyup — 比 pywinauto send_keys 穩定 — 用戶揀 B）
         try:
-            import glob as _g2
-            _ld2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
-                                'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Logs')
-            _fl2 = sorted(glob.glob(os.path.join(_ld2, '2026*.log')), key=os.path.getmtime, reverse=True)
-            if _fl2:
-                _cl2 = open(_fl2[0], encoding='utf-16-le', errors='ignore').read()
-                if 'OpenChart_Helper' in _cl2 and '已開新圖表' in _cl2:
-                    print("   ✅ OpenChart_Helper 已開圖表（log 確認）")
-                    return True
+            import pyautogui as _pg2
+            _pg2.FAILSAFE = False
+            _pg2.hotkey('ctrl', '4')
+        except Exception:
+            _sk2('^4')
+        time.sleep(2.5)
+        # 驗證：Properties dialog 彈出（熱鍵 work — EA 附加準備）
+        _dlg2 = False
+        try:
+            def _cb3(_h3, _x3):
+                nonlocal _dlg2
+                if _u2.IsWindowVisible(_h3):
+                    _c3 = ctypes.create_unicode_buffer(64)
+                    _u2.GetClassNameW(_h3, _c3, 64)
+                    if '#32770' in _c3.value:
+                        _l3 = _u2.GetWindowTextLengthW(_h3)
+                        _b3 = ctypes.create_unicode_buffer(_l3 + 1)
+                        _u2.GetWindowTextW(_h3, _b3, _l3 + 1)
+                        if 'OpenChart_Helper' in _b3.value:
+                            _dlg2 = True
+                            return False
+                return True
+            _u2.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb3), None)
         except Exception:
             pass
-        return False
+        if not _dlg2:
+            print("   ⚠️ Ctrl+4 冇彈 Properties（熱鍵未觸發）")
+            return False
+        # 撳「確定」（Properties dialog — EA 附加 → OnInit 執行 → ChartOpen(symbol)）
+        try:
+            import pyautogui as _pg3
+            _pg3.FAILSAFE = False
+            _pg3.press('enter')
+        except Exception:
+            _sk2('{ENTER}')
+        time.sleep(3)
+        print("   ✅ OpenChart_Helper 已附加（Properties → 確定 — 圖表開咗）")
+        return True
     except Exception as _e2:
         print(f"   ⚠️ _exec_open_chart_script 異常: {_e2}")
         return False
