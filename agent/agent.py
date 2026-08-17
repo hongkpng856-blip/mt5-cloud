@@ -725,7 +725,17 @@ def download_and_install(ea_name, url, ea_config=None):
                             print(f"   ✅ .ex5 found despite timeout: {os.path.getsize(ex5_path)} bytes")
                 
                 # Check .ex5
-                ex5_path = os.path.join(experts_dir, base_name + '.ex5')
+                ex5_flat = os.path.join(experts_dir, base_name + '.ex5')  # metaeditor 寫平級
+                # 🔧 2026-08-18：metaeditor 永遠寫 .ex5 去 Experts\ 平級（唔理 .mq5 喺 MT5Cloud_EA subfolder）
+                # → copy 去 MT5Cloud_EA 同目錄，令 Navigator 雙擊 MT5Cloud_EA/{ea} 掛到 .ex5
+                mt5cloud_ex5 = os.path.join(os.path.dirname(mq5_path), base_name + '.ex5')
+                if ex5_flat != mt5cloud_ex5 and os.path.exists(ex5_flat):
+                    try:
+                        _shutil.copy2(ex5_flat, mt5cloud_ex5)
+                        print(f"   💾 Copied .ex5 → MT5Cloud_EA: {mt5cloud_ex5}")
+                    except Exception as _ce:
+                        print(f"   ⚠️ copy .ex5 失敗: {_ce}")
+                ex5_path = mt5cloud_ex5 if os.path.exists(mt5cloud_ex5) else ex5_flat
                 if os.path.exists(ex5_path):
                     print(f"   ✅ Compiled: {base_name}.ex5 ({os.path.getsize(ex5_path)} bytes)")
                 else:
@@ -741,7 +751,7 @@ def download_and_install(ea_name, url, ea_config=None):
                                         print(f"      {line.strip()}")
                         except:
                             pass
-                
+
                 # === Create preset ===
                 if ea_config and base_name in ea_config:
                     cfg = ea_config[base_name]
