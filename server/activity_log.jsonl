@@ -44134,3 +44134,15 @@
 {"time": 1786995609.6256332, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
 {"time": 1786995612.7700238, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
 {"time": 1786995634.1593783, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995645.7095373, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786995664.9483914, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995695.7739403, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995726.5738676, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995757.3911452, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995788.1799614, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995818.9736445, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995849.772372, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995880.552965, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995911.3450363, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995942.1476905, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995972.942454, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

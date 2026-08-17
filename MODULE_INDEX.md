@@ -112,12 +112,12 @@
 | 項目 | 位置 |
 |------|------|
 | Deploy API | `server/app.py`（`POST /api/deploy`，寫 deploy_cmd JSON — 2026-08 加熱鍵 reload 檢查） |
-| Watcher | `agent/deploy_watcher.py`（3 秒 polling，COMMON/Files/deploy_cmd_*.json） |
-| **熱鍵部署（主力）** | `agent/auto_attach.py` `attach_ea_hotkey()`（send 熱鍵 → Properties/代替確認 dialog 自動處理） |
-| Auto-attach（fallback） | `agent/auto_attach.py` `attach_ea_navigator()`（6093 下唔可靠） |
+| Deploy API | `server/app.py`（`POST /api/deploy`，寫 deploy_cmd JSON 落 COMMON/Files） |
+| **Navigator 雙擊部署（主力，v0.9.65+）** | `agent/auto_attach.py` `attach_ea_navigator()`（用 pywinauto `ea_node.click_input(double=True)` 掛 EA — handle-based，唔使座標，唔受 owner-draw/語言影響） |
+| 熱鍵部署（fallback） | `agent/auto_attach.py` `attach_ea_hotkey()`（send 熱鍵 → Properties/代替確認 dialog 自動處理 — 僅當 hotkeys.ini 有 mapping 時用） |
 | 通知視窗 | `agent/deploy_notify.py`（tkinter「AI 控制中」）+ `agent/control_guard.py`（🛡️ AI 控制守衛） |
 | 緊急停止 | `agent/kill_all.bat` + control_guard「🚨 緊急停止」按鈕 |
-| 流程 | Dashboard `deployEA()` → `/api/deploy` → watcher detect → auto_attach.py（熱鍵優先）→ MT5 chart |
+| 流程 | Dashboard `deployEA()` → `/api/deploy` → watcher detect → auto_attach.py（Navigator 雙擊優先，唔 restart MT5）→ MT5 chart |
 
 **🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）：**
 - **設定檔**：`<Terminal>\config\hotkeys.ini`（UTF-16 LE）— 格式 `[experts]`：`Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+N`（**只有 `<experts>` section + 乾淨 CRLF — 用戶實測格式**）
@@ -126,15 +126,16 @@
 - **dialog 處理**：Properties（撳確定）+ 代替確認（「MetaTrader 5」dialog — 文字喺 Static — 撳是）— **BM_CLICK（SendMessage）**（確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）
 - **熱鍵分配**：配對 → `assign_hotkey()`（下一個可用 Ctrl+N — 唔重複）→ 剷除 → `release_hotkey()`（位置釋放）
 
-**auto_attach.py 流程：**
+**auto_attach.py 流程（v0.9.65/66）：**
 1. `control_guard.acquire()` — 彈警告視窗 + 寫 lock
 2. generate_template（.tpl）
 3. 開/搵 MT5 + Navigator 統一 + 圖表平鋪（Alt+R）
-4. **開新圖表**（Ctrl+N → Enter — 2026-08：每個 EA 一個圖表 — 唔代替）
-5. **熱鍵優先**：`attach_ea_hotkey()`（send 熱鍵 → dialog 循環處理）— fallback `attach_ea_navigator()`
+4. **關晒所有 MDI 圖表**（v0.9.65 修重複 — 開新圖表前先清） → **開新圖表**（Alt+F → Enter → Enter）
+5. **Navigator 雙擊優先**：`attach_ea_navigator()`（expand EA交易 → select EA → `ea_node.click_input(double=True)` 掛 EA — handle-based，唔使座標）；fallback `attach_ea_hotkey()` 僅當 hotkeys.ini 有 mapping
 6. ensure_auto_trading_on
-7. verify（heartbeat + EA log）
+7. verify（heartbeat `state_*.json`/`hb_*.txt` + EA log）
 8. `control_guard.release()` — 關視窗 + 清 lock
+- ⚠️ **v0.9.66 唔再 restart MT5**：掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload hotkeys.ini → 避免 PID 變令後續 connect fail
 
 **⚠️ 注意：**
 - ⚠️ **watcher 鎖**：deploy worker 寫 `.auto_attach_running` 用 os.getpid（watcher 自己）— `is_auto_attach_running()` 要 skip 自己 PID（2026-08 修 — 唔係會永遠 queuing）

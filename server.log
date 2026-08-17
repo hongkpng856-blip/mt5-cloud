@@ -3535,3 +3535,997 @@ Press CTRL+C to quit
 127.0.0.1 - - [18/Aug/2026 03:19:55] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
 127.0.0.1 - - [18/Aug/2026 03:19:57] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
 127.0.0.1 - - [18/Aug/2026 03:19:57] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994395.4590065 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:07] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:07] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994397.1747217 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:07] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786994410.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:20:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:20:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:17] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:17] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994407.1776707 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+3
+[install-local] EMA_Cross 快捷鍵: Ctrl+3
+127.0.0.1 - - [18/Aug/2026 03:20:19] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:20] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994417.2107916 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:20] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:24] "GET /api/analysis?t=1786994424373 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:24] "GET /api/dashboard?t=1786994424373 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:24] "GET /static/detector/notifications.json?t=1786994424373 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:24] "GET /static/detector/auto_trade_status.json?t=1786994424427 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:24] "GET /api/ea-config?t=1786994424449 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:20:25] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:26] "GET /api/ea-config?t=1786994425949 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:26] "GET /static/detector/ea_inventory.json?t=1786994425949 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:27] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:27] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994420.4789925 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:27] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:20:27] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:27] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994427.2123113 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:40] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:40] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994427.750696 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:45] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994440.4673033 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:45] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:48] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:48] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994445.4853878 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:54] "GET /api/dashboard?t=1786994454567 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:54] "GET /api/analysis?t=1786994454568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:54] "GET /static/detector/ea_inventory.json?t=1786994454569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:54] "GET /api/ea-config?t=1786994454568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:55] "GET /api/ea-library?t=1786994454569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:55] "GET /static/detector/notifications.json?t=1786994454570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:55] "GET /static/detector/auto_trade_status.json?t=1786994454597 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:55] "GET /static/detector/ea_inventory.json?t=1786994454625 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:55] "GET /api/ea-config?t=1786994454638 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:55] "GET /api/activity?t=1786994454570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:56] "GET /api/ea-config?t=1786994456568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:56] "GET /static/detector/ea_inventory.json?t=1786994456567 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:58] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:20:58] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994448.4919846 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:08] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:08] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994458.510772 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:10] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994468.5260205 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:10] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:21:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:18] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:18] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994470.5130637 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:24] "GET /static/detector/notifications.json?t=1786994484568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:24] "GET /api/dashboard?t=1786994484568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:24] "GET /api/analysis?t=1786994484568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:25] "GET /static/detector/auto_trade_status.json?t=1786994484608 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:25] "GET /api/ea-config?t=1786994484633 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:21:25] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:25] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994478.5367908 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:21:28] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:28] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:28] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994485.6549006 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:29] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:21:35] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994488.5373194 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:35] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:38] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:38] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994495.5362437 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:46] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:21:48] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:48] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994498.573029 HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786994509.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:21:58] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:21:58] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994508.586382 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:21:59] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:00] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994518.6056058 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:00] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:22:05] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:08] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:08] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994520.560533 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:09] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:22:09] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:09] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994528.625358 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:22:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /api/analysis?t=1786994541569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /static/detector/ea_inventory.json?t=1786994541569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /api/dashboard?t=1786994541568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /api/ea-config?t=1786994541568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /static/detector/notifications.json?t=1786994541569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /static/detector/auto_trade_status.json?t=1786994541645 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /api/activity?t=1786994541569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /api/ea-config?t=1786994542242 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:22] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994529.0437913 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:24] "GET /api/ea-config?t=1786994544568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:24] "GET /static/detector/ea_inventory.json?t=1786994544568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:25] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994542.8712878 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:25] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:28] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:28] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994545.5763915 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:38] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:38] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994548.9002972 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:48] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:48] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994558.9117227 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:50] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994568.9443793 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:50] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:58] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:22:58] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994570.5807304 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross 快捷鍵已移除（位置釋放）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:23:08] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:08] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994578.9401495 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:08] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:08] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994588.9596093 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:09] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:11] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:23:15] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994588.979647 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:15] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:23:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:18] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:18] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994595.5998046 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /api/dashboard?t=1786994601568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /api/analysis?t=1786994601570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /static/detector/ea_inventory.json?t=1786994601571 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /api/ea-library?t=1786994601571 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /static/detector/notifications.json?t=1786994601570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /static/detector/auto_trade_status.json?t=1786994601792 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /static/detector/ea_inventory.json?t=1786994601812 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /api/ea-config?t=1786994601571 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /api/ea-config?t=1786994601831 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:22] "GET /api/activity?t=1786994601571 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:23] "GET /static/detector/ea_inventory.json?t=1786994603569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:23] "GET /api/ea-config?t=1786994603569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:27] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:23:29] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:29] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994598.9998007 HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786994609.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:23:39] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:39] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994609.0153897 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:40] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994619.0358603 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:40] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:23:46] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:49] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:49] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994620.6065173 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:59] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:23:59] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994629.0473523 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:05] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994639.0748475 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:05] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:06] "GET /api/dashboard?t=1786994646272 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:06] "GET /api/analysis?t=1786994646272 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:06] "GET /static/detector/ea_inventory.json?t=1786994646272 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:06] "GET /static/detector/notifications.json?t=1786994646272 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:06] "GET /api/ea-config?t=1786994646272 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:06] "GET /api/activity?t=1786994646272 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:07] "GET /static/detector/auto_trade_status.json?t=1786994647569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:09] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:09] "GET /api/ea-config?t=1786994648678 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:09] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994645.6125393 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:10] "GET /api/ea-config?t=1786994650029 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:10] "GET /static/detector/ea_inventory.json?t=1786994650028 HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:24:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:24:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:16] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:24:19] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:19] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994649.0993712 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:24] "GET /api/dashboard?t=1786994664568 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:24] "GET /api/analysis?t=1786994664569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:25] "GET /static/detector/notifications.json?t=1786994664569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:25] "GET /static/detector/auto_trade_status.json?t=1786994664593 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:25] "GET /api/ea-config?t=1786994664630 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:26] "GET /api/ea-config?t=1786994666570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:26] "GET /static/detector/ea_inventory.json?t=1786994666569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:29] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:29] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994659.1087353 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:30] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994669.127364 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:30] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:39] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:39] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994670.6419146 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:49] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:49] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994679.144995 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:54] "GET /api/analysis?t=1786994694569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:54] "GET /api/dashboard?t=1786994694569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:54] "GET /static/detector/notifications.json?t=1786994694570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /api/ea-config?t=1786994694569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /static/detector/ea_inventory.json?t=1786994694569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /static/detector/auto_trade_status.json?t=1786994694603 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /api/ea-library?t=1786994694569 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /static/detector/ea_inventory.json?t=1786994694669 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /api/ea-config?t=1786994694664 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /api/activity?t=1786994694570 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994689.154054 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:55] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:59] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:24:59] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994695.649298 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:09] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:09] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994699.179221 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:25:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:19] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:19] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994709.1780803 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:20] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994719.2017245 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:20] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:24] "GET /api/analysis?t=1786994724376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:24] "GET /api/dashboard?t=1786994724375 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:24] "GET /static/detector/notifications.json?t=1786994724376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:24] "GET /static/detector/auto_trade_status.json?t=1786994724434 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:24] "GET /api/ea-config?t=1786994724467 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:29] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:29] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994720.6547148 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:39] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:39] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994729.21243 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:45] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994739.25003 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:45] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:49] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:49] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994745.6761699 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /api/dashboard?t=1786994754375 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /static/detector/notifications.json?t=1786994754375 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /api/analysis?t=1786994754375 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /api/ea-config?t=1786994754375 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /static/detector/ea_inventory.json?t=1786994754375 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /static/detector/auto_trade_status.json?t=1786994754436 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:54] "GET /api/ea-config?t=1786994754494 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:55] "GET /api/activity?t=1786994754376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:59] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:25:59] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994749.2586677 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:09] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:09] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994759.2832835 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:10] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994769.302758 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:10] "POST /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:26:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /socket.io/?transport=polling&EIO=4&t=1786994784.7308865 HTTP/1.1" 200 -
+[WS] Connected: IqzN5Q0XA3HLsMleAAAh
+127.0.0.1 - - [18/Aug/2026 03:26:24] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994784.7358902 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994784.7512307 HTTP/1.1" 200 -
+[WS] Auto-sent EA config to agent DEV00001: 3 EAs
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /socket.io/?transport=polling&EIO=4&sid=Z7-KD1WvWnemFhuvAAAU&t=1786994770.7053359 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994784.7793686 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994784.78471 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /api/ea-library/Breakout.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /api/analysis?t=1786994784376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /static/detector/notifications.json?t=1786994784376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /api/dashboard?t=1786994784376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /static/detector/auto_trade_status.json?t=1786994784437 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:24] "GET /api/ea-config?t=1786994784457 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:26] "GET /api/ea-library/Fibonacci.mq5 HTTP/1.1" 200 -
+[WS] Install result: {'status': 'ok', 'ea': 'Breakout.mq5'}127.0.0.1 - - [18/Aug/2026 03:26:26] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+
+[WS] Install result: {'status': 'ok', 'ea': 'Fibonacci.mq5'}
+127.0.0.1 - - [18/Aug/2026 03:26:28] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:28] "GET /api/ea-library/EMA_Cross.mq5 HTTP/1.1" 200 -
+[WS] Install result: {'status': 'ok', 'ea': 'EMA_Cross.mq5'}127.0.0.1 - - [18/Aug/2026 03:26:30] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+
+127.0.0.1 - - [18/Aug/2026 03:26:34] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:34] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994784.8140304 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:44] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:44] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994794.8215709 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:49] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994804.830611 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:49] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /api/analysis?t=1786994814377 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /static/detector/notifications.json?t=1786994814378 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /static/detector/ea_inventory.json?t=1786994814377 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /api/dashboard?t=1786994814376 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994809.7347314 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /api/ea-config?t=1786994814377 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /static/detector/auto_trade_status.json?t=1786994814472 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /api/ea-library?t=1786994814377 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /static/detector/ea_inventory.json?t=1786994814532 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:54] "GET /api/ea-config?t=1786994814532 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:55] "GET /api/activity?t=1786994814378 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:57] "GET /static/detector/ea_inventory.json?t=1786994816615 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:26:57] "GET /api/ea-config?t=1786994816615 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:04] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:04] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994814.884823 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:07] "GET /socket.io/?transport=polling&EIO=4&t=1786994827.6271415 HTTP/1.1" 200 -
+[WS] Connected: S-AXlUMDEUcARbNLAAAj
+127.0.0.1 - - [18/Aug/2026 03:27:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994827.6331396 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994827.6371365 HTTP/1.1" 200 -
+[WS] Skip auto-send (debounce): DEV00001 (43s ago)
+127.0.0.1 - - [18/Aug/2026 03:27:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:07] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994824.85639 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994827.6599076 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:14] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994827.6704166 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:14] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:14] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:14] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994834.752466 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:14] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994827.6704166 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:27:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:17] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:17] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994834.8991063 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:17] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994834.8991063 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:24] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:24] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994837.708093 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:24] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994837.708093 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:24] "GET /api/analysis?t=1786994844572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:24] "GET /api/dashboard?t=1786994844572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:24] "GET /static/detector/notifications.json?t=1786994844572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:25] "GET /static/detector/auto_trade_status.json?t=1786994844600 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:25] "GET /api/ea-config?t=1786994844623 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:27] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:27] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994844.9176087 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:27] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994844.9176087 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:32] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994847.7146523 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:32] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:33] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:27:34] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:34] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994847.7146523 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:34] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994852.631081 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:37] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:37] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994854.9304821 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:37] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994854.9304821 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:39] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994857.7394805 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:39] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:44] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:44] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994859.766463 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:44] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994857.7394805 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:47] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:47] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994864.9459817 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:47] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994864.9459817 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:54] "POST /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:54] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994867.7354803 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:54] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994867.7354803 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /api/analysis?t=1786994874572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /static/detector/ea_inventory.json?t=1786994874572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /static/detector/notifications.json?t=1786994874572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /api/dashboard?t=1786994874571 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /static/detector/auto_trade_status.json?t=1786994874736 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /api/ea-config?t=1786994874571 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /api/activity?t=1786994874572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:55] "GET /api/ea-config?t=1786994874792 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994874.9597366 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:57] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:57] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:57] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994874.9597366 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:27:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994877.6378489 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:02] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:28:04] "GET /socket.io/?transport=polling&EIO=4&sid=XVhjX10iHB1NXmpGAAAg&t=1786994877.7698038 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994877.7698038 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:28:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:17] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:17] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994887.7927535 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:20] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:28:22] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994897.8130105 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:22] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786994903.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:28:27] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:27] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994902.666527 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:37] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:37] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994907.8300426 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:28:38] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:28:44] "POST /api/deploy HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:28:47] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:47] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:28:47] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:47] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994917.837122 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:47] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994927.525749 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:47] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:47] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:47] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994927.6916203 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:52] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:28:57] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994927.844078 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:57] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:28:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994937.5372577 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:05] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:29:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994937.8706315 HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786994948.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:29:12] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994947.8886065 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:12] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:29:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:17] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:17] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994952.6974297 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:22] "GET /api/dashboard?t=1786994961572 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /api/analysis?t=1786994961573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /static/detector/ea_inventory.json?t=1786994961574 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /static/detector/notifications.json?t=1786994961573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /static/detector/auto_trade_status.json?t=1786994962562 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /api/activity?t=1786994961574 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /api/ea-config?t=1786994961573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /api/ea-library?t=1786994961573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /api/ea-config?t=1786994962658 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:23] "GET /static/detector/ea_inventory.json?t=1786994962823 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:29:24] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:25] "GET /static/detector/ea_inventory.json?t=1786994964730 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:25] "GET /api/ea-config?t=1786994964730 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:27] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:27] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994957.8919792 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:29:30] "POST /api/deploy HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:29:33] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:33] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994967.9197235 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:37] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994973.7108986 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:37] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:37] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:37] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994977.7216713 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:47] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:47] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994977.9328346 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:29:57] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994987.9360251 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:29:58] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:00] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:30:02] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786994997.9554224 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:02] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995002.7267263 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:16] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:30:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:30:17] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:17] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995007.9687214 HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995018.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /api/dashboard?t=1786995021573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /static/detector/ea_inventory.json?t=1786995021573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /api/analysis?t=1786995021573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /api/ea-config?t=1786995021573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /static/detector/notifications.json?t=1786995021573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /static/detector/auto_trade_status.json?t=1786995021632 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /api/activity?t=1786995021573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:22] "GET /api/ea-config?t=1786995022172 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:24] "GET /api/ea-config?t=1786995024574 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:25] "GET /static/detector/ea_inventory.json?t=1786995024574 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:27] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995017.9768586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:27] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995027.734334 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:30:30] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> ok (EMA_Cross attached ✅)
+127.0.0.1 - - [18/Aug/2026 03:30:36] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:36] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995028.0139635 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:30:36] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995036.3264842 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross 快捷鍵已移除（位置釋放）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)127.0.0.1 - - [18/Aug/2026 03:30:39] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+
+127.0.0.1 - - [18/Aug/2026 03:30:39] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:39] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995038.0264032 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:40] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995039.9537246 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:30:48] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995048.0376513 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:52] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995048.541274 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:52] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995052.7600865 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:30:58] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995060.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:31:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995058.0636158 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:31:09] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:31:15] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:31:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:17] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995068.0791354 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:17] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995077.7650754 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:31:19] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:19] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995078.0938258 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /api/dashboard?t=1786995081578 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /api/analysis?t=1786995081578 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /static/detector/ea_inventory.json?t=1786995081579 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /static/detector/notifications.json?t=1786995081579 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /static/detector/auto_trade_status.json?t=1786995081638 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /api/ea-library?t=1786995081579 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /api/ea-config?t=1786995081579 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /static/detector/ea_inventory.json?t=1786995081707 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /api/ea-config?t=1786995081691 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:22] "GET /api/activity?t=1786995081579 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:23] "GET /static/detector/ea_inventory.json?t=1786995083573 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:24] "GET /api/ea-config?t=1786995083574 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:31:24] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:24] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995079.0998924 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995084.148517 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995088.1024563 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:42] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995098.1247082 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:42] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995102.7908766 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:31:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995108.1176493 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995118.1509516 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995127.7948174 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:32:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:32:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995128.1654131 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:19] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /static/detector/ea_inventory.json?t=1786995141584 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /api/dashboard?t=1786995141583 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /api/analysis?t=1786995141584 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /static/detector/notifications.json?t=1786995141584 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /static/detector/auto_trade_status.json?t=1786995141643 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /api/ea-config?t=1786995141584 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /api/ea-config?t=1786995141716 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:22] "GET /api/activity?t=1786995141584 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995138.1832516 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:32] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995148.193182 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:32] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:37] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995152.8000307 HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995159.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:32:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995158.2097077 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:32:48] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:32:55] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995168.2429726 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:57] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995177.824665 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:58] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:32:58] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:32:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995178.228739 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:33:03] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:03] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995178.3385496 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995183.3818858 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:33:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995188.2624078 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /static/detector/ea_inventory.json?t=1786995201599 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /api/dashboard?t=1786995201586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /api/analysis?t=1786995201593 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /api/ea-library?t=1786995201598 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /static/detector/notifications.json?t=1786995201594 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /api/ea-config?t=1786995201597 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /static/detector/ea_inventory.json?t=1786995201726 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /static/detector/auto_trade_status.json?t=1786995201714 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /api/activity?t=1786995201600 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995198.2799778 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:22] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:23] "GET /api/ea-config?t=1786995202947 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:24] "GET /static/detector/ea_inventory.json?t=1786995203961 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:24] "GET /api/ea-config?t=1786995203962 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995202.8299744 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995208.2957652 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:47] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995218.2949946 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:47] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995227.8377402 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:33:58] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:33:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995228.321609 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:00] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:34:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995238.329244 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:12] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995248.342529 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:12] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:34:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995252.8424454 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /api/dashboard?t=1786995261585 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /static/detector/ea_inventory.json?t=1786995261589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /api/analysis?t=1786995261588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /static/detector/notifications.json?t=1786995261588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /api/ea-config?t=1786995261589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /static/detector/auto_trade_status.json?t=1786995261721 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /api/ea-config?t=1786995261808 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:22] "GET /api/activity?t=1786995261590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:24] "GET /static/detector/ea_inventory.json?t=1786995263584 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:24] "GET /api/ea-config?t=1786995263585 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995258.3656964 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:37] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995268.3894324 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:37] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995277.8474677 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995278.38898 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:34:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995288.4128287 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:02] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995298.4209893 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:02] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995302.8654962 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:35:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995308.422729 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /static/detector/ea_inventory.json?t=1786995321586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /api/dashboard?t=1786995321585 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /static/detector/notifications.json?t=1786995321586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /api/analysis?t=1786995321586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /static/detector/auto_trade_status.json?t=1786995321654 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /api/ea-config?t=1786995321586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /api/ea-library?t=1786995321586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /api/ea-config?t=1786995321721 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /static/detector/ea_inventory.json?t=1786995321774 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:22] "GET /api/activity?t=1786995321586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:27] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995318.4331944 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:27] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995327.8889773 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995328.4723713 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:45] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995347.json
+127.0.0.1 - - [18/Aug/2026 03:35:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995338.486372 HTTP/1.1" 200 -
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:35:52] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995348.4941988 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:52] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:35:58] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:35:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995352.9070196 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:36:04] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:06] "GET /api/analysis?t=1786995366275 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:06] "GET /api/dashboard?t=1786995366274 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:06] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:36:06] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:06] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995358.5122318 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /static/detector/ea_inventory.json?t=1786995367650 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /static/detector/notifications.json?t=1786995367649 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /api/ea-config?t=1786995367650 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /static/detector/auto_trade_status.json?t=1786995367653 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /api/ea-config?t=1786995367744 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /api/activity?t=1786995367650 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995366.793672 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:10] "GET /static/detector/ea_inventory.json?t=1786995370036 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:10] "GET /api/ea-config?t=1786995370036 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:36:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:17] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995368.5288694 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:17] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995377.9146469 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:25] "GET /static/detector/notifications.json?t=1786995384587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:25] "GET /api/analysis?t=1786995384587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:25] "GET /api/dashboard?t=1786995384586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:25] "GET /static/detector/auto_trade_status.json?t=1786995384625 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:25] "GET /api/ea-config?t=1786995384651 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995378.5508912 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:36:31] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:32] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:36:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995388.5544977 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:42] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995398.5869935 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:42] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995402.9193933 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:49] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995412.json
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /api/dashboard?t=1786995414586 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /static/detector/notifications.json?t=1786995414587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /static/detector/ea_inventory.json?t=1786995414587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /api/analysis?t=1786995414587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /api/ea-config?t=1786995414587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /static/detector/auto_trade_status.json?t=1786995414643 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /api/ea-library?t=1786995414587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /static/detector/ea_inventory.json?t=1786995414700 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /api/ea-config?t=1786995414680 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:55] "GET /api/activity?t=1786995414588 HTTP/1.1" 200 -
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:36:57] "GET /static/detector/ea_inventory.json?t=1786995416587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:57] "GET /api/ea-config?t=1786995416587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:36:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995408.5915115 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:37:03] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:07] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995418.5939426 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:07] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995427.9346905 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:37:09] "POST /api/deploy HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> ok (EMA_Cross attached ✅)
+127.0.0.1 - - [18/Aug/2026 03:37:09] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:09] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995428.606429 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross 快捷鍵已移除（位置釋放）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:37:12] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:37:12] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:12] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995429.3698 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:12] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:37:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995432.1091084 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995438.6202948 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:30] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:37:32] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995448.633423 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:32] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995453.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:37:36] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:36] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995452.9591765 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995456.524294 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:37:42] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:37:48] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995458.6606536 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:37:51] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:51] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995468.6790042 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:57] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995471.3256018 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:37:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995477.9878812 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995478.6816716 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:38:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross 快捷鍵已移除（位置釋放）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:38:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995488.7136478 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:19] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:21] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /api/dashboard?t=1786995501588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /static/detector/ea_inventory.json?t=1786995501590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /api/analysis?t=1786995501590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /static/detector/notifications.json?t=1786995501590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /api/ea-config?t=1786995501590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /static/detector/auto_trade_status.json?t=1786995501655 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:22] "GET /api/activity?t=1786995501590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:23] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995498.70904 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:23] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:23] "GET /api/ea-config?t=1786995502665 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:24] "GET /static/detector/ea_inventory.json?t=1786995503623 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:24] "GET /api/ea-config?t=1786995503624 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995503.0118084 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:37] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995508.7461648 HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995520.json
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+127.0.0.1 - - [18/Aug/2026 03:38:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995518.7590437 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995528.038707 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:38:52] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> ok (EMA_Cross attached ✅)
+127.0.0.1 - - [18/Aug/2026 03:38:55] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:55] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995528.7674956 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:38:58] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:38:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995535.9741125 HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross 快捷鍵已移除（位置釋放）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:39:00] "POST /api/ea-config/MT5Cloud_EA/ADX_Trend/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:39:00] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:00] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995538.7697153 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:01] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995540.605264 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:13] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995548.7960198 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:13] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:39:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995553.0618715 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:19] "POST /login HTTP/1.1" 200 -
+[API] ⚡ 已注入 1 秒心跳 code: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /api/analysis?t=1786995561588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /static/detector/ea_inventory.json?t=1786995561589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /static/detector/notifications.json?t=1786995561588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /api/dashboard?t=1786995561588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /api/ea-config?t=1786995561589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /api/ea-library?t=1786995561589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /static/detector/auto_trade_status.json?t=1786995561662 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /static/detector/ea_inventory.json?t=1786995561675 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /api/ea-config?t=1786995561699 HTTP/1.1" 200 -
+[install-local] compile 指令已排隊: compile_cmd_EMA_Cross_1786995562.json
+127.0.0.1 - - [18/Aug/2026 03:39:22] "GET /api/activity?t=1786995561590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:24] "GET /static/detector/ea_inventory.json?t=1786995563588 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:24] "GET /api/ea-config?t=1786995563588 HTTP/1.1" 200 -
+[install-local] 複製監察: 安裝 EMA_Cross.mq5 後冇額外 EA（正常）
+[WATCHER] Report: EMA_Cross -> error (EMA_Cross attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 03:39:26] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:26] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995558.8106222 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995566.6387966 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2
+[install-local] EMA_Cross 快捷鍵: Ctrl+2
+127.0.0.1 - - [18/Aug/2026 03:39:34] "POST /api/ea-library/install-local/EMA_Cross.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995568.829587 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:38] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:38] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995578.0763595 HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross → Ctrl+2（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: EMA_Cross -> EURUSD H1 (command file written)
+[API] 部署後自癒: 已刪除彈返嘅 ADX_Trend.mq5
+127.0.0.1 - - [18/Aug/2026 03:39:40] "POST /api/deploy HTTP/1.1" 200 -
+[WATCHER] Report: EMA_Cross -> info (🤖 AI 開始部署 EMA_Cross → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 03:39:42] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:42] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995578.8489678 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:48] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:48] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995582.7452958 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:58] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:39:58] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995588.86069 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:03] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995598.879553 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:03] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+[remove-local] ✅ 已刪 config: EMA_Cross（Magic/Symbol 清除）
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] EMA_Cross 快捷鍵已移除（位置釋放）
+[remove-local] ✅ 已釋放快捷鍵: EMA_Cross
+127.0.0.1 - - [18/Aug/2026 03:40:08] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:08] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995603.081724 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:09] "POST /api/ea-library/remove-local/EMA_Cross HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:12] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 03:40:16] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 03:40:16] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:18] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:18] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995608.8880672 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /api/analysis?t=1786995621589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /api/dashboard?t=1786995621589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /static/detector/notifications.json?t=1786995621589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /static/detector/ea_inventory.json?t=1786995621590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /static/detector/auto_trade_status.json?t=1786995621655 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /api/ea-config?t=1786995621590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /api/ea-config?t=1786995621685 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:22] "GET /api/activity?t=1786995621590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:24] "GET /static/detector/ea_inventory.json?t=1786995623589 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:24] "GET /api/ea-config?t=1786995623590 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995618.9098992 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:28] "POST /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 03:40:28] "GET /socket.io/?transport=polling&EIO=4&sid=LQ96eUex2kFJf4kfAAAi&t=1786995628.097005 HTTP/1.1" 200 -
