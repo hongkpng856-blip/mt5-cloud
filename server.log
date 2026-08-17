@@ -66,3 +66,34 @@ Press CTRL+C to quit
 127.0.0.1 - - [18/Aug/2026 00:16:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
 127.0.0.1 - - [18/Aug/2026 00:17:10] "GET /api/dashboard HTTP/1.1" 302 -
 127.0.0.1 - - [18/Aug/2026 00:17:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:18:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:18:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:18:35] "POST /api/ea-config/MT5Cloud_EA/Breakout/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 00:18:46] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:19:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:19:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.ex5
+127.0.0.1 - - [18/Aug/2026 00:20:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:20:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.mq5
+127.0.0.1 - - [18/Aug/2026 00:20:16] "POST /api/ea-config/MT5Cloud_EA/RSI_Over/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:21:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:21:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:21:21] "POST /api/ea-config/MT5Cloud_EA/Breakout/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: Bollinger_Band.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: Bollinger_Band.mq5
+[彈返監察] 🗑️ 定期自癒刪除彈返: MACD_Cross.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: MACD_Cross.mq5
+[彈返監察] 🗑️ 定期自癒刪除彈返: Parabolic_SAR.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: Parabolic_SAR.mq5
+127.0.0.1 - - [18/Aug/2026 00:21:44] "POST /api/ea-config/MT5Cloud_EA/MACD_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:21:46] "POST /api/ea-config/MT5Cloud_EA/Parabolic_SAR/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:21:48] "POST /api/ea-config/MT5Cloud_EA/Bollinger_Band/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:22:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:22:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:23:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:23:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:24:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:24:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -

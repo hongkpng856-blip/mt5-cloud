@@ -43538,3 +43538,24 @@
 {"time": 1786983825.343516, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786983855.8789656, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786983886.4362032, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786983903.8250933, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786983920.122467, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786983944.972726, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786983950.7050314, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786983981.2504406, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786983984.0617874, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786983987.0761635, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786984004.1769843, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786984019.0313046, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786984049.5686998, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786984080.1172044, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786984093.3942144, "action": "deleted", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦刪除", "source": "watcher"}
+{"time": 1786984093.4058473, "action": "added", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786984099.4249046, "action": "added", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786984105.4479105, "action": "added", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786984110.6744533, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786984125.5629253, "action": "deleted", "ea": "MT5Cloud_EA/MACD_Cross", "message": "MT5Cloud_EA/MACD_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786984127.6438997, "action": "deleted", "ea": "MT5Cloud_EA/Parabolic_SAR", "message": "MT5Cloud_EA/Parabolic_SAR 已於電腦刪除", "source": "watcher"}
+{"time": 1786984129.7289505, "action": "deleted", "ea": "MT5Cloud_EA/Bollinger_Band", "message": "MT5Cloud_EA/Bollinger_Band 已於電腦刪除", "source": "watcher"}
+{"time": 1786984144.4608324, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786984175.022818, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

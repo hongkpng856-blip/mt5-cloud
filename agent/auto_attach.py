@@ -1392,7 +1392,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     import pyautogui as _pg_oc
                     _pg_oc.FAILSAFE = False
                     import ctypes as _ct_oc
-                    _ct_oc.windll.user32.SetForegroundWindow(ctypes.c_void_p(int(win.element_info.handle)))
+                    _ct_oc.windll.user32.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
                     # Alt+F 開 File menu
                     _pg_oc.hotkey('alt', 'f')
@@ -1456,7 +1456,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
             try:
                 import ctypes as _c2
-                _c2.windll.user32.SendMessageW(ctypes.c_void_p(int(_btn.element_info.handle)), 0x00F5, 0, 0)
+                _c2.windll.user32.SendMessageW(_c2.c_void_p(int(_btn.element_info.handle)), 0x00F5, 0, 0)
                 return True
             except Exception:
                 try:
