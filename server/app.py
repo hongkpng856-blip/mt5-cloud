@@ -17,6 +17,86 @@ from werkzeug.utils import secure_filename
 from collections import defaultdict
 import math
 
+def _bounce_back_watchdog():
+    """🚨 2026-08-15：彈返定期監察（background thread — 每 30 秒）
+    用戶：配對庫彈出「F 字頭」等 EA（本機檔案彈返 — 環境層面 — 源頭未明）
+    → 定期 check MT5Cloud_EA：非 config EA + ctime 新（<180 秒）→ 自動刪除（彈返即刻清 — 配對庫唔會見到）+ 記錄 bounce_back_log（追蹤源頭）"""
+    import time as _tbb2, threading as _th2
+    def _run():
+        while True:
+            try:
+                import sqlite3 as _sq2, json as _j2, os as _o2, glob as _g2
+                _tbb2.sleep(30)
+                # 搵 MT5Cloud_EA 目錄
+                _tdir2 = _o2.path.join(_o2.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                _ea_dir2 = None
+                for _d2 in _o2.listdir(_tdir2) if _o2.path.isdir(_tdir2) else []:
+                    _p2 = _o2.path.join(_tdir2, _d2, 'MQL5', 'Experts', 'MT5Cloud_EA')
+                    if _o2.path.isdir(_p2):
+                        _ea_dir2 = _p2
+                        break
+                if not _ea_dir2:
+                    continue
+                # 讀 config（EA 名集合）
+                _cfg2 = set()
+                try:
+                    _db2 = _o2.path.join(_o2.path.dirname(_o2.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+                    _db2 = _o2.path.abspath(_db2)
+                    _conn2 = _sq2.connect(_db2)
+                    _row2 = _conn2.execute("SELECT ea_config FROM user WHERE username='dev'").fetchone()
+                    if _row2:
+                        _c2 = _j2.loads(_row2[0] or '{}')
+                        for _k2 in _c2:
+                            if not _k2.startswith('_') and not _k2.endswith(('_tf', '_lot', '_magic', '_status')):
+                                _cfg2.add(_k2)
+                    _conn2.close()
+                except Exception:
+                    pass
+                # check 檔案（.mq5/.ex5 — 非 config + ctime 新 → 刪除 + 記錄）
+                _now2 = _tbb2.time()
+                _bounced2 = []
+                for _fn2 in _o2.listdir(_ea_dir2):
+                    if not _fn2.endswith(('.mq5', '.ex5')):
+                        continue
+                    _base2 = _o2.path.splitext(_fn2)[0]
+                    if _base2 in _cfg2:
+                        continue  # config 有（正常配對）
+                    _fp2 = _o2.path.join(_ea_dir2, _fn2)
+                    _ctime2 = _o2.path.getctime(_fp2)
+                    # 🚨 保險：ctime < 10 秒（啱啱出現 — 可能 install-local 配對中 — config 未寫）→ 唔刪（下一個 tick 再睇）
+                    if _now2 - _ctime2 < 10:
+                        continue
+                    if _now2 - _ctime2 < 180:  # 3 分鐘內出現 = 彈返（config 冇）
+                        try:
+                            _o2.remove(_fp2)
+                            _bounced2.append(_fn2)
+                            print(f"[彈返監察] 🗑️ 定期自癒刪除彈返: {_fn2}", flush=True)
+                        except Exception:
+                            pass
+                if _bounced2:
+                    try:
+                        from . import _log_bounce_back  # 唔會 — 直接記錄
+                    except Exception:
+                        pass
+                    try:
+                        _entry2 = {'time': _tbb2.strftime('%Y-%m-%d %H:%M:%S'), 'trigger': 'periodic', 'files': _bounced2}
+                        _logp2 = _o2.path.join(_o2.path.dirname(_o2.path.abspath(__file__)), 'bounce_back_log.jsonl')
+                        with open(_logp2, 'a', encoding='utf-8') as _f2:
+                            _f2.write(_j2.dumps(_entry2, ensure_ascii=False) + '\n')
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+    _th2.Thread(target=_run, daemon=True).start()
+    print("[彈返監察] 定期自癒已啟動（每 30 秒）", flush=True)
+
+
+# 🚨 2026-08-15：啟動彈返定期監察（background thread）
+try:
+    _bounce_back_watchdog()
+except Exception as _ebw:
+    print(f"[彈返監察] ⚠️ 啟動失敗: {_ebw}", flush=True)
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
@@ -1567,6 +1647,56 @@ def api_ea_remove_local(filename):
             print(f"[remove-local] ✅ 已釋放快捷鍵: {base_only}", flush=True)
         except Exception:
             pass
+        # 🚨 2026-08-15 FIX（用戶：剸除 EA 後 MT5 彈「導航熱鍵」視窗殘留）：自動關閉「導航熱鍵」dialog
+        # （熱鍵 reload / MT5 重啟後 MT5 會彈「導航熱鍵」視窗 — 自動偵測 + 關閉）
+        try:
+            import time as _tclose
+            _tclose.sleep(1.5)
+            import ctypes as _ctclose
+            import subprocess as _spclose
+            _uclose = _ctclose.windll.user32
+            _app_close = None
+            try:
+                from pywinauto import Application as _AppClose
+                _out_c = _spclose.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True, text=True).stdout
+                _pid_c = None
+                for _lnc in _out_c.splitlines():
+                    _pc = [p.strip().strip('"') for p in _lnc.split(',')]
+                    if len(_pc) >= 2 and _pc[0] == 'terminal64.exe' and _pc[1].isdigit():
+                        _pid_c = int(_pc[1])
+                        break
+                if _pid_c:
+                    _app_close = _AppClose(backend='win32').connect(process=_pid_c, timeout=8)
+            except Exception:
+                _app_close = None
+            def _cb_close(_h, _x):
+                if _uclose.IsWindowVisible(_h):
+                    _cc = _ctclose.create_unicode_buffer(64)
+                    _uclose.GetClassNameW(_h, _cc, 64)
+                    if '#32770' in _cc.value:
+                        _lt = _uclose.GetWindowTextLengthW(_h)
+                        _bt = _ctclose.create_unicode_buffer(_lt + 1)
+                        _uclose.GetWindowTextW(_h, _bt, _lt + 1)
+                        if '熱鍵' in _bt.value or '快捷' in _bt.value:
+                            try:
+                                _dw_close = _app_close.window(handle=_h)
+                            except Exception:
+                                _dw_close = None
+                            # 搵「關閉/取消/確定」按鈕 — click
+                            if _dw_close:
+                                for _b2 in _dw_close.children(class_name='Button'):
+                                    try:
+                                        _t2 = _b2.window_text()
+                                        if '關閉' in _t2 or 'Close' in _t2 or '取消' in _t2 or 'Cancel' in _t2:
+                                            _b2.click()
+                                            print(f"[remove-local] ✅ 已關閉「導航熱鍵」視窗", flush=True)
+                                            break
+                                    except Exception:
+                                        pass
+                return True
+            _uclose.EnumWindows(_ctclose.WINFUNCTYPE(_ctclose.c_bool, _ctclose.c_void_p, _ctclose.c_void_p)(_cb_close), None)
+        except Exception as _eclose:
+            print(f"[remove-local] ⚠️ 關閉導航熱鍵視窗失敗: {_eclose}", flush=True)
         log_activity('ea_delete', f'{filename} 已於網頁刪除（本機檔案已刪除）', ea=filename)
         return jsonify({"success": True, "removed": removed})
     return jsonify({"success": False, "error": "EA not found in local Experts dir"}), 404
@@ -2047,9 +2177,12 @@ def _write_hotkeys_ini(experts, indicators):
 
 
 def _alloc_hotkey(experts):
-    """分配下一個可用快捷鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）"""
+    """分配下一個可用快捷鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）
+    🚨 2026-08-17：Ctrl+9 預留俾 OpenChart script（一體化部署用）— EA 唔可以攞 Ctrl+9"""
     used = set(experts.values())
-    candidates = [f'Ctrl+{i}' for i in range(1, 10)] + ['Ctrl+0'] + \
+    used.add('Ctrl+9')  # 🚨 預留 Ctrl+9（OpenChart script 一體化）
+    # candidates 排除 Ctrl+9（EA 用其它數字）
+    candidates = [f'Ctrl+{i}' for i in range(1, 10) if i != 9] + ['Ctrl+0'] + \
                  [f'Ctrl+Alt+{i}' for i in range(1, 10)] + ['Ctrl+Alt+0']
     for c in candidates:
         if c not in used:

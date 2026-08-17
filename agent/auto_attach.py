@@ -1277,10 +1277,17 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             _chk_abort = lambda: None
         hotkeys = load_hotkey_map()
         combo = hotkeys.get(ea_name)
-        if not combo:
+        # 🚨 2026-08-17 FIX：一體化模式（open_chart=True）唔需要 combo（OpenChart script 套模板掛 EA — 唔使熱鍵附加）— combo check 只限非一體化
+        if not open_chart and not combo:
             print(f"⚠️ {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
             return False
-        print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
+        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過「附加熱鍵」步驟
+        # （之前：套模板掛咗 EA 之後仲行「附加」（send 熱鍵 → 落 active 圖表 — 掛錯圖表 — 用戶部署 Breakout 掛咗 EURUSD 案例）
+        if open_chart:
+            print(f"✅ 一體化：{ea_name} 已由套模板掛落圖表（跳過附加熱鍵）")
+            _saw_props = True  # 當附加完成（套模板已掛）
+        else:
+            print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
         # 🚨 2026-08-12 FIX：部署前檢查有冇 pending compile_cmd（配對後未編譯 — 等編譯完成先部署 — 唔會「部署完又彈編譯視窗」）
         try:
@@ -1434,15 +1441,55 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     time.sleep(1.5)
                     _sk('{ENTER}')
                     time.sleep(3)
-                # ③ Ctrl+L（OpenChart script 熱鍵 — 用戶改咗 — 一體化：開圖表 + 套模板掛 EA — 20:29 實測成功）
-                # 🚨 2026-08-15：一定要「先開新圖表」先 work（用戶實測 — 熱鍵要圖表 active）— 上面 ② 已確保有圖表
-                # 🚨 2026-08-15 FIX：send 用 pyautogui（真實 keydown/keyup — 同用戶手動一樣 — pywinauto send_keys 送唔到/MT5 唔當熱鍵 — 用戶肉眼證實 pyautogui work）
+                # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
+                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
+                # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
+                _need_restart9 = False
+                try:
+                    _hk9_path = None
+                    _hk9_tdir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                    if os.path.isdir(_hk9_tdir):
+                        for _d9 in os.listdir(_hk9_tdir):
+                            _p9 = os.path.join(_hk9_tdir, _d9, 'config', 'hotkeys.ini')
+                            if os.path.isfile(_p9):
+                                _hk9_path = _p9
+                                break
+                    if _hk9_path:
+                        _hk9_c = open(_hk9_path, encoding='utf-16-le', errors='ignore').read()
+                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
+                        if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
+                            _hk9_ok = True
+                        else:
+                            # 寫入/修正 <scripts> Ctrl+9
+                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
+                            if '<scripts>' in _hk9_c:
+                                import re as _re9
+                                _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
+                            else:
+                                _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
+                            open(_hk9_path, 'w', encoding='utf-16-le').write(_hk9_c)
+                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9")
+                            _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
+                    # 🚨 每次部署都重啟 MT5（確保熱鍵 load — 用戶要求「都需要重啟」）— 即使已經喺 hotkeys.ini
+                    _need_restart9 = True
+                except Exception as _e9x:
+                    print(f"⚠️ hotkeys.ini 檢查失敗: {_e9x}")
+                if _need_restart9:
+                    try:
+                        import subprocess as _sp9
+                        _sp9.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                        time.sleep(4)
+                        _sp9.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
+                        time.sleep(25)
+                        print("✅ MT5 已重啟（load OpenChart Ctrl+9 熱鍵）")
+                    except Exception as _e9:
+                        print(f"⚠️ 重啟失敗: {_e9}")
+                # 確保有圖表 + focus
                 try:
                     import ctypes as _ct_oc
                     _u_oc = _ct_oc.windll.user32
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    # click 圖表區（focus 圖表 — 熱鍵要 focus 圖表先 work — 用戶手動就係咁）
                     try:
                         import pyautogui as _pg_oc
                         _pg_oc.FAILSAFE = False
@@ -1453,15 +1500,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         pass
                 except Exception:
                     pass
-                # 🚨 熱鍵 reload 檢查：send Ctrl+L（pyautogui）→ 冇彈「選項/導航熱鍵」+ 有圖表先算成功（script 執行 — 開圖表）
+                # send Ctrl+9（pyautogui）
                 _oc_ok2 = False
                 for _ocr in range(2):
                     try:
                         import pyautogui as _pg_oc2
                         _pg_oc2.FAILSAFE = False
-                        _pg_oc2.hotkey('ctrl', 'l')
+                        _pg_oc2.hotkey('ctrl', '9')
                     except Exception:
-                        _sk('^l')
+                        _sk('^9')
                     time.sleep(3.5)
                     # 檢查有冇彈「選項/導航熱鍵」dialog（Alt+Q 未 load 嘅標誌）
                     _opt_dlg = False
@@ -1482,7 +1529,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     except Exception:
                         pass
                     if _opt_dlg:
-                        print("⚠️ Alt+Q 彈咗視窗（script 熱鍵未 load）— 關閉 + 重啟 MT5 reload 熱鍵")
+                        print("⚠️ Ctrl+9 彈咗視窗（script 熱鍵未 load）— 關閉 + 重啟 MT5 reload 熱鍵")
                         try:
                             _sk('{ESC}')
                             time.sleep(1)
@@ -1500,6 +1547,23 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             print(f"⚠️ 重啟失敗: {_eoc_r}")
                         continue
                     else:
+                        # 🚨 2026-08-17 FIX：冇彈視窗都唔代表成功（靜默冇 load → script 冇執行 → 開圖表冇成功 — 用戶部署全失敗案例）
+                        # 驗證：MT5 log 有「已開新圖表」（等 log flush — 2 秒）
+                        _chart_ok = False
+                        try:
+                            import glob as _g_oc
+                            _ld_oc = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
+                                                  'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Logs')
+                            _fl_oc = sorted(glob.glob(os.path.join(_ld_oc, '2026*.log')), key=os.path.getmtime, reverse=True)
+                            if _fl_oc:
+                                _cl_oc = open(_fl_oc[0], encoding='utf-16-le', errors='ignore').read()
+                                _chart_ok = ('已開新圖表' in _cl_oc and _sym in _cl_oc)
+                        except Exception:
+                            pass
+                        if not _chart_ok:
+                            print(f"⚠️ Ctrl+9 冇開到圖表（{_sym}）— 靜默失敗（script 熱鍵未 load）— 重試")
+                            time.sleep(2)
+                            continue
                         _oc_ok2 = True
                         break
                 time.sleep(1)
@@ -1546,8 +1610,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 pass
         # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
         # send 快捷鍵
-        _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
-        _sk(combo)
+        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — 套模板已掛 EA）→ 跳過 send 熱鍵（唔好再附加落 active 圖表）
+        if open_chart:
+            _saw_props = True  # 套模板已掛 — 當附加完成
+        else:
+            _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
+            _sk(combo)
         time.sleep(3)
         def _bm_click(_btn):
             """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
