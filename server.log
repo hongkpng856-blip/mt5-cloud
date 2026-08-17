@@ -352,3 +352,55 @@ Press CTRL+C to quit
 127.0.0.1 - - [18/Aug/2026 01:47:07] "POST /api/ea-config/MT5Cloud_EA/Breakout/purge?agent_id=DEV00001 HTTP/1.1" 404 -
 127.0.0.1 - - [18/Aug/2026 01:47:13] "GET /api/dashboard HTTP/1.1" 302 -
 127.0.0.1 - - [18/Aug/2026 01:47:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:48:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:21] "GET /socket.io/?transport=polling&EIO=4&t=1786988901.0494876 HTTP/1.1" 200 -
+[WS] Connected: -HFgMVA_jIQSddzYAAAF
+127.0.0.1 - - [18/Aug/2026 01:48:21] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:21] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988901.0546148 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:21] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:21] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988901.0620983 HTTP/1.1" 200 -
+[WS] Auto-sent EA config to agent DEV00001: 2 EAs
+127.0.0.1 - - [18/Aug/2026 01:48:21] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:21] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988901.1087463 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:21] "GET /api/ea-library/Breakout.mq5 HTTP/1.1" 200 -
+[WS] Install result: {'status': 'ok', 'ea': 'Breakout.mq5'}
+127.0.0.1 - - [18/Aug/2026 01:48:22] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:22] "GET /api/ea-library/Fibonacci.mq5 HTTP/1.1" 200 -
+[WS] Install result: {'status': 'ok', 'ea': 'Fibonacci.mq5'}127.0.0.1 - - [18/Aug/2026 01:48:24] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+
+127.0.0.1 - - [18/Aug/2026 01:48:31] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:31] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988901.1325896 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:41] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:41] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988911.13175 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:46] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988921.1519086 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:46] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:51] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:48:51] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988926.0529146 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:01] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:01] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988931.1635778 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:11] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988941.17998 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:11] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:11] "POST /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:11] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988951.0787063 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:49:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:28] "POST /login HTTP/1.1" 200 -
+[hotkeys] 已寫入 C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\config\hotkeys.ini
+[hotkeys] Breakout → Ctrl+1（已分配 — 部署時 reload）
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: Breakout -> EURUSD H1 (command file written)
+127.0.0.1 - - [18/Aug/2026 01:49:28] "POST /api/deploy HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:49:36] "GET /socket.io/?transport=polling&EIO=4&sid=2wKu2dYmDR0po_rNAAAE&t=1786988951.190321 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:50:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:50:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:51:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:51:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:52:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:52:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:53:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:53:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:54:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:54:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:55:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:55:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -

@@ -648,13 +648,15 @@ def download_and_install(ea_name, url, ea_config=None):
             if experts_dir:
                 base_name = ea_name.replace('.mq5', '')
                 # 🔧 2026-08-18：EA 集中落 MT5Cloud_EA subfolder（Navigator 雙擊路徑 auto_attach 用 Experts\MT5Cloud_EA\{ea}）
-                # 同時 copy 去平級 Experts\{ea}.mq5 做 fallback（auto_attach fallback 搵平級）
+                # 主要寫 MT5Cloud_EA（有就寫嗰度 + 喺嗰度 compile），同時 copy 去平級 Experts\{ea}.mq5 做 fallback
                 import shutil as _shutil
-                mq5_paths = [os.path.join(experts_dir, ea_name)]
                 mt5cloud_ea_dir = os.path.join(experts_dir, 'MT5Cloud_EA')
                 if os.path.isdir(mt5cloud_ea_dir):
-                    mq5_paths.append(os.path.join(mt5cloud_ea_dir, ea_name))
-                mq5_path = mq5_paths[0]  # 主要寫平級（auto_attach fallback 會搵）
+                    mq5_path = os.path.join(mt5cloud_ea_dir, ea_name)
+                    fallback_paths = [os.path.join(experts_dir, ea_name)]
+                else:
+                    mq5_path = os.path.join(experts_dir, ea_name)
+                    fallback_paths = []
 
                 # Write source with normalized line endings
                 content = resp.text.replace('\r\n', '\n').replace('\n', '\r\n')
@@ -695,9 +697,16 @@ def download_and_install(ea_name, url, ea_config=None):
                 with open(mq5_path, 'w', encoding='utf-8', newline='\r\n') as f:
                     f.write(content)
                 print(f"   💾 Saved: {mq5_path}")
+                # 🔧 2026-08-18：copy 去平級 fallback（auto_attach 平級 fallback 會搵）
+                for fp in fallback_paths:
+                    try:
+                        _shutil.copy2(mq5_path, fp)
+                        print(f"   💾 Copied fallback: {fp}")
+                    except Exception as _ce:
+                        print(f"   ⚠️ fallback copy 失敗 {fp}: {_ce}")
                 
                 # === Compile (skip if .ex5 already exists and fresh) ===
-                ex5_path = os.path.join(experts_dir, base_name + '.ex5')
+                ex5_path = os.path.join(os.path.dirname(mq5_path), base_name + '.ex5')
                 if os.path.exists(ex5_path) and os.path.getmtime(ex5_path) > os.path.getmtime(mq5_path):
                     print(f"   ⏩ Skip compile: {base_name}.ex5 already exists")
                 else:

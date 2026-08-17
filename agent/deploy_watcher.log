@@ -463,3 +463,21 @@ pywinauto.application.ProcessNotFoundError: Process with PID=10052 not found!
 📌 DeskIn 已移去右上角（唔遮 MT5）
 🔄 Navigator refreshed (right-click → 刷新) at (271,679)
    ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+🔄 [WATCHER] Experts 目錄變化: Fibonacci.mq5 — 自動 refresh Navigator
+⚠️ 搵唔到 popup menu
+   ⚠️ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_Breakout_1786988968.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Breakout_1786988968.json
+   ⚠️ Breakout.ex5 唔存在（skip — 防止失敗循環）
