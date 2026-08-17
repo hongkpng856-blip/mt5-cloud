@@ -17,3 +17,7 @@
 {"time": "2026-08-18 00:26:42", "trigger": "periodic", "files": ["RSI_Over.ex5", "RSI_Over.mq5"]}
 {"time": "2026-08-18 00:28:42", "trigger": "periodic", "files": ["Bollinger_Band.ex5", "Bollinger_Band.mq5", "MACD_Cross.ex5", "MACD_Cross.mq5", "Parabolic_SAR.ex5", "Parabolic_SAR.mq5"]}
 {"time": "2026-08-18 00:30:42", "trigger": "periodic", "files": ["EMA_Cross.ex5", "EMA_Cross.mq5"]}
+{"time": "2026-08-18 00:54:42", "trigger": "periodic", "files": ["EMA_Cross.ex5", "EMA_Cross.mq5"]}
+{"time": "2026-08-18 00:56:42", "trigger": "periodic", "files": ["RSI_Over.ex5", "RSI_Over.mq5"]}
+{"time": "2026-08-18 00:59:42", "trigger": "periodic", "files": ["EMA_Cross.ex5", "EMA_Cross.mq5"]}
+{"time": "2026-08-18 01:10:42", "trigger": "periodic", "files": ["EMA_Cross.ex5", "EMA_Cross.mq5"]}

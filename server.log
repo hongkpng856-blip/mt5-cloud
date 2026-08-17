@@ -176,3 +176,61 @@ Press CTRL+C to quit
 127.0.0.1 - - [18/Aug/2026 00:53:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
 127.0.0.1 - - [18/Aug/2026 00:54:11] "GET /api/dashboard HTTP/1.1" 302 -
 127.0.0.1 - - [18/Aug/2026 00:54:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 00:54:44] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:55:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:55:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:56:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:56:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.mq5
+127.0.0.1 - - [18/Aug/2026 00:56:46] "POST /api/ea-config/MT5Cloud_EA/RSI_Over/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:57:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:57:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:58:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:58:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:59:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:59:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 00:59:46] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 01:00:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:00:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:01:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:01:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:02:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:02:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:03:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:03:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:04:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:04:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:05:11] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:05:11] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:06:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:06:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:07:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:07:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:08:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:08:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:09:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:09:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:10:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:10:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 01:10:46] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 01:11:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:11:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:12:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:12:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:13:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:13:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:14:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:14:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:15:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:15:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:16:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:16:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:17:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:17:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -

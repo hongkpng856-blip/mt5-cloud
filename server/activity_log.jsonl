@@ -43608,3 +43608,56 @@
 {"time": 1786985567.7562535, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786985598.3082762, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786985628.8741488, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985659.4219797, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985673.4029536, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786985684.4842436, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786985695.5277727, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985726.085873, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985756.6330388, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985759.6194549, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786985765.6411548, "action": "added", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786985791.2536721, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985806.7958932, "action": "deleted", "ea": "MT5Cloud_EA/RSI_Over", "message": "MT5Cloud_EA/RSI_Over 已於電腦刪除", "source": "watcher"}
+{"time": 1786985821.8282125, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985852.4204724, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985922.5105586, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985945.0405593, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786985953.0583344, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786985986.1627135, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786985988.696942, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986019.2364836, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986049.7954683, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986080.368606, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986110.9076428, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986141.4747314, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986172.04487, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986202.585147, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986233.1303167, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986263.6689193, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986294.227227, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986324.8068926, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986355.3532562, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986385.890699, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986424.83388, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986455.3863735, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986485.9211085, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986516.4699075, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986546.9999795, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986577.5546331, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986605.199851, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786986608.112816, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986638.666434, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986646.335969, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786986669.1972172, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986699.741927, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986730.267957, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986760.8135602, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986791.3617616, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986821.9130967, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986852.4755347, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986883.0528991, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986913.6349118, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986944.1865773, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786986974.7653942, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786987005.3190885, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786987035.8666964, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

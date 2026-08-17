@@ -1472,17 +1472,45 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     print(f"✅ 圖表已開: {_sym}")
             except Exception:
                 pass
-        # 🔧 2026-08-18：掛 EA 前重新提升 foreground（open_chart 段已 detach）
-        # MT5 只收 foreground 進程 key — 唔 attach 就 send 唔到（你實測 ^1 冇彈 Properties）
+        # 🔧 2026-08-18 REWRITE：掛 EA 用 Navigator 雙擊（唔使熱鍵！）
+        # 決定性測試證實：MT5 對所有自定義熱鍵（Ctrl+1/2/9 script/EA）synthetic input 都過濾
+        # 只收真實硬件鍵盤。但對 Navigator 樹 mouse 雙擊收得到 → 用 click_input(double=True) 掛 EA
+        # 開圖表經 Menu（Alt+F→Enter→Enter）已證 work；掛 EA 經 Navigator 雙擊已證 work（Breakout 實測掛到 EURUSD）
         _ftid2, _mtid2 = _focus_mt5_foreground(win.element_info.handle)
-        # send 快捷鍵
-        if open_chart:
-            _saw_props = False  # 開咗圖表 → 要 send EA 熱鍵掛 EA（驗證 Properties 彈出）
-            _sk(combo)
-        else:
-            _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
-            _sk(combo)
-        time.sleep(3)
+        _saw_props = False  # 雙擊掛 EA 後會彈 Properties → 驗證掛到
+        try:
+            import pyautogui as _pg_ea
+            _pg_ea.FAILSAFE = False
+            # 確保目標圖表 active（click 圖表區中央）
+            _r_ea = win.rectangle()
+            _pg_ea.click(_r_ea.left + _r_ea.width() // 2, _r_ea.top + _r_ea.height() // 2)
+            time.sleep(1)
+            # 搵 Navigator 樹
+            _nav = None
+            for _d in win.descendants():
+                if _d.element_info.class_name == 'SysTreeView32':
+                    _nav = _d
+                    break
+            if _nav is None:
+                print("⚠️ 搵唔到 Navigator 樹")
+            else:
+                # 展開路徑 EA交易\MT5Cloud_EA\{ea_name}（EA交易 = Experts 中文）
+                _ea_item = None
+                for _p in [rf'\MetaTrader 5\EA交易\MT5Cloud_EA\{ea_name}',
+                           rf'\MetaTrader 5\MT5Cloud_EA\{ea_name}']:
+                    try:
+                        _ea_item = _nav.get_item(_p)
+                        break
+                    except Exception:
+                        _ea_item = None
+                if _ea_item is None:
+                    print(f"⚠️ Navigator 搵唔到 {ea_name}（可能未安裝本地 .ex5）")
+                else:
+                    _ea_item.click_input(double=True)  # 🔧 mouse 雙擊掛 EA（唔使熱鍵）
+                    print(f"🖱️ 雙擊 Navigator 掛 {ea_name} 落 {_sym} 圖表")
+                    time.sleep(3)
+        except Exception as _e_ea:
+            print(f"⚠️ 掛 EA 異常: {_e_ea}")
         if _ftid2:
             import ctypes as _ctd2
             try:
@@ -1583,50 +1611,29 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
                 break
 
-        # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
+        # 🔧 2026-08-18：雙擊掛 EA 後驗證 Properties 有冇彈出（掛到 EA 會彈 Properties）
+        # 唔使熱鍵重試（決定性測試證實 MT5 過濾熱鍵 synthetic input，改用 Navigator 雙擊）
         if not _saw_props:
-            print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試中）...")
-            for _rt in range(2):
-                _chk_abort()
-                _sk(combo)
-                time.sleep(3)
-                # 檢查 dialog（簡單 — 有 EA 名/版本號 = Properties）
-                _props_now = False
-                for _w in _app.windows():
-                    try:
-                        if _w.class_name() == '#32770' and any(_k in _w.window_text() for _k in (ea_name, '1.00', '2.00', '3.00')):
-                            _props_now = True
-                            _saw_props = True
-                            break
-                    except Exception:
-                        pass
-                if _props_now:
-                    # 撳確定
-                    for _w in _app.windows():
-                        try:
-                            if _w.class_name() == '#32770':
-                                _dw = _app.window(handle=int(_w.element_info.handle))
-                                for _b in _dw.children(class_name='Button'):
-                                    try:
-                                        if '確定' in _b.window_text() or 'OK' in _b.window_text():
-                                            if _bm_click(_b):
-                                                print(f"✅ 重試 {_rt+1}: 已撳「確定」")
-                                            break
-                                    except Exception:
-                                        pass
-                        except Exception:
-                            pass
-                    break
-                time.sleep(2)
-            if not _saw_props:
-                print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
+            print(f"⚠️ {ea_name} 雙擊後未偵測到 Properties（可能未掛到 — 但 dialog 循環已處理過）")
+            # 再確認一次：check 有冇 EA 名 dialog
+            for _w in _app.windows():
+                try:
+                    if _w.class_name() == '#32770' and any(_k in _w.window_text() for _k in (ea_name, '1.00', '2.00', '3.00')):
+                        _saw_props = True
+                        break
+                except Exception:
+                    pass
+            if _saw_props:
+                print(f"✅ 偵測到 {ea_name} Properties（掛到）")
+            else:
+                print(f"❌ {ea_name} 未掛到（Navigator 雙擊無效 — 可能 EA 未安裝本地 .ex5）")
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
         if os.path.isfile(hb):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
-            print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
+            print(f"✅ {ea_name} 雙擊掛載流程完成（心跳等 tick）")
         # 🚨 2026-08-12 FIX：steps done 搬去函數最尾（所有操作完成後先寫 — 否則用戶見 steps done 撳確定 → active 仲 true → 即刻彈多一次）
         # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
         try:
