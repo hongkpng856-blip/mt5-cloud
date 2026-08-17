@@ -43760,3 +43760,113 @@
 {"time": 1786989392.210842, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786989422.758694, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786989453.302028, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989483.8436022, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989497.416144, "action": "modified", "ea": "Breakout", "message": "Breakout 已更新", "source": "watcher"}
+{"time": 1786989497.428178, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786989497.4404657, "action": "added", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786989497.451605, "action": "modified", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已更新", "source": "watcher"}
+{"time": 1786989497.4606934, "action": "modified", "ea": "Fibonacci", "message": "Fibonacci 已更新", "source": "watcher"}
+{"time": 1786989500.4797275, "action": "added", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786989514.4084346, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989544.9631813, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989575.5181718, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989580.9569826, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786989581.0373607, "action": "deploy", "ea": "Breakout", "message": "Breakout 部署 → EURUSD H1", "source": "server"}
+{"time": 1786989608.589877, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989639.1621027, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989641.5908668, "action": "unknown", "ea": "Breakout", "message": "Breakout 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786989669.7355654, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989700.2896805, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989730.8278043, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989761.3797286, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989791.9338722, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989822.4629154, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989853.000732, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989883.5443897, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989914.0921507, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989944.6404812, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786989975.188632, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990005.7430108, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990036.2878072, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990066.846326, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990097.4231832, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990127.997527, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990158.5791183, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990189.1504176, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990219.7538977, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990250.3188381, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990280.8769023, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990311.4487145, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990342.0080483, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990372.5659769, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990403.16236, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990426.3359578, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786990433.781858, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990464.3861182, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990494.9592428, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990525.556192, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990556.1793294, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990586.7295814, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990617.277454, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990618.5436783, "action": "modified", "ea": "Breakout", "message": "Breakout 已更新", "source": "watcher"}
+{"time": 1786990618.545795, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786990621.5619433, "action": "modified", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已更新", "source": "watcher"}
+{"time": 1786990621.572483, "action": "modified", "ea": "Fibonacci", "message": "Fibonacci 已更新", "source": "watcher"}
+{"time": 1786990648.2221167, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990659.4146776, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786990678.822598, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990693.1827593, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786990709.440682, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990719.7417185, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786990720.19453, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786990740.070827, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990745.8640406, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786990745.9564447, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786990758.979991, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786990759.1859903, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786990770.68154, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990801.251339, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990831.8520367, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990862.4049902, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990892.965194, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990923.5179195, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990954.0757365, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786990984.6711118, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991015.2397718, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991045.8019698, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991076.377644, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991106.94566, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991137.536008, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991168.1054668, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991198.6787577, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991229.2537956, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991259.8580084, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991260.6786876, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786991266.9223034, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 配對處理中...", "source": "server"}
+{"time": 1786991278.467018, "action": "ea_install", "ea": "ADX_Trend", "message": "ADX_Trend 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786991279.1132786, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786991290.5118032, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991306.346414, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786991321.1318436, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991351.7614791, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991382.4104373, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991412.9930048, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991426.846562, "action": "deploy", "ea": "ADX_Trend", "message": "ADX_Trend 部署 → EURUSD H1", "source": "server"}
+{"time": 1786991429.409481, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786991429.4114828, "action": "modified", "ea": "Breakout", "message": "Breakout 已更新", "source": "watcher"}
+{"time": 1786991429.427058, "action": "added", "ea": "ADX_Trend", "message": "ADX_Trend 已於網頁新增至 MT5", "source": "watcher"}
+{"time": 1786991429.437669, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786991432.4624581, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786991432.477562, "action": "added", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁新增至 MT5", "source": "watcher"}
+{"time": 1786991435.499418, "action": "modified", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已更新", "source": "watcher"}
+{"time": 1786991435.5084152, "action": "modified", "ea": "Fibonacci", "message": "Fibonacci 已更新", "source": "watcher"}
+{"time": 1786991443.6600971, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991479.7382686, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991510.3350103, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991540.9693818, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991574.7895489, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991594.083317, "action": "unknown", "ea": "ADX_Trend", "message": "ADX_Trend 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786991605.387072, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991635.9718463, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991666.5645611, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991697.1261055, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}

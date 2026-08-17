@@ -323,23 +323,41 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             time.sleep(5)
             continue
         
-        # Step 1: Open chart only if none exists
+        # Step 1: 清走所有已開圖表（避免重複 EURUSD 圖表）+ 開一個全新對應 symbol 圖表
+        # ⚠️ 2026-08-18 FIX：之前「Chart already open, skipping Ctrl+N」→ 殘留舊圖表 → 每次 deploy 疊加 → 3+ 個 EURUSD
+        # 做法：先關晒所有 MDI 圖表（focus main → 逐個 Ctrl+F4），再開一個新嘅
         mdi = None
         for d in win.descendants():
             if d.element_info.class_name == 'MDIClient':
                 mdi = d
                 break
-        has_charts = mdi and len(mdi.children()) > 0
-        
-        if not has_charts:
-            print("📋 No chart open, opening new one...")
-            send_keys('^n')
-            time.sleep(1)
+        existing = mdi.children() if mdi else []
+        # Close all existing charts
+        for ch in list(existing):
+            try:
+                ch.set_focus()
+                time.sleep(0.3)
+                send_keys('^{F4}')  # Ctrl+F4 = close active chart
+                time.sleep(0.5)
+            except Exception:
+                pass
+        # Open a fresh chart (Alt+F → Enter → Enter = new chart of last/default symbol)
+        print(f"📋 開新圖表 for {symbol}...")
+        send_keys('%f')  # Alt+F (menu)
+        time.sleep(0.5)
+        send_keys('{ENTER}')  # New Chart
+        time.sleep(0.5)
+        send_keys('{ENTER}')  # confirm (default symbol)
+        time.sleep(2)
+        # Type the target symbol to switch the new chart to the right pair
+        try:
+            send_keys(symbol)
+            time.sleep(0.5)
             send_keys('{ENTER}')
-            time.sleep(3)
-        else:
-            print(f"📋 Chart already open, skipping Ctrl+N...")
-        
+            time.sleep(2)
+        except Exception:
+            pass
+
         # Step 2: Open Navigator panel DIRECTLY via ShowWindow
         # Much more reliable than menu clicks or keyboard shortcuts
         import ctypes as _ctypes
@@ -553,48 +571,62 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 time.sleep(5)
             continue
         
-        # Step 5: 精確 double-click EA item（唔使掃描成個 tree — 唔會「亂點」）
-        found_dialog = False
-        click_x = tv_rect.left + 50  # EA item text area
-        click_y = None
+        # Step 5: 掛 EA — 用 pywinauto handle-based double-click（v0.9.61 證實 work，唔使座標、唔會亂點）
+        # ⚠️ 2026-08-18 根治：廢除 TVM_GETITEMRECT 座標 + 掃描模式（GETITEMRECT fail → 落入掃描亂點 → 掛唔到/掛錯）
+        # 直接用 ea_node.click_input(double=True)（handle-based，MT5 收得到，唔受 owner-draw / 語言影響）
         try:
-            # ⚠️ 方法：ea_node.select()（pywinauto 揀中 item）→ TVM_GETNEXTITEM(CARET) 攞 hItem
-            # → TVM_GETITEMRECT 攞屏幕位置（唔使讀文字 — MT5 owner-draw tree 讀唔到文字）
-            ea_node.select()
+            ea_node.ensure_visible()
             time.sleep(0.5)
-            import ctypes as _ct
-            from ctypes import wintypes as _wt
-            # ⚠️ 64-bit handle 溢出問題：SendMessageW 返回 32-bit c_int → 負數 → 要 set restype c_size_t
-            _ct.windll.user32.SendMessageW.restype = _ct.c_size_t
-            _tree_hwnd = _ct.c_void_p(int(tree_view.element_info.handle))
-            _caret = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x110A, 0x0009, 0)  # TVGN_CARET
-            if _caret:
-                _rect = _wt.RECT()
-                _res = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x1104, 1, _ct.byref(_rect))  # TVM_GETITEMRECT
-                if _res:
-                    _pt = _wt.POINT(0, 0)
-                    _ct.windll.user32.ClientToScreen(_tree_hwnd, _ct.byref(_pt))
-                    click_x = _rect.left + _pt.x + 30
-                    click_y = _rect.top + _pt.y + ((_rect.bottom - _rect.top) // 2)
-                    print(f"🎯 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
-                else:
-                    print(f"⚠️ GETITEMRECT fail (caret={_caret})")
-            else:
-                print("⚠️ CARET 攞唔到（select 可能冇生效）")
-        except Exception as e:
-            print(f"⚠️ 精確定位 exception: {type(e).__name__} {e}")
-            click_y = None
-        if not click_y:
+            ea_node.click_input(double=True)
+            time.sleep(2)
+            print(f"🎯 {ea_name} double-clicked (handle-based)")
+        except Exception as _dc_e:
+            print(f"⚠️ click_input double fail: {_dc_e}，fallback pyautogui")
             try:
-                # fallback：pywinauto TreeItem rectangle
                 ea_rect = ea_node.rectangle()
                 if ea_rect.width() > 0 and ea_rect.height() > 0:
-                    click_x = ea_rect.left + 30
-                    click_y = ea_rect.top + (ea_rect.height() // 2)
-                    print(f"🎯 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
+                    import pyautogui as _pa
+                    _pa.doubleClick(x=ea_rect.left + 30, y=ea_rect.top + (ea_rect.height()//2))
+                    time.sleep(2)
+                    print(f"🎯 {ea_name} double-clicked (pyautogui fallback)")
+            except Exception as _pa_e:
+                print(f"🔴 雙擊失敗：{_pa_e}")
+        found_dialog = False
+        dialogs = find_ea_dialog(ea_name)
+        if not dialogs:
+            # 可能彈咗「代替」dialog — 處理
+            replace_dialog = None
+            try:
+                for w in app.windows():
+                    if w.class_name() == '#32770':
+                        for s in w.children(class_name='Static'):
+                            try:
+                                t = s.window_text()
+                                if '代替' in t or 'replace' in t.lower() or 'Replace' in t:
+                                    replace_dialog = w
+                                    break
+                            except Exception:
+                                pass
+                        if replace_dialog:
+                            break
             except Exception:
-                click_y = None  # fallback 掃描
-        
+                pass
+            if replace_dialog:
+                print("🔄 偵測到「代替」確認 dialog — 自動撳「是」（接受取代）")
+                for b in replace_dialog.children(class_name='Button'):
+                    try:
+                        bt = b.window_text()
+                        if '是' in bt or 'Yes' in bt or '&Y' in bt:
+                            b.click()
+                            time.sleep(2)
+                            break
+                    except Exception:
+                        pass
+                dialogs = find_ea_dialog(ea_name)
+        if dialogs:
+            print(f"🎉 {ea_name} Properties dialog found! Attached.")
+            found_dialog = True
+
         # ⚠️ 確保 AutoTrading ON — EA 附加時 OnInit 即刻執行（TestRunner 會即刻開單）！
         # 一定要喺 double-click 之前開 — Properties 之後先開太遲（OnInit 已跑，開單失敗 retcode 10027）
         try:

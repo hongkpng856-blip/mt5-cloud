@@ -481,3 +481,205 @@ pywinauto.application.ProcessNotFoundError: Process with PID=10052 not found!
 
 📥 [WATCHER] Deploy worker: deploy_cmd_Breakout_1786988968.json
    ⚠️ Breakout.ex5 唔存在（skip — 防止失敗循環）
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Fibonacci.mq5, Fibonacci.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已更新
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5, MT5Cloud_EA/Breakout.mq5, MT5Cloud_EA/Breakout.ex5, MT5Cloud_EA/Fibonacci.mq5, Fibonacci.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Fibonacci.ex5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_Breakout_1786989581.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Breakout_1786989581.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Breakout_1786989581.json
+🤖 AI 正在部署 Breakout 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Breakout → EURUSD H1
+     Magic: 240701, Lot: 1.00
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Breakout --symbol EURUSD --tf H1 --magic 240701 --lot 1.00
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Breakout_EURUSD_H1.tpl (2398 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^1 附加 Breakout...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=4804
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ Breakout 雙擊掛載流程完成（心跳等 tick）
+   ✅ log 驗證: Breakout 喺 EURUSD 啟動（正確圖表）
+   Stderr: ^^^^^^^
+  File "C:\Users\hongk\AppData\Local\Programs\Python\Python311\Lib\site-packages\pywinauto\application.py", line 960, in connect
+    raise ProcessNotFoundError('Process with PID={} not found!'.format(self.process))
+pywinauto.application.ProcessNotFoundError: Process with PID=8788 not found!
+
+   ❌ Breakout attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: Breakout 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ Breakout
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已更新
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已更新
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Fibonacci.mq5, Fibonacci.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786990695.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (12686 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786990748.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (12320 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已更新
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_ADX_Trend_1786991269.json
+   🔨 Compiling ADX_Trend.mq5 → .ex5（GUI 方式）...
+   ⏩ ADX_Trend.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 ADX_Trend 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: ADX_Trend.ex5 (12456 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/ADX_Trend.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_ADX_Trend_1786991426.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_ADX_Trend_1786991426.json
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已更新
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_ADX_Trend_1786991426.json
+🤖 AI 正在部署 ADX_Trend 到 MT5，請勿使用滑鼠及鍵盤...
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: ADX_Trend 已於網頁新增至 MT5
+📜 [WATCHER] activity log 已寫: ADX_Trend 已於網頁新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, Breakout.mq5, ADX_Trend.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: ADX_Trend → EURUSD H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea ADX_Trend --symbol EURUSD --tf H1 --magic 240701 --lot 1
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已更新
+🔔 [WATCHER] 通知已寫: EMA_Cross 已於網頁新增至 MT5
+📜 [WATCHER] activity log 已寫: EMA_Cross 已於網頁新增至 MT5
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已更新
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER]（EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（ADX_Trend added 後續變化 — 窗口內已通知過，skip）
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\ADX_Trend_EURUSD_H1.tpl (2402 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   📋 Chart already open, skipping Ctrl+N...
+   📋 Navigator panel shown via ShowWindow
+   📋 TreeView rect=(8,102)-(398,954)
+   🎯 Found ADX_Trend, attaching via pyautogui double-click...
+   ⚠️ GETITEMRECT fail (caret=3053651282944)
+   🔴 AutoTrading OFF → toggled ON（double-click 前） ⚠️ 未確認
+   ⚠️ ADX_Trend dialog not found after scan (attempt 1/3)
+   ⚠️ win32 connect failed: Process with PID=4804 not found! (attempt 2/3)
+   ⚠️ win32 connect failed: Process with PID=4804 not found! (attempt 3/3)
+   ❌ ADX_Trend attach failed after 3 attempts
+   ⚠️ 快捷鍵方法失敗 — 自動重試快捷鍵（×2，唔再建立新圖表）...
+   ⚠️ ADX_Trend 未有快捷鍵設定（agent/hotkeys.json）
+   ⚠️ ADX_Trend 未有快捷鍵設定（agent/hotkeys.json）
+   ⚠️ 快捷鍵重試後都失敗（不再試 Navigator — 6093 免疫）
+   ❌ Failed to attach EA
+   ❌ ADX_Trend attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: ADX_Trend 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ ADX_Trend
