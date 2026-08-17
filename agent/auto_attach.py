@@ -285,7 +285,7 @@ def _open_chart_keyboard():
     time.sleep(2)
 
 
-def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
+def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
     """用 win32 backend + pyautogui double-click attach EA
     
     關鍵發現：
@@ -1413,8 +1413,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             break
                 except Exception:
                     pass
-                if _mt5_start is not None and _hk_mt > _mt5_start:
-                    print(f"🔄 hotkeys.ini 有變（外部寫入 — MT5 未 load）→ reload 一次（關 MT5 → 開）")
+                # ⚠️ 2026-08-18 根治：唔再 restart MT5（hotkeys.ini reload 會令 PID 變 → 後續 connect 失敗）。掛 EA 用 Navigator 雙擊唔使熱鍵。
+                if False and _hk_mt > _mt5_start:
+                    print(f"🔄 hotkeys.ini 有變 → reload（關 MT5 → 開）")
                     _chk_abort()
                     do_restart_mt5()
                     # reload 後重新攞 MT5 PID + connect
@@ -1992,7 +1993,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         if ea_name in hotkeys:
             success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         else:
-            success = attach_ea_navigator(ea_name, mt5_pid)
+            success = attach_ea_navigator(ea_name, mt5_pid, symbol=args.symbol)
         if not success:
             # 🚨 2026-08-12 FIX：重試時唔建立新圖表（open_chart=False — 重用現有圖表 — 之前每次重試建立新圖表 → 「開好多圖表」）
             print(f"⚠️ 快捷鍵方法失敗 — 自動重試快捷鍵（×2，唔再建立新圖表）...")

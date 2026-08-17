@@ -683,3 +683,558 @@ pywinauto.application.ProcessNotFoundError: Process with PID=8788 not found!
 📜 [WATCHER] activity log 已寫: ADX_Trend 部署失敗（attach 失敗）
 [deploy_notify] 控制結束
    📡 Server report: ❌ ADX_Trend
+
+📥 [WATCHER] New deploy command: deploy_cmd_ADX_Trend_1786991755.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_ADX_Trend_1786991755.json
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已更新
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_ADX_Trend_1786991755.json
+🤖 AI 正在部署 ADX_Trend 到 MT5，請勿使用滑鼠及鍵盤...
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: ADX_Trend 已更新
+📜 [WATCHER] activity log 已寫: ADX_Trend 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, Breakout.mq5, ADX_Trend.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: ADX_Trend → EURUSD H1
+     Magic: 240701, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea ADX_Trend --symbol EURUSD --tf H1 --magic 240701 --lot 1
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已更新
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend modified 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER] 通知已寫: EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: EMA_Cross 已更新
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+⚠️ 搵唔到 popup menu
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已更新
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross modified 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+   ⚠️ Navigator refreshed (in-process)
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\ADX_Trend_EURUSD_H1.tpl (2402 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^2 附加 ADX_Trend...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=12916
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ ADX_Trend 雙擊掛載流程完成（心跳等 tick）
+   ❌ log 驗證: ADX_Trend 冇喺 EURUSD 啟動（可能開錯圖表 — 檢查心跳後備）
+   ✅ hb_*.txt 心跳: ADX_Trend 運行中（hb_ADX_Trend.txt 新鮮）
+   ✅ 心跳後備: ADX_Trend 運行中（心跳新鮮 — 圖表正確）
+   Stderr: ^^^^^^^
+  File "C:\Users\hongk\AppData\Local\Programs\Python\Python311\Lib\site-packages\pywinauto\application.py", line 960, in connect
+    raise ProcessNotFoundError('Process with PID={} not found!'.format(self.process))
+pywinauto.application.ProcessNotFoundError: Process with PID=2416 not found!
+
+   ❌ ADX_Trend attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: ADX_Trend 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ ADX_Trend
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔔 [WATCHER] 通知已寫: ADX_Trend 已於網頁刪除
+📜 [WATCHER] activity log 已寫: ADX_Trend 已於網頁刪除
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（ADX_Trend deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, ADX_Trend.mq5, MT5Cloud_EA/ADX_Trend.ex5, ADX_Trend.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+⏸️ [WATCHER] Pause command: pause_cmd_ADX_Trend_1786991942.json
+⏸️ [WATCHER] 刪除 ADX_Trend（移除圖表 EA）...
+   Exit: 0
+   🛡️  [CONTROL] 暫停 ADX_Trend 開始控制電腦（警告視窗已彈出）
+   ℹ️ ADX_Trend：圖表未開（冇 EA 運行）— 唔使移除，直接完成
+   ✅ 暫停 ADX_Trend 成功
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+📜 [WATCHER] activity log 已寫: ADX_Trend 已暫停（EA 已從圖表移除）
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786994410.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (13272 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已更新
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786994425.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786994425.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786994425.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77771, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77771 --lot 1
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^2 附加 EMA_Cross...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=1660
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ EMA_Cross 附加成功（心跳存在）
+   ❌ log 驗證: EMA_Cross 冇喺 EURUSD 啟動（可能開錯圖表 — 檢查心跳後備）
+   ✅ 心跳後備: EMA_Cross 運行中（心跳新鮮 — 圖表正確）
+   Stderr: ^^^^^^
+  File "C:\Users\hongk\AppData\Local\Programs\Python\Python311\Lib\site-packages\pywinauto\application.py", line 960, in connect
+    raise ProcessNotFoundError('Process with PID={} not found!'.format(self.process))
+pywinauto.application.ProcessNotFoundError: Process with PID=12916 not found!
+
+   ❌ EMA_Cross attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ EMA_Cross
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER] 通知已寫: EMA_Cross 已於網頁刪除
+📜 [WATCHER] activity log 已寫: EMA_Cross 已於網頁刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, EMA_Cross.ex5, MT5Cloud_EA/EMA_Cross.ex5, EMA_Cross.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786994509.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (12164 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786994525.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786994525.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786994525.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77772, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77772 --lot 1
+⚠️ 搵唔到 popup menu
+   ⚠️ Navigator refreshed (in-process)
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^2 附加 EMA_Cross...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=6000
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ EMA_Cross 附加成功（心跳存在）
+   ✅ log 驗證: EMA_Cross 喺 EURUSD 啟動（正確圖表）
+   Stderr: ^^^^^^^
+  File "C:\Users\hongk\AppData\Local\Programs\Python\Python311\Lib\site-packages\pywinauto\application.py", line 960, in connect
+    raise ProcessNotFoundError('Process with PID={} not found!'.format(self.process))
+pywinauto.application.ProcessNotFoundError: Process with PID=1660 not found!
+
+   ❌ EMA_Cross attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ EMA_Cross
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786994609.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (11682 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已更新
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5, MT5Cloud_EA/Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已更新
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Fibonacci 已更新
+🔔 [WATCHER] 通知已寫: EMA_Cross 已於網頁新增至 MT5
+📜 [WATCHER] activity log 已寫: EMA_Cross 已於網頁新增至 MT5
+🔔 [WATCHER] 通知已寫: Fibonacci 已更新
+📜 [WATCHER] activity log 已寫: Fibonacci 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/Fibonacci.mq5, EMA_Cross.mq5, Fibonacci.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已更新
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已更新
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786994903.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (11696 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross modified 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786994924.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786994924.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786994924.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77771, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77771 --lot 1
+📌 DeskIn 已移去右上角（唔遮 MT5）
+⚠️ 搵唔到 popup menu
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER] 通知已寫: EMA_Cross 已於網頁刪除
+📜 [WATCHER] activity log 已寫: EMA_Cross 已於網頁刪除
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+   ⚠️ Navigator refreshed (in-process)
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   Stderr: attach_ea_navigator(ea_name, mt5_pid)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py", line 345, in attach_ea_navigator
+    print(f"📋 開新圖表 for {symbol}...")
+                             ^^^^^^
+NameError: name 'symbol' is not defined
+
+   ❌ EMA_Cross attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ EMA_Cross
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786994948.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (11954 bytes)
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend added 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786994970.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786994970.json
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786994970.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77772, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77772 --lot 1
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786995018.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (11958 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+   Exit code: 0
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^2 附加 EMA_Cross...
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ EMA_Cross 附加成功（心跳存在）
+   ✅ log 驗證: EMA_Cross 喺 EURUSD 啟動（正確圖表）
+   🟢 AutoTrading is already ON
+   ✅ EA log: HQ	0	03:28:38.184	EMA_Cross (EURUSD,H1)	✅ EMA_Cross 已啟動！策略：指數平均線交叉
+   ✅ EMA_Cross MT5 log 顯示已啟動（市場收市冇 tick — 心跳後備確認）
+   🎉 SUCCESS: EMA_Cross is running on EURUSD H1!
+   🎉 EMA_Cross 已成功 attach!
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署完成（attach 成功）
+[deploy_notify] 控制結束
+   📡 Server report: ✅ EMA_Cross
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786995036.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786995036.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786995036.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77773, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77773 --lot 1
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+⚠️ 搵唔到 popup menu
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   Stderr: attach_ea_navigator(ea_name, mt5_pid)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py", line 345, in attach_ea_navigator
+    print(f"📋 開新圖表 for {symbol}...")
+                             ^^^^^^
+NameError: name 'symbol' is not defined
+
+   ❌ EMA_Cross attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   ⚠️ Navigator refreshed (in-process)
+   📡 Server report: ❌ EMA_Cross
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786995060.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (12118 bytes)
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend added 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786995075.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786995075.json
+🔔 [WATCHER]（MT5Cloud_EA/ADX_Trend deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786995075.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77774, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77774 --lot 1
+📌 DeskIn 已移去右上角（唔遮 MT5）
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   Stderr: attach_ea_navigator(ea_name, mt5_pid)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py", line 345, in attach_ea_navigator
+    print(f"📋 開新圖表 for {symbol}...")
+                             ^^^^^^
+NameError: name 'symbol' is not defined
+
+   ❌ EMA_Cross attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ EMA_Cross
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+
+🔨 [WATCHER] Compile command: compile_cmd_EMA_Cross_1786995159.json
+   🔨 Compiling EMA_Cross.mq5 → .ex5（GUI 方式）...
+   ⏩ EMA_Cross.mq5 已注入控制層，skip
+🛡️  [CONTROL] 編譯 EMA_Cross 開始控制電腦（警告視窗已彈出）
+🛡️  [CONTROL] 控制結束，警告視窗已關閉
+   ✅ Compiled: EMA_Cross.ex5 (12010 bytes)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5, MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+📥 [WATCHER] New deploy command: deploy_cmd_EMA_Cross_1786995175.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_EMA_Cross_1786995175.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_EMA_Cross_1786995175.json
+🤖 AI 正在部署 EMA_Cross 到 MT5，請勿使用滑鼠及鍵盤...
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/ADX_Trend 已於電腦刪除
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/ADX_Trend.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+
+==================================================
+  🚀 [WATCHER] Deploying: EMA_Cross → EURUSD H1
+     Magic: 77775, Lot: 1
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea EMA_Cross --symbol EURUSD --tf H1 --magic 77775 --lot 1
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\EMA_Cross_EURUSD_H1.tpl (2400 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   Stderr: attach_ea_navigator(ea_name, mt5_pid)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py", line 345, in attach_ea_navigator
+    print(f"📋 開新圖表 for {symbol}...")
+                             ^^^^^^
+NameError: name 'symbol' is not defined
+
+   ❌ EMA_Cross attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: EMA_Cross 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ EMA_Cross
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,794)
+   ✅ Navigator refreshed (in-process)

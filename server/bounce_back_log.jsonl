@@ -21,3 +21,4 @@
 {"time": "2026-08-18 00:56:42", "trigger": "periodic", "files": ["RSI_Over.ex5", "RSI_Over.mq5"]}
 {"time": "2026-08-18 00:59:42", "trigger": "periodic", "files": ["EMA_Cross.ex5", "EMA_Cross.mq5"]}
 {"time": "2026-08-18 01:10:42", "trigger": "periodic", "files": ["EMA_Cross.ex5", "EMA_Cross.mq5"]}
+{"time": "2026-08-18 03:24:12", "trigger": "periodic", "files": ["ADX_Trend.mq5"]}

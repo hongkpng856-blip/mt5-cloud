@@ -43870,3 +43870,267 @@
 {"time": 1786991635.9718463, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786991666.5645611, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
 {"time": 1786991697.1261055, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991727.846098, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991738.7406669, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786991755.058042, "action": "deploy", "ea": "ADX_Trend", "message": "ADX_Trend 部署 → EURUSD H1", "source": "server"}
+{"time": 1786991757.1908474, "action": "modified", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786991757.1933765, "action": "modified", "ea": "Breakout", "message": "Breakout 已更新", "source": "watcher"}
+{"time": 1786991757.208999, "action": "modified", "ea": "ADX_Trend", "message": "ADX_Trend 已更新", "source": "watcher"}
+{"time": 1786991757.2244635, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786991758.477949, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991760.2632704, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786991760.2819798, "action": "modified", "ea": "EMA_Cross", "message": "EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786991763.3049083, "action": "modified", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已更新", "source": "watcher"}
+{"time": 1786991763.314064, "action": "modified", "ea": "Fibonacci", "message": "Fibonacci 已更新", "source": "watcher"}
+{"time": 1786991794.9757617, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991817.5838954, "action": "unknown", "ea": "ADX_Trend", "message": "ADX_Trend 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786991825.5684547, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991856.237541, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991886.8390963, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991912.8569794, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786991917.472805, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991942.2388194, "action": "ea_delete", "ea": "ADX_Trend", "message": "ADX_Trend 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786991942.329519, "action": "ea_delete", "ea": "ADX_Trend", "message": "ADX_Trend 配對已刪除（圖表 EA 已排隊移除）", "source": "server"}
+{"time": 1786991942.7304914, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786991942.7335393, "action": "deleted", "ea": "ADX_Trend", "message": "ADX_Trend 已於網頁刪除", "source": "watcher"}
+{"time": 1786991948.0606823, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786991953.6571603, "action": "unknown", "ea": "ADX_Trend", "message": "ADX_Trend 已暫停（EA 已從圖表移除）", "source": "watcher"}
+{"time": 1786991978.6858509, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992009.286295, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992039.8881042, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992070.518689, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992101.1209629, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992131.6908545, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992162.2557428, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992192.83344, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992223.428357, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992253.9930577, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992284.5698547, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992315.170872, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992345.753887, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992376.330542, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992406.890138, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992437.4810305, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992468.0439196, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992498.625845, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992529.1827593, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992559.7613244, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992590.3131142, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992620.86235, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992651.4379263, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992682.0219164, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992712.5822222, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992743.1451283, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992773.7167697, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992804.2753472, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992834.8568115, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992865.4495115, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992896.003201, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992926.55916, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992957.127904, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786992987.7030573, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993018.2772682, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993048.8656435, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993079.4283752, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993110.0139048, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993140.586835, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993171.1473393, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993201.719327, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993232.3646991, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993262.9403245, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993293.5056286, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993324.0882118, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993354.6549482, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993385.2190628, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993415.8134563, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993446.398281, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993476.9703903, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993507.5373394, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993538.1097546, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993568.654229, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993599.215079, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993629.7869883, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993660.347139, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993690.9144428, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993721.4661021, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993752.0241642, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993782.586454, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993813.1458294, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993843.707562, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993874.284961, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993904.857397, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993935.4538062, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993966.0232666, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786993996.6001687, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994027.1661563, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994057.741039, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994088.2978084, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994118.8681788, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994149.4503257, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994180.0425923, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994210.6038818, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994241.1773665, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994271.7303228, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994302.322563, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994332.8688352, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994363.4409704, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994394.013823, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994407.5572927, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786994407.6412604, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786994419.1683614, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786994419.6525025, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994419.654659, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786994424.6172798, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994425.277859, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786994427.733175, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786994460.8431947, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994483.5979261, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786994488.4981706, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786994489.8610165, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786994489.8639812, "action": "deleted", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除", "source": "watcher"}
+{"time": 1786994491.4154859, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994506.6599264, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786994506.7648904, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786994519.7868183, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786994520.9309685, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994520.942791, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994522.0215216, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994525.887591, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786994529.0050337, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786994558.1822894, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994586.9130402, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786994588.753222, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994589.1036963, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786994591.1440578, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786994607.2650828, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786994607.3600247, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786994609.1661332, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994619.3151124, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994626.3876247, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786994627.1394122, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994649.8769732, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994656.2348661, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786994680.4906707, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994711.0675745, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994741.6243002, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994772.1855822, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994785.3886878, "action": "modified", "ea": "Breakout", "message": "Breakout 已更新", "source": "watcher"}
+{"time": 1786994785.3916428, "action": "modified", "ea": "MT5Cloud_EA/Breakout", "message": "MT5Cloud_EA/Breakout 已更新", "source": "watcher"}
+{"time": 1786994788.4053402, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786994788.4167106, "action": "modified", "ea": "MT5Cloud_EA/Fibonacci", "message": "MT5Cloud_EA/Fibonacci 已更新", "source": "watcher"}
+{"time": 1786994788.4288898, "action": "added", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁新增至 MT5", "source": "watcher"}
+{"time": 1786994788.4415548, "action": "modified", "ea": "Fibonacci", "message": "Fibonacci 已更新", "source": "watcher"}
+{"time": 1786994802.339909, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994833.1297803, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994863.9479418, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994894.760046, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994900.4960043, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786994900.5708945, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786994902.5826995, "action": "modified", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已更新", "source": "watcher"}
+{"time": 1786994918.102093, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786994919.4393418, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994924.2118227, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786994925.5805519, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994927.3960469, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786994927.521219, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786994932.6007597, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786994932.6153827, "action": "deleted", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除", "source": "watcher"}
+{"time": 1786994935.4876199, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786994945.5548997, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786994945.640549, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786994947.639709, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786994956.3895078, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994964.686896, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786994970.7936475, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786994987.254852, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786994998.0009048, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995000.7213912, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786995016.166853, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995016.2551053, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995018.0583282, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995018.7447147, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995030.7791262, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995031.8685656, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995034.2786095, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786995036.865406, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995039.9437017, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786995040.0562553, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995046.441286, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786995048.866988, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995058.2104578, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995058.307397, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995069.8268113, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995075.9270506, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995079.6709483, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995082.1079698, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786995110.4654956, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995139.1678064, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995141.2777212, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995142.177102, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786995157.3017647, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995157.389382, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995168.9116254, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995170.245736, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995170.2584624, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995172.0629792, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995175.0305486, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995178.3268592, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786995181.3341577, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786995202.9053113, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995233.7398293, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995238.287269, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995240.457022, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786995264.533337, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995295.3275049, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995326.121134, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995345.3195152, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995345.4221613, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995356.9434967, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995358.4470935, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995358.7077265, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995358.7107675, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995364.5524828, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995366.7751522, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786995387.7558365, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995391.7628002, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995392.8743865, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786995409.9249628, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995410.0029962, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995418.5770354, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995423.027969, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995424.0155358, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995424.0200613, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995427.3099027, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786995429.1388392, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995432.093623, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786995432.3381126, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995449.3715096, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995450.484911, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995450.5886412, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995454.4369955, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786995462.1108882, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995468.2266529, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995480.1788309, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995499.4520612, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995501.3639984, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786995510.9714668, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995517.5918858, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995517.6768434, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995519.3933043, "action": "added", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995532.2000947, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995532.5124013, "action": "added", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦新增至 MT5", "source": "watcher"}
+{"time": 1786995533.9035926, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署完成（attach 成功）", "source": "watcher"}
+{"time": 1786995538.2995007, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995540.5882607, "action": "deleted", "ea": "MT5Cloud_EA/ADX_Trend", "message": "MT5Cloud_EA/ADX_Trend 已於電腦刪除", "source": "watcher"}
+{"time": 1786995541.4917061, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995541.770572, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995559.6547828, "action": "login", "ea": "", "message": "dev 登入", "source": "auth"}
+{"time": 1786995559.731633, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 配對處理中...", "source": "server"}
+{"time": 1786995564.5849445, "action": "unknown", "ea": "EMA_Cross", "message": "EMA_Cross 部署失敗（attach 失敗）", "source": "watcher"}
+{"time": 1786995572.560602, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995574.3166406, "action": "ea_install", "ea": "EMA_Cross", "message": "EMA_Cross 已安裝到本機 MT5（compile 成功）", "source": "server"}
+{"time": 1786995580.4186416, "action": "deploy", "ea": "EMA_Cross", "message": "EMA_Cross 部署 → EURUSD H1", "source": "server"}
+{"time": 1786995603.385099, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
+{"time": 1786995609.6256332, "action": "ea_delete", "ea": "EMA_Cross", "message": "EMA_Cross 已於網頁刪除（本機檔案已刪除）", "source": "server"}
+{"time": 1786995612.7700238, "action": "deleted", "ea": "MT5Cloud_EA/EMA_Cross", "message": "MT5Cloud_EA/EMA_Cross 已於電腦刪除", "source": "watcher"}
+{"time": 1786995634.1593783, "action": "db_update", "ea": "", "message": "已更新資料庫", "source": "detector"}
