@@ -1281,11 +1281,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         if not open_chart and not combo:
             print(f"⚠️ {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
             return False
-        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過「附加熱鍵」步驟
-        # （之前：套模板掛咗 EA 之後仲行「附加」（send 熱鍵 → 落 active 圖表 — 掛錯圖表 — 用戶部署 Breakout 掛咗 EURUSD 案例）
+        # 🔧 2026-08-18 REVERT 一體化跳過邏輯：open_chart=True 時開圖表 + 照 send EA 熱鍵（<experts> — 已證 work）
+        # 唔使 Ctrl+9 script（MT5 對 synthetic input 唔收）；唔係「套模板已掛」— 要 send EA 熱鍵掛落開好嘅圖表
         if open_chart:
-            print(f"✅ 一體化：{ea_name} 已由套模板掛落圖表（跳過附加熱鍵）")
-            _saw_props = True  # 當附加完成（套模板已掛）
+            print(f"🎯 開圖表 + 用快捷鍵 {combo} 附加 {ea_name}...")
         else:
             print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)

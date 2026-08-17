@@ -1,1 +1,1 @@
-{"total": 1, "deployed_count": 0, "configured_count": 1, "eas": [{"name": "Breakout", "size": 9522, "modified": "2026-08-18 00:01", "deployed": false, "deploy_info": {}, "configured": true, "config_status": "running", "symbol": "USDJPY", "tf": "H1", "lot": 1, "magic": "240701"}], "scanned_at": "2026-08-18 00:17:35"}
+{"total": 0, "deployed_count": 0, "configured_count": 0, "eas": [], "scanned_at": "2026-08-18 00:24:46"}

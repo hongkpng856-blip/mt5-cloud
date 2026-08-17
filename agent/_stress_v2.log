@@ -6,12 +6,10 @@
   添加: EMA_Cross
   重啟 MT5（load 熱鍵 + scripts Ctrl+9）...
 ✅ 一體化：EMA_Cross 已由套模板掛落圖表（跳過附加熱鍵）
-📋 冇圖表 — 開新圖表（pyautogui Alt+F → Enter ×3）
-⚠️ 開圖表異常: cannot access local variable '_u_oc' where it is not associated with a value
-⚠️ Ctrl+9 冇開到圖表（EURUSD active 標題未變）— 重試
-⚠️ Ctrl+9 冇開到圖表（EURUSD active 標題未變）— 重試
-⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）
-   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+⚠️ 開圖表異常: name 'ctypes' is not defined
+⚠️ 開圖表未確認（EURUSD active 標題未變）— 唔阻塞，繼續掛 EA
+⚠️ 快捷鍵 ^1 冇彈出 Properties（重試中）...
+❌ 快捷鍵 ^1 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）
 ✅ EMA_Cross 附加成功（心跳存在）
 ❌ log 驗證: EMA_Cross 冇喺 EURUSD 啟動（可能開錯圖表 — 檢查心跳後備）
 ⏳ 心跳後備第一次失敗 — 等 5 秒再試（EA 可能仲初始化緊）...
@@ -26,10 +24,40 @@
   添加: RSI_Over
   重啟 MT5（load 熱鍵 + scripts Ctrl+9）...
 ✅ 一體化：Breakout 已由套模板掛落圖表（跳過附加熱鍵）
-📋 冇圖表 — 開新圖表（pyautogui Alt+F → Enter ×3）
-⚠️ 開圖表異常: cannot access local variable '_u_oc' where it is not associated with a value
-⚠️ Ctrl+9 冇開到圖表（GBPUSD active 標題未變）— 重試
-⚠️ Ctrl+9 冇開到圖表（GBPUSD active 標題未變）— 重試
-⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）
-   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
-✅ Breakout 附加成功（心跳存在）
+⚠️ 開圖表異常: name 'ctypes' is not defined
+⚠️ 開圖表未確認（GBPUSD active 標題未變）— 唔阻塞，繼續掛 EA
+⚠️ 快捷鍵附加失敗: object of type 'NoneType' has no len()
+  部署 Breakout→GBPUSD: ❌(FAIL) log=❌
+✅ 一體化：RSI_Over 已由套模板掛落圖表（跳過附加熱鍵）
+⚠️ 開圖表異常: name 'ctypes' is not defined
+⚠️ 開圖表未確認（USDJPY active 標題未變）— 唔阻塞，繼續掛 EA
+⚠️ 快捷鍵 ^2 冇彈出 Properties（重試中）...
+❌ 快捷鍵 ^2 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）
+✅ RSI_Over 快捷鍵附加流程完成（心跳等 tick）
+❌ log 驗證: RSI_Over 冇喺 USDJPY 啟動（可能開錯圖表 — 檢查心跳後備）
+⏳ 心跳後備第一次失敗 — 等 5 秒再試（EA 可能仲初始化緊）...
+  部署 RSI_Over→USDJPY: ❌(FAIL) log=❌
+  第 2 輪: ❌ 失敗
+
+=======================================================
+🏁 第 3/5 輪 — ['MACD_Cross', 'Bollinger_Band', 'Parabolic_SAR']
+  關圖表: 0 個
+  剸除: 2 個本機 EA
+  添加: MACD_Cross
+  添加: Bollinger_Band
+  添加: Parabolic_SAR
+  重啟 MT5（load 熱鍵 + scripts Ctrl+9）...
+✅ 一體化：MACD_Cross 已由套模板掛落圖表（跳過附加熱鍵）
+⚠️ 開圖表異常: name 'ctypes' is not defined
+⚠️ 開圖表未確認（AUDUSD active 標題未變）— 唔阻塞，繼續掛 EA
+⚠️ 快捷鍵附加失敗: object of type 'NoneType' has no len()
+  部署 MACD_Cross→AUDUSD: ❌(FAIL) log=❌
+✅ 一體化：Bollinger_Band 已由套模板掛落圖表（跳過附加熱鍵）
+⚠️ 開圖表異常: name 'ctypes' is not defined
+⚠️ 開圖表未確認（USDCHF active 標題未變）— 唔阻塞，繼續掛 EA
+⚠️ 快捷鍵附加失敗: object of type 'NoneType' has no len()
+  部署 Bollinger_Band→USDCHF: ❌(FAIL) log=❌
+✅ 一體化：Parabolic_SAR 已由套模板掛落圖表（跳過附加熱鍵）
+⚠️ 開圖表異常: name 'ctypes' is not defined
+⚠️ 開圖表未確認（USDJPY active 標題未變）— 唔阻塞，繼續掛 EA
+⚠️ 快捷鍵 ^1 冇彈出 Properties（重試中）...
