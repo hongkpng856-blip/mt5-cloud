@@ -1387,26 +1387,31 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     import json as _joc
                     _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
                     _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-15 一體化：確保模板存在（複製現有 <ea>_*.tpl 改 symbol — 模板含 <expert> 部分 — 套模板掛 EA）
+                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → MT5Cloud_EA）
+                    # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
                     try:
-                        _tdir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                        for _dt_t in os.listdir(_tdir):
-                            _tp = os.path.join(_tdir, _dt_t, 'MQL5', 'Profiles', 'Templates')
-                            if os.path.isdir(_tp):
-                                _src_t = os.path.join(_tp, f"{ea_name}_EURUSD_H1.tpl")
-                                _dst_t = os.path.join(_tp, _tpl_name)
-                                if os.path.isfile(_src_t) and not os.path.isfile(_dst_t):
-                                    _tc = open(_src_t, encoding='utf-16-le', errors='ignore').read()
-                                    _tc = _tc.replace('symbol=EURUSD', f'symbol={_sym or "EURUSD"}')
-                                    # 🚨 2026-08-15 FIX：模板 <expert> path 指向根目錄（Experts\EA.ex5）— 但 EA 喺 MT5Cloud_EA 子目錄 → 套模板搵唔到 → EA 掛唔到！
-                                    # 改 path → Experts\MT5Cloud_EA\<EA>.ex5（指向正確位置）
-                                    _tc = _tc.replace(f'path=Experts\\{ea_name}.ex5',
-                                                      f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5')
-                                    open(_dst_t, 'w', encoding='utf-16-le').write(_tc)
-                                    print(f"📋 模板已生成: {_tpl_name}（path 已修正 → MT5Cloud_EA）")
+                        _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                        _tpl_full_t = None
+                        for _d_t2 in os.listdir(_mt5_data_t) if os.path.isdir(_mt5_data_t) else []:
+                            _pp = os.path.join(_mt5_data_t, _d_t2, 'MQL5', 'Profiles', 'Templates')
+                            if os.path.isdir(_pp):
+                                _tpl_full_t = os.path.join(_pp, _tpl_name)
                                 break
-                    except Exception:
-                        pass
+                        if _tpl_full_t and not os.path.isfile(_tpl_full_t):
+                            _CR = chr(13) + chr(10)
+                            _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
+                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
+                            _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
+                            _tpl_t += '</expert>' + _CR + _CR
+                            _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
+                            _tpl_t += '<indicator>' + _CR + 'name=Main' + _CR + 'path=' + _CR + 'apply=1' + _CR + 'show_data=1' + _CR + 'scale_inherit=0' + _CR + 'scale_line=0' + _CR + 'scale_line_percent=50' + _CR + 'scale_line_value=0.000000' + _CR + 'scale_fix_min=0' + _CR + 'scale_fix_min_val=0.000000' + _CR + 'scale_fix_max=0' + _CR + 'scale_fix_max_val=0.000000' + _CR + '</indicator>' + _CR + _CR
+                            _tpl_t += '</window>' + _CR + _CR + '</chart>'
+                            with open(_tpl_full_t, 'wb') as _f_t:
+                                _f_t.write(b'\xff\xfe')
+                                _f_t.write(_tpl_t.encode('utf-16-le'))
+                            print(f"📋 模板已生成: {_tpl_name}（path → MT5Cloud_EA）")
+                    except Exception as _ete:
+                        print(f"⚠️ 生成模板失敗: {_ete}")
                     with open(_cmd_file, 'w', encoding='utf-8') as _f:
                         _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
                                    'ea': ea_name, 'tpl': _tpl_name}, _f)
@@ -1434,8 +1439,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
                 if not _has_chart_oc:
-                    print("📋 冇圖表 — 開空圖表（Alt+F → Enter → Enter）")
+                    # 🚨 2026-08-17 FIX：完整開新圖表（Alt+F → Enter ×3 — 第三個 Enter 確認 dialog 開預設 symbol — 確保有「真圖表 window」先可以觸發 Ctrl+9 熱鍵）
+                    # （之前只有 2 個 Enter → 只開到 dialog 未真正開圖表 → 冇圖表 active → Ctrl+9 唔觸發 → 開圖表失敗！）
+                    print("📋 冇圖表 — 開新圖表（Alt+F → Enter ×3）")
                     _sk('%f')
+                    time.sleep(1.5)
+                    _sk('{ENTER}')
                     time.sleep(1.5)
                     _sk('{ENTER}')
                     time.sleep(1.5)
@@ -1455,7 +1464,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                 _hk9_path = _p9
                                 break
                     if _hk9_path:
-                        _hk9_c = open(_hk9_path, encoding='utf-16-le', errors='ignore').read()
+                        # 🚨 2026-08-17 FIX：讀寫用 utf-16（自動處理 BOM — utf-16-le 讀唔會剝 BOM → 寫返會冇 BOM → MT5 讀唔到熱鍵！）
+                        _hk9_c = open(_hk9_path, encoding='utf-16', errors='ignore').read()
                         # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
                         if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
                             _hk9_ok = True
@@ -1467,11 +1477,14 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                 _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
                             else:
                                 _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
-                            open(_hk9_path, 'w', encoding='utf-16-le').write(_hk9_c)
-                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9")
+                            with open(_hk9_path, 'wb') as _f9:
+                                _f9.write(('\ufeff' + _hk9_c).encode('utf-16-le'))
+                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
                             _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
-                    # 🚨 每次部署都重啟 MT5（確保熱鍵 load — 用戶要求「都需要重啟」）— 即使已經喺 hotkeys.ini
-                    _need_restart9 = True
+                    # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
+                    # （實測：每次重啟後 Ctrl+9 script 熱鍵未 ready → 開圖表唔work；但你手動環境（MT5 一直運行）Ctrl+9 每次 work
+                    #   → 唔好無謂重啟 — MT5 一直運行保持 Ctrl+9 ready；只有 hotkeys.ini 改變先要 reload）
+                    # _need_restart9 = True  ← 移除（唔強制每次重啟）
                 except Exception as _e9x:
                     print(f"⚠️ hotkeys.ini 檢查失敗: {_e9x}")
                 if _need_restart9:
@@ -1547,21 +1560,27 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             print(f"⚠️ 重啟失敗: {_eoc_r}")
                         continue
                     else:
-                        # 🚨 2026-08-17 FIX：冇彈視窗都唔代表成功（靜默冇 load → script 冇執行 → 開圖表冇成功 — 用戶部署全失敗案例）
-                        # 驗證：MT5 log 有「已開新圖表」（等 log flush — 2 秒）
+                        # 🚨 2026-08-17 FIX：驗證用「MT5 active 圖表標題 = 目標 symbol」（唔用 log — log 延遲/唔寫 → 誤判「靜默失敗」；active 標題 Ctrl+9 開完 BRING_TO_TOP 即時改 — 準確）
                         _chart_ok = False
                         try:
-                            import glob as _g_oc
-                            _ld_oc = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
-                                                  'D0E8209F77C8CF37AD8BF550E51FF075', 'MQL5', 'Logs')
-                            _fl_oc = sorted(glob.glob(os.path.join(_ld_oc, '2026*.log')), key=os.path.getmtime, reverse=True)
-                            if _fl_oc:
-                                _cl_oc = open(_fl_oc[0], encoding='utf-16-le', errors='ignore').read()
-                                _chart_ok = ('已開新圖表' in _cl_oc and _sym in _cl_oc)
+                            def _cb_title(_h2, _x2):
+                                nonlocal _chart_ok
+                                if _u_oc.IsWindowVisible(_h2):
+                                    _c2 = ctypes.create_unicode_buffer(64)
+                                    _u_oc.GetClassNameW(_h2, _c2, 64)
+                                    if 'MetaQuotes::MetaTrader' in _c2.value:
+                                        _l2 = _u_oc.GetWindowTextLengthW(_h2)
+                                        _b2 = ctypes.create_unicode_buffer(_l2 + 1)
+                                        _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
+                                        if _sym in _b2.value:
+                                            _chart_ok = True
+                                            return False
+                                return True
+                            _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_title), None)
                         except Exception:
                             pass
                         if not _chart_ok:
-                            print(f"⚠️ Ctrl+9 冇開到圖表（{_sym}）— 靜默失敗（script 熱鍵未 load）— 重試")
+                            print(f"⚠️ Ctrl+9 冇開到圖表（{_sym} active 標題未變）— 重試")
                             time.sleep(2)
                             continue
                         _oc_ok2 = True
