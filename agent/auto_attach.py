@@ -1262,6 +1262,27 @@ def _clear_steps():
     except Exception:
         pass
 
+def _focus_mt5_foreground(main_hwnd):
+    """🔧 2026-08-18：提升 foreground 權限（AttachThreadInput + AllowSetForegroundWindow）
+    MT5 對 keyboard input 只收 foreground 進程 — background 進程（server/pythonw）SetForegroundWindow 失敗 → key 送唔到
+    用 AttachThreadInput 將 auto_attach 進程 attach 到 MT5 thread → MT5 當佢做 foreground → key 收得到
+    返回 cur_tid, mt5_tid（caller 用完要 AttachThreadInput(cur_tid, mt5_tid, False) detach）"""
+    try:
+        import ctypes as _ctf
+        _kf = _ctf.windll.kernel32
+        _uf = _ctf.windll.user32
+        _cur_tid = _kf.GetCurrentThreadId()
+        _pid_buf = _ctf.c_ulong(0)
+        _mt5_tid = _uf.GetWindowThreadProcessId(_ctf.c_void_p(int(main_hwnd)), _ctf.byref(_pid_buf))
+        _uf.AllowSetForegroundWindow(-1)
+        _uf.AttachThreadInput(_cur_tid, _mt5_tid, True)
+        _uf.SetForegroundWindow(_ctf.c_void_p(int(main_hwnd)))
+        time.sleep(1)
+        return _cur_tid, _mt5_tid
+    except Exception as _e_f:
+        print(f"⚠️ focus foreground 失敗: {_e_f}")
+        return None, None
+
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
     """🎯 快捷鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
@@ -1388,6 +1409,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 # 6 個固定位置（MODULE_INDEX 記錄）：1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
                 _DOWN_MAP = {'EURUSD':0,'GBPUSD':1,'USDCHF':2,'USDJPY':3,'USDCNH':4,'AUDUSD':5}
                 _doffs = _DOWN_MAP.get(_sym, 0)
+                # 🔧 2026-08-18：開圖表前提升 foreground 權限（MT5 只收 foreground 進程 key）
+                _ftid, _mtid = _focus_mt5_foreground(win.element_info.handle)
                 try:
                     import pyautogui as _pg_oc
                     _pg_oc.FAILSAFE = False
@@ -1397,7 +1420,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     # Alt+F 開 File menu
                     _pg_oc.hotkey('alt', 'f')
                     time.sleep(1.5)
-                    # Enter 開「開新圖表」dialog（第一項）
+                    # Enter 開「新圖表」symbol 子選單
                     _pg_oc.press('enter')
                     time.sleep(1.5)
                     # Down×N 揀 symbol
@@ -1411,9 +1434,16 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _r_oc = win.rectangle()
                     _pg_oc.click(_r_oc.left + _r_oc.width() // 2, _r_oc.top + _r_oc.height() // 2)
                     time.sleep(1)
-                    print(f"📋 開新圖表: {_sym}（Alt+F → Down×{_doffs} → Enter）")
+                    print(f"📋 開新圖表: {_sym}（Alt+F → Enter → Down×{_doffs} → Enter）")
                 except Exception as _e_oc:
                     print(f"⚠️ 開圖表異常: {_e_oc}")
+                finally:
+                    if _ftid:
+                        import ctypes as _ctd
+                        try:
+                            _ctd.windll.user32.AttachThreadInput(_ftid, _mtid, False)
+                        except Exception:
+                            pass
                 # 驗證圖表 active 標題 = 目標 symbol
                 _chart_ok = False
                 try:
@@ -1442,8 +1472,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     print(f"✅ 圖表已開: {_sym}")
             except Exception:
                 pass
-        # 🔧 2026-08-18：開圖表後直接掛 EA（用 <experts> 熱鍵 Ctrl+1/2/3... — 已證 work）
-        # 唔使 Ctrl+9 script（MT5 對 synthetic input 唔收）。steps 已喺函數開頭寫（開圖表前）
+        # 🔧 2026-08-18：掛 EA 前重新提升 foreground（open_chart 段已 detach）
+        # MT5 只收 foreground 進程 key — 唔 attach 就 send 唔到（你實測 ^1 冇彈 Properties）
+        _ftid2, _mtid2 = _focus_mt5_foreground(win.element_info.handle)
         # send 快捷鍵
         if open_chart:
             _saw_props = False  # 開咗圖表 → 要 send EA 熱鍵掛 EA（驗證 Properties 彈出）
@@ -1452,6 +1483,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
             _sk(combo)
         time.sleep(3)
+        if _ftid2:
+            import ctypes as _ctd2
+            try:
+                _ctd2.windll.user32.AttachThreadInput(_ftid2, _mtid2, False)
+            except Exception:
+                pass
         def _bm_click(_btn):
             """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
             try:

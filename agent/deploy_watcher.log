@@ -209,3 +209,86 @@
 📌 DeskIn 已移去右上角（唔遮 MT5）
 🔄 Navigator refreshed (right-click → 刷新) at (227,592)
    ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/Breakout added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Breakout.mq5, MT5Cloud_EA/Breakout.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/RSI_Over 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/RSI_Over.mq5 — 自動 refresh Navigator
+⚠️ 搵唔到 popup menu
+🔔 [WATCHER]（MT5Cloud_EA/RSI_Over added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/RSI_Over.ex5 — 自動 refresh Navigator
+   ⚠️ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (227,592)
+   ✅ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/RSI_Over 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/RSI_Over 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/RSI_Over deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/RSI_Over.ex5, MT5Cloud_EA/RSI_Over.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (227,592)
+   ✅ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/Breakout deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/MACD_Cross 已於電腦新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Breakout.mq5, MT5Cloud_EA/Breakout.ex5, MT5Cloud_EA/MACD_Cross.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER]（MT5Cloud_EA/MACD_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/MACD_Cross.ex5 — 自動 refresh Navigator
+⚠️ 搵唔到 popup menu
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Bollinger_Band.mq5, MT5Cloud_EA/Bollinger_Band.ex5 — 自動 refresh Navigator
+   ⚠️ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Parabolic_SAR 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/Parabolic_SAR added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Parabolic_SAR.ex5, MT5Cloud_EA/Parabolic_SAR.mq5 — 自動 refresh Navigator
+🔄 Navigator refreshed (right-click → 刷新) at (227,592)
+   ✅ Navigator refreshed (in-process)
+   🔄 有 pending 變化，繼續 refresh...
+📌 DeskIn 已移去右上角（唔遮 MT5）
+⚠️ 搵唔到 popup menu
+   ⚠️ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/MACD_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/MACD_Cross 已於電腦刪除
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Parabolic_SAR 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Parabolic_SAR 已於電腦刪除
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Bollinger_Band 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Bollinger_Band 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/MACD_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/Bollinger_Band deleted 後續變化 — 窗口內已通知過，skip）
+🔔 [WATCHER]（MT5Cloud_EA/Parabolic_SAR deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/MACD_Cross.mq5, MT5Cloud_EA/Parabolic_SAR.ex5, MT5Cloud_EA/Bollinger_Band.mq5, MT5Cloud_EA/MACD_Cross.ex5, MT5Cloud_EA/Bollinger_Band.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (227,592)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦新增至 MT5
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+⚠️ 搵唔到 popup menu
+   ⚠️ Navigator refreshed (in-process)
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/EMA_Cross 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/EMA_Cross deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/EMA_Cross.mq5, MT5Cloud_EA/EMA_Cross.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (227,592)
+   ✅ Navigator refreshed (in-process)
