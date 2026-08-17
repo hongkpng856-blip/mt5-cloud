@@ -370,3 +370,96 @@
 📌 DeskIn 已移去右上角（唔遮 MT5）
 ⚠️ 搵唔到 popup menu
    ⚠️ Navigator refreshed (in-process)
+🔔 [WATCHER] 通知已寫: Breakout 已於網頁新增至 MT5
+📜 [WATCHER] activity log 已寫: Breakout 已於網頁新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+🔔 [WATCHER]（Breakout added 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: Breakout.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (227,592)
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_Breakout_1786988218.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Breakout_1786988218.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Breakout_1786988218.json
+🤖 AI 正在部署 Breakout 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Breakout → EURUSD H1
+     Magic: 240701, Lot: 1.00
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Breakout --symbol EURUSD --tf H1 --magic 240701 --lot 1.00
+   Exit code: 0
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Breakout_EURUSD_H1.tpl (2398 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^1 附加 Breakout...
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ Breakout 雙擊掛載流程完成（心跳等 tick）
+   ✅ log 驗證: Breakout 喺 EURUSD 啟動（正確圖表）
+   ✅ AutoTrading toggled
+   ✅ EA log: FI	0	01:18:18.354	Breakout (EURUSD,H1)	✅ Breakout 已啟動！策略：區間突破
+   ❌ Breakout heartbeat not detected within 15s
+   ⚠️ Breakout may be attached but no heartbeat detected
+   🎉 Breakout 已成功 attach!
+📜 [WATCHER] activity log 已寫: Breakout 部署完成（attach 成功）
+[deploy_notify] 控制結束
+   📡 Server report: ✅ Breakout
+🔔 [WATCHER] 通知已寫: Breakout 已更新
+📜 [WATCHER] activity log 已寫: Breakout 已更新
+🔔 [WATCHER] 通知已寫: Fibonacci 已於網頁新增至 MT5
+📜 [WATCHER] activity log 已寫: Fibonacci 已於網頁新增至 MT5
+🔄 [WATCHER] Experts 目錄變化: Breakout.mq5, Fibonacci.mq5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)
+
+📥 [WATCHER] New deploy command: deploy_cmd_Breakout_1786988705.json
+
+📥 [WATCHER] Deploy worker: deploy_cmd_Breakout_1786988705.json
+   🗑️ 已刪 command file（處理前 — 防中斷殘留）: deploy_cmd_Breakout_1786988705.json
+🤖 AI 正在部署 Breakout 到 MT5，請勿使用滑鼠及鍵盤...
+[deploy_notify] AI 控制中: 🤖 AI 正在控制 MT5
+
+==================================================
+  🚀 [WATCHER] Deploying: Breakout → EURUSD H1
+     Magic: 240701, Lot: 1.00
+==================================================
+   Running: C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe C:\Users\hongk\Desktop\mt5-cloud\agent\auto_attach.py --ea Breakout --symbol EURUSD --tf H1 --magic 240701 --lot 1.00
+🔔 [WATCHER] 通知已寫: Fibonacci 已於電腦新增至 MT5
+📜 [WATCHER] activity log 已寫: Fibonacci 已於電腦新增至 MT5
+   ⚠️ AI 控制緊（auto_attach），skip Navigator refresh（通知已寫）
+   Exit code: 1
+   📋 Template saved: C:\Users\hongk\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\Profiles\Templates\Breakout_EURUSD_H1.tpl (2398 bytes)
+   🎯 MT5 已帶到最前（輸入生效）
+   🎯 開圖表 + 用快捷鍵 ^1 附加 Breakout...
+   📋 已關閉全部圖表（開機唔 restore）
+   ✅ MT5 restarted, PID=8788
+   📋 開新圖表: EURUSD（Alt+F → Enter → Down×0 → Enter）
+   ✅ 圖表已開: EURUSD
+   ✅ 已撳「確定」（Properties）
+   ✅ Breakout 雙擊掛載流程完成（心跳等 tick）
+   ✅ log 驗證: Breakout 喺 EURUSD 啟動（正確圖表）
+   Stderr: ^^^^^^
+  File "C:\Users\hongk\AppData\Local\Programs\Python\Python311\Lib\site-packages\pywinauto\application.py", line 960, in connect
+    raise ProcessNotFoundError('Process with PID={} not found!'.format(self.process))
+pywinauto.application.ProcessNotFoundError: Process with PID=10052 not found!
+
+   ❌ Breakout attach 失敗 (exit=1)
+📜 [WATCHER] activity log 已寫: Breakout 部署失敗（attach 失敗）
+[deploy_notify] 控制結束
+   📡 Server report: ❌ Breakout
+   ⚠️ purge config 失敗: HTTP Error 404: NOT FOUND
+🔔 [WATCHER] 通知已寫: MT5Cloud_EA/Breakout 已於電腦刪除
+📜 [WATCHER] activity log 已寫: MT5Cloud_EA/Breakout 已於電腦刪除
+🔔 [WATCHER]（MT5Cloud_EA/Breakout deleted 後續變化 — 窗口內已通知過，skip）
+🔄 [WATCHER] Experts 目錄變化: MT5Cloud_EA/Breakout.mq5, MT5Cloud_EA/Breakout.ex5 — 自動 refresh Navigator
+📌 DeskIn 已移去右上角（唔遮 MT5）
+🔄 Navigator refreshed (right-click → 刷新) at (271,679)
+   ✅ Navigator refreshed (in-process)

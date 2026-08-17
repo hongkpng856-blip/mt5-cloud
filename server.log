@@ -234,3 +234,121 @@ Press CTRL+C to quit
 127.0.0.1 - - [18/Aug/2026 01:16:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
 127.0.0.1 - - [18/Aug/2026 01:17:12] "GET /api/dashboard HTTP/1.1" 302 -
 127.0.0.1 - - [18/Aug/2026 01:17:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:18:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:18:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:19:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:19:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:20:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:20:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:21:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:21:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:22:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:22:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:23:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:23:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:24:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:24:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:25:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:25:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:26:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:26:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:27:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:27:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:28:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:28:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:29:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:29:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:30:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:30:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:31:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:31:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:32:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:32:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:33:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:33:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:34:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:34:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:35:00] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:35:00] "GET /socket.io/?EIO=4&transport=polling&t=ikrapiz2 HTTP/1.1" 200 -
+[WS] Connected: Z3iov29VSdlouWRJAAAB
+127.0.0.1 - - [18/Aug/2026 01:35:00] "POST /socket.io/?EIO=4&transport=polling&t=ikrb78tz&sid=aBnoXWKgkIMBf-oDAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:35:00] "GET /socket.io/?EIO=4&transport=polling&t=ikrb9vhh&sid=aBnoXWKgkIMBf-oDAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:35:01] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 01:35:09] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:35:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:35:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:36:00] "GET /socket.io/?EIO=4&transport=websocket&sid=aBnoXWKgkIMBf-oDAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:36:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:36:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:36:48] "POST /api/test-account HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:36:48] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:36:58] "POST /api/test-account HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:36:58] "POST /login HTTP/1.1" 200 -
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: Breakout -> EURUSD H1 (command file written)
+127.0.0.1 - - [18/Aug/2026 01:36:58] "POST /api/deploy HTTP/1.1" 200 -
+[WATCHER] Report: Breakout -> info (🤖 AI 開始部署 Breakout → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 01:37:03] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:37:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:37:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[WATCHER] Report: Breakout -> ok (Breakout attached ✅)
+127.0.0.1 - - [18/Aug/2026 01:38:07] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:38:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:38:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:39:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:39:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:40:12] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:40:12] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:41:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:41:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:41:47] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:41:48] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 01:42:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:42:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:42:32] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:43:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:43:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "GET /socket.io/?transport=polling&EIO=4&t=1786988644.7983615 HTTP/1.1" 200 -
+[WS] Connected: y9l5kdbKQgyoTQRhAAAD
+127.0.0.1 - - [18/Aug/2026 01:44:04] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988644.8026295 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988644.8127947 HTTP/1.1" 200 -
+[WS] Auto-sent EA config to agent DEV00001: 2 EAs
+127.0.0.1 - - [18/Aug/2026 01:44:04] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988644.855211 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988644.8587363 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:04] "GET /api/ea-library/Breakout.mq5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:06] "GET /api/ea-library/Fibonacci.mq5 HTTP/1.1" 200 -
+[WS] Install result: {'status': 'ok', 'ea': 'Breakout.mq5'}
+127.0.0.1 - - [18/Aug/2026 01:44:06] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+[WS] Install result: {'status': 'ok', 'ea': 'Fibonacci.mq5'}127.0.0.1 - - [18/Aug/2026 01:44:08] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+
+127.0.0.1 - - [18/Aug/2026 01:44:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:44:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:14] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:14] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988644.8640878 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:24] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:24] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988654.880143 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:29] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988664.8972912 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:29] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:34] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:34] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988669.8014412 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:44] "POST /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:44] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988674.8968365 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:44:54] "GET /socket.io/?transport=polling&EIO=4&sid=yJFPW82ikYkVHTjsAAAC&t=1786988684.924913 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:45:05] "POST /login HTTP/1.1" 200 -
+[API] open_chart_cmd.json 已寫: EURUSD H1
+[API] Deploy: Breakout -> EURUSD H1 (command file written)
+127.0.0.1 - - [18/Aug/2026 01:45:05] "POST /api/deploy HTTP/1.1" 200 -
+[WATCHER] Report: Breakout -> info (🤖 AI 開始部署 Breakout → MT5，請勿操作電腦...)
+127.0.0.1 - - [18/Aug/2026 01:45:09] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:45:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:45:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[WATCHER] Report: Breakout -> error (Breakout attach failed ❌)
+127.0.0.1 - - [18/Aug/2026 01:46:09] "POST /api/watcher-report HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:46:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:46:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 01:47:07] "POST /api/ea-config/MT5Cloud_EA/Breakout/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 01:47:13] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 01:47:13] "GET /login?next=/api/dashboard HTTP/1.1" 200 -

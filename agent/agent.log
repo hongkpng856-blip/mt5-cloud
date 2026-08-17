@@ -1,0 +1,12 @@
+
+========================================================
+  ☁️  MT5 Cloud Agent
+========================================================
+  Server:   https://having-bent-bunch-theater.trycloudflare.com
+  Agent ID: DEV00001
+  MT5:      ✅ Available
+========================================================
+  Connecting...
+
+❌ Cannot connect to server: HTTPSConnectionPool(host='having-bent-bunch-theater.trycloudflare.com', port=443): Max retries exceeded with url: /socket.io/?transport=polling&EIO=4&t=1786988561.7095582 (Caused by NameResolutionError("HTTPSConnection(host='having-bent-bunch-theater.trycloudflare.com', port=443): Failed to resolve 'having-bent-bunch-theater.trycloudflare.com' ([Errno 11001] getaddrinfo failed)"))
+   Make sure https://having-bent-bunch-theater.trycloudflare.com is running

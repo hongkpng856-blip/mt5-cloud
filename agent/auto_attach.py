@@ -526,7 +526,17 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                         pass
             
             if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA (attempt {attempt+1}/{max_retries})")
+                # 🔧 2026-08-18 FIX：fallback 直接喺 EA交易 下層搵（EA 可能平級放 Experts/{ea}.mq5，
+                # 唔喺 MT5Cloud_EA subfolder）。例如 agent install 寫去 Experts/Breakout.mq5。
+                for sub in ea_trading_node.children():
+                    try:
+                        if sub.text() == ea_name:
+                            ea_node = sub
+                            break
+                    except Exception:
+                        pass
+            if not ea_node:
+                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA/平級 (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue

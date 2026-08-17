@@ -647,8 +647,15 @@ def download_and_install(ea_name, url, ea_config=None):
 
             if experts_dir:
                 base_name = ea_name.replace('.mq5', '')
-                mq5_path = os.path.join(experts_dir, ea_name)
-                
+                # 🔧 2026-08-18：EA 集中落 MT5Cloud_EA subfolder（Navigator 雙擊路徑 auto_attach 用 Experts\MT5Cloud_EA\{ea}）
+                # 同時 copy 去平級 Experts\{ea}.mq5 做 fallback（auto_attach fallback 搵平級）
+                import shutil as _shutil
+                mq5_paths = [os.path.join(experts_dir, ea_name)]
+                mt5cloud_ea_dir = os.path.join(experts_dir, 'MT5Cloud_EA')
+                if os.path.isdir(mt5cloud_ea_dir):
+                    mq5_paths.append(os.path.join(mt5cloud_ea_dir, ea_name))
+                mq5_path = mq5_paths[0]  # 主要寫平級（auto_attach fallback 會搵）
+
                 # Write source with normalized line endings
                 content = resp.text.replace('\r\n', '\n').replace('\n', '\r\n')
                 
