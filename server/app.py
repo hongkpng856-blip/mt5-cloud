@@ -97,9 +97,14 @@ try:
 except Exception as _ebw:
     print(f"[彈返監察] ⚠️ 啟動失敗: {_ebw}", flush=True)
 
+# ⚠️ 2026-08-18 (HY3) 根治：SQLALCHEMY_DATABASE_URI 必須用絕對路徑
+# 之前相對 'sqlite:///mt5cloud.db' → server run 喺 server/ → ORM 寫去 server/mt5cloud.db（空 file）
+# 但 watchdog / raw SQL / stress test 全部讀 instance/mt5cloud.db → 永遠讀唔到 ORM commit
+_instance_db = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db'))
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + _instance_db
+print(f"[DB] SQLAlchemy URI = {app.config['SQLALCHEMY_DATABASE_URI']}", flush=True)
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -1636,9 +1641,16 @@ def api_ea_remove_local(filename):
             for key in list(config_del.keys()):
                 if key == base_only or key.startswith(base_only + '_'):
                     del config_del[key]
-            current_user.ea_config = json.dumps(config_del)
-            db.session.commit()
-            print(f"[remove-local] ✅ 已刪 config: {base_only}（Magic/Symbol 清除）", flush=True)
+            _new_cfg_del = json.dumps(config_del)
+            # ⚠️ 2026-08-18 (HY3) 根治：直接用 raw SQL UPDATE（同 install-local 一樣 — ORM commit 唔 persist 去 DB）
+            import sqlite3 as _sq_del
+            _db_del = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+            _db_del = os.path.abspath(_db_del)
+            _conn_del = _sq_del.connect(_db_del)
+            _conn_del.execute("UPDATE user SET ea_config=? WHERE username='dev'", (_new_cfg_del,))
+            _conn_del.commit()
+            _conn_del.close()
+            print(f"[remove-local] ✅ 已刪 config(SQL): {base_only}（Magic/Symbol 清除, _removed={removed_del}）", flush=True)
         except Exception as _ecfg:
             print(f"[remove-local] ⚠️ 刪 config 失敗: {_ecfg}", flush=True)
         # 釋放快捷鍵（hotkeys.ini — 唔殘留）

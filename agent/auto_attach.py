@@ -1860,21 +1860,30 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
 
 
 def verify_heartbeat(ea_name, timeout=60):
-    """驗證 EA heartbeat file 存在且新鮮（+ MT5 log 後備 — 2026-08-10：市場收市冇 tick 心跳唔寫）"""
-    hb_file = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
+    """驗證 EA heartbeat file 存在且新鮮（+ MT5 log 後備 — 2026-08-10：市場收市冇 tick 心跳唔寫）
+    🚨 2026-08-18 (HY3) 根治：注入嘅心跳 code 寫 state_<ea>.json（FILE_COMMON），唔係 hb_<ea>.txt
+    → 必須同時檢查 state_<ea>.json 同 hb_<ea>.txt（舊版 EA 用 .txt）"""
+    candidates = [
+        os.path.join(COMMON_FILES, f'state_{ea_name}.json'),
+        os.path.join(COMMON_FILES, f'hb_{ea_name}.txt'),
+    ]
     start = time.time()
     
     while time.time() - start < timeout:
-        if os.path.exists(hb_file):
-            mtime = os.path.getmtime(hb_file)
-            age = time.time() - mtime
-            if age < 300:  # Within 5 minutes
-                # Read content
-                with open(hb_file, 'rb') as f:
-                    raw = f.read()
-                content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
-                print(f"💓 {ea_name} heartbeat: {content} ({round(age)}s ago)")
-                return True
+        for hb_file in candidates:
+            if os.path.exists(hb_file):
+                mtime = os.path.getmtime(hb_file)
+                age = time.time() - mtime
+                if age < 300:  # Within 5 minutes
+                    # Read content
+                    try:
+                        with open(hb_file, 'rb') as f:
+                            raw = f.read()
+                        content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
+                    except Exception:
+                        content = ''
+                    print(f"💓 {ea_name} heartbeat: {content} ({round(age)}s ago) [{os.path.basename(hb_file)}]")
+                    return True
         time.sleep(3)
     
     # 🚨 2026-08-10：心跳冇 → 睇 MT5 log「已啟動」（市場收市冇 tick — EA 其實啟動咗）
@@ -1997,43 +2006,45 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # Step 3: Attach EA（🎯 快捷鍵優先 — 2026-08：6093 double-click 唔 work）
         # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
         hotkeys = load_hotkey_map()
-        if ea_name in hotkeys:
-            success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
-        else:
-            success = attach_ea_navigator(ea_name, mt5_pid, symbol=args.symbol)
-        if not success:
-            # 🚨 2026-08-12 FIX：重試時唔建立新圖表（open_chart=False — 重用現有圖表 — 之前每次重試建立新圖表 → 「開好多圖表」）
-            print(f"⚠️ 快捷鍵方法失敗 — 自動重試快捷鍵（×2，唔再建立新圖表）...")
-            for _rt2 in range(2):
-                check_abort()
-                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol, open_chart=False)
-                if success:
-                    break
-                time.sleep(2)
-        if not success:
-            print("⚠️ 快捷鍵重試後都失敗（不再試 Navigator — 6093 免疫）")
-        
-        if not success:
-            print("❌ Failed to attach EA")
-            return False
-        check_abort()
-        
-        # Step 4: Ensure AutoTrading ON
-        ensure_auto_trading_on(mt5_pid)
-        check_abort()
-        
-        # Step 5: Verify
-        time.sleep(5)
-        loaded = verify_ea_loaded(ea_name)
-        # ⚠️ heartbeat timeout 15 秒（唔係 60）— 好多 EA（TestRunner 等）冇 heartbeat 機制 → 白等 60 秒
-        heartbeat = verify_heartbeat(ea_name, timeout=15)
-        
-        if heartbeat:
-            print(f"\n🎉 SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
-            return True
-        else:
-            print(f"\n⚠️ {ea_name} may be attached but no heartbeat detected")
-            return loaded
+        symbol_arg = None
+        try:
+            symbol_arg = args.symbol
+        except NameError:
+            symbol_arg = symbol
+        # 🚨 2026-08-18 (HY3) 根治：attach 唔可靠 → 循環 attach 直到心跳出現（最多 3 次）
+        # 每次 attach 之後即時 verify_heartbeat；有心跳即 return True（唔使等 watcher 二次確認）
+        max_attach = 3
+        for _att in range(max_attach):
+            check_abort()
+            if ea_name in hotkeys:
+                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=symbol_arg)
+            else:
+                success = attach_ea_navigator(ea_name, mt5_pid, symbol=symbol_arg)
+            if not success:
+                print(f"⚠️ attach 第 {_att+1} 次失敗 — 重試（唔再開新圖表）...")
+                for _rt2 in range(2):
+                    check_abort()
+                    success = attach_ea_hotkey(ea_name, mt5_pid, symbol=symbol_arg, open_chart=False)
+                    if success:
+                        break
+                    time.sleep(2)
+            if not success:
+                print(f"⚠️ 第 {_att+1} 輪 attach 全部失敗")
+                time.sleep(3)
+                continue
+            # 即時驗證心跳（attach 成功後等幾秒等 OnInit + 首次 OnTimer）
+            time.sleep(5)
+            ensure_auto_trading_on(mt5_pid)
+            hb = verify_heartbeat(ea_name, timeout=20)
+            if hb:
+                print(f"\n🎉 SUCCESS: {ea_name} is running on {symbol_arg} {timeframe}!")
+                return True
+            else:
+                print(f"⚠️ 第 {_att+1} 輪 attach 後心跳未出 — 重試 attach")
+                time.sleep(3)
+        # 3 輪都 attach 咗但心跳未出 → 最後一次 log 後備確認
+        print(f"\n⚠️ {ea_name} 3 輪 attach 後心跳仍未檢測到")
+        return False
     except ControlAborted:
         print(f"\n🚨 部署被用戶緊急停止！")
         return False

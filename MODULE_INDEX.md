@@ -61,7 +61,7 @@
 | 下載 | `server/app.py` L651（`/api/ea-library/<filename>`） |
 | Dev 上傳 | `server/app.py` L626（`/api/ea-library/dev-upload`） |
 | 用戶上傳 | `server/app.py` L743（`/api/ea-library/upload` — **自動安裝落本機 + 排 compile**） |
-| **安裝落本機** | `server/app.py` L744（`/api/ea-library/install-local/<filename>` — 複製 .mq5 + **寫 config（raw SQL `UPDATE user SET ea_config=? WHERE username='dev'` — 繞過 SQLAlchemy ORM，因 ORM commit 唔 persist → bounce_back watchdog 讀舊 config 誤刪 .mq5）** + 排 compile + **寫 web_add flag**） |
+| **安裝落本機** | `server/app.py` L744（`/api/ea-library/install-local/<filename>` — 複製 .mq5 + **寫 config（v0.9.67 起：SQLALCHEMY_DATABASE_URI 改絕對路徑 `instance/mt5cloud.db` → ORM `db.session.commit()` 正常 persist；之前 raw SQL 繞過因 URI 相對路徑令 ORM 寫去 `server/mt5cloud.db` 空 file）** + 排 compile + **寫 web_add flag**） |
 | **剷除本機檔案** | `server/app.py` L711（`/api/ea-library/remove-local/<filename>`，POST — **寫 web_delete flag + 網頁剷除 activity log**） |
 | **重試 compile** | `server/app.py`（`/api/ea-library/retry-compile/<name>` — 手動重觸發 compile + double-check） |
 | Compile 排隊 | server 寫 `compile_cmd_*.json` → watcher `process_compile_cmd()`（GUI compile + 失敗自動重試 3 次） |
@@ -136,6 +136,7 @@
 7. verify（heartbeat `state_*.json`/`hb_*.txt` + EA log）
 8. `control_guard.release()` — 關視窗 + 清 lock
 - ⚠️ **v0.9.66（commit `D08888C3`，由 HY3 更改）唔再 restart MT5**：掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload hotkeys.ini → 避免 PID 變令後續 connect fail。同版本修復：① `install-local` config 改用 raw SQL（ORM commit 唔 persist → bounce_back 誤刪 .mq5）② auto_attach `find_ea_dialog`/`ctypes`/`click_y` 間歇性崩潰 ③ UI 字眼「移去配對」→「加入配對」④ delete 後清心跳 file
+- ⚠️ **v0.9.67（2026-08-18，由 HY3 更改）真正 root cause 根治 + 5/5 PASS**：① 🔥 `SQLALCHEMY_DATABASE_URI` 改絕對路徑 `instance/mt5cloud.db`（之前相對路徑 → ORM 寫去 `server/mt5cloud.db` 空 file → watchdog/raw SQL/stress test 讀 `instance/mt5cloud.db` 永遠 mismatch → 全部 6 個 config 寫入位 persist 唔到；改絕對路徑後全部自動修好）② `verify_heartbeat` 同時檢查 `state_<ea>.json` + `hb_<ea>.txt`（之前淨查 hb_ → 注入 code 寫 state_ → 永遠 False）③ `auto_attach_ea` 循環 attach 最多 3 次，有心跳先 return True（之前 heartbeat 失敗 `return loaded` stale log → 誤報成功）④ 壓力測試達成真正 5/5 PASS（age 0.1-1.0s）
 
 **⚠️ 注意：**
 - ⚠️ **watcher 鎖**：deploy worker 寫 `.auto_attach_running` 用 os.getpid（watcher 自己）— `is_auto_attach_running()` 要 skip 自己 PID（2026-08 修 — 唔係會永遠 queuing）
@@ -156,7 +157,7 @@
 - ⚠️ **部署前確保熱鍵**（`ensure_hotkey_for_ea()`）：MT5 重啟會覆寫 hotkeys.ini（未經 GUI 設定嘅新 EA 熱鍵會冇）→ 部署前檢查 + 冇就分配 + 關 MT5 → 寫 → 開（reload）
 - ⚠️ **網頁剷除 EA**（2026-08-10）：remove-local 唔接受帶 .mq5 名（Invalid filename）→ 正則放寬 + base_only 搵檔；前端傳淨名 + remove-local 失敗唔刪 config（防半刪除狀態）
 - ⚠️ **Watcher 掛起**（2026-08-10 根治）：**deploy_notify.py 用 tkinter（thread 開 Tk → Tcl_AsyncDelete crash → worker thread 死 → deploy_cmd 冇人處理 → 部署冇反應）** — 已改 no-op（唔開 tkinter）+ worker thread 自動重生 + deploy_cmd 處理前刪除 + queue put timeout 唔阻塞
-- ⚠️ **心跳驗證後備**（2026-08-10）：市場收市冇 tick → 心跳唔寫 → verify_heartbeat 加 MT5 log「已啟動」後備（唔誤判失敗）；心跳檔 mtime <120 秒先當新鮮
+- ⚠️ **心跳驗證後備**（2026-08-10）：市場收市冇 tick → 心跳唔寫 → verify_heartbeat 加 MT5 log「已啟動」後備（唔誤判失敗）；心跳檔 mtime <120 秒先當新鮮。**v0.9.67 起 `verify_heartbeat` 同時檢查 `state_<ea>.json`（注入 code 寫呢個）同 `hb_<ea>.txt`**，兩個 file 任一新鮮即 PASS；`auto_attach_ea` 循環 attach 最多 3 次直到心跳出現先 return True（唔再靠 stale log `return loaded` 誤報成功）
 - ⚠️ **Watchdog**（2026-08-10）：每分鐘檢查 Watcher/Server/Detector/**MT5（冇開自動開）** — log: ~/AppData/Local/hermes/scripts/mt5_watchdog.log（agent/ 版寫 agent/mt5_watchdog.log）— 閒置唔會失效；watcher 輸出 redirect deploy_watcher.log（死因可查）
 
 **⚠️ 重要（Bug #50）：**
