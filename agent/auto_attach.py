@@ -1377,261 +1377,78 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         except Exception:
             pass
         # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
-        # ✅ 用戶方法（2026-08-15）：OpenChart script 熱鍵（Ctrl+O — 用戶 set 咗）— 開目標圖表 → 附加 EA 落去
-        # 流程：寫 json → 確保有圖表（熱鍵要圖表）→ Ctrl+O（OpenChart script 讀 json → ChartOpen 開目標圖表 active）→ 附加 EA（熱鍵 — 落 active）
+        # 🔧 2026-08-18 REVERT 到用戶 08-10 定案：開圖表用 Alt+F menu（唔使 script 熱鍵）
+        # Ctrl+9 (<scripts> 熱鍵) MT5 對 synthetic input 唔接受（只收真實硬件鍵盤）— 死結；改用 Alt+F → Down×N → Enter
+        # 掛 EA 用 <experts> 熱鍵（Ctrl+1/2/3... — 已證 work，MT5 原生 EA 熱鍵收 synthetic input）
         if open_chart:
             try:
-                _sym = (symbol or '').upper()
-                # ① 寫 json（OpenChart script 讀呢個 — 一體化：symbol + ea + 模板名）
+                _sym = (symbol or 'EURUSD').upper()
+                # 🔧 2026-08-18 REVERT 到用戶 08-10 定案：開圖表用 Alt+F menu（唔使 script 熱鍵）
+                # Ctrl+9 (<scripts> 熱鍵) 對 synthetic input 唔接受（MT5 只收真實硬件鍵盤）— 死結
+                # 改用 Alt+F → Enter（開新圖表 dialog）→ Down×N 揀 symbol → Enter（確認開圖表）
+                # 6 個固定位置（MODULE_INDEX 記錄）：1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
+                _DOWN_MAP = {'EURUSD':0,'GBPUSD':1,'USDCHF':2,'USDJPY':3,'USDCNH':4,'AUDUSD':5}
+                _doffs = _DOWN_MAP.get(_sym, 0)
                 try:
-                    import json as _joc
-                    _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
-                    _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → MT5Cloud_EA）
-                    # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
-                    try:
-                        _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                        _tpl_full_t = None
-                        for _d_t2 in os.listdir(_mt5_data_t) if os.path.isdir(_mt5_data_t) else []:
-                            _pp = os.path.join(_mt5_data_t, _d_t2, 'MQL5', 'Profiles', 'Templates')
-                            if os.path.isdir(_pp):
-                                _tpl_full_t = os.path.join(_pp, _tpl_name)
-                                break
-                        if _tpl_full_t and not os.path.isfile(_tpl_full_t):
-                            _CR = chr(13) + chr(10)
-                            _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
-                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
-                            _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
-                            _tpl_t += '</expert>' + _CR + _CR
-                            _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
-                            _tpl_t += '<indicator>' + _CR + 'name=Main' + _CR + 'path=' + _CR + 'apply=1' + _CR + 'show_data=1' + _CR + 'scale_inherit=0' + _CR + 'scale_line=0' + _CR + 'scale_line_percent=50' + _CR + 'scale_line_value=0.000000' + _CR + 'scale_fix_min=0' + _CR + 'scale_fix_min_val=0.000000' + _CR + 'scale_fix_max=0' + _CR + 'scale_fix_max_val=0.000000' + _CR + '</indicator>' + _CR + _CR
-                            _tpl_t += '</window>' + _CR + _CR + '</chart>'
-                            with open(_tpl_full_t, 'wb') as _f_t:
-                                _f_t.write(b'\xff\xfe')
-                                _f_t.write(_tpl_t.encode('utf-16-le'))
-                            print(f"📋 模板已生成: {_tpl_name}（path → MT5Cloud_EA）")
-                    except Exception as _ete:
-                        print(f"⚠️ 生成模板失敗: {_ete}")
-                    with open(_cmd_file, 'w', encoding='utf-8') as _f:
-                        _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
-                                   'ea': ea_name, 'tpl': _tpl_name}, _f)
-                    # 🚨 2026-08-15 FIX：寫入後驗證（讀返確認 — json 舊值問題：部署 USDJPY 但 script 讀到舊 GBPUSD）
-                    try:
-                        _chk = _joc.load(open(_cmd_file, encoding='utf-8'))
-                        if _chk.get('symbol') != _sym:
-                            with open(_cmd_file, 'w', encoding='utf-8') as _f2:
-                                _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
-                                           'ea': ea_name, 'tpl': _tpl_name}, _f2)
-                            print(f"📋 json 重寫（驗證唔啱 → {_sym}）")
-                        else:
-                            print(f"📋 json 寫入驗證 OK: {_sym}")
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
-                # ② 確保有圖表（熱鍵要圖表 active — 用戶實測）
-                _has_chart_oc = False
-                try:
-                    for _d_oc in win.descendants():
-                        if _d_oc.element_info.class_name == 'MDIClient':
-                            _has_chart_oc = len(_d_oc.children()) > 0
-                            break
-                except Exception:
-                    pass
-                if not _has_chart_oc:
-                    # 🚨 2026-08-17 FIX：完整開新圖表（Alt+F → Enter ×3 — 第三個 Enter 確認 dialog 開預設 symbol — 確保有「真圖表 window」先可以觸發 Ctrl+9 熱鍵）
-                    # （之前只有 2 個 Enter → 只開到 dialog 未真正開圖表 → 冇圖表 active → Ctrl+9 唔觸發 → 開圖表失敗！）
-                    print("📋 冇圖表 — 開新圖表（Alt+F → Enter ×3）")
-                    _sk('%f')
-                    time.sleep(1.5)
-                    _sk('{ENTER}')
-                    time.sleep(1.5)
-                    _sk('{ENTER}')
-                    time.sleep(1.5)
-                    _sk('{ENTER}')
-                    time.sleep(3)
-                # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
-                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
-                # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
-                _need_restart9 = False
-                try:
-                    _hk9_path = None
-                    _hk9_tdir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                    if os.path.isdir(_hk9_tdir):
-                        for _d9 in os.listdir(_hk9_tdir):
-                            _p9 = os.path.join(_hk9_tdir, _d9, 'config', 'hotkeys.ini')
-                            if os.path.isfile(_p9):
-                                _hk9_path = _p9
-                                break
-                    if _hk9_path:
-                        # 🚨 2026-08-17 FIX：讀寫用 utf-16（自動處理 BOM — utf-16-le 讀唔會剝 BOM → 寫返會冇 BOM → MT5 讀唔到熱鍵！）
-                        _hk9_c = open(_hk9_path, encoding='utf-16', errors='ignore').read()
-                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
-                        if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
-                            _hk9_ok = True
-                        else:
-                            # 寫入/修正 <scripts> Ctrl+9
-                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
-                            if '<scripts>' in _hk9_c:
-                                import re as _re9
-                                _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
-                            else:
-                                _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
-                            with open(_hk9_path, 'wb') as _f9:
-                                _f9.write(('\ufeff' + _hk9_c).encode('utf-16-le'))
-                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
-                            _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
-                    # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
-                    # （實測：每次重啟後 Ctrl+9 script 熱鍵未 ready → 開圖表唔work；但你手動環境（MT5 一直運行）Ctrl+9 每次 work
-                    #   → 唔好無謂重啟 — MT5 一直運行保持 Ctrl+9 ready；只有 hotkeys.ini 改變先要 reload）
-                    # _need_restart9 = True  ← 移除（唔強制每次重啟）
-                except Exception as _e9x:
-                    print(f"⚠️ hotkeys.ini 檢查失敗: {_e9x}")
-                if _need_restart9:
-                    try:
-                        import subprocess as _sp9
-                        _sp9.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
-                        time.sleep(4)
-                        _sp9.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
-                        time.sleep(25)
-                        print("✅ MT5 已重啟（load OpenChart Ctrl+9 熱鍵）")
-                    except Exception as _e9:
-                        print(f"⚠️ 重啟失敗: {_e9}")
-                # 確保有圖表 + focus
-                try:
+                    import pyautogui as _pg_oc
+                    _pg_oc.FAILSAFE = False
                     import ctypes as _ct_oc
-                    _u_oc = _ct_oc.windll.user32
-                    _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
+                    _ct_oc.windll.user32.SetForegroundWindow(ctypes.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    try:
-                        import pyautogui as _pg_oc
-                        _pg_oc.FAILSAFE = False
-                        _r_oc = win.rectangle()
-                        _pg_oc.click(_r_oc.left + _r_oc.width() // 2, _r_oc.top + _r_oc.height() // 2)
-                        time.sleep(0.8)
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
-                # send Ctrl+9（pyautogui）
-                _oc_ok2 = False
-                for _ocr in range(2):
-                    try:
-                        import pyautogui as _pg_oc2
-                        _pg_oc2.FAILSAFE = False
-                        _pg_oc2.hotkey('ctrl', '9')
-                    except Exception:
-                        _sk('^9')
-                    time.sleep(3.5)
-                    # 檢查有冇彈「選項/導航熱鍵」dialog（Alt+Q 未 load 嘅標誌）
-                    _opt_dlg = False
-                    try:
-                        def _cb_opt(_h2, _x2):
-                            nonlocal _opt_dlg
-                            if _u_oc.IsWindowVisible(_h2):
-                                _c2 = ctypes.create_unicode_buffer(64)
-                                _u_oc.GetClassNameW(_h2, _c2, 64)
-                                if '#32770' in _c2.value:
-                                    _l2 = _u_oc.GetWindowTextLengthW(_h2)
-                                    _b2 = ctypes.create_unicode_buffer(_l2 + 1)
-                                    _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
-                                    if '選項' in _b2.value or 'Option' in _b2.value or '熱鍵' in _b2.value:
-                                        _opt_dlg = True
-                            return True
-                        _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_opt), None)
-                    except Exception:
-                        pass
-                    if _opt_dlg:
-                        print("⚠️ Ctrl+9 彈咗視窗（script 熱鍵未 load）— 關閉 + 重啟 MT5 reload 熱鍵")
-                        try:
-                            _sk('{ESC}')
-                            time.sleep(1)
-                        except Exception:
-                            pass
-                        # 重啟 MT5（reload 熱鍵）
-                        import subprocess as _sp_oc
-                        try:
-                            _sp_oc.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
-                            time.sleep(4)
-                            _sp_oc.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
-                            time.sleep(25)
-                            print("✅ MT5 已重啟（reload 熱鍵）")
-                        except Exception as _eoc_r:
-                            print(f"⚠️ 重啟失敗: {_eoc_r}")
-                        continue
-                    else:
-                        # 🚨 2026-08-17 FIX：驗證用「MT5 active 圖表標題 = 目標 symbol」（唔用 log — log 延遲/唔寫 → 誤判「靜默失敗」；active 標題 Ctrl+9 開完 BRING_TO_TOP 即時改 — 準確）
-                        _chart_ok = False
-                        try:
-                            def _cb_title(_h2, _x2):
-                                nonlocal _chart_ok
-                                if _u_oc.IsWindowVisible(_h2):
-                                    _c2 = ctypes.create_unicode_buffer(64)
-                                    _u_oc.GetClassNameW(_h2, _c2, 64)
-                                    if 'MetaQuotes::MetaTrader' in _c2.value:
-                                        _l2 = _u_oc.GetWindowTextLengthW(_h2)
-                                        _b2 = ctypes.create_unicode_buffer(_l2 + 1)
-                                        _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
-                                        if _sym in _b2.value:
-                                            _chart_ok = True
-                                            return False
-                                return True
-                            _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_title), None)
-                        except Exception:
-                            pass
-                        if not _chart_ok:
-                            print(f"⚠️ Ctrl+9 冇開到圖表（{_sym} active 標題未變）— 重試")
-                            time.sleep(2)
-                            continue
-                        _oc_ok2 = True
-                        break
-                time.sleep(1)
-                print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）" if _oc_ok2 else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
-                # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
-                # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
+                    # Alt+F 開 File menu
+                    _pg_oc.hotkey('alt', 'f')
+                    time.sleep(1.5)
+                    # Enter 開「開新圖表」dialog（第一項）
+                    _pg_oc.press('enter')
+                    time.sleep(1.5)
+                    # Down×N 揀 symbol
+                    for _ in range(_doffs):
+                        _pg_oc.press('down')
+                        time.sleep(0.3)
+                    time.sleep(0.5)
+                    # Enter 確認開圖表
+                    _pg_oc.press('enter')
+                    time.sleep(3)
+                    _r_oc = win.rectangle()
+                    _pg_oc.click(_r_oc.left + _r_oc.width() // 2, _r_oc.top + _r_oc.height() // 2)
+                    time.sleep(1)
+                    print(f"📋 開新圖表: {_sym}（Alt+F → Down×{_doffs} → Enter）")
+                except Exception as _e_oc:
+                    print(f"⚠️ 開圖表異常: {_e_oc}")
+                # 驗證圖表 active 標題 = 目標 symbol
+                _chart_ok = False
                 try:
                     import ctypes as _c9
                     _u9 = _c9.windll.user32
-                    _chart_title = ''
                     @_c9.WINFUNCTYPE(_c9.c_bool, _c9.c_size_t, _c9.c_size_t)
                     def _cb9(hwnd, _):
-                        nonlocal _chart_title
+                        nonlocal _chart_ok
                         _cls = _c9.create_unicode_buffer(80)
                         _u9.GetClassNameW(_c9.c_void_p(hwnd), _cls, 80)
                         if 'Chart' in _cls.value or 'MetaTrader' in _cls.value:
                             _buf = _c9.create_unicode_buffer(120)
-                            _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, 120)
-                            _tt = _buf.value
-                            if _tt and _sym[:3] in _tt:
-                                _chart_title = _tt
-                                return False  # 停
+                            _l9 = _u9.GetWindowTextLengthW(_c9.c_void_p(hwnd))
+                            if _l9 > 0:
+                                _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, _l9 + 1)
+                                if _sym in _buf.value:
+                                    _chart_ok = True
+                                    return False
                         return True
-                    for _w in _app.windows():
-                        try:
-                            _u9.EnumChildWindows(_c9.c_void_p(int(_w.element_info.handle)), _cb9, 0)
-                        except Exception:
-                            pass
-                        if _chart_title:
-                            break
-                    if _chart_title:
-                        print(f"   ✅ 圖表標題驗證: {_chart_title[:40]}")
-                    else:
-                        print(f"   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）")
+                    _u9.EnumWindows(_cb9, None)
                 except Exception:
                     pass
-                try:
-                    _steps[0]['status'] = 'done'
-                    _steps[1]['status'] = 'doing'
-                    _update_steps(_steps)
-                except Exception:
-                    pass
+                if not _chart_ok:
+                    print(f"⚠️ 開圖表未確認（{_sym} active 標題未變）— 唔阻塞，繼續掛 EA")
+                else:
+                    print(f"✅ 圖表已開: {_sym}")
             except Exception:
                 pass
-        # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
+        # 🔧 2026-08-18：開圖表後直接掛 EA（用 <experts> 熱鍵 Ctrl+1/2/3... — 已證 work）
+        # 唔使 Ctrl+9 script（MT5 對 synthetic input 唔收）。steps 已喺函數開頭寫（開圖表前）
         # send 快捷鍵
-        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — 套模板已掛 EA）→ 跳過 send 熱鍵（唔好再附加落 active 圖表）
         if open_chart:
-            _saw_props = True  # 套模板已掛 — 當附加完成
+            _saw_props = False  # 開咗圖表 → 要 send EA 熱鍵掛 EA（驗證 Properties 彈出）
+            _sk(combo)
         else:
             _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
             _sk(combo)

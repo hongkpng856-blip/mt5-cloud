@@ -1,0 +1,54 @@
+[彈返監察] 定期自癒已啟動（每 30 秒）
+☁️  MT5 Cloud Server :5001
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.18.2:5001
+Press CTRL+C to quit
+127.0.0.1 - - [17/Aug/2026 23:55:43] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [17/Aug/2026 23:56:09] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [17/Aug/2026 23:56:09] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2026 23:57:03] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [17/Aug/2026 23:57:09] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [17/Aug/2026 23:57:09] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.mq5
+127.0.0.1 - - [17/Aug/2026 23:57:44] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [17/Aug/2026 23:58:09] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [17/Aug/2026 23:58:09] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2026 23:59:09] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [17/Aug/2026 23:59:09] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.mq5
+127.0.0.1 - - [17/Aug/2026 23:59:16] "POST /api/ea-config/MT5Cloud_EA/RSI_Over/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:00:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:00:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:00:15] "POST /api/ea-config/MT5Cloud_EA/Breakout/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: EMA_Cross.mq5
+127.0.0.1 - - [18/Aug/2026 00:00:44] "POST /api/ea-config/MT5Cloud_EA/EMA_Cross/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:01:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:01:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:02:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:02:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.ex5
+[彈返監察] 🗑️ 定期自癒刪除彈返: RSI_Over.mq5
+127.0.0.1 - - [18/Aug/2026 00:02:16] "POST /api/ea-config/MT5Cloud_EA/RSI_Over/purge?agent_id=DEV00001 HTTP/1.1" 404 -
+127.0.0.1 - - [18/Aug/2026 00:03:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:03:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:04:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:04:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:05:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:05:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:06:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:06:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:07:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:07:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:08:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:08:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:09:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:09:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [18/Aug/2026 00:10:10] "GET /api/dashboard HTTP/1.1" 302 -
+127.0.0.1 - - [18/Aug/2026 00:10:10] "GET /login?next=/api/dashboard HTTP/1.1" 200 -

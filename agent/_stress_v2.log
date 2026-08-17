@@ -1,0 +1,35 @@
+
+=======================================================
+🏁 第 1/5 輪 — ['EMA_Cross']
+  關圖表: 0 個
+  剸除: 2 個本機 EA
+  添加: EMA_Cross
+  重啟 MT5（load 熱鍵 + scripts Ctrl+9）...
+✅ 一體化：EMA_Cross 已由套模板掛落圖表（跳過附加熱鍵）
+📋 冇圖表 — 開新圖表（pyautogui Alt+F → Enter ×3）
+⚠️ 開圖表異常: cannot access local variable '_u_oc' where it is not associated with a value
+⚠️ Ctrl+9 冇開到圖表（EURUSD active 標題未變）— 重試
+⚠️ Ctrl+9 冇開到圖表（EURUSD active 標題未變）— 重試
+⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+✅ EMA_Cross 附加成功（心跳存在）
+❌ log 驗證: EMA_Cross 冇喺 EURUSD 啟動（可能開錯圖表 — 檢查心跳後備）
+⏳ 心跳後備第一次失敗 — 等 5 秒再試（EA 可能仲初始化緊）...
+  部署 EMA_Cross→EURUSD: ❌(FAIL) log=❌
+  第 1 輪: ❌ 失敗
+
+=======================================================
+🏁 第 2/5 輪 — ['Breakout', 'RSI_Over']
+  關圖表: 0 個
+  剸除: 0 個本機 EA
+  添加: Breakout
+  添加: RSI_Over
+  重啟 MT5（load 熱鍵 + scripts Ctrl+9）...
+✅ 一體化：Breakout 已由套模板掛落圖表（跳過附加熱鍵）
+📋 冇圖表 — 開新圖表（pyautogui Alt+F → Enter ×3）
+⚠️ 開圖表異常: cannot access local variable '_u_oc' where it is not associated with a value
+⚠️ Ctrl+9 冇開到圖表（GBPUSD active 標題未變）— 重試
+⚠️ Ctrl+9 冇開到圖表（GBPUSD active 標題未變）— 重試
+⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）
+   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）
+✅ Breakout 附加成功（心跳存在）
