@@ -31,7 +31,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
-| **v0.9.66** | 2026-08-18 | 🎯 **壓力測試 5/5 PASS 根治（用戶要求清重複圖表 + 五次壓力測試）**：**① auto_attach 唔再 restart MT5**（hotkeys.ini reload 檢查令 PID 變 → 後續 pywinauto connect 舊 PID fail → exit=1 → watcher 誤報失敗；掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload）**② 修 `attach_ea_navigator` 缺 `symbol` 參數 NameError**（Round 4-5 崩潰根因 — 開新圖表段 print/send_keys 用未定義 symbol → crash → EA 掛唔到 → 心跳冇出；加 `symbol` param + caller 傳 `args.symbol`）**③ 心跳驗證接受 `state_*.json` 或 `hb_*.txt`**（唔同 EA 寫法唔同 — EMA_Cross 淨寫 state_ 唔寫 hb_ → 之前誤判 FAIL）**④ 清重複圖表**（開新圖表前先關晒所有 MDI 圖表 → 每次部署得 1 個 EURUSD）**⑤ 環境清理**：kill auto_trade_detector（亂 restart MT5 干擾）+ kill 連 dead tunnel 舊 agent + spawn 新 agent 連 127.0.0.1:5001（live backend 同套）**⑥ 壓力測試 5/5 PASS**（EMA_Cross ×5 輪：配對→部署→心跳驗證 age 0.1-1.0s→刪除→確認清走）|
+| **v0.9.66** | 2026-08-18 | 🎯 **壓力測試 5/5 PASS 根治（用戶要求清重複圖表 + 五次壓力測試）— 由 HY3（呢個模型）更改，commit `D08888C3`**：**① auto_attach 唔再 restart MT5**（hotkeys.ini reload 檢查令 PID 變 → 後續 pywinauto connect 舊 PID fail → exit=1 → watcher 誤報失敗；掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload）**② 修 `attach_ea_navigator` 缺 `symbol` 參數 NameError**（Round 4-5 崩潰根因 — 開新圖表段 print/send_keys 用未定義 symbol → crash → EA 掛唔到 → 心跳冇出；加 `symbol` param + caller 傳 `args.symbol`）**③ 心跳驗證接受 `state_*.json` 或 `hb_*.txt`**（唔同 EA 寫法唔同 — EMA_Cross 淨寫 state_ 唔寫 hb_ → 之前誤判 FAIL）**④ 清重複圖表**（開新圖表前先關晒所有 MDI 圖表 → 每次部署得 1 個 EURUSD）**⑤ 環境清理**：kill auto_trade_detector（亂 restart MT5 干擾）+ kill 連 dead tunnel 舊 agent + spawn 新 agent 連 127.0.0.1:5001（live backend 同套）**⑥ 壓力測試 5/5 PASS**（EMA_Cross ×5 輪：配對→部署→心跳驗證 age 0.1-1.0s→刪除→確認清走）**⑦ 🔥 修 `install-local` config 唔 persist（CRITICAL — 隱藏 root cause）**：`current_user.ea_config=...; db.session.commit()` 喺 SQLAlchemy 下**冇真正寫入 DB** → `_bounce_back_watchdog` 每 30s 讀 config 讀到舊值（冇 EMA_Cross）→ 誤刪 `.mq5` → compile fail → 心跳冇出 → 壓力測試輪流 FAIL（bounce_back_log.jsonl 證實每 30s 刪一次 EMA_Cross）。根治：改用 raw SQL `UPDATE user SET ea_config=? WHERE username='dev'`（繞過 ORM）。**⑧ 修 auto_attach 間歇性崩潰**：`find_ea_dialog` UnboundLocalError（nested def 喺 call 之前未定義 → 搬 module-level）+ `ctypes`/`user32` NameError（加 module import）+ `click_y` NameError（加 `click_y=None` default）**⑨ #39 UI 字眼**：EA 倉庫「移去配索」→「加入配對」（未加入 EA button 正確）**⑩ #40 delete 後清心跳 file**：deploy_watcher delete 流程加 `os.remove(hb_*.txt + state_*.json)`（pause 唔清，保留配置）|
 | **v0.9.65** | 2026-08-18 | 🎯 **掛 EA 失敗根治 + 重複圖表修復**：**① 廢除 TVM_GETITEMRECT 座標 + 掃描亂點模式**（GETITEMRECT fail → 落入掃描模式逐行 double-click 成個 tree → 掛唔到/掛錯 EA）→ 改用 v0.9.61 證實 work 嘅 `ea_node.click_input(double=True)`（handle-based，唔使座標，唔受 owner-draw/語言影響）**② 重複 EURUSD 圖表**（「Chart already open, skipping Ctrl+N」→ 殘留舊圖表疊加 → 3+ 個 EURUSD）→ 改開新圖表前先關晒所有 MDI 圖表 |
 | **v0.9.56** | 2026-08-17 | ⭐ **壓力測試 + 環境修復（發現一系列環境層面問題 — 全部修復）**：**① OpenChart.ex5 script 被誤刪**（之前 cleanup 刪咗 → Ctrl+9 send 去唔存在嘅 script → 開圖表失敗 — 已重建 + 編譯（一體化版 — 讀 json → ChartOpen + ChartApplyTemplate）**② hotkeys.ini 冇 BOM**（`utf-16-le` 寫 → 無 \\ufeff → MT5 讀唔到熱鍵 → Ctrl+9 失效 — 已修：統一 utf-16（BOM）+ auto_attach 寫入加 \\ufeff）**③ 開圖表方式**（Alt+F → Enter×2 只開 dialog — 要 Enter×3 先有真圖表 window — 先可以觸發 Ctrl+9 — 已修）**④ 驗證方法**（用 MT5 Experts log 誤判（script Print 唔一定寫嗰度 + log 延遲）→ 改「MT5 active 圖表標題 = 目標 symbol」— Ctrl+9 開完 BRING_TO_TOP → active 即時改 — 準確）**⑤ Ctrl+9 5/5 開圖表成功**（clean 環境 + 唔同 symbol — active 標題驗證全部成功）**⑥ 壓力測試新發現：「每次重啟 MT5」唔好做** — 實測每次重啟後 script 熱鍵未 ready → Ctrl+9 唔work；你手動環境（MT5 一直運行）Ctrl+9 每次 work → 改「只喺 hotkeys.ini 變咗先重啟」（唔好無謂重啟 — MT5 一直運行保持 Ctrl+9 ready）**⑦ 已知未解**：同 symbol 圖表已存在 → ChartOpen 唔會再開新（focus 返舊）→ log 冇「已開」誤判；Ctrl+9 自動化 send 仍時好時壞（你手動穩定 — 需配合/半自動）|
 | **v0.9.55** | 2026-08-17 | ⭐ **部署一體化完全穩定（Ctrl+9 熱鍵 + 每次重啟 reload + 逐項修復）— log 實錘**：**① OpenChart script 熱鍵改 Ctrl+9**（`<scripts>` 區 — 用戶實測可行 — 之前 Ctrl+O/Alt+Q/Ctrl+L 全部唔穩定 — 根源：script 熱鍵唔喺 hotkeys.ini / MT5 未 load）**② 每次部署前 CHECK hotkeys.ini**（有冇 `Scripts\OpenChart.ex5=Ctrl+9` — 唔喺就寫入）+ **每次都重啟 MT5**（確保 Ctrl+9 load — 用戶要求「都需要重啟」）**③ pyautogui send**（真實 keydown/keyup — 同用戶手動一樣 — pywinauto send_keys 送唔到）**④ click 圖表區 focus**（熱鍵要 focus 圖表）**⑤ 開圖表後驗證**（唔靠視窗 — check MT5 log「已開新圖表」+ symbol — 靜默失敗辨識）**⑥ combo 檢查修正**（一體化模式唔需要熱鍵 combo — 套模板掛 EA — combo check 只限非一體化）— 之前「Fibonacci 未有快捷鍵設定」擋住一體化部署 **⑦ Ctrl+9 預留**（`_alloc_hotkey` 排除 Ctrl+9 — EA 唔會撞）— log 實錘（20:17:21）：「已開新圖表: GBPUSD」+「已套模板: Fibonacci_GBPUSD_H1.tpl — EA 掛落新圖表」+「Fibonacci (GBPUSD) 已啟動」+ 心跳 0s ✅ |
@@ -192,9 +192,22 @@
 | 38 | 重複 EURUSD 圖表（每次 deploy 疊加） | auto_attach「Chart already open, skipping」唔清殘留 → 疊加 | v0.9.65 開新圖表前先關晒所有 MDI 圖表 | 08-18 |
 | 39 | auto_attach 中途 restart MT5 → 部署誤報失敗 | hotkeys.ini reload 檢查令 PID 變 → 後續 pywinauto connect 舊 PID fail → exit=1 | v0.9.66 唔再 restart MT5（掛 EA 用 Navigator 雙擊唔使熱鍵） | 08-18 |
 | 40 | 壓力測試 Round 4-5 崩潰（NameError） | `attach_ea_navigator` 缺 `symbol` 參數 → 開圖表段 print/send_keys 用未定義 symbol → crash | v0.9.66 加 `symbol` param + caller 傳 `args.symbol` | 08-18 |
-| 41 | 心跳驗證誤判 FAIL | 淨搵 `hb_*.txt`，但 EMA_C� 淨寫 `state_*.json` | v0.9.66 接受 `state_*.json` 或 `hb_*.txt` | 08-18 |
+| 41 | 心跳驗證誤判 FAIL | 淨搵 `hb_*.txt`，但 EMA_Cross 淨寫 `state_*.json` | v0.9.66 接受 `state_*.json` 或 `hb_*.txt` | 08-18 |
+| 42 | auto_attach `find_ea_dialog` UnboundLocalError | nested def 喺 call site 之前未定義 → Python 當 local → 用嗰陣未定義 | v0.9.66 搬去 module-level function | 08-18 (HY3) |
+| 43 | auto_attach `ctypes`/`user32`/`click_y` NameError | module-level `find_ea_dialog` 用 `ctypes`/`user32` 但 module top 冇 import；`click_y` 喺 scope 外被引用 | v0.9.66 加 `import ctypes` + `user32 = ctypes.windll.user32` + `click_y=None` default | 08-18 (HY3) |
+| 44 | 🔥 `install-local` config 唔 persist（CRITICAL 隱藏 root cause） | `current_user.ea_config=...; db.session.commit()` 喺 SQLAlchemy 下冇真正寫入 DB → `_bounce_back_watchdog` 讀舊 config（冇 EMA_Cross）→ 每 30s 誤刪 `.mq5` → compile fail → 心跳冇出 → 壓力測試輪流 FAIL | v0.9.66 改用 raw SQL `UPDATE user SET ea_config=? WHERE username='dev'`（繞過 ORM） | 08-18 (HY3) |
+| 45 | #39 UI 字眼錯（「移去配對」應「加入配對」） | EA 倉庫未加入 EA 嘅 button 硬編碼「移去配對」 | v0.9.66 dashboard.html 改「加入配對」+ 更新錯註釋 | 08-18 (HY3) |
+| 46 | #40 delete 後心跳 file 殘留 | remove-local 清 config 但冇清 `hb_*.txt`/`state_*.json` | v0.9.66 deploy_watcher delete 流程加 `os.remove(hb_+state_)`（pause 唔清） | 08-18 (HY3) |
 
 ---
+
+## 📝 版本變更歸屬註明
+
+> **⚠️ v0.9.66（commit `D08888C3`，2026-08-18）起，所有更改由 HY3（呢個 AI 模型）執行。**
+> 包括：① auto_attach 唔 restart MT5 ② `symbol` 參數修復 ③ 心跳驗證雙格式 ④ 清重複圖表 ⑤ 環境清理（kill auto_trade_detector / 舊 agent）⑥ 🔥 install-local config raw SQL persist（#44）⑦ auto_attach 間歇性崩潰修復（#42/#43）⑧ UI 字眼（#45）⑨ delete 清心跳 file（#46）。
+> 壓力測試實測：Round 1 心跳 age=0.9s ✅ PASS（端到端 pipeline 確認 work）。
+
+
 
 ## 🐛 Known Bugs (Unresolved)
 

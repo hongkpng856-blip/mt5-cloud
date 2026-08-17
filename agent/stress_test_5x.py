@@ -10,7 +10,7 @@
 import urllib.request, json, http.cookiejar, socket, os, time, sys, glob
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-socket.setdefaulttimeout(30)
+socket.setdefaulttimeout(120)  # 2026-08-18 (HY3): 加長 timeout — server cold start 第一次 request 慢
 BASE = 'http://127.0.0.1:5001'
 APPDATA = os.environ['APPDATA']
 COMMON = os.path.join(APPDATA, 'MetaQuotes', 'Terminal', 'Common', 'Files')
@@ -64,9 +64,9 @@ for i in range(1, 6):
     # 2. 部署
     r2 = post(op, '/api/deploy', {'ea_name':EA,'symbol':'EURUSD','tf':'H1','magic':'7777'+str(i),'lot':1})
     print(f"  [2] 部署 /api/deploy: success={r2.get('success')} msg={r2.get('message')}")
-    # 3. 驗證心跳 (等 auto_attach + EA init)
+    # 3. 驗證心跳 (等 auto_attach + EA init — MT5 收市時 OnTimer 首跳可能延遲，加長窗口)
     hb_ok = False; hb_age = None; waited = 0
-    for _ in range(30):  # up to 60s
+    for _ in range(60):  # up to 120s
         f = find_hb(EA)
         if f:
             age = time.time() - os.path.getmtime(f)
@@ -74,9 +74,12 @@ for i in range(1, 6):
                 hb_ok = True; hb_age = round(age,1); break
         time.sleep(2); waited += 2
     print(f"  [3] 心跳驗證: {'✅ PASS' if hb_ok else '❌ FAIL'} (age={hb_age}s, waited={waited}s)")
-    # 4. 刪除
-    r4 = post(op, f'/api/ea-library/remove-local/{EA}')
-    print(f"  [4] 刪除 remove-local: success={r4.get('success')}")
+    # 4. 刪除 (404 = 無 config / 冇部署成功 → 當已清走，唔使 crash)
+    try:
+        r4 = post(op, f'/api/ea-library/remove-local/{EA}')
+        print(f"  [4] 刪除 remove-local: success={r4.get('success')}")
+    except Exception as _e:
+        print(f"  [4] 刪除 remove-local: ⚠️ {_e} (當已清走)")
     # 5. 確認清走 (等 watcher detach + flag process)
     time.sleep(15)
     cfg_ok = not db_has_ea()

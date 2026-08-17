@@ -15,6 +15,7 @@ import sys
 import time
 import struct
 import subprocess
+import ctypes
 
 # ─── Config ───
 MT5_PATH = r'C:\Program Files\MetaTrader 5\terminal64.exe'
@@ -283,6 +284,29 @@ def _open_chart_keyboard():
     time.sleep(1)
     send_keys('{ENTER}')  # 接受默認品種
     time.sleep(2)
+
+
+def find_ea_dialog(mt5_pid, target_name):
+    """Module-level：搵 MT5 process (mt5_pid) 底下 title 含 target_name 嘅 #32770 dialog（EA Properties/代替）
+    ⚠️ 2026-08-18 (HY3) 搬去 module-level — 之前 nested def 喺 call 之後定義 → UnboundLocalError（間歇性 crash）"""
+    user32 = ctypes.windll.user32
+    results = []
+    pid_buf = ctypes.c_ulong()
+    def cb(hwnd, _):
+        user32.GetWindowThreadProcessId(ctypes.c_void_p(hwnd), ctypes.byref(pid_buf))
+        if pid_buf.value == mt5_pid:
+            cls = ctypes.create_unicode_buffer(256)
+            user32.GetClassNameW(ctypes.c_void_p(hwnd), cls, 256)
+            if cls.value == '#32770':
+                title = ctypes.create_unicode_buffer(256)
+                user32.GetWindowTextW(ctypes.c_void_p(hwnd), title, 256)
+                if target_name in title.value:
+                    results.append(title.value)
+        return True
+    # Use c_size_t for 64-bit hwnd in callback
+    CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
+    user32.EnumWindows(CB(cb), 0)
+    return results
 
 
 def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
@@ -592,7 +616,7 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
             except Exception as _pa_e:
                 print(f"🔴 雙擊失敗：{_pa_e}")
         found_dialog = False
-        dialogs = find_ea_dialog(ea_name)
+        dialogs = find_ea_dialog(mt5_pid, ea_name)
         if not dialogs:
             # 可能彈咗「代替」dialog — 處理
             replace_dialog = None
@@ -622,7 +646,7 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                             break
                     except Exception:
                         pass
-                dialogs = find_ea_dialog(ea_name)
+                dialogs = find_ea_dialog(mt5_pid, ea_name)
         if dialogs:
             print(f"🎉 {ea_name} Properties dialog found! Attached.")
             found_dialog = True
@@ -683,11 +707,12 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
         except Exception:
             pass
         
+        click_y = None  # 精確模式座標（v0.9.65：用 click_input(double=True) 主力，唔使座標）
         if click_y:
             # 精確模式：一次 double-click（還原穩定版 — 直接 click）
             pyautogui.doubleClick(x=click_x, y=click_y)
             time.sleep(2)
-            dialogs = find_ea_dialog(ea_name)
+            dialogs = find_ea_dialog(mt5_pid, ea_name)
             if not dialogs:
                 # 可能彈咗「代替」dialog — 檢查
                 replace_dialog = None
@@ -718,7 +743,7 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                                 break
                         except Exception:
                             pass
-                    dialogs = find_ea_dialog(ea_name)
+                    dialogs = find_ea_dialog(mt5_pid, ea_name)
             if dialogs:
                 print(f"🎉 {ea_name} Properties dialog found at ({click_x}, {click_y})!")
                 found_dialog = True
@@ -734,26 +759,8 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                 time.sleep(2)
             
             # Check for EA Properties dialog (#32770 class with EA name)
-            def find_ea_dialog(target_name):
-                results = []
-                pid_buf = ctypes.c_ulong()
-                def cb(hwnd, _):
-                    user32.GetWindowThreadProcessId(ctypes.c_void_p(hwnd), ctypes.byref(pid_buf))
-                    if pid_buf.value == mt5_pid:
-                        cls = ctypes.create_unicode_buffer(256)
-                        user32.GetClassNameW(ctypes.c_void_p(hwnd), cls, 256)
-                        if cls.value == '#32770':
-                            title = ctypes.create_unicode_buffer(256)
-                            user32.GetWindowTextW(ctypes.c_void_p(hwnd), title, 256)
-                            if target_name in title.value:
-                                results.append(title.value)
-                    return True
-                # Use c_size_t for 64-bit hwnd in callback
-                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
-                user32.EnumWindows(CB(cb), 0)
-                return results
             
-            dialogs = find_ea_dialog(ea_name)
+            dialogs = find_ea_dialog(mt5_pid, ea_name)
             
             # ⚠️ 掃描模式：遇到任何唔係 target 嘅 dialog → 直接 ESC 關閉（唔好撳「是」！
             # 之前 bug：double-click 咗其他 EA → 彈「代替」dialog → 撳「是」→ 其他 EA 附加咗落圖表！）

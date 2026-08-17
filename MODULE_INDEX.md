@@ -61,7 +61,7 @@
 | 下載 | `server/app.py` L651（`/api/ea-library/<filename>`） |
 | Dev 上傳 | `server/app.py` L626（`/api/ea-library/dev-upload`） |
 | 用戶上傳 | `server/app.py` L743（`/api/ea-library/upload` — **自動安裝落本機 + 排 compile**） |
-| **安裝落本機** | `server/app.py` L744（`/api/ea-library/install-local/<filename>` — 複製 .mq5 + 寫 config + 排 compile + **寫 web_add flag**） |
+| **安裝落本機** | `server/app.py` L744（`/api/ea-library/install-local/<filename>` — 複製 .mq5 + **寫 config（raw SQL `UPDATE user SET ea_config=? WHERE username='dev'` — 繞過 SQLAlchemy ORM，因 ORM commit 唔 persist → bounce_back watchdog 讀舊 config 誤刪 .mq5）** + 排 compile + **寫 web_add flag**） |
 | **剷除本機檔案** | `server/app.py` L711（`/api/ea-library/remove-local/<filename>`，POST — **寫 web_delete flag + 網頁剷除 activity log**） |
 | **重試 compile** | `server/app.py`（`/api/ea-library/retry-compile/<name>` — 手動重觸發 compile + double-check） |
 | Compile 排隊 | server 寫 `compile_cmd_*.json` → watcher `process_compile_cmd()`（GUI compile + 失敗自動重試 3 次） |
@@ -135,7 +135,7 @@
 6. ensure_auto_trading_on
 7. verify（heartbeat `state_*.json`/`hb_*.txt` + EA log）
 8. `control_guard.release()` — 關視窗 + 清 lock
-- ⚠️ **v0.9.66 唔再 restart MT5**：掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload hotkeys.ini → 避免 PID 變令後續 connect fail
+- ⚠️ **v0.9.66（commit `D08888C3`，由 HY3 更改）唔再 restart MT5**：掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload hotkeys.ini → 避免 PID 變令後續 connect fail。同版本修復：① `install-local` config 改用 raw SQL（ORM commit 唔 persist → bounce_back 誤刪 .mq5）② auto_attach `find_ea_dialog`/`ctypes`/`click_y` 間歇性崩潰 ③ UI 字眼「移去配對」→「加入配對」④ delete 後清心跳 file
 
 **⚠️ 注意：**
 - ⚠️ **watcher 鎖**：deploy worker 寫 `.auto_attach_running` 用 os.getpid（watcher 自己）— `is_auto_attach_running()` 要 skip 自己 PID（2026-08 修 — 唔係會永遠 queuing）

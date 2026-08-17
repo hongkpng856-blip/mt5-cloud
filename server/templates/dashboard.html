@@ -862,7 +862,7 @@ async function loadEAConfig() {
         let html = '';
         if (allEAs.length === 0) {
             html = `<tr><td colspan="14" style="text-align:center;padding:30px;color:var(--text-muted)">
-                仲未加入任何 EA<br><span style="font-size:12px">去 EA 倉庫 㩒「<i class="icon-plus-circle"></i> 移去配對」開始</span>
+                仲未加入任何 EA<br><span style="font-size:12px">去 EA 倉庫 㩒「<i class="icon-plus-circle"></i> 加入配對」開始</span>
             </td></tr>`;
         } else {
             allEAs.forEach(name => {
@@ -1470,7 +1470,7 @@ async function loadEALibrary() {
             const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
       const isTest = baseName.startsWith('TestHB'); // 2026-08-13：測試 EA 標記
       // 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
-            // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
+            // 未加入 EA 顯示「加入配對」button（撳 → addEAToPairing → 複製去本機 + compile + 入配對庫）
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
             const localHas = !!(eaDeployStatus[baseName] || localSet[baseName]);                  // 本機有檔案
             const added = localHas;
@@ -1479,7 +1479,7 @@ async function loadEALibrary() {
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
                 <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
                     : (webHas ? '<span style="color:#f59e0b;font-size:11px"><i class="icon-alert-triangle"></i> 已加入（本機冇檔案）</span>'
-                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 移去配對</button>`)}</td>
+                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 加入配對</button>`)}</td>
             </tr>`;
         });
         const offTable = document.querySelector('#officialTable tbody');
@@ -1500,7 +1500,7 @@ async function loadEALibrary() {
                     <td><b>${f.name}</b> <span class="badge badge-blue" style="font-size:10px">社群提供</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
                     <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
-                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')"><i class="icon-plus-circle"></i> 加入配對</button>`}</td>
                 </tr>`;
             });
         }
@@ -1515,7 +1515,7 @@ async function loadEALibrary() {
                     <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">用戶上傳</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
                     <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
-                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','用戶')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','用戶')"><i class="icon-plus-circle"></i> 加入配對</button>`}</td>
                 </tr>`;
             });
         }
