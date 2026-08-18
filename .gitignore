@@ -39,3 +39,10 @@ agent/.ai_control.steps
 server/static/detector/*.json
 server/activity_log.jsonl
 server/bounce_back_log.jsonl
+
+# 臨時 debug / 測試 scripts (唔入 repo)
+agent/_*.py
+agent/*.png
+agent/_*.log
+agent/_stress*
+agent/close_all_charts.py

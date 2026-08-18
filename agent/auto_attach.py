@@ -810,8 +810,24 @@ def ensure_auto_trading_on(mt5_pid):
     """確保 AutoTrading 係開啟狀態"""
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
-    
-    app = Application(backend='uia').connect(process=mt5_pid)
+
+    # 🚨 2026-08-18 FIX：部署中途 MT5 可能重啟過（熱鍵 reload）→ 舊 PID 唔存在 → connect crash
+    # 連唔到就用 find_mt5_pid() 重新搵，再唔得就 skip（唔好令成個 auto_attach 死）
+    try:
+        app = Application(backend='uia').connect(process=mt5_pid)
+    except Exception:
+        _new_pid = find_mt5_pid()
+        if _new_pid and _new_pid != mt5_pid:
+            print(f"🔄 MT5 PID 變咗（舊 {mt5_pid} → 新 {_new_pid}），重新 connect")
+            mt5_pid = _new_pid
+            try:
+                app = Application(backend='uia').connect(process=mt5_pid)
+            except Exception as _e:
+                print(f"⚠️ ensure_auto_trading_on 連 MT5 失敗（skip）: {_e}")
+                return False
+        else:
+            print(f"⚠️ ensure_auto_trading_on 連 MT5 失敗（PID {mt5_pid} 唔在，skip）")
+            return False
     win = app.top_window()
     
     # Check toolbar - look for 算法交易 button
