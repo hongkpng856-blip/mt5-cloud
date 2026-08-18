@@ -120,7 +120,7 @@
 | 流程 | Dashboard `deployEA()` → `/api/deploy` → watcher detect → auto_attach.py（Navigator 雙擊優先，唔 restart MT5）→ MT5 chart |
 
 **🎯 熱鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）：**
-- **設定檔**：`<Terminal>\config\hotkeys.ini`（UTF-16 LE）— 格式 `[experts]`：`Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+N`（**只有 `<experts>` section + 乾淨 CRLF — 用戶實測格式**）
+- **設定檔**：`<Terminal>\config\hotkeys.ini`（UTF-16 LE）— 格式 `[experts]`：`Experts\<EA>.ex5=Ctrl+N`（**只有 `<experts>` section + 乾淨 CRLF — 用戶實測格式**；v0.9.76 起唔再用 `MT5Cloud_EA` subfolder — EA 全放根 `Experts/`）
 - **生效條件**：**關閉 MT5 → 寫檔 → 開 MT5**（運行中寫會被 MT5 覆寫；MT5 只認「啟動時讀」）
 - **⚠️ 格式**：唔可以用 `\r\r\n`（雙 CR — MT5 解析唔到）— 要乾淨 `\r\n`（0d 0a）+ 冇 `<indicators>` section
 - **dialog 處理**：Properties（撳確定）+ 代替確認（「MetaTrader 5」dialog — 文字喺 Static — 撳是）— **BM_CLICK（SendMessage）**（確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）

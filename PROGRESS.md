@@ -75,6 +75,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.9.76** | 2026-08-18 | 🎯 **取消 `MT5Cloud_EA` folder 方案 — 根治 EA「彈返/重複」問題（用戶引導）**：**① 問題** — 配對庫自動彈返 Breakout/Fibonacci/OpenChart（心跳暫停），MT5 有兩個同名 `MT5Cloud_EA` folder（Experts + Scripts 各一個），且 EA 同時喺根 `Experts/` + `Experts/MT5Cloud_EA/` 兩個位置。**② root cause** — `auto_trade_detector.py` 等 `scan_dirs = [exp_dir, exp_dir/MT5Cloud_EA]` 同時掃根 + subfolder，一個 EA 喺兩個位置就重複顯示；殘留檔 copy 去根 Experts/ 令 detector 掃到 → 彈返。**③ 根治（v0.9.76）** — 全面取消 `MT5Cloud_EA` folder：detector / install-local / deploy / hotkeys / remove-local / bounce_back 監察全部淨係用根 `Experts/` + `Scripts/`（唔掃唔建 subfolder）；hotkeys.ini path 改返 `Experts\\ADX_Trend.ex5`（根）；MT5 實體剷走兩個 `MT5Cloud_EA` folder，ADX_Trend 搬返根 `Experts/`。**④ 驗證** — `ea_inventory.json` = `total 1 eas: ['ADX_Trend']`（淨返配對嗰隻，唔再彈返三個）。**⑤ 附帶發現（未解）** — 部署時 auto_attach 個 `Ctrl+9` 熱鍵經 `hotkeys.ini <scripts>` 區，MT5 重啟會洗走該區 → OpenChart 開唔到 chart → EA 掛唔到 → 心跳 15s 偵測唔到 → 部署「load 好耐 + 電腦冇反應」（v0.9.70 已存在，未根治）。|
 | **v0.9.69** | 2026-08-18 | 🔧 **OpenChart 加入配對庫 + 部署開 chart 機制確認 + crash fix**：**① EA 倉庫加「OpenChart」程式**（v0.9.68 已入 `server/static/ea_library/OpenChart.mq5`；今次經 API `install-local` 加入配對 → copy 落 `Experts/MT5Cloud_EA/` + compile OK）。**② OpenChart 當 EA 部署**（用家指定唔使改為真 EA、唔使加心跳 —「你當係 ea 就得」；開 chart 唔係由 EA 經 script 啟動 → 用返熱鍵 Ctrl+9 個套）。部署流程跟番之前一樣：揀 Symbol → 寫 `open_chart_cmd.json {symbol,tf}` → auto_attach 檢查/寫 `hotkeys.ini Scripts\OpenChart.ex5=Ctrl+9`（冇登記自動加）→ `Alt+F→Enter×3` 確保有 chart window → `Ctrl+9` 觸發 OpenChart script 讀 json → `ChartOpen(揀嘅 Symbol)` 開返嗰個 chart。**③ 熱鍵 target 補返**：`Scripts/MT5Cloud_EA/OpenChart.ex5` + `.mq5` 擺好（Ctrl+9 會撳嘅位置）。**④ 用家實測成功**：EA 倉庫添加 OpenChart → 去配對庫部署 → 成功開到空白 chart（OpenChart 唔係交易 EA → 空白 chart 正常）→ 用「添加快捷鍵」方式保存（`hotkeys.json` 分配齊）。證據：`open_chart_cmd.json` = `{"symbol":"AUDUSD","tf":"H1"}` + `aa_debug.log` `✅ 附加成功（心跳存在）` + `✅ 心跳後備: 運行中`。**⑤ 🐛 修 crash**：實測最尾 auto_attach 去 `ensure_auto_trading_on` 時 MT5 中途重啟過（舊 PID 唔在）→ `Application.connect(process=5764)` → `ProcessNotFoundError` → 成個 auto_attach 死（EA 掛咗但自動交易可能冇啟到）。根治：連唔到就用 `find_mt5_pid()` re-find，再唔得 skip（唔 crash）。**⑥ 清理 git tracking**：runtime log + 臨時 debug file 之前被 track，加返 `.gitignore`（`agent/_*.py`/`*.png`/`_*.log`/`_stress*`/`close_all_charts.py`）+ untrack 晒，避免每次 commit 一大堆運行時 file。|
 | **v0.9.68** | 2026-08-18 | 🔄 **程式碼 revert 返 v0.9.56（保留 56-67 全部 commit 歷史，唔刪任何記錄）— 由 HY3 執行**：**① 用 `git checkout b48957c -- server agent` 將程式碼還原到 v0.9.56 狀態**（server/app.py + server/templates/dashboard.html + agent/*.py 全部 revert，唔用 `reset --hard` → 56-67 commit 完好保留喺 git log）。**② 加入 `OpenChart.mq5`（手動輸入品種版 v1.30）** — 用家最新要求：每一次雙擊 Navigator → MT5Cloud_EA → OpenChart 彈對話框填 Symbol + Period → 開唔同 chart；留空 symbol 讀 `open_chart_cmd.json` 自動模式。已放 `MQL5/Scripts/MT5Cloud_EA/` + repo `server/static/ea_library/`。**③ 注意（revert 後帶返嘅已知問題）**：Ctrl+9 熱鍵時好時壞（MT5 唔 load hotkeys.ini `<scripts>` 區）、Controller 常駐掛載未成功、5x 壓力測試未穩定 —— 呢啲係 v0.9.56 時已存在、57-67 試過解但未根治嘅問題。**④ 加 `.gitignore`** 忽略 runtime logs / detector json（唔使每次 commit 一大堆運行時 file）。**⑤ OpenChart.mq5 仲喺 MT5 terminal folder（AppData）實體運行 —— repo 版只係備份**。 |
 | **v0.9.67** | 2026-08-18 | 🎯 **🔥 真正 root cause 根治（5/5 PASS 穩定）— 由 HY3（呢個模型）更改**：**① 🔥 壓力測試 5/5 PASS（真正穩定）** — 5 輪連續 `install-local → deploy → 心跳驗證 age 0.1-1.0s → remove-local → 確認清走` 全部 ✅（v0.9.66 個陣係輪流 FAIL）。**② 🔥 真正 root cause：`SQLALCHEMY_DATABASE_URI` 用相對路徑**（v0.9.66 #44 只係 raw SQL 繞過 — 而家搵到真正源頭）：`sqlite:///mt5cloud.db` 相對 server run 目錄 → ORM `current_user.ea_config=...; db.session.commit()` **全部寫去 `server/mt5cloud.db`（空 file）**，而 watchdog / raw SQL / stress test 讀 `instance/mt5cloud.db` → 永遠 mismatch。根治：URI 改絕對路徑 `instance/mt5cloud.db` → **全部 6 個 ORM 寫入位（install-local/remove-local/upload/ea-config POST/PUT/deploy）自動修好**，唔使逐個 raw SQL。**③ 心跳驗證真正對（verify_heartbeat）**：原本淨檢查 `hb_<ea>.txt`，但注入 code 寫 `state_<ea>.json` → 永遠 False → auto_attach 靠 `verify_ea_loaded`（stale log）誤報成功 → watcher「🎉 已成功 attach」但實際冇心跳。改 verify_heartbeat 同時檢查 `state_<ea>.json` + `hb_<ea>.txt`。**④ auto_attach 唔再誤報成功**：原本 heartbeat 失敗就 `return loaded`（stale log）→ 改為循環 attach 最多 3 次，每次 attach 後即時 verify_heartbeat，有心跳先 `return True`（冇就重試 attach）。**⑤ remove-local config 清走確認**：ORM fix 後 `db.session.commit()` 真係 persist → step[5] `config無EA=✅` 而家真係清到。|
@@ -247,6 +248,7 @@
 | 46 | #40 delete 後心跳 file 殘留 | remove-local 清 config 但冇清 `hb_*.txt`/`state_*.json` | v0.9.66 deploy_watcher delete 流程加 `os.remove(hb_+state_)`（pause 唔清） | 08-18 (HY3) |
 | 47 | 🔥 **真正 root cause：`SQLALCHEMY_DATABASE_URI` 相對路徑**（#44 只係繞過） | `sqlite:///mt5cloud.db` 相對 server run 目錄 → ORM `db.session.commit()` **全部寫去 `server/mt5cloud.db`（空 file）**，但 watchdog/raw SQL/stress test 讀 `instance/mt5cloud.db` → 永遠 mismatch → 全部 6 個 config 寫入位（install-local/remove-local/upload/ea-config POST/PUT/deploy）都 persist 唔到 | v0.9.67 URI 改絕對路徑 `instance/mt5cloud.db` → 全部 6 個位自動修好（唔使逐個 raw SQL） | 08-18 (HY3) |
 | 48 | verify_heartbeat 淨檢查 `hb_<ea>.txt` → 永遠 False + auto_attach 誤報成功 | 注入 code 寫 `state_<ea>.json`（唔係 hb_.txt）→ verify_heartbeat 永遠 False → auto_attach 靠 `verify_ea_loaded`（stale log）`return loaded` → watcher「🎉 已成功 attach」但實際冇心跳 | v0.9.67 verify_heartbeat 同時檢查 state_.json + hb_.txt；auto_attach_ea 循環 attach 最多 3 次，有心跳先 return True | 08-18 (HY3) |
+| 49 | **EA「彈返/重複」** — 配對庫自動彈返已移除嘅 EA（Breakout/Fibonacci/OpenChart，心跳暫停），MT5 有兩個同名 MT5Cloud_EA folder，EA 同時喺根 Experts/ + Experts/MT5Cloud_EA/ 兩位置 | detector 等 scan_dirs 同時掃根 Experts/ + MT5Cloud_EA subfolder；殘留檔 copy 去根 Experts/ → detector 掃到 → 配對庫重複/彈返顯示 | v0.9.76 全面取消 MT5Cloud_EA folder：detector/install-local/deploy/hotkeys/remove-local 全部淨係用根 Experts/+Scripts/，MT5 實體剷走兩 folder、EA 搬返根 → ea_inventory 得返配對嗰隻 | 08-18 |
 
 ---
 
@@ -310,6 +312,27 @@
 **修復**（可選）：watcher delete 流程 detach 完成後，`os.remove(hb_{ea}.txt)` + `os.remove(state_{ea}.json)`（如果 exists）。
 
 ---
+
+### Bug #41: 部署「load 好耐 + 電腦冇反應」— Ctrl+9 熱鍵失效（🔴 活躍中 — v0.9.76 發現）
+
+**現象**：網頁撳部署 → 前端一直轉圈 + 電腦（MT5）冇實際反應 → auto_attach 最後 `❌ ADX_Trend heartbeat not detected within 15s` → FAIL。
+
+**實況（手動 run auto_attach 實錘）**：
+```
+📊 圖表平鋪完成（1 個圖表）
+✅ 一體化：ADX_Trend 已由套模板掛落圖表
+⚠️ Ctrl+9 冇開到圖表（EURUSD active 標題未變）— 重試   ← 兩次
+✅ log 驗證: ADX_Trend 喺 EURUSD 啟動
+❌ ADX_Trend heartbeat not detected within 15s   ← 心跳偵測唔到 → FAIL
+```
+
+**原因**：auto_attach 部署用 `Alt+F→Enter×3` 開空白 chart 再 `Ctrl+9` 觸發 OpenChart script 開目標 chart，但 **`Ctrl+9` 熱鍵係寫入 `hotkeys.ini` 個 `<scripts>` 區，MT5 每次重啟會洗走該區**（auto_attach 部署時 `do_restart_mt5()` 重啟 MT5 → `<scripts>` 區消失 → Ctrl+9 失效）→ OpenChart 開唔到 chart → EA 掛唔到 → 心跳 15s 偵測唔到 → 部署失敗卡住。
+
+**修復（未做）**：① auto_attach 部署時唔好每次重啟 MT5（用戶手動測試成功嗰次就冇重啟）；② 或者改用唔依賴 `hotkeys.ini <scripts>` 區嘅開 chart 方法（例如 OpenChart_Helper 常駐 EA / 直接 pyautogui 操作 MT5 menu）。
+
+---
+
+
 
 ## 📊 Current Status（2026-07-30 20:00）
 
