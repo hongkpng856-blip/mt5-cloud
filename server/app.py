@@ -1436,27 +1436,38 @@ def api_refresh_status():
             runtime[base] = st
     except Exception:
         pass
-    # 4. 🚨 2026-08-14 自癒（重新整理時 — 部署/安裝都可能觸發「彈返」— 用戶撳重新整理 → 自動清）
+    # 4. 🚨 2026-08-14 自癒 + 2026-08-18 擴展：重新整理 → 自動清殘留
+    # （除 config EA 外，所有唔喺配對庫 + 唔係系統保留嘅 .mq5/.ex5 都當殘留清 — 根治累積/彈返）
+    _SYSTEM_KEEP = {'ApplyTemplate', 'BatchApplyTemplates', 'StartAgentHelper', 'AgentHelper', 'SMA_Cross', 'TestRunner'}
     try:
-        import time as _trs
         _data_dir_rs = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         _cfg_rs = json.loads(current_user.ea_config or '{}')
-        _cfg_rs_eas = set(k.rsplit('_', 1)[0] for k in _cfg_rs if not k.startswith('_'))
-        for _d_rs in os.listdir(_data_dir_rs):
-            _ea_dir_rs = os.path.join(_data_dir_rs, _d_rs, 'MQL5', 'Experts')
-            if not os.path.isdir(_ea_dir_rs):
+        _cfg_rs_eas = set()
+        for _k_rs in _cfg_rs:
+            _b_rs = _k_rs
+            for _suf_rs in ('_lot', '_magic', '_tf', '_status'):
+                if _k_rs.endswith(_suf_rs):
+                    _b_rs = _k_rs[:-len(_suf_rs)]
+                    break
+            if _b_rs.startswith('_'):
                 continue
-            for _fn_rs in sorted(os.listdir(_ea_dir_rs)):
-                if not _fn_rs.endswith(('.mq5', '.ex5')):
+            _cfg_rs_eas.add(_b_rs)
+        # 掃 Experts 根 + Scripts 根（v0.9.76 起唔用 MT5Cloud_EA subfolder）
+        for _d_rs in os.listdir(_data_dir_rs):
+            for _rel_rs in ('MQL5\\Experts', 'MQL5\\Scripts'):
+                _scan_dir_rs = os.path.join(_data_dir_rs, _d_rs, *_rel_rs.split('\\'))
+                if not os.path.isdir(_scan_dir_rs):
                     continue
-                _b_rs = os.path.splitext(_fn_rs)[0]
-                if _b_rs in _cfg_rs_eas:
-                    continue  # config 有（正常 — 唔好亂刪）
-                _fp_rs = os.path.join(_ea_dir_rs, _fn_rs)
-                if time.time() - os.path.getctime(_fp_rs) < 120:  # 2 分鐘內出現 = 彈返
+                for _fn_rs in sorted(os.listdir(_scan_dir_rs)):
+                    if not _fn_rs.endswith(('.mq5', '.ex5')):
+                        continue
+                    _b_rs2 = os.path.splitext(_fn_rs)[0]
+                    if _b_rs2 in _cfg_rs_eas or _b_rs2 in _SYSTEM_KEEP:
+                        continue
+                    _fp_rs = os.path.join(_scan_dir_rs, _fn_rs)
                     try:
                         os.remove(_fp_rs)
-                        print(f"[API] 重新整理自癒: 已刪除彈返嘅 {_fn_rs}", flush=True)
+                        print(f"[API] 重新整理自癒: 已刪除殘留 {_fn_rs} ({_rel_rs.split(chr(92))[1]})", flush=True)
                     except Exception:
                         pass
     except Exception:
