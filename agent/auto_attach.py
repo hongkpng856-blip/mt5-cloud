@@ -433,7 +433,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                             pass
             except Exception:
                 pass
-        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator — 有 MT5Cloud_EA folder）
+        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator）
         
         if not tree_view:
             print(f"⚠️ 搵唔到有效 TreeView（rect 驗證失敗 — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")
@@ -528,24 +528,9 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     ea_node = ea
                     break
             
-            # ⚠️ 2026-08：web 配對嘅 EA 集中喺 MT5Cloud_EA folder — 要入 folder 搵
+            # EA 喺根 EA交易 節點（唔入 folder）
             if not ea_node:
-                for sub in ea_trading_node.children():
-                    try:
-                        st = sub.text()
-                        if 'MT5Cloud' in st or 'Cloud' in st:
-                            sub.expand()
-                            time.sleep(1)
-                            for ea in sub.children():
-                                if ea.text() == ea_name:
-                                    ea_node = ea
-                                    break
-                            break
-                    except Exception:
-                        pass
-            
-            if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA (attempt {attempt+1}/{max_retries})")
+                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
@@ -1204,7 +1189,7 @@ def ensure_navigator_unified(mt5_pid):
 
 def load_hotkey_map():
     """讀快捷鍵 mapping（EA 名 → pywinauto 快捷鍵格式）— 讀 MT5 hotkeys.ini（權威來源）
-    hotkeys.ini: [experts] "Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+1"
+    hotkeys.ini: [experts] "Experts\\<EA>.ex5=Ctrl+1"
     Ctrl+1 → ^1, Ctrl+Alt+1 → ^!1"""
     import json as _json
     result = {}
@@ -1422,7 +1407,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     import json as _joc
                     _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
                     _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → MT5Cloud_EA）
+                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → Experts 根）
                     # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
                     try:
                         _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -1435,7 +1420,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         if _tpl_full_t and not os.path.isfile(_tpl_full_t):
                             _CR = chr(13) + chr(10)
                             _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
-                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
+                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
                             _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
                             _tpl_t += '</expert>' + _CR + _CR
                             _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
@@ -1444,7 +1429,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             with open(_tpl_full_t, 'wb') as _f_t:
                                 _f_t.write(b'\xff\xfe')
                                 _f_t.write(_tpl_t.encode('utf-16-le'))
-                            print(f"📋 模板已生成: {_tpl_name}（path → MT5Cloud_EA）")
+                            print(f"📋 模板已生成: {_tpl_name}（path → Experts 根）")
                     except Exception as _ete:
                         print(f"⚠️ 生成模板失敗: {_ete}")
                     with open(_cmd_file, 'w', encoding='utf-8') as _f:
@@ -1486,8 +1471,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _sk('{ENTER}')
                     time.sleep(3)
                 # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
-                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart_Test.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
-                # （用戶：Scripts\OpenChart_Test.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
+                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
+                # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
                 _need_restart9 = False
                 try:
                     _hk9_path = None
@@ -1501,12 +1486,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     if _hk9_path:
                         # 🚨 2026-08-17 FIX：讀寫用 utf-16（自動處理 BOM — utf-16-le 讀唔會剝 BOM → 寫返會冇 BOM → MT5 讀唔到熱鍵！）
                         _hk9_c = open(_hk9_path, encoding='utf-16', errors='ignore').read()
-                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart_Test=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
-                        if 'Scripts\\OpenChart_Test.ex5=Ctrl+9' in _hk9_c:
+                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
+                        if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
                             _hk9_ok = True
                         else:
                             # 寫入/修正 <scripts> Ctrl+9
-                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart_Test.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
+                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
                             if '<scripts>' in _hk9_c:
                                 import re as _re9
                                 _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
@@ -1514,7 +1499,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                 _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
                             with open(_hk9_path, 'wb') as _f9:
                                 _f9.write(('﻿' + _hk9_c).encode('utf-16-le'))
-                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart_Test.ex5=Ctrl+9（帶 BOM）")
+                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
                             _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
                     # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
                     # （實測：每次重啟後 Ctrl+9 script 熱鍵未 ready → 開圖表唔work；但你手動環境（MT5 一直運行）Ctrl+9 每次 work
