@@ -1056,21 +1056,6 @@ def process_pause_cmd(fp):
         _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
         _prog_steps(['清理設定並釋放快捷鍵'], '完成刪除')
         _prog_steps(['完成刪除'])
-        # 🔧 2026-08-18 (HY3, v0.9.66+): 刪除後清走殘留心跳 file（hb_*.txt / state_*.json）
-        # EA detach 後停止寫，但舊 file 仲喺 Common/Files → 殘留；delete 清走（pause 保留配置唔清）
-        if action == 'delete':
-            try:
-                import glob as _glob
-                _mt5_common = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-                for _pat in [f'hb_{ea_name}.txt', f'state_{ea_name}.json']:
-                    for _fp in _glob.glob(os.path.join(_mt5_common, _pat)):
-                        try:
-                            os.remove(_fp)
-                            print(f"   🧹 已清殘留心跳 file: {os.path.basename(_fp)}")
-                        except OSError:
-                            pass
-            except Exception:
-                pass
         # 通知 server
         try:
             _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,

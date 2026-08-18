@@ -60,7 +60,16 @@ for i in range(1, 6):
     # 1. 配對 (install-local)
     r1 = post(op, f'/api/ea-library/install-local/{FILENAME}')
     print(f"  [1] 配對 install-local: success={r1.get('success')} compile_ok={r1.get('compile_ok')}")
-    time.sleep(6)
+    # 🚨 2026-08-18 (HY3) 根治：等 .ex5 生成（server compile 最多 45s poll，watcher 慢就等）
+    # 唔可以固定 sleep(6) — 如果 .ex5 未生成就 deploy → auto_attach 掛唔到 → age=None
+    _ex5_found = False
+    for _w in range(30):  # 最多 60s
+        _ex5 = glob.glob(os.path.join(APPDATA,'MetaQuotes','Terminal','*','MQL5','Experts','MT5Cloud_EA',f'{EA}.ex5'))
+        if _ex5:
+            _ex5_found = True
+            break
+        time.sleep(2)
+    print(f"  [1b] .ex5 存在: {_ex5_found} (waited {_w*2}s)")
     # 2. 部署
     r2 = post(op, '/api/deploy', {'ea_name':EA,'symbol':'EURUSD','tf':'H1','magic':'7777'+str(i),'lot':1})
     print(f"  [2] 部署 /api/deploy: success={r2.get('success')} msg={r2.get('message')}")

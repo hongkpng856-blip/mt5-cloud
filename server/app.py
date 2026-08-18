@@ -97,14 +97,9 @@ try:
 except Exception as _ebw:
     print(f"[彈返監察] ⚠️ 啟動失敗: {_ebw}", flush=True)
 
-# ⚠️ 2026-08-18 (HY3) 根治：SQLALCHEMY_DATABASE_URI 必須用絕對路徑
-# 之前相對 'sqlite:///mt5cloud.db' → server run 喺 server/ → ORM 寫去 server/mt5cloud.db（空 file）
-# 但 watchdog / raw SQL / stress test 全部讀 instance/mt5cloud.db → 永遠讀唔到 ORM commit
-_instance_db = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db'))
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + _instance_db
-print(f"[DB] SQLAlchemy URI = {app.config['SQLALCHEMY_DATABASE_URI']}", flush=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -1641,16 +1636,9 @@ def api_ea_remove_local(filename):
             for key in list(config_del.keys()):
                 if key == base_only or key.startswith(base_only + '_'):
                     del config_del[key]
-            _new_cfg_del = json.dumps(config_del)
-            # ⚠️ 2026-08-18 (HY3) 根治：直接用 raw SQL UPDATE（同 install-local 一樣 — ORM commit 唔 persist 去 DB）
-            import sqlite3 as _sq_del
-            _db_del = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
-            _db_del = os.path.abspath(_db_del)
-            _conn_del = _sq_del.connect(_db_del)
-            _conn_del.execute("UPDATE user SET ea_config=? WHERE username='dev'", (_new_cfg_del,))
-            _conn_del.commit()
-            _conn_del.close()
-            print(f"[remove-local] ✅ 已刪 config(SQL): {base_only}（Magic/Symbol 清除, _removed={removed_del}）", flush=True)
+            current_user.ea_config = json.dumps(config_del)
+            db.session.commit()
+            print(f"[remove-local] ✅ 已刪 config: {base_only}（Magic/Symbol 清除）", flush=True)
         except Exception as _ecfg:
             print(f"[remove-local] ⚠️ 刪 config 失敗: {_ecfg}", flush=True)
         # 釋放快捷鍵（hotkeys.ini — 唔殘留）
@@ -1822,34 +1810,6 @@ def api_ea_install_local(filename):
     compiled = False
     # ⚠️ 用 src_path 嘅 basename（保留副檔名）— filename 可能冇 .mq5（前端傳 baseName）
     # 唔可以淨用 filename — 會複製錯名 + 唔會寫 compile_cmd（endswith('.mq5') False）
-    # 4. 寫 config（預設值 — 前端會覆蓋）— ⚠️ 2026-08-18 (HY3) 搬去 copy .mq5 之前
-    # 根治：bounce_back_watchdog 每 30s scan，若 .mq5 已寫但 config 未寫（timing gap）→ 誤刪 .mq5
-    # → 搬到 copy 前 → scan 嗰陣有 .mq5 必有 config → skip（唔誤刪）
-    try:
-        config = json.loads(current_user.ea_config or '{}')
-        base = os.path.splitext(filename)[0]
-        config.setdefault(base, 'EURUSD')
-        config.setdefault(base + '_tf', 'H1')
-        config.setdefault(base + '_magic', '240701')
-        config.setdefault(base + '_lot', 1.00)
-        # 重新配對 → 由 _removed 移除（Bug #64：之前刪除過嘅 EA 重新配對後唔顯示）
-        removed = config.get('_removed', [])
-        if base in removed:
-            removed.remove(base)
-            config['_removed'] = removed
-        _new_cfg = json.dumps(config)
-        # ⚠️ 2026-08-18 (HY3) 根治：直接用 raw SQL UPDATE（唔經 current_user ORM — SQLAlchemy session 唔 persist 去 DB，導致 bounce_back watchdog 讀舊 config → 誤刪 .mq5）
-        import sqlite3 as _sq_cfg
-        _db_cfg = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
-        _db_cfg = os.path.abspath(_db_cfg)
-        _conn_cfg = _sq_cfg.connect(_db_cfg)
-        _conn_cfg.execute("UPDATE user SET ea_config=? WHERE username='dev'", (_new_cfg,))
-        _conn_cfg.commit()
-        _conn_cfg.close()
-        print(f"[install-local] ✅ config 寫入(SQL): {base} added, _removed={config.get('_removed')}", flush=True)
-    except Exception as e:
-        print(f"[install-local] ❌ config 寫入失敗: {e}", flush=True)
-    # 3a. 複製 .mq5 → MT5Cloud_EA（config 已寫，watchdog 唔會誤刪）
     dest_name = os.path.basename(src_path)
     for exp_dir in experts_dirs:
         ea_folder = os.path.join(exp_dir, 'MT5Cloud_EA')
@@ -2052,7 +2012,23 @@ void __mt5c_process() {
     except Exception as _ehb3:
         print(f"[install-local] ⚠️ 自癒檢查失敗: {_ehb3}", flush=True)
 
-    # 4. 寫 config 已搬去 copy .mq5 之前（2026-08-18 HY3 根治 bounce_back 誤刪）— 此處留空
+    # 4. 寫 config（預設值 — 前端會覆蓋）
+    try:
+        config = json.loads(current_user.ea_config or '{}')
+        base = os.path.splitext(filename)[0]
+        config.setdefault(base, 'EURUSD')
+        config.setdefault(base + '_tf', 'H1')
+        config.setdefault(base + '_magic', '240701')
+        config.setdefault(base + '_lot', 1.00)
+        # 重新配對 → 由 _removed 移除（Bug #64：之前刪除過嘅 EA 重新配對後唔顯示）
+        removed = config.get('_removed', [])
+        if base in removed:
+            removed.remove(base)
+            config['_removed'] = removed
+        current_user.ea_config = json.dumps(config)
+        db.session.commit()
+    except Exception as e:
+        print(f"[install-local] config 寫入失敗: {e}")
 
     # 5. Double-check：等 compile 完成（最多 45 秒）— 唔可以假成功
     #    .mq5 需要 watcher compile → poll .ex5 出現

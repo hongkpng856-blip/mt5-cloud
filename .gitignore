@@ -26,3 +26,16 @@ NUL
 
 # agent runtime 檔案（唔入 repo）
 agent/.ai_control.*
+
+# Runtime logs / state (唔入 repo — 運行時自動產生)
+*.log
+agent/agent.log
+agent/deploy_watcher.log
+server.log
+server_run.log
+agent/.watcher_running
+agent/.alert_worker.pid
+agent/.ai_control.steps
+server/static/detector/*.json
+server/activity_log.jsonl
+server/bounce_back_log.jsonl

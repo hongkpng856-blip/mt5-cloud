@@ -15,7 +15,6 @@ import sys
 import time
 import struct
 import subprocess
-import ctypes
 
 # ─── Config ───
 MT5_PATH = r'C:\Program Files\MetaTrader 5\terminal64.exe'
@@ -286,30 +285,7 @@ def _open_chart_keyboard():
     time.sleep(2)
 
 
-def find_ea_dialog(mt5_pid, target_name):
-    """Module-level：搵 MT5 process (mt5_pid) 底下 title 含 target_name 嘅 #32770 dialog（EA Properties/代替）
-    ⚠️ 2026-08-18 (HY3) 搬去 module-level — 之前 nested def 喺 call 之後定義 → UnboundLocalError（間歇性 crash）"""
-    user32 = ctypes.windll.user32
-    results = []
-    pid_buf = ctypes.c_ulong()
-    def cb(hwnd, _):
-        user32.GetWindowThreadProcessId(ctypes.c_void_p(hwnd), ctypes.byref(pid_buf))
-        if pid_buf.value == mt5_pid:
-            cls = ctypes.create_unicode_buffer(256)
-            user32.GetClassNameW(ctypes.c_void_p(hwnd), cls, 256)
-            if cls.value == '#32770':
-                title = ctypes.create_unicode_buffer(256)
-                user32.GetWindowTextW(ctypes.c_void_p(hwnd), title, 256)
-                if target_name in title.value:
-                    results.append(title.value)
-        return True
-    # Use c_size_t for 64-bit hwnd in callback
-    CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
-    user32.EnumWindows(CB(cb), 0)
-    return results
-
-
-def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
+def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
     """用 win32 backend + pyautogui double-click attach EA
     
     關鍵發現：
@@ -347,41 +323,23 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
             time.sleep(5)
             continue
         
-        # Step 1: 清走所有已開圖表（避免重複 EURUSD 圖表）+ 開一個全新對應 symbol 圖表
-        # ⚠️ 2026-08-18 FIX：之前「Chart already open, skipping Ctrl+N」→ 殘留舊圖表 → 每次 deploy 疊加 → 3+ 個 EURUSD
-        # 做法：先關晒所有 MDI 圖表（focus main → 逐個 Ctrl+F4），再開一個新嘅
+        # Step 1: Open chart only if none exists
         mdi = None
         for d in win.descendants():
             if d.element_info.class_name == 'MDIClient':
                 mdi = d
                 break
-        existing = mdi.children() if mdi else []
-        # Close all existing charts
-        for ch in list(existing):
-            try:
-                ch.set_focus()
-                time.sleep(0.3)
-                send_keys('^{F4}')  # Ctrl+F4 = close active chart
-                time.sleep(0.5)
-            except Exception:
-                pass
-        # Open a fresh chart (Alt+F → Enter → Enter = new chart of last/default symbol)
-        print(f"📋 開新圖表 for {symbol}...")
-        send_keys('%f')  # Alt+F (menu)
-        time.sleep(0.5)
-        send_keys('{ENTER}')  # New Chart
-        time.sleep(0.5)
-        send_keys('{ENTER}')  # confirm (default symbol)
-        time.sleep(2)
-        # Type the target symbol to switch the new chart to the right pair
-        try:
-            send_keys(symbol)
-            time.sleep(0.5)
+        has_charts = mdi and len(mdi.children()) > 0
+        
+        if not has_charts:
+            print("📋 No chart open, opening new one...")
+            send_keys('^n')
+            time.sleep(1)
             send_keys('{ENTER}')
-            time.sleep(2)
-        except Exception:
-            pass
-
+            time.sleep(3)
+        else:
+            print(f"📋 Chart already open, skipping Ctrl+N...")
+        
         # Step 2: Open Navigator panel DIRECTLY via ShowWindow
         # Much more reliable than menu clicks or keyboard shortcuts
         import ctypes as _ctypes
@@ -568,17 +526,7 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                         pass
             
             if not ea_node:
-                # 🔧 2026-08-18 FIX：fallback 直接喺 EA交易 下層搵（EA 可能平級放 Experts/{ea}.mq5，
-                # 唔喺 MT5Cloud_EA subfolder）。例如 agent install 寫去 Experts/Breakout.mq5。
-                for sub in ea_trading_node.children():
-                    try:
-                        if sub.text() == ea_name:
-                            ea_node = sub
-                            break
-                    except Exception:
-                        pass
-            if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA/平級 (attempt {attempt+1}/{max_retries})")
+                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
@@ -595,62 +543,48 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                 time.sleep(5)
             continue
         
-        # Step 5: 掛 EA — 用 pywinauto handle-based double-click（v0.9.61 證實 work，唔使座標、唔會亂點）
-        # ⚠️ 2026-08-18 根治：廢除 TVM_GETITEMRECT 座標 + 掃描模式（GETITEMRECT fail → 落入掃描亂點 → 掛唔到/掛錯）
-        # 直接用 ea_node.click_input(double=True)（handle-based，MT5 收得到，唔受 owner-draw / 語言影響）
+        # Step 5: 精確 double-click EA item（唔使掃描成個 tree — 唔會「亂點」）
+        found_dialog = False
+        click_x = tv_rect.left + 50  # EA item text area
+        click_y = None
         try:
-            ea_node.ensure_visible()
+            # ⚠️ 方法：ea_node.select()（pywinauto 揀中 item）→ TVM_GETNEXTITEM(CARET) 攞 hItem
+            # → TVM_GETITEMRECT 攞屏幕位置（唔使讀文字 — MT5 owner-draw tree 讀唔到文字）
+            ea_node.select()
             time.sleep(0.5)
-            ea_node.click_input(double=True)
-            time.sleep(2)
-            print(f"🎯 {ea_name} double-clicked (handle-based)")
-        except Exception as _dc_e:
-            print(f"⚠️ click_input double fail: {_dc_e}，fallback pyautogui")
+            import ctypes as _ct
+            from ctypes import wintypes as _wt
+            # ⚠️ 64-bit handle 溢出問題：SendMessageW 返回 32-bit c_int → 負數 → 要 set restype c_size_t
+            _ct.windll.user32.SendMessageW.restype = _ct.c_size_t
+            _tree_hwnd = _ct.c_void_p(int(tree_view.element_info.handle))
+            _caret = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x110A, 0x0009, 0)  # TVGN_CARET
+            if _caret:
+                _rect = _wt.RECT()
+                _res = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x1104, 1, _ct.byref(_rect))  # TVM_GETITEMRECT
+                if _res:
+                    _pt = _wt.POINT(0, 0)
+                    _ct.windll.user32.ClientToScreen(_tree_hwnd, _ct.byref(_pt))
+                    click_x = _rect.left + _pt.x + 30
+                    click_y = _rect.top + _pt.y + ((_rect.bottom - _rect.top) // 2)
+                    print(f"🎯 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
+                else:
+                    print(f"⚠️ GETITEMRECT fail (caret={_caret})")
+            else:
+                print("⚠️ CARET 攞唔到（select 可能冇生效）")
+        except Exception as e:
+            print(f"⚠️ 精確定位 exception: {type(e).__name__} {e}")
+            click_y = None
+        if not click_y:
             try:
+                # fallback：pywinauto TreeItem rectangle
                 ea_rect = ea_node.rectangle()
                 if ea_rect.width() > 0 and ea_rect.height() > 0:
-                    import pyautogui as _pa
-                    _pa.doubleClick(x=ea_rect.left + 30, y=ea_rect.top + (ea_rect.height()//2))
-                    time.sleep(2)
-                    print(f"🎯 {ea_name} double-clicked (pyautogui fallback)")
-            except Exception as _pa_e:
-                print(f"🔴 雙擊失敗：{_pa_e}")
-        found_dialog = False
-        dialogs = find_ea_dialog(mt5_pid, ea_name)
-        if not dialogs:
-            # 可能彈咗「代替」dialog — 處理
-            replace_dialog = None
-            try:
-                for w in app.windows():
-                    if w.class_name() == '#32770':
-                        for s in w.children(class_name='Static'):
-                            try:
-                                t = s.window_text()
-                                if '代替' in t or 'replace' in t.lower() or 'Replace' in t:
-                                    replace_dialog = w
-                                    break
-                            except Exception:
-                                pass
-                        if replace_dialog:
-                            break
+                    click_x = ea_rect.left + 30
+                    click_y = ea_rect.top + (ea_rect.height() // 2)
+                    print(f"🎯 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
             except Exception:
-                pass
-            if replace_dialog:
-                print("🔄 偵測到「代替」確認 dialog — 自動撳「是」（接受取代）")
-                for b in replace_dialog.children(class_name='Button'):
-                    try:
-                        bt = b.window_text()
-                        if '是' in bt or 'Yes' in bt or '&Y' in bt:
-                            b.click()
-                            time.sleep(2)
-                            break
-                    except Exception:
-                        pass
-                dialogs = find_ea_dialog(mt5_pid, ea_name)
-        if dialogs:
-            print(f"🎉 {ea_name} Properties dialog found! Attached.")
-            found_dialog = True
-
+                click_y = None  # fallback 掃描
+        
         # ⚠️ 確保 AutoTrading ON — EA 附加時 OnInit 即刻執行（TestRunner 會即刻開單）！
         # 一定要喺 double-click 之前開 — Properties 之後先開太遲（OnInit 已跑，開單失敗 retcode 10027）
         try:
@@ -707,12 +641,11 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
         except Exception:
             pass
         
-        click_y = None  # 精確模式座標（v0.9.65：用 click_input(double=True) 主力，唔使座標）
         if click_y:
             # 精確模式：一次 double-click（還原穩定版 — 直接 click）
             pyautogui.doubleClick(x=click_x, y=click_y)
             time.sleep(2)
-            dialogs = find_ea_dialog(mt5_pid, ea_name)
+            dialogs = find_ea_dialog(ea_name)
             if not dialogs:
                 # 可能彈咗「代替」dialog — 檢查
                 replace_dialog = None
@@ -743,7 +676,7 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                                 break
                         except Exception:
                             pass
-                    dialogs = find_ea_dialog(mt5_pid, ea_name)
+                    dialogs = find_ea_dialog(ea_name)
             if dialogs:
                 print(f"🎉 {ea_name} Properties dialog found at ({click_x}, {click_y})!")
                 found_dialog = True
@@ -759,8 +692,26 @@ def attach_ea_navigator(ea_name, mt5_pid, symbol=None, max_retries=3):
                 time.sleep(2)
             
             # Check for EA Properties dialog (#32770 class with EA name)
+            def find_ea_dialog(target_name):
+                results = []
+                pid_buf = ctypes.c_ulong()
+                def cb(hwnd, _):
+                    user32.GetWindowThreadProcessId(ctypes.c_void_p(hwnd), ctypes.byref(pid_buf))
+                    if pid_buf.value == mt5_pid:
+                        cls = ctypes.create_unicode_buffer(256)
+                        user32.GetClassNameW(ctypes.c_void_p(hwnd), cls, 256)
+                        if cls.value == '#32770':
+                            title = ctypes.create_unicode_buffer(256)
+                            user32.GetWindowTextW(ctypes.c_void_p(hwnd), title, 256)
+                            if target_name in title.value:
+                                results.append(title.value)
+                    return True
+                # Use c_size_t for 64-bit hwnd in callback
+                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
+                user32.EnumWindows(CB(cb), 0)
+                return results
             
-            dialogs = find_ea_dialog(mt5_pid, ea_name)
+            dialogs = find_ea_dialog(ea_name)
             
             # ⚠️ 掃描模式：遇到任何唔係 target 嘅 dialog → 直接 ESC 關閉（唔好撳「是」！
             # 之前 bug：double-click 咗其他 EA → 彈「代替」dialog → 撳「是」→ 其他 EA 附加咗落圖表！）
@@ -1311,27 +1262,6 @@ def _clear_steps():
     except Exception:
         pass
 
-def _focus_mt5_foreground(main_hwnd):
-    """🔧 2026-08-18：提升 foreground 權限（AttachThreadInput + AllowSetForegroundWindow）
-    MT5 對 keyboard input 只收 foreground 進程 — background 進程（server/pythonw）SetForegroundWindow 失敗 → key 送唔到
-    用 AttachThreadInput 將 auto_attach 進程 attach 到 MT5 thread → MT5 當佢做 foreground → key 收得到
-    返回 cur_tid, mt5_tid（caller 用完要 AttachThreadInput(cur_tid, mt5_tid, False) detach）"""
-    try:
-        import ctypes as _ctf
-        _kf = _ctf.windll.kernel32
-        _uf = _ctf.windll.user32
-        _cur_tid = _kf.GetCurrentThreadId()
-        _pid_buf = _ctf.c_ulong(0)
-        _mt5_tid = _uf.GetWindowThreadProcessId(_ctf.c_void_p(int(main_hwnd)), _ctf.byref(_pid_buf))
-        _uf.AllowSetForegroundWindow(-1)
-        _uf.AttachThreadInput(_cur_tid, _mt5_tid, True)
-        _uf.SetForegroundWindow(_ctf.c_void_p(int(main_hwnd)))
-        time.sleep(1)
-        return _cur_tid, _mt5_tid
-    except Exception as _e_f:
-        print(f"⚠️ focus foreground 失敗: {_e_f}")
-        return None, None
-
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
     """🎯 快捷鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
@@ -1351,10 +1281,11 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         if not open_chart and not combo:
             print(f"⚠️ {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
             return False
-        # 🔧 2026-08-18 REVERT 一體化跳過邏輯：open_chart=True 時開圖表 + 照 send EA 熱鍵（<experts> — 已證 work）
-        # 唔使 Ctrl+9 script（MT5 對 synthetic input 唔收）；唔係「套模板已掛」— 要 send EA 熱鍵掛落開好嘅圖表
+        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過「附加熱鍵」步驟
+        # （之前：套模板掛咗 EA 之後仲行「附加」（send 熱鍵 → 落 active 圖表 — 掛錯圖表 — 用戶部署 Breakout 掛咗 EURUSD 案例）
         if open_chart:
-            print(f"🎯 開圖表 + 用快捷鍵 {combo} 附加 {ea_name}...")
+            print(f"✅ 一體化：{ea_name} 已由套模板掛落圖表（跳過附加熱鍵）")
+            _saw_props = True  # 當附加完成（套模板已掛）
         else:
             print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
@@ -1420,9 +1351,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             break
                 except Exception:
                     pass
-                # ⚠️ 2026-08-18 根治：唔再 restart MT5（hotkeys.ini reload 會令 PID 變 → 後續 connect 失敗）。掛 EA 用 Navigator 雙擊唔使熱鍵。
-                if False and _hk_mt > _mt5_start:
-                    print(f"🔄 hotkeys.ini 有變 → reload（關 MT5 → 開）")
+                if _mt5_start is not None and _hk_mt > _mt5_start:
+                    print(f"🔄 hotkeys.ini 有變（外部寫入 — MT5 未 load）→ reload 一次（關 MT5 → 開）")
                     _chk_abort()
                     do_restart_mt5()
                     # reload 後重新攞 MT5 PID + connect
@@ -1447,131 +1377,270 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         except Exception:
             pass
         # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
-        # 🔧 2026-08-18 REVERT 到用戶 08-10 定案：開圖表用 Alt+F menu（唔使 script 熱鍵）
-        # Ctrl+9 (<scripts> 熱鍵) MT5 對 synthetic input 唔接受（只收真實硬件鍵盤）— 死結；改用 Alt+F → Down×N → Enter
-        # 掛 EA 用 <experts> 熱鍵（Ctrl+1/2/3... — 已證 work，MT5 原生 EA 熱鍵收 synthetic input）
+        # ✅ 用戶方法（2026-08-15）：OpenChart script 熱鍵（Ctrl+O — 用戶 set 咗）— 開目標圖表 → 附加 EA 落去
+        # 流程：寫 json → 確保有圖表（熱鍵要圖表）→ Ctrl+O（OpenChart script 讀 json → ChartOpen 開目標圖表 active）→ 附加 EA（熱鍵 — 落 active）
         if open_chart:
             try:
-                _sym = (symbol or 'EURUSD').upper()
-                # 🔧 2026-08-18 REVERT 到用戶 08-10 定案：開圖表用 Alt+F menu（唔使 script 熱鍵）
-                # Ctrl+9 (<scripts> 熱鍵) 對 synthetic input 唔接受（MT5 只收真實硬件鍵盤）— 死結
-                # 改用 Alt+F → Enter（開新圖表 dialog）→ Down×N 揀 symbol → Enter（確認開圖表）
-                # 6 個固定位置（MODULE_INDEX 記錄）：1.EURUSD 2.GBPUSD 3.USDCHF 4.USDJPY 5.USDCNH 6.AUDUSD
-                _DOWN_MAP = {'EURUSD':0,'GBPUSD':1,'USDCHF':2,'USDJPY':3,'USDCNH':4,'AUDUSD':5}
-                _doffs = _DOWN_MAP.get(_sym, 0)
-                # 🔧 2026-08-18：開圖表前提升 foreground 權限（MT5 只收 foreground 進程 key）
-                _ftid, _mtid = _focus_mt5_foreground(win.element_info.handle)
+                _sym = (symbol or '').upper()
+                # ① 寫 json（OpenChart script 讀呢個 — 一體化：symbol + ea + 模板名）
                 try:
-                    import pyautogui as _pg_oc
-                    _pg_oc.FAILSAFE = False
-                    import ctypes as _ct_oc
-                    _ct_oc.windll.user32.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
-                    time.sleep(1)
-                    # Alt+F 開 File menu
-                    _pg_oc.hotkey('alt', 'f')
+                    import json as _joc
+                    _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
+                    _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
+                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → MT5Cloud_EA）
+                    # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
+                    try:
+                        _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                        _tpl_full_t = None
+                        for _d_t2 in os.listdir(_mt5_data_t) if os.path.isdir(_mt5_data_t) else []:
+                            _pp = os.path.join(_mt5_data_t, _d_t2, 'MQL5', 'Profiles', 'Templates')
+                            if os.path.isdir(_pp):
+                                _tpl_full_t = os.path.join(_pp, _tpl_name)
+                                break
+                        if _tpl_full_t and not os.path.isfile(_tpl_full_t):
+                            _CR = chr(13) + chr(10)
+                            _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
+                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
+                            _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
+                            _tpl_t += '</expert>' + _CR + _CR
+                            _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
+                            _tpl_t += '<indicator>' + _CR + 'name=Main' + _CR + 'path=' + _CR + 'apply=1' + _CR + 'show_data=1' + _CR + 'scale_inherit=0' + _CR + 'scale_line=0' + _CR + 'scale_line_percent=50' + _CR + 'scale_line_value=0.000000' + _CR + 'scale_fix_min=0' + _CR + 'scale_fix_min_val=0.000000' + _CR + 'scale_fix_max=0' + _CR + 'scale_fix_max_val=0.000000' + _CR + '</indicator>' + _CR + _CR
+                            _tpl_t += '</window>' + _CR + _CR + '</chart>'
+                            with open(_tpl_full_t, 'wb') as _f_t:
+                                _f_t.write(b'\xff\xfe')
+                                _f_t.write(_tpl_t.encode('utf-16-le'))
+                            print(f"📋 模板已生成: {_tpl_name}（path → MT5Cloud_EA）")
+                    except Exception as _ete:
+                        print(f"⚠️ 生成模板失敗: {_ete}")
+                    with open(_cmd_file, 'w', encoding='utf-8') as _f:
+                        _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
+                                   'ea': ea_name, 'tpl': _tpl_name}, _f)
+                    # 🚨 2026-08-15 FIX：寫入後驗證（讀返確認 — json 舊值問題：部署 USDJPY 但 script 讀到舊 GBPUSD）
+                    try:
+                        _chk = _joc.load(open(_cmd_file, encoding='utf-8'))
+                        if _chk.get('symbol') != _sym:
+                            with open(_cmd_file, 'w', encoding='utf-8') as _f2:
+                                _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
+                                           'ea': ea_name, 'tpl': _tpl_name}, _f2)
+                            print(f"📋 json 重寫（驗證唔啱 → {_sym}）")
+                        else:
+                            print(f"📋 json 寫入驗證 OK: {_sym}")
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                # ② 確保有圖表（熱鍵要圖表 active — 用戶實測）
+                _has_chart_oc = False
+                try:
+                    for _d_oc in win.descendants():
+                        if _d_oc.element_info.class_name == 'MDIClient':
+                            _has_chart_oc = len(_d_oc.children()) > 0
+                            break
+                except Exception:
+                    pass
+                if not _has_chart_oc:
+                    # 🚨 2026-08-17 FIX：完整開新圖表（Alt+F → Enter ×3 — 第三個 Enter 確認 dialog 開預設 symbol — 確保有「真圖表 window」先可以觸發 Ctrl+9 熱鍵）
+                    # （之前只有 2 個 Enter → 只開到 dialog 未真正開圖表 → 冇圖表 active → Ctrl+9 唔觸發 → 開圖表失敗！）
+                    print("📋 冇圖表 — 開新圖表（Alt+F → Enter ×3）")
+                    _sk('%f')
                     time.sleep(1.5)
-                    # Enter 開「新圖表」symbol 子選單
-                    _pg_oc.press('enter')
+                    _sk('{ENTER}')
                     time.sleep(1.5)
-                    # Down×N 揀 symbol
-                    for _ in range(_doffs):
-                        _pg_oc.press('down')
-                        time.sleep(0.3)
-                    time.sleep(0.5)
-                    # Enter 確認開圖表
-                    _pg_oc.press('enter')
+                    _sk('{ENTER}')
+                    time.sleep(1.5)
+                    _sk('{ENTER}')
                     time.sleep(3)
-                    _r_oc = win.rectangle()
-                    _pg_oc.click(_r_oc.left + _r_oc.width() // 2, _r_oc.top + _r_oc.height() // 2)
+                # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
+                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
+                # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
+                _need_restart9 = False
+                try:
+                    _hk9_path = None
+                    _hk9_tdir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                    if os.path.isdir(_hk9_tdir):
+                        for _d9 in os.listdir(_hk9_tdir):
+                            _p9 = os.path.join(_hk9_tdir, _d9, 'config', 'hotkeys.ini')
+                            if os.path.isfile(_p9):
+                                _hk9_path = _p9
+                                break
+                    if _hk9_path:
+                        # 🚨 2026-08-17 FIX：讀寫用 utf-16（自動處理 BOM — utf-16-le 讀唔會剝 BOM → 寫返會冇 BOM → MT5 讀唔到熱鍵！）
+                        _hk9_c = open(_hk9_path, encoding='utf-16', errors='ignore').read()
+                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
+                        if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
+                            _hk9_ok = True
+                        else:
+                            # 寫入/修正 <scripts> Ctrl+9
+                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
+                            if '<scripts>' in _hk9_c:
+                                import re as _re9
+                                _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
+                            else:
+                                _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
+                            with open(_hk9_path, 'wb') as _f9:
+                                _f9.write(('\ufeff' + _hk9_c).encode('utf-16-le'))
+                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
+                            _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
+                    # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
+                    # （實測：每次重啟後 Ctrl+9 script 熱鍵未 ready → 開圖表唔work；但你手動環境（MT5 一直運行）Ctrl+9 每次 work
+                    #   → 唔好無謂重啟 — MT5 一直運行保持 Ctrl+9 ready；只有 hotkeys.ini 改變先要 reload）
+                    # _need_restart9 = True  ← 移除（唔強制每次重啟）
+                except Exception as _e9x:
+                    print(f"⚠️ hotkeys.ini 檢查失敗: {_e9x}")
+                if _need_restart9:
+                    try:
+                        import subprocess as _sp9
+                        _sp9.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                        time.sleep(4)
+                        _sp9.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
+                        time.sleep(25)
+                        print("✅ MT5 已重啟（load OpenChart Ctrl+9 熱鍵）")
+                    except Exception as _e9:
+                        print(f"⚠️ 重啟失敗: {_e9}")
+                # 確保有圖表 + focus
+                try:
+                    import ctypes as _ct_oc
+                    _u_oc = _ct_oc.windll.user32
+                    _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    print(f"📋 開新圖表: {_sym}（Alt+F → Enter → Down×{_doffs} → Enter）")
-                except Exception as _e_oc:
-                    print(f"⚠️ 開圖表異常: {_e_oc}")
-                finally:
-                    if _ftid:
-                        import ctypes as _ctd
+                    try:
+                        import pyautogui as _pg_oc
+                        _pg_oc.FAILSAFE = False
+                        _r_oc = win.rectangle()
+                        _pg_oc.click(_r_oc.left + _r_oc.width() // 2, _r_oc.top + _r_oc.height() // 2)
+                        time.sleep(0.8)
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                # send Ctrl+9（pyautogui）
+                _oc_ok2 = False
+                for _ocr in range(2):
+                    try:
+                        import pyautogui as _pg_oc2
+                        _pg_oc2.FAILSAFE = False
+                        _pg_oc2.hotkey('ctrl', '9')
+                    except Exception:
+                        _sk('^9')
+                    time.sleep(3.5)
+                    # 檢查有冇彈「選項/導航熱鍵」dialog（Alt+Q 未 load 嘅標誌）
+                    _opt_dlg = False
+                    try:
+                        def _cb_opt(_h2, _x2):
+                            nonlocal _opt_dlg
+                            if _u_oc.IsWindowVisible(_h2):
+                                _c2 = ctypes.create_unicode_buffer(64)
+                                _u_oc.GetClassNameW(_h2, _c2, 64)
+                                if '#32770' in _c2.value:
+                                    _l2 = _u_oc.GetWindowTextLengthW(_h2)
+                                    _b2 = ctypes.create_unicode_buffer(_l2 + 1)
+                                    _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
+                                    if '選項' in _b2.value or 'Option' in _b2.value or '熱鍵' in _b2.value:
+                                        _opt_dlg = True
+                            return True
+                        _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_opt), None)
+                    except Exception:
+                        pass
+                    if _opt_dlg:
+                        print("⚠️ Ctrl+9 彈咗視窗（script 熱鍵未 load）— 關閉 + 重啟 MT5 reload 熱鍵")
                         try:
-                            _ctd.windll.user32.AttachThreadInput(_ftid, _mtid, False)
+                            _sk('{ESC}')
+                            time.sleep(1)
                         except Exception:
                             pass
-                # 驗證圖表 active 標題 = 目標 symbol
-                _chart_ok = False
+                        # 重啟 MT5（reload 熱鍵）
+                        import subprocess as _sp_oc
+                        try:
+                            _sp_oc.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                            time.sleep(4)
+                            _sp_oc.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
+                            time.sleep(25)
+                            print("✅ MT5 已重啟（reload 熱鍵）")
+                        except Exception as _eoc_r:
+                            print(f"⚠️ 重啟失敗: {_eoc_r}")
+                        continue
+                    else:
+                        # 🚨 2026-08-17 FIX：驗證用「MT5 active 圖表標題 = 目標 symbol」（唔用 log — log 延遲/唔寫 → 誤判「靜默失敗」；active 標題 Ctrl+9 開完 BRING_TO_TOP 即時改 — 準確）
+                        _chart_ok = False
+                        try:
+                            def _cb_title(_h2, _x2):
+                                nonlocal _chart_ok
+                                if _u_oc.IsWindowVisible(_h2):
+                                    _c2 = ctypes.create_unicode_buffer(64)
+                                    _u_oc.GetClassNameW(_h2, _c2, 64)
+                                    if 'MetaQuotes::MetaTrader' in _c2.value:
+                                        _l2 = _u_oc.GetWindowTextLengthW(_h2)
+                                        _b2 = ctypes.create_unicode_buffer(_l2 + 1)
+                                        _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
+                                        if _sym in _b2.value:
+                                            _chart_ok = True
+                                            return False
+                                return True
+                            _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_title), None)
+                        except Exception:
+                            pass
+                        if not _chart_ok:
+                            print(f"⚠️ Ctrl+9 冇開到圖表（{_sym} active 標題未變）— 重試")
+                            time.sleep(2)
+                            continue
+                        _oc_ok2 = True
+                        break
+                time.sleep(1)
+                print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）" if _oc_ok2 else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
+                # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
+                # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
                     import ctypes as _c9
                     _u9 = _c9.windll.user32
+                    _chart_title = ''
                     @_c9.WINFUNCTYPE(_c9.c_bool, _c9.c_size_t, _c9.c_size_t)
                     def _cb9(hwnd, _):
-                        nonlocal _chart_ok
+                        nonlocal _chart_title
                         _cls = _c9.create_unicode_buffer(80)
                         _u9.GetClassNameW(_c9.c_void_p(hwnd), _cls, 80)
                         if 'Chart' in _cls.value or 'MetaTrader' in _cls.value:
                             _buf = _c9.create_unicode_buffer(120)
-                            _l9 = _u9.GetWindowTextLengthW(_c9.c_void_p(hwnd))
-                            if _l9 > 0:
-                                _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, _l9 + 1)
-                                if _sym in _buf.value:
-                                    _chart_ok = True
-                                    return False
+                            _u9.GetWindowTextW(_c9.c_void_p(hwnd), _buf, 120)
+                            _tt = _buf.value
+                            if _tt and _sym[:3] in _tt:
+                                _chart_title = _tt
+                                return False  # 停
                         return True
-                    _u9.EnumWindows(_cb9, None)
+                    for _w in _app.windows():
+                        try:
+                            _u9.EnumChildWindows(_c9.c_void_p(int(_w.element_info.handle)), _cb9, 0)
+                        except Exception:
+                            pass
+                        if _chart_title:
+                            break
+                    if _chart_title:
+                        print(f"   ✅ 圖表標題驗證: {_chart_title[:40]}")
+                    else:
+                        print(f"   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）")
                 except Exception:
                     pass
-                if not _chart_ok:
-                    print(f"⚠️ 開圖表未確認（{_sym} active 標題未變）— 唔阻塞，繼續掛 EA")
-                else:
-                    print(f"✅ 圖表已開: {_sym}")
+                try:
+                    _steps[0]['status'] = 'done'
+                    _steps[1]['status'] = 'doing'
+                    _update_steps(_steps)
+                except Exception:
+                    pass
             except Exception:
                 pass
-        # 🔧 2026-08-18 REWRITE：掛 EA 用 Navigator 雙擊（唔使熱鍵！）
-        # 決定性測試證實：MT5 對所有自定義熱鍵（Ctrl+1/2/9 script/EA）synthetic input 都過濾
-        # 只收真實硬件鍵盤。但對 Navigator 樹 mouse 雙擊收得到 → 用 click_input(double=True) 掛 EA
-        # 開圖表經 Menu（Alt+F→Enter→Enter）已證 work；掛 EA 經 Navigator 雙擊已證 work（Breakout 實測掛到 EURUSD）
-        _ftid2, _mtid2 = _focus_mt5_foreground(win.element_info.handle)
-        _saw_props = False  # 雙擊掛 EA 後會彈 Properties → 驗證掛到
-        try:
-            import pyautogui as _pg_ea
-            _pg_ea.FAILSAFE = False
-            # 確保目標圖表 active（click 圖表區中央）
-            _r_ea = win.rectangle()
-            _pg_ea.click(_r_ea.left + _r_ea.width() // 2, _r_ea.top + _r_ea.height() // 2)
-            time.sleep(1)
-            # 搵 Navigator 樹
-            _nav = None
-            for _d in win.descendants():
-                if _d.element_info.class_name == 'SysTreeView32':
-                    _nav = _d
-                    break
-            if _nav is None:
-                print("⚠️ 搵唔到 Navigator 樹")
-            else:
-                # 展開路徑 EA交易\MT5Cloud_EA\{ea_name}（EA交易 = Experts 中文）
-                _ea_item = None
-                for _p in [rf'\MetaTrader 5\EA交易\MT5Cloud_EA\{ea_name}',
-                           rf'\MetaTrader 5\MT5Cloud_EA\{ea_name}']:
-                    try:
-                        _ea_item = _nav.get_item(_p)
-                        break
-                    except Exception:
-                        _ea_item = None
-                if _ea_item is None:
-                    print(f"⚠️ Navigator 搵唔到 {ea_name}（可能未安裝本地 .ex5）")
-                else:
-                    _ea_item.click_input(double=True)  # 🔧 mouse 雙擊掛 EA（唔使熱鍵）
-                    print(f"🖱️ 雙擊 Navigator 掛 {ea_name} 落 {_sym} 圖表")
-                    time.sleep(3)
-        except Exception as _e_ea:
-            print(f"⚠️ 掛 EA 異常: {_e_ea}")
-        if _ftid2:
-            import ctypes as _ctd2
-            try:
-                _ctd2.windll.user32.AttachThreadInput(_ftid2, _mtid2, False)
-            except Exception:
-                pass
+        # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
+        # send 快捷鍵
+        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — 套模板已掛 EA）→ 跳過 send 熱鍵（唔好再附加落 active 圖表）
+        if open_chart:
+            _saw_props = True  # 套模板已掛 — 當附加完成
+        else:
+            _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
+            _sk(combo)
+        time.sleep(3)
         def _bm_click(_btn):
             """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
             try:
                 import ctypes as _c2
-                _c2.windll.user32.SendMessageW(_c2.c_void_p(int(_btn.element_info.handle)), 0x00F5, 0, 0)
+                _c2.windll.user32.SendMessageW(ctypes.c_void_p(int(_btn.element_info.handle)), 0x00F5, 0, 0)
                 return True
             except Exception:
                 try:
@@ -1661,29 +1730,50 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
                 break
 
-        # 🔧 2026-08-18：雙擊掛 EA 後驗證 Properties 有冇彈出（掛到 EA 會彈 Properties）
-        # 唔使熱鍵重試（決定性測試證實 MT5 過濾熱鍵 synthetic input，改用 Navigator 雙擊）
+        # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
         if not _saw_props:
-            print(f"⚠️ {ea_name} 雙擊後未偵測到 Properties（可能未掛到 — 但 dialog 循環已處理過）")
-            # 再確認一次：check 有冇 EA 名 dialog
-            for _w in _app.windows():
-                try:
-                    if _w.class_name() == '#32770' and any(_k in _w.window_text() for _k in (ea_name, '1.00', '2.00', '3.00')):
-                        _saw_props = True
-                        break
-                except Exception:
-                    pass
-            if _saw_props:
-                print(f"✅ 偵測到 {ea_name} Properties（掛到）")
-            else:
-                print(f"❌ {ea_name} 未掛到（Navigator 雙擊無效 — 可能 EA 未安裝本地 .ex5）")
+            print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試中）...")
+            for _rt in range(2):
+                _chk_abort()
+                _sk(combo)
+                time.sleep(3)
+                # 檢查 dialog（簡單 — 有 EA 名/版本號 = Properties）
+                _props_now = False
+                for _w in _app.windows():
+                    try:
+                        if _w.class_name() == '#32770' and any(_k in _w.window_text() for _k in (ea_name, '1.00', '2.00', '3.00')):
+                            _props_now = True
+                            _saw_props = True
+                            break
+                    except Exception:
+                        pass
+                if _props_now:
+                    # 撳確定
+                    for _w in _app.windows():
+                        try:
+                            if _w.class_name() == '#32770':
+                                _dw = _app.window(handle=int(_w.element_info.handle))
+                                for _b in _dw.children(class_name='Button'):
+                                    try:
+                                        if '確定' in _b.window_text() or 'OK' in _b.window_text():
+                                            if _bm_click(_b):
+                                                print(f"✅ 重試 {_rt+1}: 已撳「確定」")
+                                            break
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+                    break
+                time.sleep(2)
+            if not _saw_props:
+                print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
         if os.path.isfile(hb):
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
-            print(f"✅ {ea_name} 雙擊掛載流程完成（心跳等 tick）")
+            print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
         # 🚨 2026-08-12 FIX：steps done 搬去函數最尾（所有操作完成後先寫 — 否則用戶見 steps done 撳確定 → active 仲 true → 即刻彈多一次）
         # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
         try:
@@ -1860,30 +1950,21 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
 
 
 def verify_heartbeat(ea_name, timeout=60):
-    """驗證 EA heartbeat file 存在且新鮮（+ MT5 log 後備 — 2026-08-10：市場收市冇 tick 心跳唔寫）
-    🚨 2026-08-18 (HY3) 根治：注入嘅心跳 code 寫 state_<ea>.json（FILE_COMMON），唔係 hb_<ea>.txt
-    → 必須同時檢查 state_<ea>.json 同 hb_<ea>.txt（舊版 EA 用 .txt）"""
-    candidates = [
-        os.path.join(COMMON_FILES, f'state_{ea_name}.json'),
-        os.path.join(COMMON_FILES, f'hb_{ea_name}.txt'),
-    ]
+    """驗證 EA heartbeat file 存在且新鮮（+ MT5 log 後備 — 2026-08-10：市場收市冇 tick 心跳唔寫）"""
+    hb_file = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
     start = time.time()
     
     while time.time() - start < timeout:
-        for hb_file in candidates:
-            if os.path.exists(hb_file):
-                mtime = os.path.getmtime(hb_file)
-                age = time.time() - mtime
-                if age < 300:  # Within 5 minutes
-                    # Read content
-                    try:
-                        with open(hb_file, 'rb') as f:
-                            raw = f.read()
-                        content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
-                    except Exception:
-                        content = ''
-                    print(f"💓 {ea_name} heartbeat: {content} ({round(age)}s ago) [{os.path.basename(hb_file)}]")
-                    return True
+        if os.path.exists(hb_file):
+            mtime = os.path.getmtime(hb_file)
+            age = time.time() - mtime
+            if age < 300:  # Within 5 minutes
+                # Read content
+                with open(hb_file, 'rb') as f:
+                    raw = f.read()
+                content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
+                print(f"💓 {ea_name} heartbeat: {content} ({round(age)}s ago)")
+                return True
         time.sleep(3)
     
     # 🚨 2026-08-10：心跳冇 → 睇 MT5 log「已啟動」（市場收市冇 tick — EA 其實啟動咗）
@@ -2006,45 +2087,43 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # Step 3: Attach EA（🎯 快捷鍵優先 — 2026-08：6093 double-click 唔 work）
         # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
         hotkeys = load_hotkey_map()
-        symbol_arg = None
-        try:
-            symbol_arg = args.symbol
-        except NameError:
-            symbol_arg = symbol
-        # 🚨 2026-08-18 (HY3) 根治：attach 唔可靠 → 循環 attach 直到心跳出現（最多 3 次）
-        # 每次 attach 之後即時 verify_heartbeat；有心跳即 return True（唔使等 watcher 二次確認）
-        max_attach = 3
-        for _att in range(max_attach):
-            check_abort()
-            if ea_name in hotkeys:
-                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=symbol_arg)
-            else:
-                success = attach_ea_navigator(ea_name, mt5_pid, symbol=symbol_arg)
-            if not success:
-                print(f"⚠️ attach 第 {_att+1} 次失敗 — 重試（唔再開新圖表）...")
-                for _rt2 in range(2):
-                    check_abort()
-                    success = attach_ea_hotkey(ea_name, mt5_pid, symbol=symbol_arg, open_chart=False)
-                    if success:
-                        break
-                    time.sleep(2)
-            if not success:
-                print(f"⚠️ 第 {_att+1} 輪 attach 全部失敗")
-                time.sleep(3)
-                continue
-            # 即時驗證心跳（attach 成功後等幾秒等 OnInit + 首次 OnTimer）
-            time.sleep(5)
-            ensure_auto_trading_on(mt5_pid)
-            hb = verify_heartbeat(ea_name, timeout=20)
-            if hb:
-                print(f"\n🎉 SUCCESS: {ea_name} is running on {symbol_arg} {timeframe}!")
-                return True
-            else:
-                print(f"⚠️ 第 {_att+1} 輪 attach 後心跳未出 — 重試 attach")
-                time.sleep(3)
-        # 3 輪都 attach 咗但心跳未出 → 最後一次 log 後備確認
-        print(f"\n⚠️ {ea_name} 3 輪 attach 後心跳仍未檢測到")
-        return False
+        if ea_name in hotkeys:
+            success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
+        else:
+            success = attach_ea_navigator(ea_name, mt5_pid)
+        if not success:
+            # 🚨 2026-08-12 FIX：重試時唔建立新圖表（open_chart=False — 重用現有圖表 — 之前每次重試建立新圖表 → 「開好多圖表」）
+            print(f"⚠️ 快捷鍵方法失敗 — 自動重試快捷鍵（×2，唔再建立新圖表）...")
+            for _rt2 in range(2):
+                check_abort()
+                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol, open_chart=False)
+                if success:
+                    break
+                time.sleep(2)
+        if not success:
+            print("⚠️ 快捷鍵重試後都失敗（不再試 Navigator — 6093 免疫）")
+        
+        if not success:
+            print("❌ Failed to attach EA")
+            return False
+        check_abort()
+        
+        # Step 4: Ensure AutoTrading ON
+        ensure_auto_trading_on(mt5_pid)
+        check_abort()
+        
+        # Step 5: Verify
+        time.sleep(5)
+        loaded = verify_ea_loaded(ea_name)
+        # ⚠️ heartbeat timeout 15 秒（唔係 60）— 好多 EA（TestRunner 等）冇 heartbeat 機制 → 白等 60 秒
+        heartbeat = verify_heartbeat(ea_name, timeout=15)
+        
+        if heartbeat:
+            print(f"\n🎉 SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
+            return True
+        else:
+            print(f"\n⚠️ {ea_name} may be attached but no heartbeat detected")
+            return loaded
     except ControlAborted:
         print(f"\n🚨 部署被用戶緊急停止！")
         return False

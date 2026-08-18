@@ -22,6 +22,44 @@
 | Global Mutex (防多個 auto_attach) | ✅ 完成 | 100% |
 | Dashboard Alive 🟢🔴 指示 | ⏳ 未開始 | 0% |
 | Heartbeat FILE_COMMON fix | ⏳ 進行中 | 50% |
+| **5x 壓力測試穩定（v0.9.67 新 stack）** | 🔴 **未過（0/5）** | 困住 attach |
+
+---
+
+## 🔴 Current Blocker（2026-08-18 下午 — HY3 跟進）
+
+> **目標**：用家要求「用新版做多 5 次壓力測試（5/5 PASS）」。v0.9.67 已 commit/push，但喺**對版新 stack**（server+watcher+agent+MT5 全部用新 code 重起）上跑 `stress_test_5x.py` 連續 **0/5 ~ 2/5 FAIL**，5/5 一直未達成。
+
+### 已確認 / 已根治嘅項（呢輪 debug 搞清楚咗）
+1. ✅ **URI fix 對版**：server_run.log 確認 load `sqlite:///C:\...\instance\mt5cloud.db`；ORM remove-local persist 證實（之前 5/5 係靠 v0.9.66 raw-SQL 頂住，新 stack 先暴露下面嘅真 bug）。
+2. ✅ **auto_attach dispatch 改咗**：`auto_attach_ea` 永遠用 `attach_ea_navigator`（Navigator 雙擊），唔用 `attach_ea_hotkey`（雙擊掛唔到 → `雙擊後未偵測到 Properties`）。
+3. ✅ **watcher 改 python.exe**：`run_auto_attach` 強制用 `C:\...\Python311\python.exe`（絕對路徑，唔用 `sys.executable`/`pythonw`）—— pythonw 會令 subprocess 間歇性 hang（試過 44 分鐘唔退）→ 5min timeout。但 note：pythonw 有時都成功，所以**唔係決定性因素**。
+4. ✅ **stress test 改等 .ex5**：install 之後 poll `.ex5` 出現（最多 60s）先 deploy，唔好固定 sleep(6)。
+5. ✅ **watcher deploy worker 改等 .ex5**：check `.ex5` 唔到就等（最多 30s）先 skip，唔好即刻 skip（race）。
+6. ✅ **單次 deploy 證實 work**：手動經 API `install-local` + `deploy` → watcher 跑 `auto_attach` → **`🎉 Properties dialog found! Attached.` + 💓 心跳出**（watcher log 有實錘）。
+
+### 🔴 真正卡住嘅點（未解）
+- **5x 連續跑全部 age=None**（心跳冇出）。但**單次**手動 deploy 成功 → 問題出喺**連續循環**或者**某啲輪次 attach 唔到**。
+- `aa_debug.log`（watcher tee 出嘅 auto_attach 完整 output）顯示真正失敗模式：
+  ```
+  🎯 Found EMA_Cross, attaching via pyautogui double-click...
+  🎯 EMA_Cross double-clicked (handle-based)
+  ⚠️ EMA_Cross dialog not found after scan (attempt 1/3)
+  ... 3 輪都係咁
+  ❌ EMA_Cross attach failed after 3 attempts
+  ```
+  → **搵到 EMA_Cross + double-click 咗，但 Properties dialog 彈唔出（或者彈咗即刻收埋）** → 掛唔到 EA。
+- 矛盾點：`aa_debug.log` 中途有 `🎉 Properties dialog found! Attached.`（line 83）但跟住 line 85 又 `❌ attach failed` → 似係 dialog 搵到 vs 驗證邏輯有出入，或者 scan 模式逐行 double-click 干擾咗已彈出嘅 dialog。
+- `compile_ok` 間歇 `False`（Round 2/4/5）：server install 有時寫咗 compile_cmd 但 `.ex5` 未生成（watcher `_compile_via_gui` 用 MetaEditor GUI F7，間歇性失敗）。
+
+### 假陽性陷阱（已識別）
+- stress test Round 1 有時 `age=53s` PASS → 其實係**上一輪手動掛嘅殘留心跳 file** 未清，唔係今輪真成功。要用「今輪 install 之後新寫嘅心跳」判斷。
+
+### 下一步（未做）
+- A. 修 `attach_ea_navigator` 嘅 **double-click → dialog 唔出** 問題（可能係 `click_input(double=True)` vs pyautogui 座標 double-click 喺連續跑時 focus 唔穩；或者 scan 模式逐行 double-click 干擾）。
+- B. 根治 `compile_ok` 間歇 False（server/watcher compile 唔穩定）。
+- C. **架構反思（用家提問）**：而家 attach 靠 pyautogui/pywinauto GUI 自動化（開圖表→開 Navigator→雙擊 EA→Properties→確定），天生脆弱。之前 v0.9.50-56 用過 **OpenChart.mq5 + ChartApplyTemplate（純 MQL5，模板含 `<expert>` EA path → 套模板即掛 EA）**，完全唔使 GUI 自動化 → 應該更穩。見下面答用家。
+- D. commit/push auto_attach.py + deploy_watcher.py + stress_test_5x.py 嘅改動（而家全部未 commit）。
 
 ---
 
@@ -31,6 +69,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.9.68** | 2026-08-18 | 🔄 **程式碼 revert 返 v0.9.56（保留 56-67 全部 commit 歷史，唔刪任何記錄）— 由 HY3 執行**：**① 用 `git checkout b48957c -- server agent` 將程式碼還原到 v0.9.56 狀態**（server/app.py + server/templates/dashboard.html + agent/*.py 全部 revert，唔用 `reset --hard` → 56-67 commit 完好保留喺 git log）。**② 加入 `OpenChart.mq5`（手動輸入品種版 v1.30）** — 用家最新要求：每一次雙擊 Navigator → MT5Cloud_EA → OpenChart 彈對話框填 Symbol + Period → 開唔同 chart；留空 symbol 讀 `open_chart_cmd.json` 自動模式。已放 `MQL5/Scripts/MT5Cloud_EA/` + repo `server/static/ea_library/`。**③ 注意（revert 後帶返嘅已知問題）**：Ctrl+9 熱鍵時好時壞（MT5 唔 load hotkeys.ini `<scripts>` 區）、Controller 常駐掛載未成功、5x 壓力測試未穩定 —— 呢啲係 v0.9.56 時已存在、57-67 試過解但未根治嘅問題。**④ 加 `.gitignore`** 忽略 runtime logs / detector json（唔使每次 commit 一大堆運行時 file）。**⑤ OpenChart.mq5 仲喺 MT5 terminal folder（AppData）實體運行 —— repo 版只係備份**。 |
 | **v0.9.67** | 2026-08-18 | 🎯 **🔥 真正 root cause 根治（5/5 PASS 穩定）— 由 HY3（呢個模型）更改**：**① 🔥 壓力測試 5/5 PASS（真正穩定）** — 5 輪連續 `install-local → deploy → 心跳驗證 age 0.1-1.0s → remove-local → 確認清走` 全部 ✅（v0.9.66 個陣係輪流 FAIL）。**② 🔥 真正 root cause：`SQLALCHEMY_DATABASE_URI` 用相對路徑**（v0.9.66 #44 只係 raw SQL 繞過 — 而家搵到真正源頭）：`sqlite:///mt5cloud.db` 相對 server run 目錄 → ORM `current_user.ea_config=...; db.session.commit()` **全部寫去 `server/mt5cloud.db`（空 file）**，而 watchdog / raw SQL / stress test 讀 `instance/mt5cloud.db` → 永遠 mismatch。根治：URI 改絕對路徑 `instance/mt5cloud.db` → **全部 6 個 ORM 寫入位（install-local/remove-local/upload/ea-config POST/PUT/deploy）自動修好**，唔使逐個 raw SQL。**③ 心跳驗證真正對（verify_heartbeat）**：原本淨檢查 `hb_<ea>.txt`，但注入 code 寫 `state_<ea>.json` → 永遠 False → auto_attach 靠 `verify_ea_loaded`（stale log）誤報成功 → watcher「🎉 已成功 attach」但實際冇心跳。改 verify_heartbeat 同時檢查 `state_<ea>.json` + `hb_<ea>.txt`。**④ auto_attach 唔再誤報成功**：原本 heartbeat 失敗就 `return loaded`（stale log）→ 改為循環 attach 最多 3 次，每次 attach 後即時 verify_heartbeat，有心跳先 `return True`（冇就重試 attach）。**⑤ remove-local config 清走確認**：ORM fix 後 `db.session.commit()` 真係 persist → step[5] `config無EA=✅` 而家真係清到。|
 | **v0.9.66** | 2026-08-18 | 🎯 **壓力測試 5/5 PASS 根治（用戶要求清重複圖表 + 五次壓力測試）— 由 HY3（呢個模型）更改，commit `D08888C3`**：**① auto_attach 唔再 restart MT5**（hotkeys.ini reload 檢查令 PID 變 → 後續 pywinauto connect 舊 PID fail → exit=1 → watcher 誤報失敗；掛 EA 用 Navigator 雙擊唔使熱鍵 → 唔需要 reload）**② 修 `attach_ea_navigator` 缺 `symbol` 參數 NameError**（Round 4-5 崩潰根因 — 開新圖表段 print/send_keys 用未定義 symbol → crash → EA 掛唔到 → 心跳冇出；加 `symbol` param + caller 傳 `args.symbol`）**③ 心跳驗證接受 `state_*.json` 或 `hb_*.txt`**（唔同 EA 寫法唔同 — EMA_Cross 淨寫 state_ 唔寫 hb_ → 之前誤判 FAIL）**④ 清重複圖表**（開新圖表前先關晒所有 MDI 圖表 → 每次部署得 1 個 EURUSD）**⑤ 環境清理**：kill auto_trade_detector（亂 restart MT5 干擾）+ kill 連 dead tunnel 舊 agent + spawn 新 agent 連 127.0.0.1:5001（live backend 同套）**⑥ 壓力測試 5/5 PASS**（EMA_Cross ×5 輪：配對→部署→心跳驗證 age 0.1-1.0s→刪除→確認清走）**⑦ 🔥 修 `install-local` config 唔 persist（CRITICAL — 隱藏 root cause）**：`current_user.ea_config=...; db.session.commit()` 喺 SQLAlchemy 下**冇真正寫入 DB** → `_bounce_back_watchdog` 每 30s 讀 config 讀到舊值（冇 EMA_Cross）→ 誤刪 `.mq5` → compile fail → 心跳冇出 → 壓力測試輪流 FAIL（bounce_back_log.jsonl 證實每 30s 刪一次 EMA_Cross）。根治：改用 raw SQL `UPDATE user SET ea_config=? WHERE username='dev'`（繞過 ORM）。**⑧ 修 auto_attach 間歇性崩潰**：`find_ea_dialog` UnboundLocalError（nested def 喺 call 之前未定義 → 搬 module-level）+ `ctypes`/`user32` NameError（加 module import）+ `click_y` NameError（加 `click_y=None` default）**⑨ #39 UI 字眼**：EA 倉庫「移去配索」→「加入配對」（未加入 EA button 正確）**⑩ #40 delete 後清心跳 file**：deploy_watcher delete 流程加 `os.remove(hb_*.txt + state_*.json)`（pause 唔清，保留配置）|
 | **v0.9.65** | 2026-08-18 | 🎯 **掛 EA 失敗根治 + 重複圖表修復**：**① 廢除 TVM_GETITEMRECT 座標 + 掃描亂點模式**（GETITEMRECT fail → 落入掃描模式逐行 double-click 成個 tree → 掛唔到/掛錯 EA）→ 改用 v0.9.61 證實 work 嘅 `ea_node.click_input(double=True)`（handle-based，唔使座標，唔受 owner-draw/語言影響）**② 重複 EURUSD 圖表**（「Chart already open, skipping Ctrl+N」→ 殘留舊圖表疊加 → 3+ 個 EURUSD）→ 改開新圖表前先關晒所有 MDI 圖表 |
