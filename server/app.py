@@ -1864,8 +1864,7 @@ def api_ea_install_local(filename):
             _is_script = False
     # 選擇目標目錄（Script → Scripts/，EA → Experts/）
     _target_dirs = []
-    data_dir = os.environ.get('APPDATA', '')
-    for _td_d in os.listdir(data_dir) if os.path.isdir(data_dir) else []:
+    for _td_d in os.listdir(data_dir) if os.path.isdir(data_dir) else []:  # data_dir = APPDATA\MetaQuotes\Terminal（上面已定義）
         _rel = 'MQL5\\Scripts' if _is_script else 'MQL5\\Experts'
         _tgt = os.path.join(data_dir, _td_d, *_rel.split('\\'))
         if os.path.isdir(_tgt):
