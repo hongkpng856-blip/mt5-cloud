@@ -178,6 +178,9 @@ def scan_ea_inventory():
             exp = os.path.join(data_dir, d, 'MQL5', 'Experts')
             if os.path.isdir(exp):
                 experts_dirs.append(exp)
+            scr = os.path.join(data_dir, d, 'MQL5', 'Scripts')  # 🚨 2026-08-18：Script 類型 EA（如 OpenChart）都掃
+            if os.path.isdir(scr):
+                experts_dirs.append(scr)
 
     # 掃描 .ex5 文件（只掃根目錄 — 唔掃 MT5 內建 folder
     # （Free Robots/Examples/Advisors — 樣本 EA 唔應該顯示）

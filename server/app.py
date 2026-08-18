@@ -1851,15 +1851,36 @@ def api_ea_install_local(filename):
     # ⚠️ 用 src_path 嘅 basename（保留副檔名）— filename 可能冇 .mq5（前端傳 baseName）
     # 唔可以淨用 filename — 會複製錯名 + 唔會寫 compile_cmd（endswith('.mq5') False）
     dest_name = os.path.basename(src_path)
-    for exp_dir in experts_dirs:
-        target = os.path.join(exp_dir, dest_name)
+    # 🚨 2026-08-18 FIX（用戶要求：Script 類型 EA 配對）：偵測 .mq5 係 Script 定 EA
+    # Script（#property script_show_inputs / 有 void OnStart() 無 OnInit）→ 放 MQL5/Scripts/ + 唔注入心跳
+    # EA（有 OnInit/OnTick）→ 放 MQL5/Experts/ + 注入心跳
+    _is_script = False
+    if dest_name.lower().endswith('.mq5'):
+        try:
+            _src_c = open(src_path, encoding='utf-8', errors='ignore').read()
+            _is_script = ('#property script_show_inputs' in _src_c) or \
+                         ('void OnStart()' in _src_c and 'int OnInit()' not in _src_c)
+        except Exception:
+            _is_script = False
+    # 選擇目標目錄（Script → Scripts/，EA → Experts/）
+    _target_dirs = []
+    data_dir = os.environ.get('APPDATA', '')
+    for _td_d in os.listdir(data_dir) if os.path.isdir(data_dir) else []:
+        _rel = 'MQL5\\Scripts' if _is_script else 'MQL5\\Experts'
+        _tgt = os.path.join(data_dir, _td_d, *_rel.split('\\'))
+        if os.path.isdir(_tgt):
+            _target_dirs.append(_tgt)
+    if not _target_dirs:
+        _target_dirs = experts_dirs  # fallback
+    for target_dir in _target_dirs:
+        target = os.path.join(target_dir, dest_name)
         if os.path.abspath(target) == os.path.abspath(src_path):
             continue  # 已經喺度
         try:
             _sh.copy2(src_path, target)
             # 🚨 2026-08-14：核心模板 — 複製後自動注入心跳 code（1 秒心跳 — 新 EA 自動有 — 唔使手動加）
             # （EA 庫版本冇心跳 code → 部署後永遠「沒有心跳設定」— 自動注入解決）
-            if dest_name.endswith('.mq5'):
+            if dest_name.endswith('.mq5') and not _is_script:  # 🚨 2026-08-18：心跳只注入 EA（Script 唔適用 — script 一嚟就跑）
                 try:
                     import re as _re_hb
                     _c_hb = open(target, encoding='utf-8', errors='ignore').read()
@@ -1943,7 +1964,7 @@ void __mt5c_process() {
                         _s['status'] = 'done'
                 # 🚨 2026-08-12 FIX：如果唔使編譯（.ex5 已存在且新過 .mq5）→ 即刻完成「編譯」+「完成配對」（唔停留 pending — 「兩步就停」根治）
                 try:
-                    _ex5_ic = os.path.join(ea_folder, os.path.splitext(dest_name)[0] + '.ex5')
+                    _ex5_ic = os.path.join(target_dir, os.path.splitext(dest_name)[0] + '.ex5')
                     _mq5_ic = target
                     _need_compile = dest_name.lower().endswith('.mq5') and (
                         not os.path.exists(_ex5_ic) or os.path.getmtime(_ex5_ic) < os.path.getmtime(_mq5_ic))
@@ -1964,7 +1985,7 @@ void __mt5c_process() {
         if dest_name.lower().endswith('.mq5'):
             try:
                 base = os.path.splitext(dest_name)[0]
-                ex5_target = os.path.join(ea_folder, base + '.ex5')
+                ex5_target = os.path.join(target_dir, base + '.ex5')
                 mq5_target = target
                 if not os.path.exists(ex5_target) or os.path.getmtime(ex5_target) < os.path.getmtime(mq5_target):
                     # 寫 compile_cmd 俾 deploy_watcher（MetaEditor 需要 desktop access）
