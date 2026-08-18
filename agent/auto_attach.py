@@ -1286,6 +1286,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         import ctypes as _ct
         from pywinauto import Application as _App
         from pywinauto.keyboard import send_keys as _sk
+        # 🚨 2026-08-19：偵測 ea_name 係咪 Script 類型（OpenChart 先係 — Script 用一體化假裝掛；真 EA 用熱鍵真掛）
+        _is_script_att = ea_name.startswith('OpenChart')
         # 🚨 緊急停止支援（2026-08-06：之前 dialog 循環冇 check — 緊急停止冇效）
         try:
             from control_guard import check_abort as _chk_abort
@@ -1632,12 +1634,20 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 pass
         # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
         # send 快捷鍵
-        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — 套模板已掛 EA）→ 跳過 send 熱鍵（唔好再附加落 active 圖表）
-        if open_chart:
-            _saw_props = True  # 套模板已掛 — 當附加完成
+        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過 send 熱鍵
+        # 🚨 2026-08-19 FIX：只有 Script（OpenChart）先跳過熱鍵（一體化假裝掛）；真 EA（ADX 等）即使 open_chart=True 都要用熱鍵真掛落 target chart
+        if open_chart and _is_script_att:
+            _saw_props = True  # Script（OpenChart）一體化假裝已掛
         else:
             _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
-            _sk(combo)
+            if not open_chart:
+                _sk(combo)
+            else:
+                # open_chart=True 但係真 EA → 開 chart 後用熱鍵真掛落 active chart
+                if combo:
+                    _sk(combo)
+                else:
+                    print(f"⚠️ {ea_name} 冇快捷鍵 combo — 用 Navigator 附加")
         time.sleep(3)
         def _bm_click(_btn):
             """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
