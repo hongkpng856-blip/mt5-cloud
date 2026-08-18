@@ -80,7 +80,11 @@
 | **v0.9.80** | 2026-08-18 | 🐛 **修 install-local Script 偵測路徑 bug** — `data_dir` 應係 `APPDATA/MetaQuotes/Terminal` → Script copy 正確去 Scripts/ |
 | **v0.9.79** | 2026-08-18 | 🎯 **完整支援 Script 類型 EA 配對** — install-local 偵測 .mq5 Script → copy+compile 去 Scripts/（唔注入心跳）+ detector 掃 Scripts/ — 根治 OpenChart 配對失敗 |
 | **v0.9.78** | 2026-08-18 | 🎯 **重新整理自動清殘留** — refresh-status 掃 Experts+Scripts，刪唔喺 config + 唔係 _SYSTEM_KEEP 嘅檔 |
-| **v0.9.87** | 2026-08-19 | 🔧 **Script 類型暫不支援部署** — /api/deploy 偵測 .mq5 係 Script（#property script_show_inputs / OnStart 無 OnInit）→ 返回 400「暫不支援部署（只支援長駐EA）」，唔再嘗試 deploy（唔會卡死/load 好耐）。實測：OpenChart→不支援；ADX_Trend→正常。|
+| **v0.9.91** | 2026-08-19 | ⭐🔧 **根治「一秒 remove」真兇（ADX 部署重要成功）** — ADX_Trend 源碼有 AgentHelper bootstrap code（OnTick 一啟動就 ChartApplyTemplate('AgentHelper_EURUSD_H1.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ 一秒成功下一秒 remove + 最終冇掛。移除嗰段 bootstrap → ADX 掛住交易唔讓位 → 重新 compile。驗證（對真 MT5 log）：`04:59:41 expert ADX_Trend (EURUSD,H1) loaded successfully` **無 removed** + 心跳持續新鮮。其他 EA（Breakout/Bollinger_Band）log 證實 loaded 無 removed（機制正常）。|
+| **v0.9.90** | 2026-08-19 | 🔧 **部署真 EA（ADX）用熱鍵真掛 target chart** — 只有 Script（OpenChart）用一體化假裝掛；真 EA 即使 open_chart=True 都 send 熱鍵（Ctrl+N）真掛落新開 chart（唔靠 apply_template_gui 係 stub — 之前假掛 + 掛錯 chart）|
+| **v0.9.89** | 2026-08-19 | 🔥 **修心跳後備假成功 root cause** — state_<EA>.json 新鮮度用 ts（EA TimeCurrent() server-time/UTC）對比本地 time.time() → 時區錯位相減負數 → 永遠<300 → 假話運行中；改用心跳檔案 mtime 對比本地時間（一定準）|
+| **v0.9.88** | 2026-08-19 | 🔧 **部署成功判定改用 Terminal log 驗證** — D0E8.../logs/ 搵『expert <EA> (<SYM>,H1) loaded successfully』先算成功（用戶要求：對真 MT5 log 做比對先話成功，唔信心跳/activity 假成功）；唔用 MQL5/Logs（EA Print 誤判）|
+| **v0.9.87** | **v0.9.87** | 2026-08-19 | 🔧 **Script 類型暫不支援部署** — /api/deploy 偵測 .mq5 係 Script（#property script_show_inputs / OnStart 無 OnInit）→ 返回 400「暫不支援部署（只支援長駐EA）」，唔再嘗試 deploy（唔會卡死/load 好耐）。實測：OpenChart→不支援；ADX_Trend→正常。|
 | **v0.9.86** | 2026-08-19 | 🔧 **移除 auto_attach 個 Ctrl+9 hotkeys check + 重啟 MT5 段** — 唔再用 Ctrl+9 開 chart，唔會 MT5 重啟令 PID 變新方法 fail |
 | **v0.9.85** | 2026-08-19 | 🔧 **移除舊 Alt+F→Enter×3 開空白 chart 段** — 統一由「用戶方法」Alt+F→Enter→Enter→Space→symbol→Enter 一次過開 target chart，唔重複開 chart + 唔受 Ctrl+9 熱鍵洗走影響 |
 | **v0.9.84** | 2026-08-19 | 🔧 **main attach 流程修正** — Script 類型（OpenChart/OpenChart_Helper）用 attach_ea_hotkey（新方法開 chart），避免走 attach_ea_navigator（Navigator 雙擊對 Script 唔 work 卡死 not found）|
@@ -262,6 +266,7 @@
 | 49 | **EA「彈返/重複」** — 配對庫自動彈返已移除嘅 EA（Breakout/Fibonacci/OpenChart，心跳暫停），MT5 有兩個同名 MT5Cloud_EA folder，EA 同時喺根 Experts/ + Experts/MT5Cloud_EA/ 兩位置 | detector 等 scan_dirs 同時掃根 Experts/ + MT5Cloud_EA subfolder；殘留檔 copy 去根 Experts/ → detector 掃到 → 配對庫重複/彈返顯示 | v0.9.76 全面取消 MT5Cloud_EA folder：detector/install-local/deploy/hotkeys/remove-local 全部淨係用根 Experts/+Scripts/，MT5 實體剷走兩 folder、EA 搬返根 → ea_inventory 得返配對嗰隻 | 08-18 |
 | 50 | **Script 類型 EA（OpenChart）配對失敗** | install-local 將 Script（#property script_show_inputs）當 EA copy+compile 去 Experts/ + watcher GUI F7 compile 間歇性失敗 → 冇 .ex5 + config 鎖死「本機冇檔案」+ 俾清殘留誤刪 | v0.9.79-82：Script 偵測→copy 去 Scripts/ + watcher 改用 CLI /compile + OpenChart 加入 _SYSTEM_KEEP + detector 掃 Scripts/ | 08-18 |
 | 51 | **Script 類型部署（OpenChart）卡死/影響正式 EA** | Script 唔係長駐 EA（冇心跳）— deploy OpenChart 會行 Navigator 雙擊卡死（not found）+ 之後誤判失敗 | v0.9.83-87：Script 類型暫時唔支援部署（api/deploy 偵測返回 400「不支援」）+ 部署開 chart 改用用戶方法（唔塊 Ctrl+9） | 08-19 |
+| 52 | ⭐ **部署 EA「一秒成功下一秒 remove」（ADX 唔掛）** | ADX_Trend 源碼 OnTick 有 AgentHelper bootstrap（ChartApplyTemplate('AgentHelper_*.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ loaded 後 4-5 秒 remove + 最終冇掛 | v0.9.91 移除 bootstrap code → ADX 掛住交易唔讓位 + recompile；其他 EA（Breakout/Bollinger）log 證實無呢個問題 | 08-19 |
 
 ---
 
