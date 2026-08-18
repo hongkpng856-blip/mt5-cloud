@@ -2762,7 +2762,33 @@ def api_deploy():
     config[f'{ea_name}_magic'] = str(magic)
     config[f'{ea_name}_lot'] = float(lot)
     current_user.ea_config = json.dumps(config)
-    
+
+    # 🚨 2026-08-19：Script 類型暫時唔支援部署（唔嘗試 deploy — 直接話「不支援」）
+    try:
+        _is_scr = False
+        for _d_sc_dir in (EA_LIBRARY_DIR, os.path.join(UPLOAD_DIR, current_user.username), COMMUNITY_EA_DIR):
+            _mq5_sc = os.path.join(_d_sc_dir, ea_name + '.mq5')
+            if os.path.isfile(_mq5_sc):
+                _sc_c = open(_mq5_sc, encoding='utf-8', errors='ignore').read()
+                _is_scr = ('#property script_show_inputs' in _sc_c) or ('void OnStart()' in _sc_c and 'int OnInit()' not in _sc_c)
+            if _is_scr:
+                break
+        # 本機已 install 嗰個做 backup 判斷
+        if not _is_scr:
+            _ml5t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            for _td in os.listdir(_ml5t) if os.path.isdir(_ml5t) else []:
+                for _rel in ('MQL5\\Scripts', 'MQL5\\Experts'):
+                    _mc = os.path.join(_ml5t, _td, *_rel.split('\\'), ea_name + '.mq5')
+                    if os.path.isfile(_mc):
+                        _mc_c = open(_mc, encoding='utf-8', errors='ignore').read()
+                        _is_scr = ('#property script_show_inputs' in _mc_c) or ('void OnStart()' in _mc_c and 'int OnInit()' not in _mc_c)
+                        break
+                if _is_scr:
+                    break
+        if _is_scr:
+            return jsonify({"success": False, "error": f"{ea_name} 係 Script 類型，暫不支援部署（只支援長駐EA）"}), 400
+    except Exception:
+        pass
     # ⚠️ Controller 部署（今日版本功能）：心跳 running → 已運行；否則手動提示（+ 標記 → watcher 自動確定）
     if ea_name == 'Controller':
         try:
