@@ -1554,6 +1554,17 @@ def api_ea_remove_local(filename):
                 experts_dirs.append(exp)
 
     removed = []
+    # 🚨 2026-08-18 FIX：剷除要完整 — 除咗 Experts 根 + Experts/MT5Cloud_EA，仲要刪 Scripts 根 + Scripts/MT5Cloud_EA
+    # （OpenChart 呢類 script 放 Scripts/MT5Cloud_EA — 之前冇刪 → 殘留 → 之後彈返）
+    # scripts_dirs: 搵返 MQL5/Scripts 根 + Scripts/MT5Cloud_EA
+    scripts_dirs = []
+    for d in os.listdir(data_dir) if os.path.isdir(data_dir) else []:
+        scr = os.path.join(data_dir, d, 'MQL5', 'Scripts')
+        if os.path.isdir(scr):
+            scripts_dirs.append(scr)
+            sm = os.path.join(scr, 'MT5Cloud_EA')
+            if os.path.isdir(sm):
+                scripts_dirs.append(sm)
     for exp_dir in experts_dirs:
         # ⚠️ 2026-08：EA 喺 MT5Cloud_EA folder（web 配對）— 兩邊都搵（根目錄 + folder）
         search_dirs = [exp_dir, os.path.join(exp_dir, 'MT5Cloud_EA')]
@@ -1567,6 +1578,17 @@ def api_ea_remove_local(filename):
                         removed.append(target)
                     except Exception as e:
                         return jsonify({"success": False, "error": str(e)}), 500
+    # 刪 Scripts 根 + Scripts/MT5Cloud_EA（script 類 EA — 例如 OpenChart）
+    for scr_dir in scripts_dirs:
+        for ext in ('.ex5', '.mq5', '.log'):
+            target = os.path.join(scr_dir, base_only + ext)
+            if os.path.isfile(target):
+                try:
+                    os.remove(target)
+                    removed.append(target)
+                    print(f"[remove-local] 刪 Scripts: {target}", flush=True)
+                except Exception as e:
+                    print(f"[remove-local] ⚠️ 刪 Scripts 失敗: {target} ({e})", flush=True)
 
     # 🚨 2026-08-14 FIX（用戶案例：刪除後本機檔案「彈返」）：刪除後 Double-check — 確認檔案真係刪除
     # （之前淨係刪完就話成功 — 用戶發現「安裝 Fibonacci → 全部 EA 彈返」— 加確認 + 記錄）
@@ -1577,6 +1599,12 @@ def api_ea_remove_local(filename):
                 target = os.path.join(search_dir, base_only + ext)
                 if os.path.isfile(target):
                     _residual.append(target)
+    # Scripts 殘留 double-check
+    for scr_dir in scripts_dirs:
+        for ext in ('.ex5', '.mq5'):
+            target = os.path.join(scr_dir, base_only + ext)
+            if os.path.isfile(target):
+                _residual.append(target)
     if _residual:
         print(f"[remove-local] ⚠️ 刪除後偵測到殘留檔案（可能被鎖/自動恢復）: {_residual}", flush=True)
         # 再試一次（MT5 可能鎖住 — 稍等再刪）
