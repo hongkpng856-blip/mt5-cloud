@@ -1464,11 +1464,12 @@ async function loadEALibrary() {
         const official = (data.files || []).filter(f => f.type === 'official');
         document.getElementById('officialCount').textContent = official.length;
         let oHtml = '';
-    // 2026-08-13：排序 — 真實 EA 喺前，測試 EA（TestHB_*）喺後（分開測試用同真實）
-        official.sort((a, b) => ((a.name.startsWith('TestHB')) ? 1 : 0) - ((b.name.startsWith('TestHB')) ? 1 : 0));
-        official.forEach(f => {
-            const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-      const isTest = baseName.startsWith('TestHB'); // 2026-08-13：測試 EA 標記
+    // 2026-08-13：排序 — 真實 EA 喺前，測試 EA（TestHB_* / OpenChart*）喺後（分開測試用同真實）
+                const isTestEA = (n) => n.startsWith('TestHB') || n.startsWith('OpenChart'); // 2026-08-18：OpenChart 系列標記做測試用（含副檔名匹配 OpenChart.mq5 / OpenChart_Helper.mq5）
+                official.sort((a, b) => (isTestEA(a.name) ? 1 : 0) - (isTestEA(b.name) ? 1 : 0));
+            official.forEach(f => {
+                const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
+          const isTest = isTestEA(baseName); // 2026-08-13 測試 EA 標記 / 2026-08-18 加 OpenChart 系列
       // 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
             // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
