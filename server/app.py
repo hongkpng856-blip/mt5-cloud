@@ -27,15 +27,17 @@ def _bounce_back_watchdog():
             try:
                 import sqlite3 as _sq2, json as _j2, os as _o2, glob as _g2
                 _tbb2.sleep(30)
-                # 搵 MT5Cloud_EA 目錄
+                # 搵 MT5Cloud_EA 目錄（Experts + Scripts 兩個都要監察 — script 類 EA 都會彈返）
                 _tdir2 = _o2.path.join(_o2.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                _ea_dir2 = None
+                _ea_dirs2 = []
                 for _d2 in _o2.listdir(_tdir2) if _o2.path.isdir(_tdir2) else []:
-                    _p2 = _o2.path.join(_tdir2, _d2, 'MQL5', 'Experts', 'MT5Cloud_EA')
-                    if _o2.path.isdir(_p2):
-                        _ea_dir2 = _p2
-                        break
-                if not _ea_dir2:
+                    _pe2 = _o2.path.join(_tdir2, _d2, 'MQL5', 'Experts', 'MT5Cloud_EA')
+                    if _o2.path.isdir(_pe2):
+                        _ea_dirs2.append(_pe2)
+                    _ps2 = _o2.path.join(_tdir2, _d2, 'MQL5', 'Scripts', 'MT5Cloud_EA')
+                    if _o2.path.isdir(_ps2):
+                        _ea_dirs2.append(_ps2)
+                if not _ea_dirs2:
                     continue
                 # 讀 config（EA 名集合）
                 _cfg2 = set()
@@ -55,24 +57,25 @@ def _bounce_back_watchdog():
                 # check 檔案（.mq5/.ex5 — 非 config + ctime 新 → 刪除 + 記錄）
                 _now2 = _tbb2.time()
                 _bounced2 = []
-                for _fn2 in _o2.listdir(_ea_dir2):
-                    if not _fn2.endswith(('.mq5', '.ex5')):
-                        continue
-                    _base2 = _o2.path.splitext(_fn2)[0]
-                    if _base2 in _cfg2:
-                        continue  # config 有（正常配對）
-                    _fp2 = _o2.path.join(_ea_dir2, _fn2)
-                    _ctime2 = _o2.path.getctime(_fp2)
-                    # 🚨 保險：ctime < 10 秒（啱啱出現 — 可能 install-local 配對中 — config 未寫）→ 唔刪（下一個 tick 再睇）
-                    if _now2 - _ctime2 < 10:
-                        continue
-                    if _now2 - _ctime2 < 180:  # 3 分鐘內出現 = 彈返（config 冇）
-                        try:
-                            _o2.remove(_fp2)
-                            _bounced2.append(_fn2)
-                            print(f"[彈返監察] 🗑️ 定期自癒刪除彈返: {_fn2}", flush=True)
-                        except Exception:
-                            pass
+                for _ed2 in _ea_dirs2:
+                    for _fn2 in _o2.listdir(_ed2):
+                        if not _fn2.endswith(('.mq5', '.ex5')):
+                            continue
+                        _base2 = _o2.path.splitext(_fn2)[0]
+                        if _base2 in _cfg2:
+                            continue  # config 有（正常配對）
+                        _fp2 = _o2.path.join(_ed2, _fn2)
+                        _ctime2 = _o2.path.getctime(_fp2)
+                        # 🚨 保險：ctime < 10 秒（啱啱出現 — 可能 install-local 配對中 — config 未寫）→ 唔刪（下一個 tick 再睇）
+                        if _now2 - _ctime2 < 10:
+                            continue
+                        if _now2 - _ctime2 < 180:  # 3 分鐘內出現 = 彈返（config 冇）
+                            try:
+                                _o2.remove(_fp2)
+                                _bounced2.append(_fn2)
+                                print(f"[彈返監察] 🗑️ 定期自癒刪除彈返: {_fn2} ({_o2.path.basename(_ed2)})", flush=True)
+                            except Exception:
+                                pass
                 if _bounced2:
                     try:
                         from . import _log_bounce_back  # 唔會 — 直接記錄
