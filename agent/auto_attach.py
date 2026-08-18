@@ -123,7 +123,26 @@ def do_restart_mt5():
             print("📋 已關閉全部圖表（開機唔 restore）")
     except Exception:
         pass
-    
+
+    # 🔧 2026-08-18：根除「重啟後 chart 累積」— MT5 重啟會由 Profiles/Default/chart_*.tpl restore 舊 chart
+    # （上面關 window 唔夠 — profile 記錄仲喺，重啟又開返）。Kill MT5 之前刪走 chart_*.tpl → 重啟開 0 chart
+    # → OpenChart script 之後開 1 個就係 1 個，唔會變 3 個。
+    try:
+        _mt5_data = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        if os.path.isdir(_mt5_data):
+            for _td in os.listdir(_mt5_data):
+                _prof = os.path.join(_mt5_data, _td, 'Profiles', 'Default')
+                if os.path.isdir(_prof):
+                    for _cf in os.listdir(_prof):
+                        if _cf.startswith('chart_') and _cf.endswith('.tpl'):
+                            try:
+                                os.remove(os.path.join(_prof, _cf))
+                            except Exception:
+                                pass
+            print("🧹 已刪除 profile chart_*.tpl（重啟唔會 restore 舊 chart）")
+    except Exception:
+        pass
+
     # Kill existing MT5
     for proc in psutil.process_iter(['pid', 'name']):
         if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
