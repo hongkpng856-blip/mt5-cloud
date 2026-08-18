@@ -1445,7 +1445,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         pass
                 except Exception:
                     pass
-                # ② 確保有圖表（熱鍵要圖表 active — 用戶實測）
+                # ② 確保有圖表（新方法 Alt+F→Enter→Enter 會自己開 chart — 呢度只偵測）
                 _has_chart_oc = False
                 try:
                     for _d_oc in win.descendants():
@@ -1454,18 +1454,6 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             break
                 except Exception:
                     pass
-                if not _has_chart_oc:
-                    # 🚨 2026-08-17 FIX：完整開新圖表（Alt+F → Enter ×3 — 第三個 Enter 確認 dialog 開預設 symbol — 確保有「真圖表 window」先可以觸發 Ctrl+9 熱鍵）
-                    # （之前只有 2 個 Enter → 只開到 dialog 未真正開圖表 → 冇圖表 active → Ctrl+9 唔觸發 → 開圖表失敗！）
-                    print("📋 冇圖表 — 開新圖表（Alt+F → Enter ×3）")
-                    _sk('%f')
-                    time.sleep(1.5)
-                    _sk('{ENTER}')
-                    time.sleep(1.5)
-                    _sk('{ENTER}')
-                    time.sleep(1.5)
-                    _sk('{ENTER}')
-                    time.sleep(3)
                 # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
                 # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
                 # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
