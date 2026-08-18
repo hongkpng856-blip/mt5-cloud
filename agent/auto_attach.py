@@ -123,26 +123,7 @@ def do_restart_mt5():
             print("📋 已關閉全部圖表（開機唔 restore）")
     except Exception:
         pass
-
-    # 🔧 2026-08-18：根除「重啟後 chart 累積」— MT5 重啟會由 Profiles/Default/chart_*.tpl restore 舊 chart
-    # （上面關 window 唔夠 — profile 記錄仲喺，重啟又開返）。Kill MT5 之前刪走 chart_*.tpl → 重啟開 0 chart
-    # → OpenChart script 之後開 1 個就係 1 個，唔會變 3 個。
-    try:
-        _mt5_data = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-        if os.path.isdir(_mt5_data):
-            for _td in os.listdir(_mt5_data):
-                _prof = os.path.join(_mt5_data, _td, 'Profiles', 'Default')
-                if os.path.isdir(_prof):
-                    for _cf in os.listdir(_prof):
-                        if _cf.startswith('chart_') and _cf.endswith('.tpl'):
-                            try:
-                                os.remove(os.path.join(_prof, _cf))
-                            except Exception:
-                                pass
-            print("🧹 已刪除 profile chart_*.tpl（重啟唔會 restore 舊 chart）")
-    except Exception:
-        pass
-
+    
     # Kill existing MT5
     for proc in psutil.process_iter(['pid', 'name']):
         if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
@@ -433,7 +414,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                             pass
             except Exception:
                 pass
-        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator）
+        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator — 有 MT5Cloud_EA folder）
         
         if not tree_view:
             print(f"⚠️ 搵唔到有效 TreeView（rect 驗證失敗 — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")
@@ -528,9 +509,24 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     ea_node = ea
                     break
             
-            # EA 喺根 EA交易 節點（唔入 folder）
+            # ⚠️ 2026-08：web 配對嘅 EA 集中喺 MT5Cloud_EA folder — 要入 folder 搵
             if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
+                for sub in ea_trading_node.children():
+                    try:
+                        st = sub.text()
+                        if 'MT5Cloud' in st or 'Cloud' in st:
+                            sub.expand()
+                            time.sleep(1)
+                            for ea in sub.children():
+                                if ea.text() == ea_name:
+                                    ea_node = ea
+                                    break
+                            break
+                    except Exception:
+                        pass
+            
+            if not ea_node:
+                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
@@ -1189,7 +1185,7 @@ def ensure_navigator_unified(mt5_pid):
 
 def load_hotkey_map():
     """讀快捷鍵 mapping（EA 名 → pywinauto 快捷鍵格式）— 讀 MT5 hotkeys.ini（權威來源）
-    hotkeys.ini: [experts] "Experts\\<EA>.ex5=Ctrl+1"
+    hotkeys.ini: [experts] "Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+1"
     Ctrl+1 → ^1, Ctrl+Alt+1 → ^!1"""
     import json as _json
     result = {}
@@ -1407,7 +1403,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     import json as _joc
                     _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
                     _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → Experts 根）
+                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → MT5Cloud_EA）
                     # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
                     try:
                         _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -1420,7 +1416,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         if _tpl_full_t and not os.path.isfile(_tpl_full_t):
                             _CR = chr(13) + chr(10)
                             _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
-                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
+                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
                             _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
                             _tpl_t += '</expert>' + _CR + _CR
                             _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
@@ -1429,7 +1425,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             with open(_tpl_full_t, 'wb') as _f_t:
                                 _f_t.write(b'\xff\xfe')
                                 _f_t.write(_tpl_t.encode('utf-16-le'))
-                            print(f"📋 模板已生成: {_tpl_name}（path → Experts 根）")
+                            print(f"📋 模板已生成: {_tpl_name}（path → MT5Cloud_EA）")
                     except Exception as _ete:
                         print(f"⚠️ 生成模板失敗: {_ete}")
                     with open(_cmd_file, 'w', encoding='utf-8') as _f:
@@ -1498,7 +1494,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             else:
                                 _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
                             with open(_hk9_path, 'wb') as _f9:
-                                _f9.write(('﻿' + _hk9_c).encode('utf-16-le'))
+                                _f9.write(('\ufeff' + _hk9_c).encode('utf-16-le'))
                             print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
                             _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
                     # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
@@ -2181,7 +2177,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
 
 # ─── CLI ───
 def _exec_open_chart_script():
-    """🚨 2026-08-15：執行 OpenChart_Test script（Ctrl+I → 插入 menu → 腳本 → OpenChart_Test — 用戶實測方法）
+    """🚨 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — 用戶實測方法）
     取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
     try:
         import subprocess as _sp2

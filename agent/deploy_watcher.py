@@ -307,12 +307,12 @@ _refresh_cooldown = 3  # 秒 — 防連環觸發（3 秒內唔重複）
 
 def get_experts_snapshot():
     """攞 Experts 目錄檔案清單（name + size + mtime）做 fingerprint
-    ⚠️ 2026-08：只掃根目錄 — 唔掃 MT5 內建 folder（Free Robots/Examples 等樣本）"""
+    ⚠️ 2026-08：只掃根目錄 + MT5Cloud_EA folder — 唔掃 MT5 內建 folder（Free Robots/Examples 等樣本）"""
     try:
         if not os.path.isdir(MT5_EXPERTS_DIR):
             return None
         snap = {}
-        scan_dirs = [MT5_EXPERTS_DIR]
+        scan_dirs = [MT5_EXPERTS_DIR, os.path.join(MT5_EXPERTS_DIR, 'MT5Cloud_EA')]
         for scan_dir in scan_dirs:
             if not os.path.isdir(scan_dir):
                 continue
@@ -621,7 +621,7 @@ def process_compile_cmd(fp):
             if not _cur:
                 # 冇現有 steps（直接 compile — 唔經 install-local）→ 建完整流程
                 _cur = [{'text': f'開始配對 {base}', 'status': 'done'},
-                        {'text': '複製檔案至本機（Experts 根）', 'status': 'done'},
+                        {'text': '複製檔案至本機（MT5Cloud_EA）', 'status': 'done'},
                         {'text': f'編譯 {base}.mq5 → .ex5', 'status': 'doing'},
                         {'text': '完成配對', 'status': 'pending'}]
             else:
@@ -959,7 +959,7 @@ def _deploy_worker_loop():
                 _exp_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
                 _found = False
                 for _d in os.listdir(_exp_dir):
-                    _ex5 = os.path.join(_exp_dir, _d, 'MQL5', 'Experts', _ea + '.ex5')
+                    _ex5 = os.path.join(_exp_dir, _d, 'MQL5', 'Experts', 'MT5Cloud_EA', _ea + '.ex5')
                     if os.path.isfile(_ex5):
                         _found = True
                         break

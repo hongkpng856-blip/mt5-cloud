@@ -20,18 +20,18 @@ import math
 def _bounce_back_watchdog():
     """🚨 2026-08-15：彈返定期監察（background thread — 每 30 秒）
     用戶：配對庫彈出「F 字頭」等 EA（本機檔案彈返 — 環境層面 — 源頭未明）
-    → 定期 check Experts：非 config EA + ctime 新（<180 秒）→ 自動刪除（彈返即刻清 — 配對庫唔會見到）+ 記錄 bounce_back_log（追蹤源頭）"""
+    → 定期 check MT5Cloud_EA：非 config EA + ctime 新（<180 秒）→ 自動刪除（彈返即刻清 — 配對庫唔會見到）+ 記錄 bounce_back_log（追蹤源頭）"""
     import time as _tbb2, threading as _th2
     def _run():
         while True:
             try:
                 import sqlite3 as _sq2, json as _j2, os as _o2, glob as _g2
                 _tbb2.sleep(30)
-                # 搵 Experts 目錄
+                # 搵 MT5Cloud_EA 目錄
                 _tdir2 = _o2.path.join(_o2.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
                 _ea_dir2 = None
                 for _d2 in _o2.listdir(_tdir2) if _o2.path.isdir(_tdir2) else []:
-                    _p2 = _o2.path.join(_tdir2, _d2, 'MQL5', 'Experts')
+                    _p2 = _o2.path.join(_tdir2, _d2, 'MQL5', 'Experts', 'MT5Cloud_EA')
                     if _o2.path.isdir(_p2):
                         _ea_dir2 = _p2
                         break
@@ -426,7 +426,7 @@ def api_ea_config():
                     if os.path.isfile(_hkf):
                         _hk_mtime = os.path.getmtime(_hkf)
                         _hk_c = open(_hkf, 'r', encoding='utf-16-le', errors='ignore').read()
-                        for _m2 in _re_hk.finditer(r'Experts\\([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
+                        for _m2 in _re_hk.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
                             _hk_has.add(_m2.group(1))
                         break
             except Exception:
@@ -1212,14 +1212,14 @@ def api_ea_library_refresh():
         pass
     try:
         files = []
-        # 🚨 2026-08-11：掃描本機 Experts 實際檔案（.mq5/.ex5 — base name 集合 — 用嚟對比網頁 config）
+        # 🚨 2026-08-11：掃描本機 MT5Cloud_EA 實際檔案（.mq5/.ex5 — base name 集合 — 用嚟對比網頁 config）
         local_bases = set()
         try:
             data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             if os.path.isdir(data_dir):
                 for d in os.listdir(data_dir):
                     exp = os.path.join(data_dir, d, 'MQL5', 'Experts')
-                    for sub in (exp,):
+                    for sub in (exp, os.path.join(exp, 'MT5Cloud_EA')):
                         if os.path.isdir(sub):
                             for fn in os.listdir(sub):
                                 if fn.endswith(('.mq5', '.ex5')):
@@ -1348,7 +1348,7 @@ def api_refresh_status():
             if os.path.isfile(_hkf):
                 _hk_mtime = os.path.getmtime(_hkf)
                 _hk_c = open(_hkf, 'r', encoding='utf-16-le', errors='ignore').read()
-                for _m2 in _re_hk.finditer(r'Experts\\([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
+                for _m2 in _rrs.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _hk_c):
                     _hk_has.add(_m2.group(1))
                 break
     except Exception:
@@ -1440,7 +1440,7 @@ def api_refresh_status():
         _cfg_rs = json.loads(current_user.ea_config or '{}')
         _cfg_rs_eas = set(k.rsplit('_', 1)[0] for k in _cfg_rs if not k.startswith('_'))
         for _d_rs in os.listdir(_data_dir_rs):
-            _ea_dir_rs = os.path.join(_data_dir_rs, _d_rs, 'MQL5', 'Experts')
+            _ea_dir_rs = os.path.join(_data_dir_rs, _d_rs, 'MQL5', 'Experts', 'MT5Cloud_EA')
             if not os.path.isdir(_ea_dir_rs):
                 continue
             for _fn_rs in sorted(os.listdir(_ea_dir_rs)):
@@ -1555,8 +1555,8 @@ def api_ea_remove_local(filename):
 
     removed = []
     for exp_dir in experts_dirs:
-        # ⚠️ 2026-08：EA 喺 Experts 根目錄（web 配對）— 兩邊都搵（根目錄 + folder）
-        search_dirs = [exp_dir, exp_dir]
+        # ⚠️ 2026-08：EA 喺 MT5Cloud_EA folder（web 配對）— 兩邊都搵（根目錄 + folder）
+        search_dirs = [exp_dir, os.path.join(exp_dir, 'MT5Cloud_EA')]
         for search_dir in search_dirs:
             for ext in ('.ex5', '.mq5'):
                 # 🚨 2026-08-08：用 base_only（filename 可能帶 .mq5 — 唔可以 filename+ext）
@@ -1572,7 +1572,7 @@ def api_ea_remove_local(filename):
     # （之前淨係刪完就話成功 — 用戶發現「安裝 Fibonacci → 全部 EA 彈返」— 加確認 + 記錄）
     _residual = []
     for exp_dir in experts_dirs:
-        for search_dir in (exp_dir, exp_dir):
+        for search_dir in (os.path.join(exp_dir, 'MT5Cloud_EA'), exp_dir):
             for ext in ('.ex5', '.mq5'):
                 target = os.path.join(search_dir, base_only + ext)
                 if os.path.isfile(target):
@@ -1760,7 +1760,7 @@ def api_ea_install_local(filename):
             # 🚨 2026-08-12 FIX：配對詳細步驟（活動記錄式 — 同刪除一致 — 唔會同 watcher 編譯步驟唔對應）
             _jin.dump([
                 {'text': f'開始配對 {_base0}', 'status': 'doing'},
-                {'text': '複製檔案至本機（Experts 根）', 'status': 'pending'},
+                {'text': '複製檔案至本機（MT5Cloud_EA）', 'status': 'pending'},
                 {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
                 {'text': '完成配對', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
@@ -1805,14 +1805,19 @@ def api_ea_install_local(filename):
     if not experts_dirs:
         return jsonify({"success": False, "error": "搵唔到本機 MT5 Experts 目錄"}), 500
 
-    # 3. 複製去 Experts 根目錄（用戶要求：取消 MT5Cloud_EA folder，全部放 Default 位置）
+    # 3. 複製去 MT5Cloud_EA folder（2026-08 用戶要求：所有 web 配對嘅 EA 集中一個 folder）
     installed = []
     compiled = False
     # ⚠️ 用 src_path 嘅 basename（保留副檔名）— filename 可能冇 .mq5（前端傳 baseName）
     # 唔可以淨用 filename — 會複製錯名 + 唔會寫 compile_cmd（endswith('.mq5') False）
     dest_name = os.path.basename(src_path)
     for exp_dir in experts_dirs:
-        target = os.path.join(exp_dir, dest_name)
+        ea_folder = os.path.join(exp_dir, 'MT5Cloud_EA')
+        try:
+            os.makedirs(ea_folder, exist_ok=True)
+        except Exception:
+            pass
+        target = os.path.join(ea_folder, dest_name)
         if os.path.abspath(target) == os.path.abspath(src_path):
             continue  # 已經喺度
         try:
@@ -1899,7 +1904,7 @@ void __mt5c_process() {
                 except Exception:
                     _cur_ic = []
                 for _s in _cur_ic:
-                    if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案至本機（Experts 根）'):
+                    if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案至本機（MT5Cloud_EA）'):
                         _s['status'] = 'done'
                 # 🚨 2026-08-12 FIX：如果唔使編譯（.ex5 已存在且新過 .mq5）→ 即刻完成「編譯」+「完成配對」（唔停留 pending — 「兩步就停」根治）
                 try:
@@ -1965,7 +1970,7 @@ void __mt5c_process() {
     # 偵測「install-local 之後有冇非預期 EA 檔案出現」（ctime 08:19:55 批量複製 — 源頭未明 — 加監察下次捉到）
     try:
         import time as _tmon
-        _mon_ea_dir = experts_dirs[0] if experts_dirs else None
+        _mon_ea_dir = os.path.join(experts_dirs[0], 'MT5Cloud_EA') if experts_dirs else None
         if _mon_ea_dir and os.path.isdir(_mon_ea_dir):
             _before = set(os.listdir(_mon_ea_dir))
             # 等 3 秒（watcher 可能即刻處理 compile — 期間有冇額外複製）
@@ -1986,7 +1991,7 @@ void __mt5c_process() {
         import time as _thb
         _cfg_hb = json.loads(current_user.ea_config or '{}')
         _cfg_hb_eas = set(k.rsplit('_', 1)[0] for k in _cfg_hb if not k.startswith('_'))
-        _ea_dir_hb = experts_dirs[0] if experts_dirs else None
+        _ea_dir_hb = os.path.join(experts_dirs[0], 'MT5Cloud_EA') if experts_dirs else None
         if _ea_dir_hb and os.path.isdir(_ea_dir_hb):
             for _fn_hb in sorted(os.listdir(_ea_dir_hb)):
                 if not _fn_hb.endswith(('.mq5', '.ex5')):
@@ -2032,15 +2037,15 @@ void __mt5c_process() {
         compile_ok = False
         exp_dir = experts_dirs[0] if experts_dirs else None
         if exp_dir:
-            # ⚠️ 2026-08：EA 喺 Experts 根目錄
+            # ⚠️ 2026-08：EA 喺 MT5Cloud_EA folder — 檢查 folder（+ 根目錄 fallback）
             ex5_target = None
-            for _d in (exp_dir, exp_dir):
+            for _d in (os.path.join(exp_dir, 'MT5Cloud_EA'), exp_dir):
                 _p = os.path.join(_d, os.path.splitext(filename)[0] + '.ex5')
                 if os.path.isfile(_p):
                     ex5_target = _p
                     break
             if ex5_target is None:
-                ex5_target = os.path.join(exp_dir, os.path.splitext(filename)[0] + '.ex5')
+                ex5_target = os.path.join(exp_dir, 'MT5Cloud_EA', os.path.splitext(filename)[0] + '.ex5')
             deadline = time.time() + 45
             while time.time() < deadline:
                 # 檢查 compile_cmd 仲喺唔喺（watcher 處理完會刪）
@@ -2197,8 +2202,8 @@ def assign_hotkey(ea_name):
         if not combo:
             print(f"[hotkeys] 冇可用快捷鍵（太多 EA）")
             return None
-        # 路徑：Experts\<EA>.ex5
-        experts[f'Experts\\{ea_name}.ex5'] = combo
+        # 路徑：Experts\MT5Cloud_EA\<EA>.ex5
+        experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
         if _write_hotkeys_ini(experts, indicators):
             print(f"[hotkeys] {ea_name} → {combo}")
             return combo
@@ -2356,7 +2361,7 @@ def ensure_hotkey_for_ea(ea_name):
         combo = _alloc_hotkey(experts)
         if not combo:
             return False
-        experts[f'Experts\\{ea_name}.ex5'] = combo
+        experts[f'Experts\\MT5Cloud_EA\\{ea_name}.ex5'] = combo
         if _write_hotkeys_ini(experts, indicators):
             print(f"[hotkeys] {ea_name} → {combo}（已分配 — 部署時 reload）")
             return True
@@ -2836,7 +2841,7 @@ def api_deploy():
         _cfg_h = json.loads(current_user.ea_config or '{}')
         _cfg_h_eas = set(k.rsplit('_', 1)[0] for k in _cfg_h if not k.startswith('_'))
         for _d_h in os.listdir(_data_dir_h):
-            _ea_dir_h = os.path.join(_data_dir_h, _d_h, 'MQL5', 'Experts')
+            _ea_dir_h = os.path.join(_data_dir_h, _d_h, 'MQL5', 'Experts', 'MT5Cloud_EA')
             if not os.path.isdir(_ea_dir_h):
                 continue
             for _fn_h in sorted(os.listdir(_ea_dir_h)):
