@@ -1805,7 +1805,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             _lg = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             _latest = None
             for _d in os.listdir(_lg):
-                _lgd = os.path.join(_lg, _d, 'MQL5', 'Logs')
+                _lgd = os.path.join(_lg, _d, 'logs')
                 if os.path.isdir(_lgd):
                     for _f in _g4.glob(os.path.join(_lgd, '*.log')):
                         if _latest is None or os.path.getmtime(_f) > os.path.getmtime(_latest):
@@ -1821,7 +1821,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 _target_sym = (symbol or 'EURUSD').upper()
                 _ok_sym = False
                 for _line in _txt.splitlines():
-                    if ea_name in _line and _target_sym in _line and ('已启动' in _line or '已啟動' in _line):
+                    if ea_name in _line and _target_sym in _line and ('已启动' in _line or '已啟動' in _line or 'loaded successfully' in _line):
                         _ok_sym = True
                         break
                 if _ok_sym:
@@ -1884,7 +1884,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             _latest2 = None
                             _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
                             for _d3 in os.listdir(_lg2):
-                                _lgd2 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+                                _lgd2 = os.path.join(_lg2, _d3, 'logs')
                                 if os.path.isdir(_lgd2):
                                     for _f5 in _g5.glob(os.path.join(_lgd2, '*.log')):
                                         if _latest2 is None or os.path.getmtime(_f5) > os.path.getmtime(_latest2):
@@ -1899,7 +1899,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                         continue
                                 if _txt2:
                                     for _line2 in _txt2.splitlines():
-                                        if ea_name in _line2 and _target_sym in _line2 and ('已启动' in _line2 or '已啟動' in _line2):
+                                        if ea_name in _line2 and _target_sym in _line2 and ('已启动' in _line2 or '已啟動' in _line2 or 'loaded successfully' in _line2):
                                             _hb_ok = True
                                             print(f"✅ log 驗證（第二次）: {ea_name} 喺 {_target_sym} 啟動 — 圖表正確")
                                             break
