@@ -1454,53 +1454,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             break
                 except Exception:
                     pass
-                # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
-                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
-                # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
-                _need_restart9 = False
-                try:
-                    _hk9_path = None
-                    _hk9_tdir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                    if os.path.isdir(_hk9_tdir):
-                        for _d9 in os.listdir(_hk9_tdir):
-                            _p9 = os.path.join(_hk9_tdir, _d9, 'config', 'hotkeys.ini')
-                            if os.path.isfile(_p9):
-                                _hk9_path = _p9
-                                break
-                    if _hk9_path:
-                        # 🚨 2026-08-17 FIX：讀寫用 utf-16（自動處理 BOM — utf-16-le 讀唔會剝 BOM → 寫返會冇 BOM → MT5 讀唔到熱鍵！）
-                        _hk9_c = open(_hk9_path, encoding='utf-16', errors='ignore').read()
-                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
-                        if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
-                            _hk9_ok = True
-                        else:
-                            # 寫入/修正 <scripts> Ctrl+9
-                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
-                            if '<scripts>' in _hk9_c:
-                                import re as _re9
-                                _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
-                            else:
-                                _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
-                            with open(_hk9_path, 'wb') as _f9:
-                                _f9.write(('\ufeff' + _hk9_c).encode('utf-16-le'))
-                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
-                            _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
-                    # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
-                    # （實測：每次重啟後 Ctrl+9 script 熱鍵未 ready → 開圖表唔work；但你手動環境（MT5 一直運行）Ctrl+9 每次 work
-                    #   → 唔好無謂重啟 — MT5 一直運行保持 Ctrl+9 ready；只有 hotkeys.ini 改變先要 reload）
-                    # _need_restart9 = True  ← 移除（唔強制每次重啟）
-                except Exception as _e9x:
-                    print(f"⚠️ hotkeys.ini 檢查失敗: {_e9x}")
-                if _need_restart9:
-                    try:
-                        import subprocess as _sp9
-                        _sp9.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
-                        time.sleep(4)
-                        _sp9.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
-                        time.sleep(25)
-                        print("✅ MT5 已重啟（load OpenChart Ctrl+9 熱鍵）")
-                    except Exception as _e9:
-                        print(f"⚠️ 重啟失敗: {_e9}")
+                # ③ OpenChart 開 chart — 用下方「用戶方法」Alt+F→Enter→Enter→Space→symbol→Enter（唔再 Ctrl+9）
                 # 確保有圖表 + focus
                 try:
                     import ctypes as _ct_oc
