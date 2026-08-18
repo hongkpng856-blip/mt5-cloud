@@ -1486,8 +1486,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _sk('{ENTER}')
                     time.sleep(3)
                 # ③ 執行 OpenChart script — 熱鍵 Ctrl+9（<scripts> 區 — 用戶實測可行）
-                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
-                # （用戶：Scripts\OpenChart.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
+                # 🚨 2026-08-17 FIX：每次部署前 CHECK hotkeys.ini 有冇「Scripts\OpenChart_Test.ex5=Ctrl+9」+ 確保 MT5 load（重啟 reload 熱鍵）
+                # （用戶：Scripts\OpenChart_Test.ex5=Ctrl+9 喺 hotkeys.ini <scripts> 完全可行 — 但係每次熱鍵可能唔同 → 要先 CHECK + 重啟確保 load）
                 _need_restart9 = False
                 try:
                     _hk9_path = None
@@ -1501,20 +1501,20 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     if _hk9_path:
                         # 🚨 2026-08-17 FIX：讀寫用 utf-16（自動處理 BOM — utf-16-le 讀唔會剝 BOM → 寫返會冇 BOM → MT5 讀唔到熱鍵！）
                         _hk9_c = open(_hk9_path, encoding='utf-16', errors='ignore').read()
-                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
-                        if 'Scripts\\OpenChart.ex5=Ctrl+9' in _hk9_c:
+                        # 🚨 檢查「每次熱鍵唔同」：確保<scripts>區有 OpenChart_Test=Ctrl+9（可能有其它熱鍵 — 唔保證 Ctrl+9）
+                        if 'Scripts\\OpenChart_Test.ex5=Ctrl+9' in _hk9_c:
                             _hk9_ok = True
                         else:
                             # 寫入/修正 <scripts> Ctrl+9
-                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
+                            _hk9_def = '<scripts>' + chr(13) + chr(10) + 'Scripts\\OpenChart_Test.ex5=Ctrl+9' + chr(13) + chr(10) + '</scripts>'
                             if '<scripts>' in _hk9_c:
                                 import re as _re9
                                 _hk9_c = _re9.sub(r'<scripts>.*?</scripts>', _hk9_def, _hk9_c, flags=re.S)
                             else:
                                 _hk9_c = _hk9_c.replace('</experts>', '</experts>' + chr(13) + chr(10) + _hk9_def)
                             with open(_hk9_path, 'wb') as _f9:
-                                _f9.write(('\ufeff' + _hk9_c).encode('utf-16-le'))
-                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart.ex5=Ctrl+9（帶 BOM）")
+                                _f9.write(('﻿' + _hk9_c).encode('utf-16-le'))
+                            print(f"✅ 已寫入 hotkeys.ini: Scripts\\OpenChart_Test.ex5=Ctrl+9（帶 BOM）")
                             _need_restart9 = True  # 改咗熱鍵 → 要重啟 reload
                     # 🚨 2026-08-17 FIX：唔好「每次重啟」— 只喺 hotkeys.ini 真係變咗（寫入咗 Ctrl+9）先重啟
                     # （實測：每次重啟後 Ctrl+9 script 熱鍵未 ready → 開圖表唔work；但你手動環境（MT5 一直運行）Ctrl+9 每次 work
@@ -2196,7 +2196,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
 
 # ─── CLI ───
 def _exec_open_chart_script():
-    """🚨 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — 用戶實測方法）
+    """🚨 2026-08-15：執行 OpenChart_Test script（Ctrl+I → 插入 menu → 腳本 → OpenChart_Test — 用戶實測方法）
     取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
     try:
         import subprocess as _sp2
