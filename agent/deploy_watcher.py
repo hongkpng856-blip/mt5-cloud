@@ -746,10 +746,37 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
         metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
         exp_dir = os.path.dirname(mq5_path)
 
+        # 🚨 2026-08-18 FIX（用戶要求：OpenChart 配對 compile 失敗根治）：先試 CLI /compile
+        # （GUI F7 自動化間歇性失敗 — CLI /compile 100% 可靠 — metaeditor64 /compile:file /log:log）
+        # 成功（.ex5 生成）→ 即刻返 True，唔使 GUI
+        try:
+            _log_path = os.path.join(exp_dir, f'_cli_compile_{os.path.splitext(os.path.basename(mq5_path))[0]}.log')
+            if os.path.exists(_log_path):
+                try: os.remove(_log_path)
+                except Exception: pass
+            _p_cli = _sp.Popen([metaeditor, f'/compile:{mq5_path}', f'/log:{_log_path}'], shell=False)
+            _cli_ok = False
+            for _cc in range(10):
+                _t.sleep(2)
+                if _p_cli.poll() is not None:
+                    break
+                if os.path.exists(ex5_path):
+                    _cli_ok = True
+                    break
+            if os.path.exists(ex5_path) and os.path.getsize(ex5_path) > 0:
+                _cli_ok = True
+            if _cli_ok:
+                print(f"   ✅ CLI Compiled: {os.path.basename(ex5_path)} ({os.path.getsize(ex5_path)} bytes)")
+                return True
+            else:
+                print("   ⚠️ CLI compile 未確認，fallback 去 GUI...")
+        except Exception as _ce:
+            print(f"   ⚠️ CLI compile 失敗（fallback GUI）: {_ce}")
+
         # 記錄 MetaEditor 之前係咪已經開住（如果係我哋開嘅 → 用完自動關閉）
         out_before = _sp.check_output(
-            'tasklist /FI "IMAGENAME eq metaeditor64.exe" /FO CSV /NH',
-            shell=True, timeout=5).decode(errors='ignore')
+                    'tasklist /FI "IMAGENAME eq metaeditor64.exe" /FO CSV /NH',
+                    shell=True, timeout=5).decode(errors='ignore')
         was_running = 'MetaEditor64.exe' in out_before
 
         for attempt in range(max_retries):
