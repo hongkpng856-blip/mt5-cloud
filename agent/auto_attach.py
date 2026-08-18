@@ -2145,10 +2145,12 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # 2026-08 還原：今日下午加 pin_deskin_away 之後 crash — 暫時唔用（穩定版冇呢個）
         check_abort()
         
-        # Step 3: Attach EA（🎯 快捷鍵優先 — 2026-08：6093 double-click 唔 work）
+        # Step 3: Attach EA（快捷鍵優先 — 2026-08：6093 double-click 唔 work）
         # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
+        # 🚨 2026-08-19 FIX：OpenChart 係 Script（讀 open_chart_cmd.json 開 target chart）— 唔行 attach_ea_navigator（Navigator double-click 對 Script 唔 work — 卡死 not found）
         hotkeys = load_hotkey_map()
-        if ea_name in hotkeys:
+        _is_script_ea = ea_name.startswith('OpenChart') or ea_name == 'OpenChart_Helper'
+        if ea_name in hotkeys or _is_script_ea:
             success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         else:
             success = attach_ea_navigator(ea_name, mt5_pid)
