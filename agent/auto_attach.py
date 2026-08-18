@@ -414,7 +414,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                             pass
             except Exception:
                 pass
-        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator — 有 MT5Cloud_EA folder）
+        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator）
         
         if not tree_view:
             print(f"⚠️ 搵唔到有效 TreeView（rect 驗證失敗 — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")
@@ -509,7 +509,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     ea_node = ea
                     break
             
-            # ⚠️ 2026-08：web 配對嘅 EA 集中喺 MT5Cloud_EA folder — 要入 folder 搵
+            # ⚠️ 2026-08：web 配對嘅 EA 喺根 Experts 節點
             if not ea_node:
                 for sub in ea_trading_node.children():
                     try:
@@ -526,7 +526,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                         pass
             
             if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易/MT5Cloud_EA (attempt {attempt+1}/{max_retries})")
+                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
@@ -1185,7 +1185,7 @@ def ensure_navigator_unified(mt5_pid):
 
 def load_hotkey_map():
     """讀快捷鍵 mapping（EA 名 → pywinauto 快捷鍵格式）— 讀 MT5 hotkeys.ini（權威來源）
-    hotkeys.ini: [experts] "Experts\MT5Cloud_EA\<EA>.ex5=Ctrl+1"
+    hotkeys.ini: [experts] "Experts\<EA>.ex5=Ctrl+1"
     Ctrl+1 → ^1, Ctrl+Alt+1 → ^!1"""
     import json as _json
     result = {}
@@ -1403,7 +1403,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     import json as _joc
                     _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
                     _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → MT5Cloud_EA）
+                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → Experts 根）
                     # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
                     try:
                         _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -1416,7 +1416,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         if _tpl_full_t and not os.path.isfile(_tpl_full_t):
                             _CR = chr(13) + chr(10)
                             _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
-                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\MT5Cloud_EA\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
+                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
                             _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
                             _tpl_t += '</expert>' + _CR + _CR
                             _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
@@ -1425,7 +1425,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             with open(_tpl_full_t, 'wb') as _f_t:
                                 _f_t.write(b'\xff\xfe')
                                 _f_t.write(_tpl_t.encode('utf-16-le'))
-                            print(f"📋 模板已生成: {_tpl_name}（path → MT5Cloud_EA）")
+                            print(f"📋 模板已生成: {_tpl_name}（path → Experts 根）")
                     except Exception as _ete:
                         print(f"⚠️ 生成模板失敗: {_ete}")
                     with open(_cmd_file, 'w', encoding='utf-8') as _f:

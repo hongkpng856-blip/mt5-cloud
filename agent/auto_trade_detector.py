@@ -179,11 +179,11 @@ def scan_ea_inventory():
             if os.path.isdir(exp):
                 experts_dirs.append(exp)
 
-    # 掃描 .ex5 文件（⚠️ 2026-08：只掃根目錄 + MT5Cloud_EA folder — 唔掃 MT5 內建 folder
+    # 掃描 .ex5 文件（只掃根目錄 — 唔掃 MT5 內建 folder
     # （Free Robots/Examples/Advisors — 樣本 EA 唔應該顯示）
     eas = {}
     for exp_dir in experts_dirs:
-        scan_dirs = [exp_dir, os.path.join(exp_dir, 'MT5Cloud_EA')]
+        scan_dirs = [exp_dir]
         for scan_dir in scan_dirs:
             if not os.path.isdir(scan_dir):
                 continue
@@ -211,7 +211,7 @@ def scan_ea_inventory():
         if os.path.isfile(hk_path):
             with open(hk_path, 'r', encoding='utf-16-le', errors='ignore') as f:
                 hk_content = f.read()
-            for m in re.finditer(r'Experts\\MT5Cloud_EA\\?([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', hk_content):
+            for m in re.finditer(r'Experts\\([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', hk_content):
                 ea_name = m.group(1)
                 attached.setdefault(ea_name, {})
         # 熱鍵有 — 再配合 log 攞 symbol/tf（只係 fallback 資訊 — 唔用嚟判斷 deployed）
