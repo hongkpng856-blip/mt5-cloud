@@ -97,6 +97,24 @@ void OnStart()
    {
       ChartSetInteger(chart_id, CHART_BRING_TO_TOP, 0, true);
       Print("✅ 已開新圖表: ", sym, " ", EnumToString(tf), " (id=", chart_id, ")");
+
+      // 🔧 2026-08-18：部署模式（自動模式 = 留空 symbol 讀 json）開完目標 chart，
+      // 關閉所有其它 chart（包括部署前 Alt+F 開嘅空白 chart + 任何重複 chart）
+      // → 解決「開咗空白 chart 再開目標 chart 再開多一個」變 3 個 chart 嘅問題。
+      // 手動模式（用家自己填 symbol）唔關其它 chart，保護用家手動 workspace。
+      if(InpSymbol == "" )
+      {
+         // MQL5 列舉 chart：ChartFirst → ChartNext（冇 ChartsTotal/ChartId）
+         long cid = ChartFirst();
+         while(cid != 0)
+         {
+            long next = ChartNext(cid);
+            if(cid != chart_id)
+               ChartClose(cid);
+            cid = next;
+         }
+         Print("🧹 已關閉其它 chart（保留目標 ", sym, "）");
+      }
    }
    else
    {

@@ -1530,6 +1530,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
                 # send Ctrl+9（pyautogui）
+                # 🔧 2026-08-18：只 send 一次就驗證目標 chart 存在就 break
+                # （之前 for range(2) 每次 deploy 都 send 兩次 → 可能開出第 3 個 chart → 你見到 3 個 chart）
+                # 只有目標 chart 未出先 retry 第二次。
                 _oc_ok2 = False
                 for _ocr in range(2):
                     try:
@@ -1539,7 +1542,29 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     except Exception:
                         _sk('^9')
                     time.sleep(3.5)
-                    # 檢查有冇彈「選項/導航熱鍵」dialog（Alt+Q 未 load 嘅標誌）
+                    # 驗證目標 chart 已開（active 標題含 _sym）→ 成功就唔再 send（避免開第 3 個）
+                    _chart_ok_early = False
+                    try:
+                        def _cb_early(_h3, _x3):
+                            nonlocal _chart_ok_early
+                            if _u_oc.IsWindowVisible(_h3):
+                                _c3 = ctypes.create_unicode_buffer(64)
+                                _u_oc.GetClassNameW(_h3, _c3, 64)
+                                if 'MetaQuotes::MetaTrader' in _c3.value:
+                                    _l3 = _u_oc.GetWindowTextLengthW(_h3)
+                                    _b3 = ctypes.create_unicode_buffer(_l3 + 1)
+                                    _u_oc.GetWindowTextW(_h3, _b3, _l3 + 1)
+                                    if _sym in _b3.value:
+                                        _chart_ok_early = True
+                                        return False
+                            return True
+                        _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_early), None)
+                    except Exception:
+                        pass
+                    if _chart_ok_early:
+                        _oc_ok2 = True
+                        break
+                    # 目標 chart 未出 → 入面會檢查 dialog / 重試
                     _opt_dlg = False
                     try:
                         def _cb_opt(_h2, _x2):
