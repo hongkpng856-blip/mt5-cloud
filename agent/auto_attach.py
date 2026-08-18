@@ -1843,7 +1843,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                     break
                                 except Exception:
                                     continue
-                            if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(_hb_d.get('ts', 0)) < 300:
+                            if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(os.path.getmtime(_hb_f)) < 300:
                                 _hb_ok = True
                         # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt 格式（舊版 EA）— state_*.json 揾唔到 → 檢查 hb_*.txt（mtime 新鮮 <300s = 運行中）
                         if not _hb_ok:
@@ -1869,7 +1869,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                         break
                                     except Exception:
                                         continue
-                                if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(_hb_d.get('ts', 0)) < 300:
+                                if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(os.path.getmtime(_hb_f)) < 300:
                                     _hb_ok = True
                         except Exception:
                             pass
