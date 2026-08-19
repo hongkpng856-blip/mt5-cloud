@@ -1363,10 +1363,28 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     experts[_k_hk] = _v_hk
         except Exception:
             pass
-        # 2. 已有熱鍵 → 唔使郁
+        # 2. 已有熱鍵 → 檢查係咪真係 load 到（唔可以淨係見 hotkeys.ini 有就 return）
+        # 🚨 2026-08-20（v0.10.10）：MT5 開住時寫入嘅熱鍵唔 load（用戶實測：關 MT5 → 寫 → 開先 work）
+        # → 比較 hotkeys.ini mtime vs MT5 啟動時間：hotkeys.ini 喺 MT5 開機後先寫 = MT5 未 load → 要 restart 重寫
         for _k in experts:
             if ea_name in _k:
-                print(f"✅ {ea_name} 已有熱鍵（{experts[_k]}）— 唔使預載")
+                _combo_exist = experts[_k]
+                # 攞 MT5 啟動時間（psutil）
+                _mt5_start_hk = None
+                try:
+                    import psutil as _ps_hk
+                    for _p in _ps_hk.process_iter(['name', 'create_time']):
+                        if _p.info['name'] and 'terminal64' in _p.info['name'].lower():
+                            _mt5_start_hk = _p.info['create_time']
+                            break
+                except Exception:
+                    pass
+                _hk_mtime_hk = os.path.getmtime(_hk_ini) if os.path.isfile(_hk_ini) else 0
+                if _mt5_start_hk and _hk_mtime_hk > _mt5_start_hk:
+                    print(f"⚠️ {ea_name} 熱鍵（{_combo_exist}）喺 MT5 開機後先寫入 — MT5 未 load → 要 restart 重寫")
+                    _combo_n = _combo_exist  # 保留原本 combo（重寫用返）
+                    break  # 唔 return — 繼續落去 restart（關→寫→開）
+                print(f"✅ {ea_name} 已有熱鍵（{_combo_exist}）— 唔使預載")
                 return mt5_pid
         # 3. 分配未用 Ctrl+N
         _used = set()
