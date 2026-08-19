@@ -36,6 +36,7 @@ server_run.log
 agent/.watcher_running
 agent/.alert_worker.pid
 agent/.ai_control.steps
+agent/.auto_attach_running
 server/static/detector/*.json
 server/activity_log.jsonl
 server/bounce_back_log.jsonl

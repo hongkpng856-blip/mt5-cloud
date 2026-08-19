@@ -43,6 +43,35 @@ def find_mt5_pid():
     return None
 
 
+def _mt5_alive():
+    """🚨 2026-08-20（部署流程檢測系統）：terminal64.exe 有冇運行（tasklist — 唔靠 psutil cached）"""
+    try:
+        _out = subprocess.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH',
+                              shell=True, capture_output=True, timeout=10)
+        return 'terminal64.exe' in _out.stdout.decode('utf-8', errors='replace')
+    except Exception:
+        return False
+
+
+def _wait_until(check_fn, timeout=60, desc='', interval=2):
+    """🚨 2026-08-20（部署流程檢測系統 — docs/deployment-checkpoint-system.md）
+    poll check_fn 直到 True 或者 timeout — 每步驗證 gate（成功先落下一步）
+    驗證要「等」：唔可以即刻 check（資料未就緒 → 假失敗）——poll 到成功或者 timeout
+    返回：check_fn 嘅真值（bool check → True；攞值 check（如 PID）→ 嗰個值）"""
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            _res = check_fn()
+            if _res:
+                print(f"✅ {desc}")
+                return _res
+        except Exception:
+            pass
+        time.sleep(interval)
+    print(f"❌ {desc} — timeout {timeout}s")
+    return False
+
+
 def wait_for_mt5(timeout=30):
     """等 MT5 啟動完成
     ⚠️ 用 backend='win32'（快）+ 主視窗存在檢查 — 唔可以用 uia（MT5 大 UI connect 超慢 → 卡 60 秒）"""
@@ -1370,14 +1399,15 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 time.sleep(8)
         except Exception:
             pass
-        # 強制確認關咗（WM_CLOSE 可能彈窗）
-        try:
-            _alive_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
-            if 'terminal64.exe' in _alive_hk.stdout.decode('utf-8', errors='replace'):
+        # 強制確認關咗（WM_CLOSE 可能彈窗）— 🚨 2026-08-20 gate：確認 terminal64 已關（poll 最多 20s）
+        _closed_hk = _wait_until(lambda: not _mt5_alive(), 20, 'MT5 已關閉（WM_CLOSE 後確認）', interval=2)
+        if not _closed_hk:
+            print("⚠️ MT5 未完全關閉 — 強制 kill")
+            try:
                 _sp_hk.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
                 time.sleep(4)
-        except Exception:
-            pass
+            except Exception:
+                pass
         # 5. 寫熱鍵（MT5 關閉狀態下寫 — 用戶實測先 load）
         _experts_hk = dict(experts)
         _experts_hk[f'Experts\\{ea_name}.ex5'] = _combo_n
@@ -1391,7 +1421,85 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         print(f"✅ 熱鍵已寫入 hotkeys.ini（{ea_name}={_combo_n}）")
         # 6. 開 MT5
         subprocess.Popen([MT5_PATH])
-        time.sleep(20)
+        # 🚨 2026-08-20（部署流程檢測系統落地）：開完 MT5 唔可以即刻部署 — 要等 MT5 load 完熱鍵
+        # 驗證 gate：等主視窗 ready（poll 最多 90s）→ send Ctrl+<N> 測試熱鍵 load（彈 Properties = load 成功）
+        _start_hk = time.time()
+        _mt5_ready_hk = False
+        _cur_pid_hk = None
+        while time.time() - _start_hk < 90:
+            try:
+                _cur_pid_hk = find_mt5_pid()
+                if _cur_pid_hk:
+                    from pywinauto import Application as _AppHK
+                    _a_hk = _AppHK(backend='win32').connect(process=_cur_pid_hk, timeout=5)
+                    _w_hk = _a_hk.window(class_name='MetaQuotes::MetaTrader::5.00')
+                    if _w_hk.exists():
+                        _mt5_ready_hk = True
+                        break
+            except Exception:
+                pass
+            time.sleep(3)
+        if not _mt5_ready_hk:
+            print("⚠️ 熱鍵預載：MT5 主視窗 90s 未 ready（繼續 — 部署時會再驗證）")
+        else:
+            print("✅ 熱鍵預載：MT5 主視窗 ready")
+            # 熱鍵 load 驗證：send Ctrl+N 測試 — 彈出 <EA> Properties = 熱鍵 load 成功（失敗關閉 dialog 再重試）
+            _hk_loaded_ok = False
+            for _hk_try in range(3):
+                try:
+                    _w_hk.set_focus()
+                    time.sleep(0.8)
+                    from pywinauto.keyboard import send_keys as _sk_hk
+                    _sk_hk(_combo_n)
+                    time.sleep(3)
+                    # EnumWindows 搵 Properties dialog（標題含 EA 名 / 版本號）
+                    _dlg_hk_found = False
+                    _dlg_hk_hwnd = None
+                    def _cb_hk(_h, _x):
+                        nonlocal _dlg_hk_found, _dlg_hk_hwnd
+                        if _ct_hk.windll.user32.IsWindowVisible(_h):
+                            _cls_hk = _ct_hk.create_unicode_buffer(64)
+                            _ct_hk.windll.user32.GetClassNameW(_h, _cls_hk, 64)
+                            if '#32770' in _cls_hk.value:
+                                _tl_hk = _ct_hk.windll.user32.GetWindowTextLengthW(_h)
+                                _tb_hk = _ct_hk.create_unicode_buffer(_tl_hk + 1)
+                                _ct_hk.windll.user32.GetWindowTextW(_h, _tb_hk, _tl_hk + 1)
+                                if ea_name in _tb_hk.value or '1.00' in _tb_hk.value or '2.00' in _tb_hk.value:
+                                    _dlg_hk_found = True
+                                    _dlg_hk_hwnd = _h
+                                    return False
+                        return True
+                    _ct_hk.windll.user32.EnumWindows(_ct_hk.WINFUNCTYPE(_ct_hk.c_bool, _ct_hk.c_size_t, _ct_hk.c_size_t)(_cb_hk), 0)
+                    if _dlg_hk_found:
+                        _hk_loaded_ok = True
+                        print(f"✅ 熱鍵 load 驗證通過：{_combo_n} 彈出 {ea_name} Properties（熱鍵已 load）")
+                        # 撳「取消」關 dialog（唔好誤掛 EA）
+                        try:
+                            from pywinauto import Application as _AppDlg
+                            _d_app = _AppDlg(backend='win32').connect(handle=_dlg_hk_hwnd, timeout=3)
+                            _d_w = _d_app.window(handle=_dlg_hk_hwnd)
+                            for _b in _d_w.children(class_name='Button'):
+                                try:
+                                    if '取消' in _b.window_text() or 'Cancel' in _b.window_text():
+                                        _ct_hk.windll.user32.SendMessageW(_ct_hk.c_void_p(int(_b.element_info.handle)), 0x00F5, 0, 0)
+                                        break
+                                except Exception:
+                                    pass
+                        except Exception:
+                            _sk_hk('{ESC}')
+                        break
+                    else:
+                        print(f"⚠️ 熱鍵 load 測試 {_hk_try+1}/3：{_combo_n} 冇彈 Properties（可能未 load 完 — 重試）")
+                        try:
+                            _sk_hk('{ESC}')
+                        except Exception:
+                            pass
+                        time.sleep(3)
+                except Exception as _ehk_t:
+                    print(f"⚠️ 熱鍵 load 測試異常: {_ehk_t}")
+                    time.sleep(3)
+            if not _hk_loaded_ok:
+                print(f"⚠️ 熱鍵 load 3 次測試都冇彈 Properties — 部署時 attach_ea_hotkey 會再驗證（失敗會明確報錯）")
         # 7. 攞新 PID
         _new_pid = find_mt5_pid()
         if _new_pid:
@@ -2151,6 +2259,45 @@ def verify_heartbeat(ea_name, timeout=60):
     return False
 
 
+def _ea_loaded_in_log(ea_name, symbol):
+    """🚨 2026-08-20（部署流程檢測系統 — Step 4 gate）
+    對真 MT5 log：搵 `expert <EA> (<SYM>,H1) loaded successfully`（且無隨後 removed）
+    用於 _wait_until poll — 返 bool（唔 print 成功 — _wait_until 會 print）"""
+    try:
+        log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        import glob as _g
+        latest = None
+        for d in os.listdir(log_dir):
+            lg = os.path.join(log_dir, d, 'logs')
+            if os.path.isdir(lg):
+                for f in _g.glob(os.path.join(lg, '*.log')):
+                    if latest is None or os.path.getmtime(f) > os.path.getmtime(latest):
+                        latest = f
+        if not latest:
+            return False
+        with open(latest, 'rb') as f:
+            raw = f.read()
+        for enc in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
+            try:
+                text = raw.decode(enc)
+                break
+            except Exception:
+                continue
+        _sym = (symbol or '').upper()
+        _found = False
+        _removed_after = False
+        for line in text.splitlines():
+            if ea_name in line and ('loaded successfully' in line.lower() or '已启动' in line or '已啟動' in line):
+                if _sym in line or 'loaded successfully' in line.lower():
+                    _found = True
+                    _removed_after = False  # 新 loaded — 重置
+            elif _found and ea_name in line and 'removed' in line.lower():
+                _removed_after = True
+        return _found and not _removed_after
+    except Exception:
+        return False
+
+
 def verify_ea_loaded(ea_name):
     """檢查 MT5 log 確認 EA 已 load"""
     log_path = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
@@ -2222,7 +2369,8 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             if not mt5_pid:
                 print("MT5 not running, starting...")
                 subprocess.Popen([MT5_PATH])
-            mt5_pid = wait_for_mt5()
+            # 🚨 2026-08-20（部署流程檢測系統 — Step 1 gate）：等 MT5 開 + 主視窗 ready（poll 最多 90s，唔係固定 30s）
+            mt5_pid = _wait_until(lambda: wait_for_mt5(5), 90, 'MT5 已開 + 主視窗 ready（poll 90s）', interval=3)
             if not mt5_pid:
                 return False
         check_abort()
@@ -2272,22 +2420,29 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             return False
         check_abort()
         
+        # 🚨 2026-08-20（部署流程檢測系統 — Step 4 gate）：EA loaded 驗證（等 + poll — 唔係即刻 check）
+        # log「loaded successfully」出現先算成功（對真 MT5 log — 心跳/activity 可能假成功）
+        if not _wait_until(lambda: _ea_loaded_in_log(ea_name, (symbol or 'EURUSD')), 30,
+                           f'EA {ea_name} loaded（MT5 log 驗證）', interval=3):
+            print(f"❌ Step 4 gate 失敗：{ea_name} 喺 30s 內冇喺 MT5 log 出現 loaded — 部署失敗")
+            return False
+        
         # Step 4: Ensure AutoTrading ON
         ensure_auto_trading_on(mt5_pid)
         check_abort()
         
-        # Step 5: Verify
-        time.sleep(5)
-        loaded = verify_ea_loaded(ea_name)
-        # ⚠️ heartbeat timeout 15 秒（唔係 60）— 好多 EA（TestRunner 等）冇 heartbeat 機制 → 白等 60 秒
+        # Step 5: Verify（最終驗證 — 🚨 2026-08-20 部署流程檢測系統）
+        # Step 4 gate 已確認 MT5 log loaded → 心跳只係輔助（市場收市冇 tick 心跳唔寫 — log 有 = 成功）
+        # 心跳有 → 錦上添花；心跳冇但 log 已 loaded → 都係成功（唔好因心跳誤判失敗）
+        _log_loaded = _ea_loaded_in_log(ea_name, (symbol or 'EURUSD'))
         heartbeat = verify_heartbeat(ea_name, timeout=15)
         
-        if heartbeat:
+        if heartbeat or _log_loaded:
             print(f"\n🎉 SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
             return True
         else:
-            print(f"\n⚠️ {ea_name} may be attached but no heartbeat detected")
-            return loaded
+            print(f"\n❌ 部署完成但驗證失敗：MT5 log 冇 loaded 記錄 + 心跳冇（應該唔會到呢度 — Step 4 gate 已過）")
+            return False
     except ControlAborted:
         print(f"\n🚨 部署被用戶緊急停止！")
         return False

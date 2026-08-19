@@ -75,6 +75,7 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.10.5** | 2026-08-20 | ⭐🔧 **部署流程檢測系統落地（docs/deployment-checkpoint-system.md）** — auto_attach.py 加 `_wait_until(check_fn, timeout, desc, interval)` 每步驗證 gate helper（poll 到成功先落下一步，唔等固定時間）+ ① `_ensure_hotkey_loaded` 開完 MT5 驗證熱鍵 load（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試，撳取消關 dialog）② 關 MT5 gate（WM_CLOSE 後 poll 確認已關 20s，未關先強制 kill）③ Step 1 gate：MT5 開 + 主視窗 ready（poll 90s）④ Step 4 gate：EA loaded 驗證（MT5 log `loaded successfully` 且無隨後 removed，poll 30s — 對真 log 唔靠心跳）⑤ Step 5 最終驗證：log loaded 優先（市場收市心跳唔寫都算成功），心跳只做輔助 |
 | **v0.9.82** | 2026-08-18 | 🔧 **watcher compile 改用 CLI `/compile` 優先** — GUI F7 間歇性失敗，改先試 `metaeditor64.exe /compile:<mq5> /log:<log>`（100% 可靠），成功即返，GUI fallback — 根治 OpenChart 配對 compile 失敗 |
 | **v0.9.81** | 2026-08-18 | 🔧 **OpenChart/OpenChart_Helper 加入 `_SYSTEM_KEEP`** — 唔會被「重新整理清殘留」誤刪 |
 | **v0.9.80** | 2026-08-18 | 🐛 **修 install-local Script 偵測路徑 bug** — `data_dir` 應係 `APPDATA/MetaQuotes/Terminal` → Script copy 正確去 Scripts/ |
@@ -538,12 +539,18 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 **Git HEAD**: `e7abd44`（master）— v0.10.4 + docs
 
-**進行中任務**：部署流程檢測系統落地（用戶要求：每步完成 → 驗證 gate → 成功先落下一步）
+**✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
-- 待做：改 auto_attach.py 加 `_wait_until(check_fn, timeout, desc)` helper + 每步驗證 gate
+- Code 落地：auto_attach.py 加 `_wait_until(check_fn, timeout, desc, interval)` helper + 每步驗證 gate
+  - Step 0 前置：EA .ex5 檢查（v0.10.4）、hotkeys.ini 可寫
+  - Step 1 熱鍵預載 gate：WM_CLOSE 後 poll 確認 MT5 已關（20s）→ 寫熱鍵 → 開 MT5 → 等主視窗 ready（90s）→ send Ctrl+N 測試熱鍵 load（彈 Properties = 成功，×3 重試，撳取消）
+  - Step 1b MT5 ready gate：`_wait_until(wait_for_mt5, 90s)`（唔係固定 30s）
+  - Step 4 EA loaded gate：`_ea_loaded_in_log` — MT5 log `loaded successfully` 且無隨後 removed（poll 30s — 對真 log）
+  - Step 5 最終驗證：log loaded 優先 + 心跳輔助（市場收市心跳唔寫都算成功）
+- 待做：實機測試（壓力測試驗證 5/5）
 
 **已知問題（下次 session 繼續）**：
-1. 🔴 **熱鍵預載後未等 load** — `_ensure_hotkey_loaded`（v0.10.2）開完 MT5 後冇驗證熱鍵 load（send Ctrl+N 彈 Properties）→ 壓力測試 Round 1 fail（時序 race：開完 MT5 即刻部署 → 熱鍵未 load → Ctrl+N 失效）
+1. ✅ **熱鍵預載後未等 load**（v0.10.5 已修）— `_ensure_hotkey_loaded` 開完 MT5 後加熱鍵 load 驗證 gate（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試）；壓力測試 Round 1 fail（時序 race）待實機驗證修復
 2. **壓力測試 5x 未達 5/5** — `agent/_stress_test_5x_multi.py`（每輪添加 N 個 → 部署 N 個）；已加「等 .ex5 出現」但 Round 1 仍 fail（熱鍵時序）
 3. **多 watcher instance 問題** — 殺舊起新時會 spawn 多個（單實例守衛 lock file 殘留）；起 watcher 一定要 python.exe 絕對路徑（pythonw 會 hang）
 
