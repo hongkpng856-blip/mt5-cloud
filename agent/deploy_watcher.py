@@ -17,9 +17,15 @@ import time
 import json
 import glob
 import queue
+import shutil
+import threading
 import subprocess
 import requests
-import threading
+
+# 🚨 2026-08-20：auto_attach 一律用 python.exe 絕對路徑（唔可以用 pythonw — pyautogui/pywinauto 無 console hang 5min timeout）
+_PY_EXE = r"C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe"
+if not os.path.isfile(_PY_EXE):
+    _PY_EXE = shutil.which('python') or shutil.which('python3') or sys.executable
 
 # ─── Deploy Notification (AI 控制中視窗) ───
 _DEPLOY_NOTIFY_DIR = os.path.dirname(__file__)
@@ -119,8 +125,10 @@ def run_auto_attach(cmd_data):
     print(f"{'='*50}")
     
     # Build auto_attach command
+    # 🚨 2026-08-20：hardcode python.exe 絕對路徑（唔用 sys.executable — 如果 watcher 用 pythonw 起 → sys.executable=pythonw → auto_attach hang 5min timeout）
+    _PYEXE = _PY_EXE
     cmd = [
-        sys.executable,  # Same python that's running this script (has desktop access)
+        _PYEXE,
         AUTO_ATTACH_SCRIPT,
         '--ea', ea_name,
         '--symbol', symbol,
@@ -1067,7 +1075,7 @@ def process_pause_cmd(fp):
         _prog_steps([f'開始暫停 {ea_name}'], '移除圖表 EA（停止交易）')
         try:
             result = subprocess.run(
-                [sys.executable, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
+                [_PYEXE, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
                 timeout=90, capture_output=True, encoding='utf-8', errors='replace',  # ⚠️ GBK 修
                 cwd=os.path.dirname(AUTO_ATTACH_SCRIPT),
             )
