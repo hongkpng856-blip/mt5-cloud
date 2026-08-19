@@ -2415,6 +2415,76 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             ensure_mt5_window(mt5_pid)
         except Exception:
             pass
+        # 🚨 2026-08-20（批次預載優化 v0.10.7）：開完 MT5 之後驗證熱鍵 load（無論熱鍵新寫定已有）
+        # 問題：_ensure_hotkey_loaded「已有熱鍵 → return」skip 咗開完 MT5 嘅熱鍵 load 驗證
+        # → MT5 啱開機熱鍵未 load → send 熱鍵失效（EMA_Cross Ctrl+2 案例）
+        # 修正：呢度 poll send 測試熱鍵 → 彈 Properties = load 成功（冇熱鍵嘅 EA skip）
+        try:
+            _is_script_ea = ea_name.startswith('OpenChart') or ea_name == 'OpenChart_Helper'  # 提前定義（Step 3 都會用）
+            _hk_map_t = load_hotkey_map()
+            _combo_t = _hk_map_t.get(ea_name)
+            if _combo_t and not _is_script_ea:
+                import ctypes as _ct_t
+                def _hotkey_loads():
+                    try:
+                        from pywinauto import Application as _AppT
+                        _a_t = _AppT(backend='win32').connect(process=mt5_pid, timeout=5)
+                        _w_t = _a_t.window(class_name='MetaQuotes::MetaTrader::5.00')
+                        _w_t.set_focus()
+                        time.sleep(0.5)
+                        # click chart 區域（熱鍵附加 EA 需要 active chart）
+                        try:
+                            import pyautogui as _pg_t
+                            _pg_t.FAILSAFE = False
+                            _r_t = _w_t.rectangle()
+                            _pg_t.click(_r_t.left + _r_t.width() // 2, _r_t.top + _r_t.height() // 2)
+                            time.sleep(0.5)
+                        except Exception:
+                            pass
+                        from pywinauto.keyboard import send_keys as _sk_t
+                        _sk_t(_combo_t)
+                        time.sleep(2.5)
+                        # EnumWindows 搵 Properties dialog（標題含 EA 名）
+                        _found_t = False
+                        _dlg_t_hwnd = None
+                        def _cb_t(_h, _x):
+                            nonlocal _found_t, _dlg_t_hwnd
+                            if _ct_t.windll.user32.IsWindowVisible(_h):
+                                _cls_t = _ct_t.create_unicode_buffer(64)
+                                _ct_t.windll.user32.GetClassNameW(_h, _cls_t, 64)
+                                if '#32770' in _cls_t.value:
+                                    _tl_t = _ct_t.windll.user32.GetWindowTextLengthW(_h)
+                                    _tb_t = _ct_t.create_unicode_buffer(_tl_t + 1)
+                                    _ct_t.windll.user32.GetWindowTextW(_h, _tb_t, _tl_t + 1)
+                                    if ea_name in _tb_t.value or '1.00' in _tb_t.value:
+                                        _found_t = True
+                                        _dlg_t_hwnd = _h
+                                        return False
+                            return True
+                        _ct_t.windll.user32.EnumWindows(_ct_t.WINFUNCTYPE(_ct_t.c_bool, _ct_t.c_size_t, _ct_t.c_size_t)(_cb_t), 0)
+                        if _found_t:
+                            # 撳「取消」關 dialog（唔好誤掛 EA）
+                            try:
+                                from pywinauto import Application as _AppD
+                                _d_t = _AppD(backend='win32').connect(handle=_dlg_t_hwnd, timeout=3)
+                                _dw_t = _d_t.window(handle=_dlg_t_hwnd)
+                                for _b in _dw_t.children(class_name='Button'):
+                                    if '取消' in _b.window_text() or 'Cancel' in _b.window_text():
+                                        _ct_t.windll.user32.SendMessageW(_ct_t.c_void_p(int(_b.element_info.handle)), 0x00F5, 0, 0)
+                                        break
+                            except Exception:
+                                _sk_t('{ESC}')
+                            return True
+                        try:
+                            _sk_t('{ESC}')
+                        except Exception:
+                            pass
+                        return False
+                    except Exception:
+                        return False
+                _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（{_combo_t} 彈 Properties）', interval=4)
+        except Exception:
+            pass
         # ⚠️ 統一 Navigator 位置（2026-08 用戶要求：操作前 Navigator 最大 + 固定位置）
         try:
             ensure_navigator_unified(mt5_pid)
