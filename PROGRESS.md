@@ -534,6 +534,33 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ---
 
+### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
+
+**Git HEAD**: `e7abd44`（master）— v0.10.4 + docs
+
+**進行中任務**：部署流程檢測系統落地（用戶要求：每步完成 → 驗證 gate → 成功先落下一步）
+- 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
+- 待做：改 auto_attach.py 加 `_wait_until(check_fn, timeout, desc)` helper + 每步驗證 gate
+
+**已知問題（下次 session 繼續）**：
+1. 🔴 **熱鍵預載後未等 load** — `_ensure_hotkey_loaded`（v0.10.2）開完 MT5 後冇驗證熱鍵 load（send Ctrl+N 彈 Properties）→ 壓力測試 Round 1 fail（時序 race：開完 MT5 即刻部署 → 熱鍵未 load → Ctrl+N 失效）
+2. **壓力測試 5x 未達 5/5** — `agent/_stress_test_5x_multi.py`（每輪添加 N 個 → 部署 N 個）；已加「等 .ex5 出現」但 Round 1 仍 fail（熱鍵時序）
+3. **多 watcher instance 問題** — 殺舊起新時會 spawn 多個（單實例守衛 lock file 殘留）；起 watcher 一定要 python.exe 絕對路徑（pythonw 會 hang）
+
+**關鍵流程（用戶實測成功 — 唔好改）**：
+- 熱鍵注入：網頁配對 EA → 等 MT5 refresh → 關 MT5 → 寫 hotkeys.ini（`<experts>Experts\<EA>.ex5=Ctrl+N</experts>` UTF-16）→ save → 開 MT5 → 熱鍵 work
+- 開 chart：`Alt+F→Enter→Enter→Space→打 symbol→Enter`（pyautogui）
+- 成功判定：對真 MT5 log（`D0E8.../logs/YYYYMMDD.log`）見 `expert <EA> (SYM,TF) loaded successfully` 且無 removed 先話成功；心跳/activity 可能假成功
+- 部署時唔可以再 restart MT5（restart 會令 MT5 覆寫 hotkeys.ini → 熱鍵失效）
+
+**重要 code 狀態**：
+- `_ensure_hotkey_loaded`（auto_attach.py ~1280）— 熱鍵預載（關→寫→開）+ .ex5 檢查（v0.10.4）
+- `_HK_RESTART_DISABLED = True`（v0.10.3）— 部署時唔 restart
+- watcher `_PY_EXE`（v0.10.0）— auto_attach 用 python.exe 絕對路徑
+- 壓力測試：`agent/_stress_test_5x_multi.py`
+
+**運行中 process（交接時）**：server :5001、watcher python.exe、MT5 terminal64
+
 *Last updated: 2026-07-30 20:00*
 
 ## 🐛 Critical Bug: Hermes 系統 auto-restart 導致無限 spawn loop 🆘
