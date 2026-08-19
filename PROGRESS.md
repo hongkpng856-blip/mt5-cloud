@@ -549,6 +549,13 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
   - Step 5 最終驗證：log loaded 優先 + 心跳輔助（市場收市心跳唔寫都算成功）
 - 待做：實機測試（壓力測試驗證 5/5）
 
+**📊 壓力測試實測結果（2026-08-20 v0.10.6）：2/5 PASS**
+- ✅ Round 1（EMA_Cross）+ Round 5（EMA_Cross+Bollinger）— log/hb 全過（心跳 age 0.1-0.7s）
+- ❌ Round 2（Bollinger ✅ + Breakout ❌）、Round 3（ADX/Divergence/Swing 全 ❌）、Round 4（Grid ❌）
+- **確認 pattern：EMA_Cross/Bollinger 穩定成功；Breakout/ADX/Divergence/Swing/Grid 部署失敗（EA 本身問題 — 唔係檢測系統）**
+- 已修 v0.10.6：attach_ea_hotkey 假失敗根治（驗證失敗唔再 return False → 外層 Step 4 gate + Step 5 心跳後備判定）+ _ea_loaded_in_log 新鮮度檢查
+- **待做：逐隻失敗 EA 排查（Breakout/ADX/Divergence/Swing/Grid — 可能 AgentHelper bootstrap 或注入問題）**
+
 **已知問題（下次 session 繼續）**：
 1. ✅ **熱鍵預載後未等 load**（v0.10.5 已修）— `_ensure_hotkey_loaded` 開完 MT5 後加熱鍵 load 驗證 gate（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試）；壓力測試 Round 1 fail（時序 race）待實機驗證修復
 2. **壓力測試 5x 未達 5/5** — `agent/_stress_test_5x_multi.py`（每輪添加 N 個 → 部署 N 個）；已加「等 .ex5 出現」但 Round 1 仍 fail（熱鍵時序）
