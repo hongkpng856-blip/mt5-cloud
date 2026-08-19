@@ -1386,17 +1386,18 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     break  # 唔 return — 繼續落去 restart（關→寫→開）
                 print(f"✅ {ea_name} 已有熱鍵（{_combo_exist}）— 唔使預載")
                 return mt5_pid
-        # 3. 分配未用 Ctrl+N
+        # 3. 分配未用 Ctrl+N（如果 break 落嚟已有 _combo_n — skip）
         _used = set()
         for _k, _v in experts.items():
             if _v and _v.startswith('Ctrl+'):
                 try: _used.add(int(_v.replace('Ctrl+', '')))
                 except: pass
-        _combo_n = None
-        for _i_n in range(1, 10):
-            if _i_n not in _used:
-                _combo_n = f'Ctrl+{_i_n}'
-                break
+        if _combo_n is None:
+            _combo_n = None
+            for _i_n in range(1, 10):
+                if _i_n not in _used:
+                    _combo_n = f'Ctrl+{_i_n}'
+                    break
         if not _combo_n:
             print(f"⚠️ 冇可用熱鍵 — 唔做預載")
             return mt5_pid
@@ -1427,18 +1428,52 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             except Exception:
                 pass
                 # 5. 寫熱鍵（MT5 關閉狀態下寫 — 用戶實測先 load）
-        # 🚨 2026-08-20 回歸 v0.10.6：唔批次預載全部 EA — 只寫 ea_name 熱鍵
-        # （批次預載寫入嘅「全新熱鍵」MT5 內部未記住 → 唔 load → send 失效 — 用戶實測知識）
-        _experts_hk = dict(experts)
-        _experts_hk[f'Experts\\{ea_name}.ex5'] = _combo_n
-        _lines_hk = ['<experts>']
-        for _k2, _v2 in _experts_hk.items():
-            _lines_hk.append(f'{_k2}={_v2}')
-        _lines_hk.append('</experts>')
-        _text_out_hk = '\r\n'.join(_lines_hk) + '\r\n'
-        with open(_hk_ini, 'wb') as _f_hk:
-            _f_hk.write(_text_out_hk.encode('utf-16'))
-        print(f"✅ 熱鍵已寫入 hotkeys.ini（{ea_name}={_combo_n}）")
+                # 🚨 2026-08-20 v0.10.11（多 EA 時序根治）：恢復批次預載（v0.10.7 邏輯）+ 保留 v0.10.8/10.10 驗證 gate
+                # 之前批次預載失敗係因為冇等 MT5 load 完熱鍵（3 次 send 測試唔夠）— 而家有 45s poll gate 搞掂
+                # → 一次 restart 寫入全部 .ex5 熱鍵 → 之後每隻 skip restart → 冇「逐隻 restart」時序問題
+                _experts_hk = dict(experts)
+                # 掃描 Experts 目錄全部 .ex5（排除子目錄 — 只掃根目錄）
+                _all_ex5 = []
+                try:
+                    for _d_root in os.listdir(_data_root):
+                        _exp_dir = os.path.join(_data_root, _d_root, 'MQL5', 'Experts')
+                        if os.path.isdir(_exp_dir):
+                            for _f5 in os.listdir(_exp_dir):
+                                if _f5.endswith('.ex5') and os.path.isfile(os.path.join(_exp_dir, _f5)):
+                                    _all_ex5.append(_f5[:-4])
+                except Exception:
+                    pass
+                # 分配熱鍵：已存在嘅保持，冇嘅分配未用 Ctrl+N
+                _used_n = set()
+                for _k2, _v2 in _experts_hk.items():
+                    if _v2 and _v2.startswith('Ctrl+'):
+                        try: _used_n.add(int(_v2.replace('Ctrl+', '')))
+                        except: pass
+                # 確保 ea_name 一定喺入面（用原本 combo）
+                _experts_hk[f'Experts\\{ea_name}.ex5'] = _combo_n
+                _used_n.add(int(_combo_n.replace('Ctrl+', '')))
+                _next_n = 1
+                for _ea5 in sorted(_all_ex5):
+                    _hk_key = f'Experts\\{_ea5}.ex5'
+                    if _hk_key in _experts_hk:
+                        continue  # 已有熱鍵
+                    while _next_n in _used_n:
+                        _next_n += 1
+                    if _next_n > 9:
+                        print(f"⚠️ 熱鍵已滿（9 個用晒）— {_ea5} 冇熱鍵")
+                        break
+                    _experts_hk[_hk_key] = f'Ctrl+{_next_n}'
+                    _used_n.add(_next_n)
+                    _next_n += 1
+                    print(f"   ➕ 批次預載: {_ea5} → Ctrl+{_next_n-1}")
+                _lines_hk = ['<experts>']
+                for _k2, _v2 in _experts_hk.items():
+                    _lines_hk.append(f'{_k2}={_v2}')
+                _lines_hk.append('</experts>')
+                _text_out_hk = '\r\n'.join(_lines_hk) + '\r\n'
+                with open(_hk_ini, 'wb') as _f_hk:
+                    _f_hk.write(_text_out_hk.encode('utf-16'))
+                print(f"✅ 熱鍵已寫入 hotkeys.ini（共 {len(_experts_hk)} 個 mapping — 含 {ea_name}={_combo_n}）")
         # 6. 開 MT5
         subprocess.Popen([MT5_PATH])
         # 🚨 2026-08-20（部署流程檢測系統落地）：開完 MT5 唔可以即刻部署 — 要等 MT5 load 完熱鍵
