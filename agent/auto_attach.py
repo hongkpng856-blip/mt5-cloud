@@ -97,33 +97,9 @@ def do_restart_mt5():
     import psutil
     import ctypes as _ct
     
-    # 🚨 2026-08-08：先關閉全部圖表（MT5 關機記住圖表 → 開機 restore — 圖表會累積）
-    # 關閉圖表先 → MT5 開機乾淨（冇 restore）→ 部署建立新圖表唔會累積
-    try:
-        import subprocess as _sp
-        _out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
-        for _line in _out.stdout.decode('utf-8', errors='replace').splitlines():
-            _parts = [p.strip().strip('"') for p in _line.split(',')]
-            if len(_parts) >= 2 and _parts[0] == 'terminal64.exe' and _parts[1].isdigit():
-                _pid = int(_parts[1])
-                break
-        else:
-            _pid = None
-        if _pid:
-            from pywinauto import Application as _App2
-            _app2 = _App2(backend='win32').connect(process=_pid, timeout=8)
-            _WM_CLOSE = 0x0010
-            for _w in _app2.windows():
-                try:
-                    if 'AfxFrameOrView' in _w.class_name():
-                        _ct.windll.user32.PostMessageW(ctypes.c_void_p(int(_w.element_info.handle)), _WM_CLOSE, 0, 0)
-                except Exception:
-                    pass
-            time.sleep(2)
-            print("📋 已關閉全部圖表（開機唔 restore）")
-    except Exception:
-        pass
-    
+    # 🚨 2026-08-19 FIX：restart 前唔好「關閉全部圖表」— 否則其他已掛 EA（EMA_Cross 等）chart 被關 → EA 消失
+    # MT5 restart 會自然 save + restore chart（profile）→ 保留其他 chart + EA；同時 reload hotkeys（新 EA 熱鍵生效）
+    # （之前 v0.9.71 為咗「部署唔累積 chart」而關晒 — 但搞死其他已掛 EA — 改為保留）
     # Kill existing MT5
     for proc in psutil.process_iter(['pid', 'name']):
         if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
@@ -1357,7 +1333,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         # 🚨 2026-08-19 FIX：唔好 restart MT5 — do_restart_mt5 前會「關閉全部圖表」→ 其他已掛 EA（如 EMA_Cross）chart 被關 → EA 消失
         #   而家部署用「Alt+F→Enter→Enter→Space→symbol→Enter」menu 方法開 chart，唔靠 Ctrl+熱鍵 → 唔需要 restart reload hotkeys
         #   → hotkeys.ini 有變都唔 restart（避免搞死其他 EA）
-        _HK_RESTART_DISABLED = True  # 2026-08-19：停用部署時 restart MT5（保護其他已掛 EA）
+        _HK_RESTART_DISABLED = False  # 2026-08-19：重新啟用 restart reload 熱鍵（do_restart_mt5 已唔會關晒 chart → 其他 EA 保留 + 新 EA 熱鍵 load）
         try:
             _hk_ini = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                                    'D0E8209F77C8CF37AD8BF550E51FF075', 'config', 'hotkeys.ini')
