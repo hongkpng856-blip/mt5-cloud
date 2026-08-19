@@ -80,7 +80,10 @@
 | **v0.9.80** | 2026-08-18 | 🐛 **修 install-local Script 偵測路徑 bug** — `data_dir` 應係 `APPDATA/MetaQuotes/Terminal` → Script copy 正確去 Scripts/ |
 | **v0.9.79** | 2026-08-18 | 🎯 **完整支援 Script 類型 EA 配對** — install-local 偵測 .mq5 Script → copy+compile 去 Scripts/（唔注入心跳）+ detector 掃 Scripts/ — 根治 OpenChart 配對失敗 |
 | **v0.9.78** | 2026-08-18 | 🎯 **重新整理自動清殘留** — refresh-status 掃 Experts+Scripts，刪唔喺 config + 唔係 _SYSTEM_KEEP 嘅檔 |
-| **v0.9.94** | 2026-08-19 | 🔧 **解決 Swing_Trader 熱鍵失效＋保護其他已掛 EA** — ① do_restart_mt5 移除「關閉全部圖表」段（restart 保留 chart → 其他 EA 唔消失）② 重新啟用部署 restart reload 熱鍵（_HK_RESTART_DISABLED=False）→ 新 EA 熱鍵（Swing Ctrl+5）load 到。實測：Swing loaded + 心跳新鮮；ADX/Bollinger/Breakout/EMA_Cross 全部保持掛住（心跳持續）— 「部署其他 EA 令 EMA_Cross 消失」一齊根治|
+| **v0.9.97** | 2026-08-19 | 🔧 **「已加入本機冇檔案」殘留根治** — /api/ea-library 加 local_has（server 直接 check 本機 MT5 Experts/Scripts 有冇 .ex5，唔靠 detector 延遲）→ 前端 added 用 f.local_has → 配對完成後即時顯示「已加入」，唔使 refresh（實測 Grid_Trading local_has=True）|
+| **v0.9.96** | 2026-08-19 | 🔧 **① 配對完成後自動 refresh（觸發 rescan + 延遲多次 refresh）② 所有動作完成後自動 refresh（waitDeployDone → refresh-status + reload 配對庫）**|
+| **v0.9.95** | 2026-08-19 | 🔧 **① Symbol 開放全部（showSymbolPicker 用 allSymbols 24 隻，唔再淨 6 隻固定）② Magic/Symbol 顯示改為「實際有部署/掛住」先顯示 — 剷除圖表（chart_removed）/未部署（unpaired）/啱啱配對都「—」**|
+| **v0.9.94** | **v0.9.94** | 2026-08-19 | 🔧 **解決 Swing_Trader 熱鍵失效＋保護其他已掛 EA** — ① do_restart_mt5 移除「關閉全部圖表」段（restart 保留 chart → 其他 EA 唔消失）② 重新啟用部署 restart reload 熱鍵（_HK_RESTART_DISABLED=False）→ 新 EA 熱鍵（Swing Ctrl+5）load 到。實測：Swing loaded + 心跳新鮮；ADX/Bollinger/Breakout/EMA_Cross 全部保持掛住（心跳持續）— 「部署其他 EA 令 EMA_Cross 消失」一齊根治|
 | **v0.9.93** | 2026-08-19 | 🔧 **部署唔 restart MT5（_HK_RESTART_DISABLED）** — do_restart_mt5 前關閉全部圖表 → 部署其他 EA 令已掛 EA chart 被關消失（v0.9.94 改返 restart 但保留 chart 取代）|
 | **v0.9.92** | 2026-08-19 | 🔧 **修部署完成後要 hard refresh 先可以再部署** — _append_activity_log 讀 'type' key 但 caller 用 'action' → deploy_result 寫成 unknown → 前端 waitDeployDone 揾唔到 → modal 卡住遮部署掣。改讀 action 優先｜實測 deploy_result 正常寫入 |
 | **v0.9.91** | **v0.9.91** | 2026-08-19 | ⭐🔧 **根治「一秒 remove」真兇（ADX 部署重要成功）** — ADX_Trend 源碼有 AgentHelper bootstrap code（OnTick 一啟動就 ChartApplyTemplate('AgentHelper_EURUSD_H1.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ 一秒成功下一秒 remove + 最終冇掛。移除嗰段 bootstrap → ADX 掛住交易唔讓位 → 重新 compile。驗證（對真 MT5 log）：`04:59:41 expert ADX_Trend (EURUSD,H1) loaded successfully` **無 removed** + 心跳持續新鮮。其他 EA（Breakout/Bollinger_Band）log 證實 loaded 無 removed（機制正常）。|
@@ -272,6 +275,8 @@
 | 52 | ⭐ **部署 EA「一秒成功下一秒 remove」（ADX 唔掛）** | ADX_Trend 源碼 OnTick 有 AgentHelper bootstrap（ChartApplyTemplate('AgentHelper_*.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ loaded 後 4-5 秒 remove + 最終冇掛 | v0.9.91 移除 bootstrap code → ADX 掛住交易唔讓位 + recompile；其他 EA（Breakout/Bollinger）log 證實無呢個問題 | 08-19 |
 | 53 | **部署完另一隻 EA 後，已掛 EA（EMA_Cross）自己消失** | 部署時 do_restart_mt5 前「關閉全部圖表」→ 其他已掛 EA chart 被關 → EA 消失（chart 可能留但 EA 冇） | v0.9.93-94 移除「關閉全部圖表」段 → restart 保留 chart → 其他 EA 唔再消失（實測 ADX/Bollinger/Breakout/EMA_Cross 心跳持續） | 08-19 |
 | 54 | **Swing_Trader 部署失敗（熱鍵失效）** | 新加 EA 熱鍵（Ctrl+5）MT5 未 reload → send Ctrl+5 冇彈 Properties → 掛唔到 | v0.9.94 重新啟用部署 restart reload 熱鍵 → Swing Ctrl+5 load → 掛到（實測 loaded + 心跳新鮮） | 08-19 |
+| 55 | **配對後「已加入（本機冇檔案）」殘留，要 hard refresh 先啱** | 前端「本機有檔案」靠 detector ea_inventory.json（重掃延遲）→ 配對後 load 攞舊 data → 顯示本機冇檔案 | v0.9.97 /api/ea-library 加 local_has（server 直接 check 本機 .ex5）→ 即時準確，配對完即刻「已加入」 | 08-19 |
+| 56 | **配對/部署完成後唔自動 refresh** | 動作完成後 UI 唔更新（要手動 refresh） | v0.9.96 配對完成後觸發 rescan + 延遲 refresh；部署完成後 waitDeployDone → refresh-status + reload | 08-19 |
 
 ---
 
