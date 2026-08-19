@@ -80,7 +80,10 @@
 | **v0.9.80** | 2026-08-18 | 🐛 **修 install-local Script 偵測路徑 bug** — `data_dir` 應係 `APPDATA/MetaQuotes/Terminal` → Script copy 正確去 Scripts/ |
 | **v0.9.79** | 2026-08-18 | 🎯 **完整支援 Script 類型 EA 配對** — install-local 偵測 .mq5 Script → copy+compile 去 Scripts/（唔注入心跳）+ detector 掃 Scripts/ — 根治 OpenChart 配對失敗 |
 | **v0.9.78** | 2026-08-18 | 🎯 **重新整理自動清殘留** — refresh-status 掃 Experts+Scripts，刪唔喺 config + 唔係 _SYSTEM_KEEP 嘅檔 |
-| **v0.10.1** | 2026-08-20 | 🔧 **新方法開 chart 驗證 bug** — 之前淨靠主窗口標題含 symbol（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）→ 誤判失敗 fallback Ctrl+9 → 熱鍵失效全失敗。改為同時檢查 MDI chart 窗口有冇 <SYM> chart |
+| **v0.10.4** | 2026-08-20 | 🔧 **_ensure_hotkey_loaded 加 .ex5 存在檢查**（破綻處理）— EA 冇本機 .ex5 → 報錯『請先配對』唔白試（用戶實測：冇 .ex5 熱鍵指向唔存在 EA → 失效）|
+| **v0.10.3** | 2026-08-20 | 🔧 **部署時唔再 restart MT5**（_HK_RESTART_DISABLED=True）— 熱鍵已由 _ensure_hotkey_loaded 預載（關→寫→開），部署時 restart 會令 MT5 覆寫 hotkeys.ini 令熱鍵失效|
+| **v0.10.2** | 2026-08-20 | ⭐🔧 **部署前熱鍵預載（_ensure_hotkey_loaded — 用戶實測成功流程）** — 確保 EA 熱鍵喺 MT5 關閉狀態下寫入 hotkeys.ini → 開 MT5 load → 熱鍵 work（之前 MT5 開住時寫 → 唔 load → Ctrl+N 失效）|
+| **v0.10.1** | **v0.10.1** | 2026-08-20 | 🔧 **新方法開 chart 驗證 bug** — 之前淨靠主窗口標題含 symbol（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）→ 誤判失敗 fallback Ctrl+9 → 熱鍵失效全失敗。改為同時檢查 MDI chart 窗口有冇 <SYM> chart |
 | **v0.10.0** | 2026-08-20 | 🔧 **watcher 跑 auto_attach 一律用 python.exe 絕對路徑（_PY_EXE module constant）** — 防 sys.executable=pythonw hang 5min timeout 致命問題 + 修重複 import |
 | **v0.9.99** | 2026-08-20 | 🔧 **修 do_restart_mt5 WM_CLOSE 段 ctypes 未定義 NameError**（用 _ct 代替 ctypes）→ 正常關閉真正生效（之前 fallback 強制 kill 又搞走其他 EA）|
 | **v0.9.98** | **v0.9.98** | 2026-08-20 | ⭐🔧 **根治「部署 restart 後其他 EA 移出圖表」** — do_restart_mt5 用 proc.kill() 強制殺 MT5 → 冇 save chart profile → 開機唔 restore 其他 EA。改為「正常關閉」（WM_CLOSE 俾主窗口）→ MT5 save profile → 開機 restore 全部 chart + EA；同時 reload 熱鍵（Swing Ctrl+5 生效）。實測：restart 後 6 隻 EA（ADX/Bollinger/Breakout/EMA_Cross/Swing/Divergence）全部 loaded + 心跳新鮮 + Swing 部署成功|
@@ -283,6 +286,8 @@
 | 56 | **配對/部署完成後唔自動 refresh** | 動作完成後 UI 唔更新（要手動 refresh） | v0.9.96 配對完成後觸發 rescan + 延遲 refresh；部署完成後 waitDeployDone → refresh-status + reload | 08-19 |
 | 57 | ⭐ **部署 restart MT5 後，其他運行緊 EA 移出圖表** | do_restart_mt5 用 proc.kill() 強制殺 MT5 → 冇正常關閉 save chart profile → 開機唔 restore 掛緊 EA | v0.9.98 改「正常關閉」（WM_CLOSE 主窗口）→ save profile → 開機 restore 全部 EA（實測 6 隻全 restore + 心跳新鮮） | 08-20 |
 | 58 | ⭐ **熱鍵注入正確流程確認（用戶實測 2026-08-20）** | 之前直接寫 hotkeys.ini 喺 MT5 開住時寫 → 唔被認/被覆寫 → Ctrl+N 失效。用戶實測成功流程：① 網頁配對 EA（install-local → Navigator 見 EA）② 等 MT5 refresh ③ 關閉 MT5 ④ 寫 hotkeys.ini `<experts>Experts\<EA>.ex5=Ctrl+N</experts>`（UTF-16）⑤ save ⑥ 開 MT5 → 熱鍵 work。破綻：EA 必須本機有 .ex5（EMA_Cross 冇 .ex5 → 熱鍵失效；配對返後 work）；熱鍵重用（Ctrl+8 俾 Breakout → 放空 → 俾 EMA_Cross）可行 | 08-20 |
+| 59 | ⭐ **部署時熱鍵失效（MT5 開住寫唔 load）** | server ensure_hotkey_for_ea 喺 MT5 開住時寫 hotkeys.ini → MT5 唔 load → Ctrl+N 失效 | v0.10.2 _ensure_hotkey_loaded 部署前熱鍵預載（關 MT5 → 寫 → 開 → load）；v0.10.3 部署時唔再 restart（restart 覆寫熱鍵）；v0.10.4 .ex5 檢查 | 08-20 |
+| 60 | **部署流程冇「每步驗證 gate」（用戶要求：成功先落下一步）** | 而家每步做完就算/等固定時間，冇驗證（熱鍵 load 未等 → 部署失敗） | docs/deployment-checkpoint-system.md 設計每步驗證 gate（檔案/視窗/log 程式化檢測，唔靠 AI）+ _wait_until poll；待改 code 落地 | 08-20 |
 
 ---
 
