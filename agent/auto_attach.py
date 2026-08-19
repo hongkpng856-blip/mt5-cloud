@@ -1382,7 +1382,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         if not _combo_n:
             print(f"⚠️ 冇可用熱鍵 — 唔做預載")
             return mt5_pid
-        print(f"🔄 熱鍵預載：{ea_name} → {_combo_n}（關 MT5 → 寫 → 開）")
+        print(f"🔄 熱鍵預載：{ea_name}（關 MT5 → 批次寫入熱鍵 → 開）")
         # 4. 關 MT5（WM_CLOSE 正常關閉）
         try:
             _out_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
@@ -1409,8 +1409,41 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             except Exception:
                 pass
         # 5. 寫熱鍵（MT5 關閉狀態下寫 — 用戶實測先 load）
+        # 🚨 2026-08-20 優化（批次預載）：一次過掃描本機所有 .ex5 → 全部寫入熱鍵（唔淨係 ea_name）
+        # → 之後部署任何 EA 都已有熱鍵 → _ensure_hotkey_loaded skip → 唔再 restart MT5（解決 stress 多 EA 逐隻 restart 時序問題）
         _experts_hk = dict(experts)
-        _experts_hk[f'Experts\\{ea_name}.ex5'] = _combo_n
+        _existing_combos = set(_experts_hk.values())
+        # 掃描 Experts 目錄全部 .ex5（排除子目錄 — 只掃根目錄）
+        _all_ex5 = []
+        try:
+            for _d_root in os.listdir(_data_root):
+                _exp_dir = os.path.join(_data_root, _d_root, 'MQL5', 'Experts')
+                if os.path.isdir(_exp_dir):
+                    for _f5 in os.listdir(_exp_dir):
+                        if _f5.endswith('.ex5') and os.path.isfile(os.path.join(_exp_dir, _f5)):
+                            _all_ex5.append(_f5[:-4])
+        except Exception:
+            pass
+        # 分配熱鍵：已存在嘅保持，冇嘅分配未用 Ctrl+N
+        _used_n = set()
+        for _k2, _v2 in _experts_hk.items():
+            if _v2 and _v2.startswith('Ctrl+'):
+                try: _used_n.add(int(_v2.replace('Ctrl+', '')))
+                except: pass
+        _next_n = 1
+        for _ea5 in sorted(_all_ex5):
+            _hk_key = f'Experts\\\\{_ea5}.ex5'
+            if _hk_key in _experts_hk:
+                continue  # 已有熱鍵
+            while _next_n in _used_n:
+                _next_n += 1
+            if _next_n > 9:
+                print(f"⚠️ 熱鍵已滿（9 個用晒）— {_ea5} 冇熱鍵")
+                break
+            _experts_hk[_hk_key] = f'Ctrl+{_next_n}'
+            _used_n.add(_next_n)
+            _next_n += 1
+            print(f"   ➕ 批次預載: {_ea5} → Ctrl+{_next_n-1}")
         _lines_hk = ['<experts>']
         for _k2, _v2 in _experts_hk.items():
             _lines_hk.append(f'{_k2}={_v2}')
@@ -1418,11 +1451,13 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         _text_out_hk = '\r\n'.join(_lines_hk) + '\r\n'
         with open(_hk_ini, 'wb') as _f_hk:
             _f_hk.write(_text_out_hk.encode('utf-16'))
-        print(f"✅ 熱鍵已寫入 hotkeys.ini（{ea_name}={_combo_n}）")
+        print(f"✅ 熱鍵已寫入 hotkeys.ini（共 {len(_experts_hk)} 個 mapping — 含 {ea_name}）")
         # 6. 開 MT5
         subprocess.Popen([MT5_PATH])
         # 🚨 2026-08-20（部署流程檢測系統落地）：開完 MT5 唔可以即刻部署 — 要等 MT5 load 完熱鍵
         # 驗證 gate：等主視窗 ready（poll 最多 90s）→ send Ctrl+<N> 測試熱鍵 load（彈 Properties = load 成功）
+        # 🚨 2026-08-20 優化：用批次預載後 ea_name 實際嘅 combo（可能唔係 _combo_n）
+        _combo_actual = _experts_hk.get(f'Experts\\{ea_name}.ex5') or _combo_n
         _start_hk = time.time()
         _mt5_ready_hk = False
         _cur_pid_hk = None
@@ -1460,7 +1495,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     except Exception:
                         pass
                     from pywinauto.keyboard import send_keys as _sk_hk
-                    _sk_hk(_combo_n)
+                    _sk_hk(_combo_actual)
                     time.sleep(3)
                     # EnumWindows 搵 Properties dialog（標題含 EA 名 / 版本號）
                     _dlg_hk_found = False
@@ -1482,7 +1517,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _ct_hk.windll.user32.EnumWindows(_ct_hk.WINFUNCTYPE(_ct_hk.c_bool, _ct_hk.c_size_t, _ct_hk.c_size_t)(_cb_hk), 0)
                     if _dlg_hk_found:
                         _hk_loaded_ok = True
-                        print(f"✅ 熱鍵 load 驗證通過：{_combo_n} 彈出 {ea_name} Properties（熱鍵已 load）")
+                        print(f"✅ 熱鍵 load 驗證通過：{_combo_actual} 彈出 {ea_name} Properties（熱鍵已 load）")
                         # 撳「取消」關 dialog（唔好誤掛 EA）
                         try:
                             from pywinauto import Application as _AppDlg
@@ -1499,7 +1534,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             _sk_hk('{ESC}')
                         break
                     else:
-                        print(f"⚠️ 熱鍵 load 測試 {_hk_try+1}/3：{_combo_n} 冇彈 Properties（可能未 load 完 — 重試）")
+                        print(f"⚠️ 熱鍵 load 測試 {_hk_try+1}/3：{_combo_actual} 冇彈 Properties（可能未 load 完 — 重試）")
                         try:
                             _sk_hk('{ESC}')
                         except Exception:
