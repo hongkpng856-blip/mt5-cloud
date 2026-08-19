@@ -80,7 +80,8 @@
 | **v0.9.80** | 2026-08-18 | 🐛 **修 install-local Script 偵測路徑 bug** — `data_dir` 應係 `APPDATA/MetaQuotes/Terminal` → Script copy 正確去 Scripts/ |
 | **v0.9.79** | 2026-08-18 | 🎯 **完整支援 Script 類型 EA 配對** — install-local 偵測 .mq5 Script → copy+compile 去 Scripts/（唔注入心跳）+ detector 掃 Scripts/ — 根治 OpenChart 配對失敗 |
 | **v0.9.78** | 2026-08-18 | 🎯 **重新整理自動清殘留** — refresh-status 掃 Experts+Scripts，刪唔喺 config + 唔係 _SYSTEM_KEEP 嘅檔 |
-| **v0.9.97** | 2026-08-19 | 🔧 **「已加入本機冇檔案」殘留根治** — /api/ea-library 加 local_has（server 直接 check 本機 MT5 Experts/Scripts 有冇 .ex5，唔靠 detector 延遲）→ 前端 added 用 f.local_has → 配對完成後即時顯示「已加入」，唔使 refresh（實測 Grid_Trading local_has=True）|
+| **v0.9.98** | 2026-08-20 | ⭐🔧 **根治「部署 restart 後其他 EA 移出圖表」** — do_restart_mt5 用 proc.kill() 強制殺 MT5 → 冇 save chart profile → 開機唔 restore 其他 EA。改為「正常關閉」（WM_CLOSE 俾主窗口）→ MT5 save profile → 開機 restore 全部 chart + EA；同時 reload 熱鍵（Swing Ctrl+5 生效）。實測：restart 後 6 隻 EA（ADX/Bollinger/Breakout/EMA_Cross/Swing/Divergence）全部 loaded + 心跳新鮮 + Swing 部署成功|
+| **v0.9.97** | **v0.9.97** | 2026-08-19 | 🔧 **「已加入本機冇檔案」殘留根治** — /api/ea-library 加 local_has（server 直接 check 本機 MT5 Experts/Scripts 有冇 .ex5，唔靠 detector 延遲）→ 前端 added 用 f.local_has → 配對完成後即時顯示「已加入」，唔使 refresh（實測 Grid_Trading local_has=True）|
 | **v0.9.96** | 2026-08-19 | 🔧 **① 配對完成後自動 refresh（觸發 rescan + 延遲多次 refresh）② 所有動作完成後自動 refresh（waitDeployDone → refresh-status + reload 配對庫）**|
 | **v0.9.95** | 2026-08-19 | 🔧 **① Symbol 開放全部（showSymbolPicker 用 allSymbols 24 隻，唔再淨 6 隻固定）② Magic/Symbol 顯示改為「實際有部署/掛住」先顯示 — 剷除圖表（chart_removed）/未部署（unpaired）/啱啱配對都「—」**|
 | **v0.9.94** | **v0.9.94** | 2026-08-19 | 🔧 **解決 Swing_Trader 熱鍵失效＋保護其他已掛 EA** — ① do_restart_mt5 移除「關閉全部圖表」段（restart 保留 chart → 其他 EA 唔消失）② 重新啟用部署 restart reload 熱鍵（_HK_RESTART_DISABLED=False）→ 新 EA 熱鍵（Swing Ctrl+5）load 到。實測：Swing loaded + 心跳新鮮；ADX/Bollinger/Breakout/EMA_Cross 全部保持掛住（心跳持續）— 「部署其他 EA 令 EMA_Cross 消失」一齊根治|
@@ -277,6 +278,7 @@
 | 54 | **Swing_Trader 部署失敗（熱鍵失效）** | 新加 EA 熱鍵（Ctrl+5）MT5 未 reload → send Ctrl+5 冇彈 Properties → 掛唔到 | v0.9.94 重新啟用部署 restart reload 熱鍵 → Swing Ctrl+5 load → 掛到（實測 loaded + 心跳新鮮） | 08-19 |
 | 55 | **配對後「已加入（本機冇檔案）」殘留，要 hard refresh 先啱** | 前端「本機有檔案」靠 detector ea_inventory.json（重掃延遲）→ 配對後 load 攞舊 data → 顯示本機冇檔案 | v0.9.97 /api/ea-library 加 local_has（server 直接 check 本機 .ex5）→ 即時準確，配對完即刻「已加入」 | 08-19 |
 | 56 | **配對/部署完成後唔自動 refresh** | 動作完成後 UI 唔更新（要手動 refresh） | v0.9.96 配對完成後觸發 rescan + 延遲 refresh；部署完成後 waitDeployDone → refresh-status + reload | 08-19 |
+| 57 | ⭐ **部署 restart MT5 後，其他運行緊 EA 移出圖表** | do_restart_mt5 用 proc.kill() 強制殺 MT5 → 冇正常關閉 save chart profile → 開機唔 restore 掛緊 EA | v0.9.98 改「正常關閉」（WM_CLOSE 主窗口）→ save profile → 開機 restore 全部 EA（實測 6 隻全 restore + 心跳新鮮） | 08-20 |
 
 ---
 
