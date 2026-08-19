@@ -1277,6 +1277,115 @@ def _clear_steps():
     except Exception:
         pass
 
+
+def _ensure_hotkey_loaded(ea_name, mt5_pid):
+    """🚨 2026-08-20（用戶實測成功流程）：確保 EA 熱鍵寫入 hotkeys.ini 且 MT5 load
+    流程：① 檢查 hotkeys.ini 有冇 ea_name 熱鍵（冇先做）
+          ② 冇 → 分配未用 Ctrl+N → 關 MT5（WM_CLOSE 正常關閉 save profile）
+          ③ 寫 hotkeys.ini（<experts>Experts\\<EA>.ex5=Ctrl+N</experts> — UTF-16）
+          ④ 開 MT5 → 熱鍵 load → 返新 PID
+    破綻注意：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
+    """
+    try:
+        import ctypes as _ct_hk
+        import subprocess as _sp_hk
+        # 1. 讀 hotkeys.ini 有冇 ea_name
+        experts = {}
+        _hk_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        _hk_ini = None
+        if os.path.isdir(_hk_path):
+            for _d_hk in os.listdir(_hk_path):
+                _pp = os.path.join(_hk_path, _d_hk, 'config', 'hotkeys.ini')
+                if os.path.isfile(_pp):
+                    _hk_ini = _pp
+                    break
+        if not _hk_ini:
+            print(f"⚠️ 搵唔到 hotkeys.ini — 唔做熱鍵預載")
+            return mt5_pid
+        # 讀現有 experts
+        try:
+            _raw_hk = open(_hk_ini, 'rb').read()
+            try:
+                _text_hk = _raw_hk.decode('utf-16')
+            except Exception:
+                _text_hk = _raw_hk.decode('utf-8', errors='ignore')
+            _sec_hk = None
+            for _ln_hk in _text_hk.splitlines():
+                _ls_hk = _ln_hk.strip().replace('\r', '')
+                if _ls_hk == '<experts>': _sec_hk = 'experts'; continue
+                if _ls_hk == '</experts>': _sec_hk = None; continue
+                if '=' in _ls_hk and _sec_hk == 'experts':
+                    _k_hk, _v_hk = _ls_hk.split('=', 1)
+                    experts[_k_hk] = _v_hk
+        except Exception:
+            pass
+        # 2. 已有熱鍵 → 唔使郁
+        for _k in experts:
+            if ea_name in _k:
+                print(f"✅ {ea_name} 已有熱鍵（{experts[_k]}）— 唔使預載")
+                return mt5_pid
+        # 3. 分配未用 Ctrl+N
+        _used = set()
+        for _k, _v in experts.items():
+            if _v and _v.startswith('Ctrl+'):
+                try: _used.add(int(_v.replace('Ctrl+', '')))
+                except: pass
+        _combo_n = None
+        for _i_n in range(1, 10):
+            if _i_n not in _used:
+                _combo_n = f'Ctrl+{_i_n}'
+                break
+        if not _combo_n:
+            print(f"⚠️ 冇可用熱鍵 — 唔做預載")
+            return mt5_pid
+        print(f"🔄 熱鍵預載：{ea_name} → {_combo_n}（關 MT5 → 寫 → 開）")
+        # 4. 關 MT5（WM_CLOSE 正常關閉）
+        try:
+            _out_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+            _pid_hk = None
+            for _l_hk in _out_hk.stdout.decode('utf-8', errors='replace').splitlines():
+                _pa_hk = [p.strip().strip('"') for p in _l_hk.split(',')]
+                if len(_pa_hk) >= 2 and _pa_hk[0] == 'terminal64.exe' and _pa_hk[1].isdigit():
+                    _pid_hk = int(_pa_hk[1]); break
+            if _pid_hk:
+                from pywinauto import Application as _App_hk
+                _app_hk = _App_hk(backend='win32').connect(process=_pid_hk, timeout=8)
+                _main_hk = _app_hk.window(class_name_re='MetaQuotes::MetaTrader')
+                _ct_hk.windll.user32.PostMessageW(_ct_hk.c_void_p(int(_main_hk.element_info.handle)), 0x0010, 0, 0)
+                time.sleep(8)
+        except Exception:
+            pass
+        # 強制確認關咗（WM_CLOSE 可能彈窗）
+        try:
+            _alive_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+            if 'terminal64.exe' in _alive_hk.stdout.decode('utf-8', errors='replace'):
+                _sp_hk.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                time.sleep(4)
+        except Exception:
+            pass
+        # 5. 寫熱鍵（MT5 關閉狀態下寫 — 用戶實測先 load）
+        _experts_hk = dict(experts)
+        _experts_hk[f'Experts\\{ea_name}.ex5'] = _combo_n
+        _lines_hk = ['<experts>']
+        for _k2, _v2 in _experts_hk.items():
+            _lines_hk.append(f'{_k2}={_v2}')
+        _lines_hk.append('</experts>')
+        _text_out_hk = '\r\n'.join(_lines_hk) + '\r\n'
+        with open(_hk_ini, 'wb') as _f_hk:
+            _f_hk.write(_text_out_hk.encode('utf-16'))
+        print(f"✅ 熱鍵已寫入 hotkeys.ini（{ea_name}={_combo_n}）")
+        # 6. 開 MT5
+        subprocess.Popen([MT5_PATH])
+        time.sleep(20)
+        # 7. 攞新 PID
+        _new_pid = find_mt5_pid()
+        if _new_pid:
+            return _new_pid
+        return mt5_pid
+    except Exception as _e_hk:
+        print(f"⚠️ 熱鍵預載失敗: {_e_hk}")
+        return mt5_pid
+
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
     """🎯 快捷鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
@@ -2079,7 +2188,15 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # Step 1: Generate template
         tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
         check_abort()  # 每步檢查緊急停止
-        
+
+        # 🚨 2026-08-20（用戶實測成功流程）：熱鍵預載 — 確保 EA 熱鍵寫入 hotkeys.ini（MT5 關閉狀態下）→ MT5 load
+        # 破綻：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
+        try:
+            _cur_pid = find_mt5_pid()
+            mt5_pid = _ensure_hotkey_loaded(ea_name, _cur_pid or 0)
+        except Exception:
+            pass
+
         # Step 2: Get or restart MT5
         if do_restart:
             mt5_pid = do_restart_mt5()
