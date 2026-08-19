@@ -441,7 +441,7 @@ def _append_activity_log(notif):
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         entry = {
             'time': notif.get('time', time.time()),
-            'action': notif.get('type', 'unknown'),
+            'action': notif.get('action', notif.get('type', 'unknown')),  # 🚨 2026-08-19 FIX：caller 用 'action' key（deploy_result 等）— 之前只讀 'type' → deploy_result 寫成 unknown → 前端等唔到 → modal 卡
             'ea': notif.get('ea', ''),
             'message': notif.get('message', ''),
             'source': 'watcher',
