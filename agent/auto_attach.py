@@ -1465,7 +1465,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         # 🚨 2026-08-19 FIX：唔好 restart MT5 — do_restart_mt5 前會「關閉全部圖表」→ 其他已掛 EA（如 EMA_Cross）chart 被關 → EA 消失
         #   而家部署用「Alt+F→Enter→Enter→Space→symbol→Enter」menu 方法開 chart，唔靠 Ctrl+熱鍵 → 唔需要 restart reload hotkeys
         #   → hotkeys.ini 有變都唔 restart（避免搞死其他 EA）
-        _HK_RESTART_DISABLED = False  # 2026-08-19：重新啟用 restart reload 熱鍵（do_restart_mt5 已唔會關晒 chart → 其他 EA 保留 + 新 EA 熱鍵 load）
+        _HK_RESTART_DISABLED = True  # 🚨 2026-08-20：熱鍵已由 _ensure_hotkey_loaded 預載（關 MT5 → 寫 → 開）— 部署時唔可以再 restart（restart 會令 MT5 用內部設定覆寫 hotkeys.ini → 我哋寫嘅熱鍵消失 → Ctrl+N 失效）
         try:
             _hk_ini = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                                    'D0E8209F77C8CF37AD8BF550E51FF075', 'config', 'hotkeys.ini')
