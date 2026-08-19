@@ -2505,7 +2505,56 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                         return False
                     except Exception:
                         return False
-                _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（{_combo_t} 彈 Properties）', interval=4)
+                # 🚨 2026-08-20 v0.10.13：熱鍵 load 驗證 fail → restart MT5（關→寫→開）→ 再驗證一次
+                # （多 EA 場景：第二隻部署時 MT5 啱 restart 完/熱鍵未 load → send 失效 → 要 restart 重寫）
+                _hk_ok_t = _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（{_combo_t} 彈 Properties）', interval=4)
+                if not _hk_ok_t:
+                    print(f"⚠️ 熱鍵 load 驗證 fail（{_combo_t} 45s 冇彈）— restart MT5 重寫熱鍵再試")
+                    try:
+                        _closed_t = _wait_until(lambda: not _mt5_alive(), 20, 'MT5 已關閉（重寫前）', interval=2)
+                        if not _closed_t:
+                            import subprocess as _sp_t
+                            _sp_t.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                            time.sleep(4)
+                        # 重寫 hotkeys.ini（保留現有 mapping — 確保 ea_name 喺入面）
+                        import ctypes as _ct_rw
+                        _hk_ini_rw = None
+                        _root_rw = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                        for _d_rw in os.listdir(_root_rw):
+                            _pp_rw = os.path.join(_root_rw, _d_rw, 'config', 'hotkeys.ini')
+                            if os.path.isfile(_pp_rw):
+                                _hk_ini_rw = _pp_rw
+                                break
+                        if _hk_ini_rw:
+                            _experts_rw = {}
+                            try:
+                                _raw_rw = open(_hk_ini_rw, 'rb').read()
+                                _txt_rw = _raw_rw.decode('utf-16', errors='ignore')
+                                _sec_rw = None
+                                for _ln_rw in _txt_rw.splitlines():
+                                    _ls_rw = _ln_rw.strip().replace('\r\n', '')
+                                    if _ls_rw == '<experts>': _sec_rw = True; continue
+                                    if _ls_rw == '</experts>': _sec_rw = None; continue
+                                    if '=' in _ls_rw and _sec_rw:
+                                        _kk_rw, _vv_rw = _ls_rw.split('=', 1)
+                                        _experts_rw[_kk_rw] = _vv_rw
+                            except Exception:
+                                pass
+                            _experts_rw[f'Experts\\{ea_name}.ex5'] = _combo_t.replace('^', 'Ctrl+').replace('!', 'Alt+')
+                            _lines_rw = ['<experts>']
+                            for _k_rw, _v_rw in _experts_rw.items():
+                                _lines_rw.append(f'{_k_rw}={_v_rw}')
+                            _lines_rw.append('</experts>')
+                            with open(_hk_ini_rw, 'wb') as _f_rw:
+                                _f_rw.write(('\r\n'.join(_lines_rw) + '\r\n').encode('utf-16'))
+                            print(f"✅ 熱鍵已重寫（含 {ea_name}={_combo_t}）")
+                        # 開 MT5
+                        subprocess.Popen([MT5_PATH])
+                        _wait_until(lambda: wait_for_mt5(5), 90, 'MT5 已重開 + ready', interval=3)
+                        # 再驗證熱鍵 load
+                        _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（重開後 {_combo_t}）', interval=4)
+                    except Exception as _e_rw:
+                        print(f"⚠️ restart 重寫熱鍵失敗: {_e_rw}")
         except Exception:
             pass
         # ⚠️ 統一 Navigator 位置（2026-08 用戶要求：操作前 Navigator 最大 + 固定位置）
