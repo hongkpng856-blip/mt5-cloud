@@ -549,12 +549,13 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
   - Step 5 最終驗證：log loaded 優先 + 心跳輔助（市場收市心跳唔寫都算成功）
 - 待做：實機測試（壓力測試驗證 5/5）
 
-**📊 壓力測試實測結果（2026-08-20 v0.10.6）：2/5 PASS**
-- ✅ Round 1（EMA_Cross）+ Round 5（EMA_Cross+Bollinger）— log/hb 全過（心跳 age 0.1-0.7s）
-- ❌ Round 2（Bollinger ✅ + Breakout ❌）、Round 3（ADX/Divergence/Swing 全 ❌）、Round 4（Grid ❌）
-- **確認 pattern：EMA_Cross/Bollinger 穩定成功；Breakout/ADX/Divergence/Swing/Grid 部署失敗（EA 本身問題 — 唔係檢測系統）**
-- 已修 v0.10.6：attach_ea_hotkey 假失敗根治（驗證失敗唔再 return False → 外層 Step 4 gate + Step 5 心跳後備判定）+ _ea_loaded_in_log 新鮮度檢查
-- **待做：逐隻失敗 EA 排查（Breakout/ADX/Divergence/Swing/Grid — 可能 AgentHelper bootstrap 或注入問題）**
+**📊 壓力測試實測結果（2026-08-20 v0.10.6-10.10）：2/5 PASS（單 EA 100% 成功）**
+- v0.10.6：2/5（Round 1/5 EMA/Bollinger 成功 — 固定 EA pattern）
+- v0.10.10（熱鍵 load 時序修正）：2/5（Round 1/4 單 EA 輪全部 PASS — log+hb 全過；多 EA 輪每輪有一隻失敗 — 非確定性時序問題）
+- **單 EA 部署 100% 成功**（手動 + 壓力測試單 EA 輪全部 log=True + hb=True）
+- **多 EA 連續部署 ~50%**：每輪有一隻撞到 MT5 啱 restart 完未 ready → 失敗（位置隨機 — 唔係固定 EA）
+- **已根治（v0.10.8-10.10）：熱鍵 load 時序** — 熱鍵必須「MT5 關閉狀態下寫入」先 load（用戶實測）；`_ensure_hotkey_loaded`「已有熱鍵」時檢查 hotkeys.ini mtime vs MT5 啟動時間（開機後先寫 → restart 重寫）；開完 MT5 後熱鍵 load 驗證 gate
+- **待做：多 EA 連續部署時序根治**（每隻部署之間 MT5 狀態/熱鍵 restart 時機）
 
 **已知問題（下次 session 繼續）**：
 1. ✅ **熱鍵預載後未等 load**（v0.10.5 已修）— `_ensure_hotkey_loaded` 開完 MT5 後加熱鍵 load 驗證 gate（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試）；壓力測試 Round 1 fail（時序 race）待實機驗證修復
