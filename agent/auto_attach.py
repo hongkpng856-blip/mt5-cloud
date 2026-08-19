@@ -100,11 +100,34 @@ def do_restart_mt5():
     # 🚨 2026-08-19 FIX：restart 前唔好「關閉全部圖表」— 否則其他已掛 EA（EMA_Cross 等）chart 被關 → EA 消失
     # MT5 restart 會自然 save + restore chart（profile）→ 保留其他 chart + EA；同時 reload hotkeys（新 EA 熱鍵生效）
     # （之前 v0.9.71 為咗「部署唔累積 chart」而關晒 — 但搞死其他已掛 EA — 改為保留）
-    # Kill existing MT5
-    for proc in psutil.process_iter(['pid', 'name']):
-        if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
-            proc.kill()
-    
+    # 🚨 2026-08-19 FIX2：唔可以用 proc.kill() 強制殺 — MT5 冇機會 save chart profile → 開機唔 restore 其他 EA（「restart 後其他 EA 移出圖表」）
+    # → 用「正常關閉」（WM_CLOSE 俾主窗口）令 MT5 save profile → 開機 restore chart + EA
+    try:
+        import subprocess as _sp3
+        _out3 = _sp3.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+        _pid3 = None
+        for _line3 in _out3.stdout.decode('utf-8', errors='replace').splitlines():
+            _pa3 = [p.strip().strip('"') for p in _line3.split(',')]
+            if len(_pa3) >= 2 and _pa3[0] == 'terminal64.exe' and _pa3[1].isdigit():
+                _pid3 = int(_pa3[1])
+                break
+        if _pid3:
+            from pywinauto import Application as _App3
+            _app3 = _App3(backend='win32').connect(process=_pid3, timeout=8)
+            _main3 = _app3.window(class_name_re='MetaQuotes::MetaTrader')
+            _ct.windll.user32.PostMessageW(ctypes.c_void_p(int(_main3.element_info.handle)), 0x0010, 0, 0)  # WM_CLOSE — 正常關閉（save profile）
+            print("📋 MT5 正常關閉中（save chart profile）...")
+            time.sleep(8)
+            # 如果仲未退（可能彈對話框）→ 用 taskkill 兜底（萬一 hang）
+            _alive3 = _sp3.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+            if 'terminal64.exe' in _alive3.stdout.decode('utf-8', errors='replace'):
+                print("⚠️ MT5 未退出（可能彈窗）— 等 5 秒再試，唔強制 kill（保護 profile）")
+                time.sleep(5)
+    except Exception as _e3:
+        print(f"⚠️ MT5 正常關閉失敗（{_e3}）— 用強制 kill 兜底")
+        for proc in psutil.process_iter(['pid', 'name']):
+            if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
+                proc.kill()
     time.sleep(3)
     
     # Start MT5
