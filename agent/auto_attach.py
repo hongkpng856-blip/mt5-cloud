@@ -1354,7 +1354,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             pass
         time.sleep(0.8)  # 🚨 網頁 poll 捕到「部署」進行中
         # 🚨 2026-08-10 部署穩定性：一次過 reload（hotkeys.ini mtime > MT5 啟動 → 外部寫入未 load — reload 一次）
-        # 唔好每次部署同步 reload（之前 server ensure_hotkey sleep 50+55 = 卡 105 秒 — 「第一次冇反應」）
+        # 🚨 2026-08-19 FIX：唔好 restart MT5 — do_restart_mt5 前會「關閉全部圖表」→ 其他已掛 EA（如 EMA_Cross）chart 被關 → EA 消失
+        #   而家部署用「Alt+F→Enter→Enter→Space→symbol→Enter」menu 方法開 chart，唔靠 Ctrl+熱鍵 → 唔需要 restart reload hotkeys
+        #   → hotkeys.ini 有變都唔 restart（避免搞死其他 EA）
+        _HK_RESTART_DISABLED = True  # 2026-08-19：停用部署時 restart MT5（保護其他已掛 EA）
         try:
             _hk_ini = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                                    'D0E8209F77C8CF37AD8BF550E51FF075', 'config', 'hotkeys.ini')
@@ -1369,7 +1372,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             break
                 except Exception:
                     pass
-                if _mt5_start is not None and _hk_mt > _mt5_start:
+                if (not _HK_RESTART_DISABLED) and _mt5_start is not None and _hk_mt > _mt5_start:
                     print(f"🔄 hotkeys.ini 有變（外部寫入 — MT5 未 load）→ reload 一次（關 MT5 → 開）")
                     _chk_abort()
                     do_restart_mt5()
