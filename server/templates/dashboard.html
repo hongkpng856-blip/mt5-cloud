@@ -1593,9 +1593,16 @@ async function addEAToPairing(baseName, fileName, source) {
         body: JSON.stringify({mappings})
     });
     if (saveRes.ok) {
-        loadEALibrary();
-        loadEAConfig();
-        fetchEAInventory();
+        // 🚨 2026-08-19 FIX：配對完成後自動 refresh（唔使手動 hard refresh）
+        // 之前淨係 immediate loadEAConfig/fetchEAInventory — 但 detector 寫 ea_inventory.json 有延遲 → 顯示「本機無檔案」
+        // → 觸發 detector 即刻重掃（rescan.flag）+ 延遲多次 refresh（等 detector update）
+        try {
+            await fetch('/api/refresh-status', { method: 'POST' });  // 觸發 detector 即刻重掃
+        } catch(e) {}
+        loadEALibrary(); loadEAConfig(); fetchEAInventory();
+        // 延遲再 refresh（detector 重掃 + 本機檔案已寫）— 確保「已加入」正確顯示
+        setTimeout(() => { fetchEAInventory(); loadEAConfig(); }, 1200);
+        setTimeout(() => { fetchEAInventory(); loadEAConfig(); }, 3000);
     showLog(' '+ fileName + ' 已安裝到本機 + 加入配對庫！', 'log-success');
     } else {
     showLog(' 加入失敗', 'log-error');
@@ -1804,6 +1811,10 @@ async function waitDeployDone(eaName, maxWaitMs = 120000) {
         await new Promise(r => setTimeout(r, 3000));
     }
     hideControlModal();
+    // 🚨 2026-08-19 FIX：所有動作完成後自動 refresh（唔使手動 hard refresh）
+    try { await fetch('/api/refresh-status', { method: 'POST' }); } catch(e1) {}
+    loadEAConfig(); fetchEAInventory(); loadEALibrary();
+    setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 1500);
 }
 
 async function toggleBind() {
