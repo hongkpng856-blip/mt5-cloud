@@ -1476,8 +1476,10 @@ async function loadEALibrary() {
           const isTest = isTestEA(baseName); // 2026-08-13 測試 EA 標記 / 2026-08-18 加 OpenChart 系列
       // 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
             // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
+            // 🚨 2026-08-19 FIX：本機有冇用 server 直接返回嘅 local_has（check filesystem 即時準確）
+            //   之前靠 localSet（detector ea_inventory.json 延遲）→ 配對後「本機冇檔案」殘留要 refresh
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
-            const localHas = !!(eaDeployStatus[baseName] || localSet[baseName]);                  // 本機有檔案
+            const localHas = !!(f.local_has === true);  // server 直接 check 本機有 .ex5
             const added = localHas;
             oHtml += `<tr>
                 <td><b>${f.name}</b> <span class="badge ${isTest?'badge-orange':'badge-green'}" style="font-size:10px">${isTest?'測試':'平台提供'}</span></td>

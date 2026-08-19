@@ -1136,7 +1136,22 @@ os.makedirs(COMMUNITY_EA_DIR, exist_ok=True)
 
 @app.route('/api/ea-library')
 def api_ea_library():
-    """返回 EA 庫列表（平台提供 + 社群提供 + 用戶上傳）"""
+    """返回 EA 庫列表（平台提供 + 社群提供 + 用戶上傳）+ 本機有冇 .ex5（即時判斷，唔靠 detector）"""
+    # 🚨 2026-08-19 FIX：加 local_has — server 直接 check 本機 MT5 Experts/ 有冇 <base>.ex5
+    # 之前前端靠 detector ea_inventory.json（延遲）→ 配對後「本機冇檔案」殘留，要 refresh 先啱
+    # 呢度直接 filesystem check → 配對完成後即時準確
+    local_bases = set()
+    _mt5dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+    try:
+        for _td in os.listdir(_mt5dir) if os.path.isdir(_mt5dir) else []:
+            for _sub in ('MQL5\\Experts', 'MQL5\\Scripts'):
+                _d = os.path.join(_mt5dir, _td, *_sub.split('\\'))
+                if os.path.isdir(_d):
+                    for _fn in os.listdir(_d):
+                        if _fn.endswith('.ex5'):
+                            local_bases.add(os.path.splitext(_fn)[0])
+    except Exception:
+        pass
     files = []
     # 平台提供嘅 EA
     if os.path.isdir(EA_LIBRARY_DIR):
@@ -1144,14 +1159,16 @@ def api_ea_library():
             if f.endswith('.mq5'):
                 path = os.path.join(EA_LIBRARY_DIR, f)
                 size = os.path.getsize(path)
-                files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "official", "author": "Platform"})
+                base = os.path.splitext(f)[0]
+                files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "official", "author": "Platform", "local_has": base in local_bases})
     # 社群提供嘅 EA（Developer 上傳，所有人都睇到）
     if os.path.isdir(COMMUNITY_EA_DIR):
         for f in sorted(os.listdir(COMMUNITY_EA_DIR)):
             if f.endswith('.mq5'):
                 path = os.path.join(COMMUNITY_EA_DIR, f)
                 size = os.path.getsize(path)
-                files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "community", "author": "Dev"})
+                base = os.path.splitext(f)[0]
+                files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "community", "author": "Dev", "local_has": base in local_bases})
     # 用戶上傳嘅 EA（只有自己睇到）
     if current_user.is_authenticated:
         user_dir = os.path.join(UPLOAD_DIR, current_user.username)
@@ -1160,7 +1177,8 @@ def api_ea_library():
                 if f.endswith(('.mq5','.ex5')):
                     path = os.path.join(user_dir, f)
                     size = os.path.getsize(path)
-                    files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "user", "author": current_user.username})
+                    base = os.path.splitext(f)[0]
+                    files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "user", "author": current_user.username, "local_has": base in local_bases})
     return jsonify({"files": files, "count": len(files)})
 
 
