@@ -115,7 +115,7 @@ def do_restart_mt5():
             from pywinauto import Application as _App3
             _app3 = _App3(backend='win32').connect(process=_pid3, timeout=8)
             _main3 = _app3.window(class_name_re='MetaQuotes::MetaTrader')
-            _ct.windll.user32.PostMessageW(ctypes.c_void_p(int(_main3.element_info.handle)), 0x0010, 0, 0)  # WM_CLOSE — 正常關閉（save profile）
+            _ct.windll.user32.PostMessageW(_ct.c_void_p(int(_main3.element_info.handle)), 0x0010, 0, 0)  # WM_CLOSE — 正常關閉（save profile）
             print("📋 MT5 正常關閉中（save chart profile）...")
             time.sleep(8)
             # 如果仲未退（可能彈對話框）→ 用 taskkill 兜底（萬一 hang）
