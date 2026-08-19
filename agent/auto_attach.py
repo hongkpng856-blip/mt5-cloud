@@ -1289,6 +1289,21 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
     try:
         import ctypes as _ct_hk
         import subprocess as _sp_hk
+        # 🚨 2026-08-20（用戶實測破綻）：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
+        # → 檢查本機 Experts/ 有冇 <EA>.ex5；冇 → 報錯 + 唔預載（部署會失敗 — 但至少原因清楚）
+        _ex5_found = False
+        _data_root = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        try:
+            for _d_root in os.listdir(_data_root):
+                _exp_dir = os.path.join(_data_root, _d_root, 'MQL5', 'Experts')
+                if os.path.isdir(_exp_dir) and os.path.isfile(os.path.join(_exp_dir, f'{ea_name}.ex5')):
+                    _ex5_found = True
+                    break
+        except Exception:
+            pass
+        if not _ex5_found:
+            print(f"❌ {ea_name}.ex5 唔存在（本機未配對/未 compile）— 熱鍵無法預載，請先配對 EA")
+            return mt5_pid
         # 1. 讀 hotkeys.ini 有冇 ea_name
         experts = {}
         _hk_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
