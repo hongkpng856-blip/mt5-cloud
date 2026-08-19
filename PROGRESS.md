@@ -80,7 +80,10 @@
 | **v0.9.80** | 2026-08-18 | 🐛 **修 install-local Script 偵測路徑 bug** — `data_dir` 應係 `APPDATA/MetaQuotes/Terminal` → Script copy 正確去 Scripts/ |
 | **v0.9.79** | 2026-08-18 | 🎯 **完整支援 Script 類型 EA 配對** — install-local 偵測 .mq5 Script → copy+compile 去 Scripts/（唔注入心跳）+ detector 掃 Scripts/ — 根治 OpenChart 配對失敗 |
 | **v0.9.78** | 2026-08-18 | 🎯 **重新整理自動清殘留** — refresh-status 掃 Experts+Scripts，刪唔喺 config + 唔係 _SYSTEM_KEEP 嘅檔 |
-| **v0.9.91** | 2026-08-19 | ⭐🔧 **根治「一秒 remove」真兇（ADX 部署重要成功）** — ADX_Trend 源碼有 AgentHelper bootstrap code（OnTick 一啟動就 ChartApplyTemplate('AgentHelper_EURUSD_H1.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ 一秒成功下一秒 remove + 最終冇掛。移除嗰段 bootstrap → ADX 掛住交易唔讓位 → 重新 compile。驗證（對真 MT5 log）：`04:59:41 expert ADX_Trend (EURUSD,H1) loaded successfully` **無 removed** + 心跳持續新鮮。其他 EA（Breakout/Bollinger_Band）log 證實 loaded 無 removed（機制正常）。|
+| **v0.9.94** | 2026-08-19 | 🔧 **解決 Swing_Trader 熱鍵失效＋保護其他已掛 EA** — ① do_restart_mt5 移除「關閉全部圖表」段（restart 保留 chart → 其他 EA 唔消失）② 重新啟用部署 restart reload 熱鍵（_HK_RESTART_DISABLED=False）→ 新 EA 熱鍵（Swing Ctrl+5）load 到。實測：Swing loaded + 心跳新鮮；ADX/Bollinger/Breakout/EMA_Cross 全部保持掛住（心跳持續）— 「部署其他 EA 令 EMA_Cross 消失」一齊根治|
+| **v0.9.93** | 2026-08-19 | 🔧 **部署唔 restart MT5（_HK_RESTART_DISABLED）** — do_restart_mt5 前關閉全部圖表 → 部署其他 EA 令已掛 EA chart 被關消失（v0.9.94 改返 restart 但保留 chart 取代）|
+| **v0.9.92** | 2026-08-19 | 🔧 **修部署完成後要 hard refresh 先可以再部署** — _append_activity_log 讀 'type' key 但 caller 用 'action' → deploy_result 寫成 unknown → 前端 waitDeployDone 揾唔到 → modal 卡住遮部署掣。改讀 action 優先｜實測 deploy_result 正常寫入 |
+| **v0.9.91** | **v0.9.91** | 2026-08-19 | ⭐🔧 **根治「一秒 remove」真兇（ADX 部署重要成功）** — ADX_Trend 源碼有 AgentHelper bootstrap code（OnTick 一啟動就 ChartApplyTemplate('AgentHelper_EURUSD_H1.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ 一秒成功下一秒 remove + 最終冇掛。移除嗰段 bootstrap → ADX 掛住交易唔讓位 → 重新 compile。驗證（對真 MT5 log）：`04:59:41 expert ADX_Trend (EURUSD,H1) loaded successfully` **無 removed** + 心跳持續新鮮。其他 EA（Breakout/Bollinger_Band）log 證實 loaded 無 removed（機制正常）。|
 | **v0.9.90** | 2026-08-19 | 🔧 **部署真 EA（ADX）用熱鍵真掛 target chart** — 只有 Script（OpenChart）用一體化假裝掛；真 EA 即使 open_chart=True 都 send 熱鍵（Ctrl+N）真掛落新開 chart（唔靠 apply_template_gui 係 stub — 之前假掛 + 掛錯 chart）|
 | **v0.9.89** | 2026-08-19 | 🔥 **修心跳後備假成功 root cause** — state_<EA>.json 新鮮度用 ts（EA TimeCurrent() server-time/UTC）對比本地 time.time() → 時區錯位相減負數 → 永遠<300 → 假話運行中；改用心跳檔案 mtime 對比本地時間（一定準）|
 | **v0.9.88** | 2026-08-19 | 🔧 **部署成功判定改用 Terminal log 驗證** — D0E8.../logs/ 搵『expert <EA> (<SYM>,H1) loaded successfully』先算成功（用戶要求：對真 MT5 log 做比對先話成功，唔信心跳/activity 假成功）；唔用 MQL5/Logs（EA Print 誤判）|
@@ -267,6 +270,8 @@
 | 50 | **Script 類型 EA（OpenChart）配對失敗** | install-local 將 Script（#property script_show_inputs）當 EA copy+compile 去 Experts/ + watcher GUI F7 compile 間歇性失敗 → 冇 .ex5 + config 鎖死「本機冇檔案」+ 俾清殘留誤刪 | v0.9.79-82：Script 偵測→copy 去 Scripts/ + watcher 改用 CLI /compile + OpenChart 加入 _SYSTEM_KEEP + detector 掃 Scripts/ | 08-18 |
 | 51 | **Script 類型部署（OpenChart）卡死/影響正式 EA** | Script 唔係長駐 EA（冇心跳）— deploy OpenChart 會行 Navigator 雙擊卡死（not found）+ 之後誤判失敗 | v0.9.83-87：Script 類型暫時唔支援部署（api/deploy 偵測返回 400「不支援」）+ 部署開 chart 改用用戶方法（唔塊 Ctrl+9） | 08-19 |
 | 52 | ⭐ **部署 EA「一秒成功下一秒 remove」（ADX 唔掛）** | ADX_Trend 源碼 OnTick 有 AgentHelper bootstrap（ChartApplyTemplate('AgentHelper_*.tpl') → AgentHelper 取代 ADX → ADX 自己 ExpertRemove）→ loaded 後 4-5 秒 remove + 最終冇掛 | v0.9.91 移除 bootstrap code → ADX 掛住交易唔讓位 + recompile；其他 EA（Breakout/Bollinger）log 證實無呢個問題 | 08-19 |
+| 53 | **部署完另一隻 EA 後，已掛 EA（EMA_Cross）自己消失** | 部署時 do_restart_mt5 前「關閉全部圖表」→ 其他已掛 EA chart 被關 → EA 消失（chart 可能留但 EA 冇） | v0.9.93-94 移除「關閉全部圖表」段 → restart 保留 chart → 其他 EA 唔再消失（實測 ADX/Bollinger/Breakout/EMA_Cross 心跳持續） | 08-19 |
+| 54 | **Swing_Trader 部署失敗（熱鍵失效）** | 新加 EA 熱鍵（Ctrl+5）MT5 未 reload → send Ctrl+5 冇彈 Properties → 掛唔到 | v0.9.94 重新啟用部署 restart reload 熱鍵 → Swing Ctrl+5 load → 掛到（實測 loaded + 心跳新鮮） | 08-19 |
 
 ---
 
