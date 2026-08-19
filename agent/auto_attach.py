@@ -1493,7 +1493,22 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _pg_new2.typewrite(_sym, interval=0.2); time.sleep(1)
                     _pg_new2.press('enter'); time.sleep(3)
                     _new_title2 = win.window_text()
-                    if _sym in _new_title2:
+                    # 🚨 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
+                    # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart 存在）— chart 開咗就算成功
+                    _chart_found2 = False
+                    try:
+                        for _d2 in win.descendants():
+                            if _d2.element_info.class_name == 'MDIClient':
+                                for _c2 in _d2.children():
+                                    if 'Afx' in _c2.element_info.class_name:
+                                        _ctxt2 = _c2.window_text()
+                                        if _sym in _ctxt2:
+                                            _chart_found2 = True
+                                            break
+                                break
+                    except Exception:
+                        pass
+                    if _sym in _new_title2 or _chart_found2:
                         _oc_ok2 = True
                         print(f"✅ 新方法開圖成功: active chart = {_sym}")
                     else:
