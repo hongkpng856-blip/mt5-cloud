@@ -337,6 +337,23 @@
         /* 狀態文字縮細（配合排位） */
         .ea-table td .status-tip { white-space: nowrap; }
 
+        /* ─── 2026-08-21：排序箭頭指示 ─── */
+        /* 🚨 FIX：縮細視窗箭嘴走位 — th nowrap + sort-ind 固定 inline-block 唔換行 */
+        .ea-table th { white-space: nowrap; }
+        .sort-ind {
+            font-size: 10px;
+            color: var(--text-3);
+            margin-left: 2px;
+            display: inline-block;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        /* 🚨 2026-08-21：Trades/Win/P&L 默認顯示 ⇅ 箭嘴（未排序狀態）— 用戶要求三個一開始見到箭嘴 */
+        .sort-ind.neutral::after { content: '⇅'; color: var(--text-3); opacity: 0.6; }
+        .sort-ind.asc::after { content: '▲'; color: var(--accent); }
+        .sort-ind.desc::after { content: '▼'; color: var(--accent); }
+        th:hover .sort-ind { color: var(--text-2); }
+
         /* ─── Scroll ─── */
         .scroll-box {
             max-height: 450px;
@@ -619,7 +636,15 @@
         <div class="scroll-box">
             <table class="ea-table">
                 <thead><tr>
-                    <th>EA</th><th>來源</th><th><i class="icon-activity" style="font-size:11px"></i> 狀態</th><th>Magic</th><th>Symbol</th><th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades</th><th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win</th><th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L</th><th></th>
+                    <th style="cursor:pointer" onclick="sortEA('name')"><i class="icon-activity" style="font-size:11px"></i> EA <span class="sort-ind" data-sort="name"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('source')">來源 <span class="sort-ind" data-sort="source"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('status')">狀態 <span class="sort-ind" data-sort="status"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('magic')">Magic <span class="sort-ind" data-sort="magic"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('symbol')">Symbol <span class="sort-ind" data-sort="symbol"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades <span class="sort-ind" data-sort="trades"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win <span class="sort-ind" data-sort="winrate"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L <span class="sort-ind" data-sort="profit"></span></th>
+                    <th></th>
                 </tr></thead>
                 <tbody id="eaTableBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
             </table>
@@ -804,6 +829,18 @@ let allSymbols = [];
 let analysisData = null;
 let heartbeats = {};
 let sortOrder = {};
+
+// 🚨 2026-08-21：統一排序函數（配對庫所有欄位）
+// 撳 header → 切換 asc/desc（第一次 asc，再撳轉 desc）→ 重新 render
+// sortOrder[key] = 'asc' | 'desc'（設定後 loadEAConfig render 時用）
+function sortEA(key) {
+    if (!sortOrder[key] || sortOrder[key] === 'desc') {
+        sortOrder[key] = 'asc';
+    } else {
+        sortOrder[key] = 'desc';
+    }
+    loadEAConfig();
+}
 let detectorSignals = {};  // detector :5003 嘅信號資料
 let eaDeployStatus = {};   // EA -> 部署狀態（running/stopped）
 
@@ -870,9 +907,63 @@ async function loadEAConfig() {
 
     // 2026-08-11：配對庫顯示「本機 EA」（未配對都顯示 — 用戶想要）+ 每行有狀態標記（已配對/未配對 — 唔會誤會）
         const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n) && !(eaDeployStatus[n] && eaDeployStatus[n].is_script));
-        const allEAs = [...new Set([...activeEAs, ...localEA])];
+        let allEAs = [...new Set([...activeEAs, ...localEA])];
 
     // 排序： 運行中喺上面， 停止中喺下面；已配對優先
+    // 🚨 2026-08-21：如果用戶撳咗 header 排序 → 用用戶排序（override 默認）
+    const _sortKey = Object.keys(sortOrder).length ? Object.keys(sortOrder)[Object.keys(sortOrder).length - 1] : null;
+    const _sortDir = _sortKey ? sortOrder[_sortKey] : null;
+    const _sortedKeys = _sortKey ? allEAs.slice() : null;
+
+    if (_sortKey) {
+        // 每個 EA 攞排序值（用 render 邏輯嘅統計）
+        const _getSortVal = (name, key) => {
+            const _m = eaMappings[name];
+            const _sym = (_m && typeof _m === 'string') ? _m : '';
+            const _magic = eaMappings[name + '_magic'] || '240701';
+            const _eaStat = eaStats[name];
+            const _ms2 = analysisData && analysisData.per_ea_by_magic_symbol ? (() => {
+                const _bm = {};
+                Object.values(analysisData.per_ea_by_magic_symbol).forEach(v => {
+                    const mm = String(v.magic);
+                    if (!_bm[mm]) _bm[mm] = { trades:0, wins:0, losses:0, profit:0 };
+                    _bm[mm].trades += v.trades; _bm[mm].wins += v.wins;
+                    _bm[mm].losses += v.losses; _bm[mm].profit += v.profit;
+                });
+                const d = _bm[String(_magic)];
+                if (!d || d.trades === 0) return null;
+                const t = d.wins + d.losses;
+                return { trades: d.trades, wr: t>0 ? Math.round(d.wins/t*1000)/10 : 0, profit: Math.round(d.profit*100)/100 };
+            })() : null;
+            const _wins = _eaStat ? _eaStat.wins : (_ms2 ? _ms2.wins : 0);
+            const _losses = _eaStat ? _eaStat.losses : (_ms2 ? _ms2.losses : 0);
+            const _trades = _eaStat ? _eaStat.trades : (_ms2 ? _ms2.trades : 0);
+            const _profit = _eaStat ? _eaStat.profit : (_ms2 ? _ms2.profit : 0);
+            const _wr = (_wins + _losses) > 0 ? Math.round(_wins / (_wins + _losses) * 1000) / 10 : (_ms2 ? _ms2.wr : 0);
+            const _src = ['SMA_Cross','EMA_Cross','RSI_Over','MACD_Cross','Bollinger_Band','Stochastic','ADX_Trend','ATR_Stop','Ichimoku','Parabolic_SAR','Heikin_Ashi','Volume_Spike','Support_Resist','Price_Action','Breakout','Trend_Follow','Scalping_M1','Grid_Trading','Martingale','Hedge_Fund','News_Trader','Swing_Trader','Divergence','Multi_TimeFrame','Correlation','Mean_Reversion','Momentum','Fibonacci','Seasonal','Machine_Learn'].includes(name) ? '官方' : (eaMappings[name] ? '自訂' : '本機');
+            const _st = runtimeStatus[name] || '';
+            switch (key) {
+                case 'name': return name.toLowerCase();
+                case 'source': return _src;
+                case 'status': return _st;
+                case 'magic': return _magic;
+                case 'symbol': return _sym;
+                case 'trades': return _trades;
+                case 'winrate': return _wr;
+                case 'profit': return _profit;
+                default: return name.toLowerCase();
+            }
+        };
+        _sortedKeys.sort((a, b) => {
+            const va = _getSortVal(a, _sortKey);
+            const vb = _getSortVal(b, _sortKey);
+            let cmp = 0;
+            if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+            else cmp = String(va).localeCompare(String(vb), 'zh-HK');
+            return _sortDir === 'desc' ? -cmp : cmp;
+        });
+        allEAs = _sortedKeys;
+    } else {
         allEAs.sort((a, b) => {
             const da = (eaDeployStatus[a] && eaDeployStatus[a].deployed) ? 1 : 0;
             const db = (eaDeployStatus[b] && eaDeployStatus[b].deployed) ? 1 : 0;
@@ -881,6 +972,7 @@ async function loadEAConfig() {
             const pb = eaMappings[b] ? 1 : 0;
             return pb - pa;
         });
+    }
 
         // 用 analysis data 嘅 magic+symbol 組合自動分配俾 EA
         const combos = analysisData && analysisData.per_ea_by_magic_symbol ? Object.keys(analysisData.per_ea_by_magic_symbol) : [];
@@ -993,6 +1085,18 @@ async function loadEAConfig() {
         document.getElementById('eaTableBody').innerHTML = html;
         document.getElementById('eaCount').textContent = allEAs.length;
         if (_sb2) _sb2.scrollTop = _st2;
+        // 🚨 2026-08-21：更新排序箭頭指示（活躍 header 顯示 ▲/▼；Trades/Win/P&L 默認 ⇅）
+        document.querySelectorAll('.sort-ind').forEach(el => {
+            const k = el.getAttribute('data-sort');
+            // 有排序 → asc/desc；Trades/Win/P&L 未排序 → neutral（用戶要求默認顯示箭嘴）
+            if (sortOrder[k]) {
+                el.className = 'sort-ind ' + sortOrder[k];
+            } else if (['trades', 'winrate', 'profit'].includes(k)) {
+                el.className = 'sort-ind neutral';
+            } else {
+                el.className = 'sort-ind';
+            }
+        });
     } catch(e) { console.error(e); }
 }
 

@@ -87,6 +87,9 @@
 | **v0.10.52** | 2026-08-21 | 🎯 **新增 TestTrades.mq5 測試 EA** — 持續開單→平倉（每 15 秒開 0.10 lot，持倉 10 秒平，交替買賣）產生真實 Trades/Win/P&L。**EA 自己 track 統計寫入 `state_<EA>.json`**（trades/wins/losses/profit — 因 MT5 Python history API 讀唔到新 deals（build 6120 caching）→ EA 層面自己計最準）→ server `/api/ea-config` 讀 EA stats 返回前端。實測：164 單 / 18.9% / -$13.00 持續跳動 |
 | **v0.10.53** | 2026-08-21 | 🔧 **休市偵測（非交易時間）** — server 用 `symbol_info_tick` 最後 tick（正規化 UTC+3）> 5 分鐘 = 休市 → `market_closed` map 返回前端；心跳暫停 + 休市 → 顯示「休市」（灰色 — 正常，唔係 EA 故障）vs 心跳暫停 + 開市 → 顯示「心跳暫停」（黃色 — 有問題）。實測：AMD 休市偵測到（true）/ EURUSD 開市（false）|
 | **v0.10.54** | 2026-08-21 | 🧹 **清歷史 script 殘留** — OpenChart/StartAgentHelper config 配對刪除（歷史測試遺留 — script 唔係 EA，唔應該配對；`market_closed` 唔再見到佢哋）— config 淨返 Divergence + TestTrades 兩隻真 EA |
+| **v0.10.55** | 2026-08-21 | 🎯 **配對庫全欄位排序功能** — 撳 header 排序（第一次 asc ▲ → 再撳 desc ▼ → 循環）：EA/來源/狀態/Magic/Symbol（字母/狀態）+ Trades/Win/P&L（數字由低至高/高至低）— 排序箭頭指示（金色 ▲/▼）+ 默認 Trades/Win/P&L 顯示 ⇅ 箭嘴（用戶要求）|
+| **v0.10.56** | 2026-08-21 | 🔧 **縮細視窗箭嘴走位修正** — `.ea-table th` 預設 `white-space:normal` → 視窗縮細時 header 空間唔夠，箭嘴 span（inline）被擠去第二行 → 箭嘴走位。改 th `white-space:nowrap` + sort-ind `display:inline-block; vertical-align:middle` — 箭嘴強制同 header 文字同行 |
+| **v0.10.57** | 2026-08-21 | 🧹 **清重複 TestTrades chart** — 多次部署 TestTrades（改 code 重新部署）累積 5 個 EURUSD chart 同時運行（窗口 dialog 確認）→ 用 auto_attach --remove 逐個剷除 → 淨返 1 個（正常）— 用戶實測見 4 個部署係重複，唔正常 |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -364,6 +367,9 @@
 | 91 | 🔥 **MT5 Python history API 讀唔到新 deals（build 6120 caching）** | `history_deals_get` 喺 terminal 開住時只讀到舊 cache（測試發現 14 個舊 deals 讀到，最新嘅 TestTrades deals 讀唔到；重啟 MT5 都唔得）→ agent 同步唔到新交易 → Trades/Win/P&L 停喺舊值 | v0.10.52 TestTrades EA 自己 track 統計（MQL5 HistorySelect 計 wins/losses/profit）寫入 `state_<EA>.json` → server `/api/ea-config` 讀 EA stats 優先 + fallback analysis — 繞過 Python API 限制，EA 層面最準 | 08-21 |
 | 92 | **心跳暫停原因唔知（可能係休市但顯示「心跳暫停」誤導）** | 系統淨睇心跳檔 mtime（<30 秒 = running）冇判斷「係咪因為非交易時間」— 週末/收市時段心跳暫停會誤顯示「心跳暫停」（令人以為 EA 故障）| v0.10.53 server `_market_closed_for_symbol`：`symbol_info_tick` 最後 tick（tick.time 係 UTC+3 — 正規化）> 5 分鐘 = 休市 → `market_closed` map；前端心跳暫停 + 休市 → 顯示「休市」（灰色 + tooltip「非交易時間 — 開市自動恢復」）。實測 AMD=true（美股凌晨休市）/ EURUSD=false（24 小時開市）| 08-21 |
 | 93 | **OpenChart/StartAgentHelper 歷史 script 殘留 config** | 之前測試遺留嘅 script 配對（AMD — 帳戶唔支援 symbol）— 唔係 EA 但 config 有 → `market_closed`/runtime 見到佢哋（誤導）| v0.10.54 刪除 OpenChart/StartAgentHelper config 配對（`/api/ea-config/<name>` DELETE）— config 淨返 Divergence + TestTrades 兩隻真 EA（`_removed` 記錄）| 08-21 |
+| 94 | **配對庫冇排序功能（撳 Trades/Win/P&L header 冇反應）** | header 有 `onclick="sortEA(...)"` 但 **sortEA 函數根本唔存在**（sortOrder 有宣告但冇實作）→ 撳咗冇反應；用戶要求全部欄位可排序（EA 跟英文字母 A-Z/Z-A，Trades/Win/P&L 數字高低）| v0.10.55 實作 sortEA(key) 統一排序函數（第一次 asc → 再撳 desc → 循環）+ 所有 header 加 onclick + 排序箭頭指示（金色 ▲/▼）+ `_getSortVal` 按欄位攞值（字母 localeCompare / 數字相減）| 08-21 |
+| 95 | **縮細視窗箭嘴走位（淨係箭嘴甩）** | `.ea-table th` 預設 `white-space:normal` — 視窗縮細時 header 空間唔夠，`<span class="sort-ind">`（inline 元素）被擠去第二行 → 箭嘴同 header 文字錯位（用戶實測「將視窗縮細一半，啲箭嘴走晒位」）| v0.10.56 th `white-space:nowrap`（header 文字+箭嘴強制同行）+ sort-ind `display:inline-block; vertical-align:middle; white-space:nowrap` — 實測 computed style 確認；太窄時成個表格 horizontal scroll（唔會錯位）| 08-21 |
+| 96 | **重複 TestTrades 部署（5 個 EURUSD chart 同時運行）** | 多次 `/api/deploy` TestTrades（改 code 後重新部署）每次都開新 chart + 舊 chart 冇清 → 累積 5 個 EURUSD chart 掛 5 個 TestTrades 同時開單（用戶實測見 4 個 — 窗口 dialog 確認 5 個）| v0.10.57 用 auto_attach `--remove --ea TestTrades` 逐個剷除（3 次成功 — MT5 log removed + Ctrl+W 關 chart）→ 淨返 1 個 chart + 1 個持倉（正常）| 08-21 |
 
 ---
 
@@ -612,7 +618,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `bbdf92a`（master）— v0.10.54（Trades/Win/P&L 真實數據 + TestTrades 測試 EA + 休市偵測 + 清歷史殘留）
+**Git HEAD**: `3dc3b3d`（master）— v0.10.57（配對庫全欄位排序 + 箭嘴走位修正 + 默認 ⇅ 箭嘴 + 清重複 TestTrades chart）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
