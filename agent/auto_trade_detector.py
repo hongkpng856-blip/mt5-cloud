@@ -271,6 +271,7 @@ def scan_ea_inventory():
             'tf': cfg_st.get('tf', attached.get(name, {}).get('tf', '')),
             'lot': cfg_st.get('lot', 1),
             'magic': cfg_st.get('magic', ''),
+            'is_script': info.get('is_script', False),  # 🚨 Scripts 目錄標記（前端配對庫過濾用）
         })
 
     return {
