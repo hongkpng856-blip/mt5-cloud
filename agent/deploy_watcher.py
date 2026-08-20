@@ -1126,6 +1126,13 @@ def process_pause_cmd(fp):
         _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
         _prog_steps(['清理設定並釋放快捷鍵'], '完成刪除')
         _prog_steps(['完成刪除'])
+        # 🚨 2026-08-21 FIX（用戶實測「剷除成功但 MT5 Navigator 仲殘留 — 要自己 refresh」）：
+        # 剷除完成 → 觸發 refresh Navigator（同部署/配對一樣 — 移除 MT5 入面殘留顯示）
+        try:
+            _refresh_queue.put(True)
+            print(f"   🔄 剷除完成 → 排隊 refresh Navigator")
+        except Exception:
+            pass
         # 通知 server
         try:
             _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
