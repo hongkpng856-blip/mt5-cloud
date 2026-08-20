@@ -2817,6 +2817,15 @@ def api_deploy():
     ea_name = data.get('ea_name', '')
     symbol = data.get('symbol', 'EURUSD')
     tf = data.get('tf', 'H1')
+    # 🚨 2026-08-21 FIX（用戶要求：揀咗冇嘅 symbol → 偵測 → 警告 — 唔可以部署）：
+    # 部署前驗證 symbol 存在（帳戶實際 symbols — get_account_symbols）
+    try:
+        _avail_syms = get_account_symbols()
+        if symbol.upper() not in [s.upper() for s in _avail_syms]:
+            print(f"[deploy] ⚠️ {ea_name} → {symbol}：symbol 唔喺帳戶（可用: {_avail_syms[:10]}...）")
+            return jsonify({"success": False, "error": f"symbol {symbol} 唔存在（帳戶可用: {', '.join(_avail_syms[:8])}）"}), 400
+    except Exception as _e_sym:
+        print(f"[deploy] symbol 驗證失敗（唔阻部署）: {_e_sym}")
     # 🚨 2026-08-20 FIX：magic 空 string（前端未 alive EA 傳 ''）→ fallback default（否則 auto_attach --magic 空 → argparse 失敗 → 假成功）
     magic = data.get('magic') or '240701'
     lot = data.get('lot', '1.00')

@@ -1786,7 +1786,14 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
             // 警告視窗要保持到部署真正完成（watcher auto_attach 完成先關）
             await waitDeployDone(eaName);
         } else {
-      showLog(' 部署失敗: '+ (deployData.error || 'Unknown'), 'log-error');
+            showLog(' 部署失敗: '+ (deployData.error || 'Unknown'), 'log-error');
+            // 🚨 2026-08-21 FIX（用戶要求：揀咗冇嘅 symbol → 彈警告視窗 — 唔可以部署）：
+            // deploy API 返回 error（例如 symbol 唔存在）→ 彈警告 modal（唔係淨係 log）
+            if (deployData.error) {
+                showConfirm('<i class="icon-alert-triangle" style="color:var(--danger)"></i> 部署失敗', 
+                    '<b style="color:var(--danger)">' + deployData.error + '</b><br><br>請揀返帳戶實際有嘅 symbol 再試。',
+                    null, true);
+            }
         }
     } catch(e) {
     showLog(' 部署錯誤: '+ e.message, 'log-error');
