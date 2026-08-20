@@ -2634,17 +2634,22 @@ def _exec_open_chart_script():
 
 
 def remove_ea_from_chart(ea_name, mt5_pid=None):
-    """真暫停：GUI 移除圖表上嘅 EA
-    方法：right-click 圖表 → Alt+X 開「專家」dialog → 列表揀 EA → 「移除」按鈕
-    （比「專家顧問→移除」menu 可靠 — 用戶實測確認）
+    """真暫停/剷除：Alt+W 窗口 dialog → ListView 揀 chart → Enter → Ctrl+W 關閉（2026-08-21 用戶方法 — 唔靠座標）
+    原理：
+    - Alt+W 開「窗口」dialog（有 chart 時）→ SysListView32 列出所有 chart（排位順序 = 開 chart 順序）
+    - ListView 即時讀取（MT5 記憶體 — 唔似 .chr 檔延遲）
+    - 揀目標 chart（對應排位）→ Enter → dialog 關閉 + 彈返該 chart
+    - Ctrl+W → 直接關閉該 chart（EA 一齊移除）
     返回 True = 移除成功/已冇 EA；False = 失敗"""
-    import pyautogui as _pg
-    _pg.FAILSAFE = False
+    import subprocess as _sp
     from pywinauto import Application as _App
     from pywinauto.keyboard import send_keys as _sk
-    
+    import pyautogui as _pg
+    _pg.FAILSAFE = False
+    import ctypes as _ct
+    _u = _ct.windll.user32
+
     if not mt5_pid:
-        import subprocess as _sp
         out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True, text=True).stdout
         for line in out.splitlines():
             parts = [p.strip().strip('"') for p in line.split(',')]
@@ -2652,347 +2657,242 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                 mt5_pid = int(parts[1])
                 break
     if not mt5_pid:
-        # ⚠️ MT5 未開 → 自動開啟 + 等登入（用戶要求：操作前先開 MT5 + 登入）
-        print("MT5 not running, starting...")
-        try:
-            _sp.Popen([MT5_PATH])
-        except Exception as e:
-            print(f"⚠️ 開 MT5 失敗: {e}")
-            return False
-        mt5_pid = wait_for_mt5(timeout=90)
-        if not mt5_pid:
-            print("⚠️ MT5 開唔到（等 90 秒超時）")
-            return False
-        print(f"✅ MT5 已開啟（PID {mt5_pid}）+ 登入完成")
-    
-    app = _App(backend='win32').connect(process=mt5_pid)
-    win = app.window(class_name='MetaQuotes::MetaTrader::5.00')
-    win.set_focus()
-    time.sleep(0.8)
-    
-    # 固定 MT5 視窗（座標穩定 — 視窗移動/縮放都唔影響）
+        print("⚠️ MT5 未開 — 冇嘢要移除")
+        return True
+
+    _app = _App(backend='win32').connect(process=mt5_pid)
+    _win = _app.window(class_name='MetaQuotes::MetaTrader::5.00')
+    _win.set_focus()
+    time.sleep(1)
+
+    def _dlgs():
+        found = []
+        def cb(h, x):
+            if _u.IsWindowVisible(h):
+                cls = ctypes.create_unicode_buffer(64)
+                _u.GetClassNameW(h, cls, 64)
+                if '#32770' in cls.value:
+                    tl = _u.GetWindowTextLengthW(h)
+                    tb = ctypes.create_unicode_buffer(tl + 1)
+                    _u.GetWindowTextW(h, tb, tl + 1)
+                    if tb.value.strip():
+                        found.append((tb.value, h))
+            return True
+        _u.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(cb), 0)
+        return found
+
+    # 0. 檢查 EA 係咪真係運行（MT5 log 最後狀態 + 心跳）
+    _ea_running = False
     try:
-        ensure_mt5_window(mt5_pid)
-        win.set_focus()
-        time.sleep(0.8)
-    except Exception:
-        pass
-    
-    # 將 DeskIn 移去角落（還原穩定版 — 唔郁 DeskIn）
-    # 2026-08 還原：今日下午加 pin_deskin_away 之後 crash — 暫時唔用（穩定版冇呢個）
-    
-    # 0. 檢查圖表 window 有冇開 — 冇圖表 = 冇 EA 運行 = 唔使移除（2026-08 實測：MT5 restore 後圖表可能冇開）
-    # 大眾化：圖表 title 格式係「SYMBOL,TF」（例如 EURUSD,H1 / GBPCAD,M15）— 用 ',' 判斷任何圖表
-    # 🚨 2026-08-14 FIX：圖表 window 檢查不可靠（圖表隱藏/最小化/標題讀唔到 → 誤判「圖表未開」→ 冇移除 → EA 仲運行）
-    # → 加 log 判斷：MT5 log 最後「已啟動」（冇「已停止」）→ EA 確實運行 → 一定要移除（唔好直接完成）
-    _ea_running_by_log = False
-    try:
-        import glob as _gl2
-        _lgd2 = os.path.join(os.path.dirname(os.path.dirname(MT5_PATH)) if False else os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal'))
-        _lat2 = None
-        for _d2 in os.listdir(_lgd2):
-            _logs2 = os.path.join(_lgd2, _d2, 'MQL5', 'Logs')
-            if os.path.isdir(_logs2):
-                for _f2 in _gl2.glob(os.path.join(_logs2, '2026*.log')):
-                    if _lat2 is None or os.path.getmtime(_f2) > os.path.getmtime(_lat2):
-                        _lat2 = _f2
-        if _lat2:
-            _raw2 = open(_lat2, 'rb').read()
-            _txt2 = None
-            for _enc2 in ('utf-16', 'utf-8', 'cp1252'):
+        import glob as _gl_r
+        _lgd_r = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        _lat_r = None
+        for _d_r2 in os.listdir(_lgd_r):
+            _logs_r = os.path.join(_lgd_r, _d_r2, 'logs')
+            if os.path.isdir(_logs_r):
+                for _f_r in _gl_r.glob(os.path.join(_logs_r, '2026*.log')):
+                    if _lat_r is None or os.path.getmtime(_f_r) > os.path.getmtime(_lat_r):
+                        _lat_r = _f_r
+        if _lat_r:
+            _raw_r = open(_lat_r, 'rb').read()
+            _txt_r = None
+            for _enc_r in ('utf-16', 'utf-8', 'cp1252'):
                 try:
-                    _txt2 = _raw2.decode(_enc2)
+                    _txt_r = _raw_r.decode(_enc_r)
                     break
                 except Exception:
                     continue
-            if _txt2:
-                import re as _re2
-                _last_state2 = None
-                for _ln2 in _txt2.splitlines():
-                    if re.search(rf'{re.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)', _ln2):
-                        if '已停止' in _ln2 or 'removed' in _ln2:
-                            _last_state2 = 'stopped'
-                        elif '已啟動' in _ln2:
-                            _last_state2 = 'started'
-                _ea_running_by_log = (_last_state2 == 'started')
+            if _txt_r:
+                import re as _re_r
+                _last_r = None
+                for _ln_r in _txt_r.splitlines():
+                    if _re_r.search(rf'{_re_r.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)', _ln_r):
+                        if 'removed' in _ln_r or '已停止' in _ln_r:
+                            _last_r = 'stopped'
+                        elif 'loaded successfully' in _ln_r or '已啟動' in _ln_r:
+                            _last_r = 'started'
+                _ea_running = (_last_r == 'started')
     except Exception:
         pass
-    has_chart = False
-    for _w in app.windows():
+    # 心跳檢查（state_<EA>.json 新鮮 = 運行）
+    _hb_fresh = False
+    try:
+        _cfd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        for _hfn in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+            _hfp = os.path.join(_cfd, _hfn)
+            if os.path.isfile(_hfp) and time.time() - os.path.getmtime(_hfp) < 60:
+                _hb_fresh = True
+    except Exception:
+        pass
+    if not _ea_running and not _hb_fresh:
+        print(f"ℹ️ {ea_name}：未運行（log 最後 stopped / 冇心跳）— 唔使移除，直接完成")
+        return True
+
+    # 1. Alt+W 開「窗口」dialog（有 chart 時）
+    _sk('%w')
+    time.sleep(2)
+
+    # 2. 搵「窗口」dialog + ListView（精準定位 — 唔會搞亂其他 dialog）
+    _dlg_found = None
+    _lv_found = None
+    for _w_a in _app.windows():
         try:
-            if 'Afx' in _w.class_name() and ',' in _w.window_text():
-                _cr = _w.rectangle()
-                if _cr.width() > 100 and _cr.height() > 50:
-                    has_chart = True
-                    break
+            if _w_a.class_name() == '#32770' and '窗口' in _w_a.window_text():
+                _dlg_found = _w_a
+                for _c_a in _w_a.children():
+                    if _c_a.element_info.class_name == 'SysListView32':
+                        _lv_found = _c_a
+                        break
+                break
         except Exception:
-            pass
-    # 🚨 2026-08-20 FIX（chart 標題空 — 市場收市/隱藏時 Afx 標題冇逗號）：用 MDIClient children 偵測 chart
-    if not has_chart:
-        try:
-            for _d_hc in win.descendants():
-                if _d_hc.element_info.class_name == 'MDIClient':
-                    for _c_hc in _d_hc.children():
-                        if 'Afx' in _c_hc.element_info.class_name and _c_hc.window_text().strip():
-                            has_chart = True
-                            break
-                    break
-        except Exception:
-            pass
-    if not has_chart:
-        # 🚨 2026-08-14 FIX：心跳新鮮（state_<EA>.json / hb_<EA>.txt <30s）= EA 確實運行（最可靠）→ 圖表檢查錯 → 唔好直接完成 — 繼續移除流程
-        _hb_fresh = False
-        try:
-            _cfd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-            for _hfn in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
-                _hfp = os.path.join(_cfd, _hfn)
-                if os.path.isfile(_hfp) and time.time() - os.path.getmtime(_hfp) < 30:
-                    _hb_fresh = True
-        except Exception:
-            pass
-        if _ea_running_by_log or _hb_fresh:
-            print(f"⚠️ {ea_name}：圖表 window 檢查唔到但心跳/log 顯示運行緊（多圖表或隱藏）— 繼續移除流程")
-            has_chart = True
-        else:
-            print(f"ℹ️ {ea_name}：圖表未開（冇 EA 運行）— 唔使移除，直接完成")
-            return True
-    
-    # 1. right-click 圖表（用圖表 window（EURUSD,H1 Afx）實際 rect — 2026-08 實測：主視窗 offset 唔可靠，
-    # 圖表係獨立 Afx window 而且可能好細/唔同位置；DeskIn/其他視窗遮住時 WindowFromPoint 會食錯）
-    # 每個位置：right-click → click「專家列表」位置 → 檢查「專家」dialog 開咗未
-    r = win.rectangle()
-    # 搵圖表 window（大眾化：title 含 ',' = SYMBOL,TF 格式 — 任何 symbol 都得）
-    chart_rects = []
-    for _w in app.windows():
-        try:
-            if 'Afx' in _w.class_name() and ',' in _w.window_text():
-                _cr = _w.rectangle()
-                if _cr.width() > 100 and _cr.height() > 50:
-                    chart_rects.append(_cr)
-        except Exception:
-            pass
-    # 🚨 2026-08-20 FIX（chart 標題空）：MDIClient children 偵測 chart rect（標題空時 Afx 冇逗號）
-    if not chart_rects:
-        try:
-            for _d_rc in win.descendants():
-                if _d_rc.element_info.class_name == 'MDIClient':
-                    for _c_rc in _d_rc.children():
-                        if 'Afx' in _c_rc.element_info.class_name and _c_rc.window_text().strip():
-                            try:
-                                chart_rects.append(_c_rc.rectangle())
-                            except Exception:
-                                pass
-                    break
-        except Exception:
-            pass
-    if chart_rects:
-        # 用第一個圖表 rect 嘅幾個位置
-        cr = chart_rects[0]
-        positions = [
-            (cr.left + cr.width() // 2, cr.top + cr.height() // 2),        # 中央
-            (cr.left + cr.width() // 2, cr.top + int(cr.height() * 0.7)), # 下部
-            (cr.left + int(cr.width() * 0.3), cr.top + int(cr.height() * 0.4)),
-        ]
-        print(f"📊 圖表 rect: ({cr.left},{cr.top})-({cr.right},{cr.bottom})")
-    else:
-        # fallback：主視窗 offset
-        positions = [
-            (r.left + r.width() // 2, r.top + 550),
-            (r.left + r.width() // 3, r.top + 350),
-            (r.left + r.width() * 2 // 3, r.top + 400),
-            (r.left + r.width() // 2, r.top + 650),
-        ]
-    expert_dlg = None
-    for (px, py) in positions:
-        try:
-            _sk('{ESC}')
-            time.sleep(0.5)
-        except Exception:
-            pass
-        _pg.rightClick(px, py)
-        time.sleep(2)
-        # ⚠️ Menu 彈出後（用戶實測：right-click 會彈 menu）→ 直接 click 第 7 項「專家列表」
-        # 唔靠 Alt+X（menu 可能冇 focus — 快捷鍵冇效）；item 高度 ~22px，第 7 項 ≈ +132px
-        _pg.click(px + 100, py + 142)
-        time.sleep(2.5)
-        # 檢查「專家」dialog（click 專家列表 → 直接彈 dialog — 用戶實測「撳入去有 test runner + 刪除按鈕」）
-        for w in app.windows():
+            continue
+    if not _lv_found:
+        # dialog 可能仲未彈（等 1 秒再試）
+        time.sleep(1)
+        for _w_a in _app.windows():
             try:
-                if w.class_name() == '#32770' and ('專家' in w.window_text() or 'Expert' in w.window_text()):
-                    expert_dlg = w
+                if _w_a.class_name() == '#32770' and '窗口' in _w_a.window_text():
+                    _dlg_found = _w_a
+                    for _c_a in _w_a.children():
+                        if _c_a.element_info.class_name == 'SysListView32':
+                            _lv_found = _c_a
+                            break
                     break
             except Exception:
-                pass
-        if not expert_dlg:
-            # fallback：Alt+X
-            _pg.hotkey('alt', 'x')
-            time.sleep(2.5)
-            for w in app.windows():
-                try:
-                    if w.class_name() == '#32770' and ('專家' in w.window_text() or 'Expert' in w.window_text()):
-                        expert_dlg = w
-                        break
-                except Exception:
-                    pass
-        if expert_dlg:
-            print(f"🎯 開到「專家」dialog @ ({px},{py})")
-            break
-        # 關閉可能彈出嘅「對象」視窗/menu
-        try:
-            _sk('{ESC}')
-            time.sleep(0.5)
-        except Exception:
-            pass
-    if not expert_dlg:
-        print("⚠️ 搵唔到「專家」dialog（4 個位置都試過）")
+                continue
+    if not _lv_found:
+        print("⚠️ 搵唔到「窗口」dialog 或 ListView（Alt+W 冇彈出？）")
         try:
             _sk('{ESC}')
         except Exception:
             pass
         return False
-    
-    # 固定「專家」dialog 位置 + 大小（每次彈出都鎖定 — 唔會漂移）
-    try:
-        pin_window(int(expert_dlg.element_info.handle), 800, 300, 540, 380)
-        time.sleep(0.5)
-    except Exception:
-        pass
-    
-    # 4. 喺列表揀 EA（列表第一行 = 圖表唯一 EA）
-    list_view = None
-    remove_btn = None
-    for c in expert_dlg.children():
+
+    # 3. 讀 ListView（即時 chart 排位 — index 順序 = 開 chart 順序）
+    _cnt = _u.SendMessageW(_ct.c_void_p(int(_lv_found.element_info.handle)), 0x1004, 0, 0)  # LVM_GETITEMCOUNT
+    _items = []
+    for _i in range(max(_cnt, 0)):
         try:
-            cls = c.element_info.class_name
-            if cls == 'SysListView32':
-                list_view = c
-            elif cls == 'Button' and ('移除' in c.window_text() or 'Remove' in c.window_text()):
-                remove_btn = c
+            _t = _lv_found.get_item(_i).text()
+            _items.append(_t)
         except Exception:
-            pass
-    
-    if list_view:
-        # 檢查列表有冇 EA（item count > 0）
-        import ctypes as _ct
-        lv_hwnd = int(list_view.element_info.handle)
-        cnt = _ct.windll.user32.SendMessageW(_ct.c_void_p(lv_hwnd), 0x1004, 0, 0)  # LVM_GETITEMCOUNT
-        if cnt <= 0:
-            print(f"ℹ️ {ea_name} 已經唔喺圖表（列表空）")
-            # 關 dialog
-            for b in expert_dlg.children():
+            _items.append('')
+    print(f"📋 窗口 dialog 有 {_cnt} 個 chart：")
+    for _i, _t in enumerate(_items):
+        print(f"  [{_i}] {_t}")
+
+    # 4. 對應 EA → symbol（由 MT5 log 搵目標 EA 掛邊個 symbol）
+    _target_sym = None
+    try:
+        if _lat_r and os.path.isfile(_lat_r):
+            _raw_t = open(_lat_r, 'rb').read()
+            _txt_t = None
+            for _enc_t in ('utf-16', 'utf-8', 'cp1252'):
                 try:
-                    if b.element_info.class_name == 'Button' and '關閉' in b.window_text():
-                        b.click()
-                        time.sleep(1)
-                        break
-                except Exception:
-                    pass
-            return True
-        # click 列表第一行（EA）
-        rect = list_view.rectangle()
-        _pg.click(rect.left + 80, rect.top + 20)
-        time.sleep(1)
-    
-    # 5. click「移除」按鈕
-    if remove_btn:
-        try:
-            remove_btn.click()
-            time.sleep(2)
-            print(f"✅ 已從圖表移除 {ea_name}")
-        except Exception as e:
-            print(f"⚠️ 移除按鈕 click 失敗: {e}")
-            return False
-        # 🚨 2026-08-20 FIX（用戶實測「導航剷除咗但圖表冇剷除」）：移除 EA 後關埋 chart 窗口
-        # （之前只 ExpertRemove — chart 留低 → 用戶見圖表冇剷除）
-        # 關 active chart（移除 dialog 係喺 active chart 開嘅 — 移除完嗰個 chart 唔需要留）
-        try:
-            import ctypes as _ct_c
-            _u_c = _ct_c.windll.user32
-            # 搵 active chart（Afx class + 有標題）— 關第一個（active 通常係第一個）
-            for _d_c in win.descendants():
-                if _d_c.element_info.class_name == 'MDIClient':
-                    for _c_c in _d_c.children():
-                        if 'Afx' in _c_c.element_info.class_name and _c_c.window_text().strip():
-                            _ctxt_c = _c_c.window_text()
-                            try:
-                                _u_c.SendMessageW(_ct_c.c_void_p(int(_c_c.element_info.handle)), 0x0010, 0, 0)
-                                print(f"✅ 已關 chart: {_ctxt_c[:30]}")
-                                time.sleep(1)
-                            except Exception:
-                                pass
-                            break
+                    _txt_t = _raw_t.decode(_enc_t)
                     break
-        except Exception:
-            pass
-    else:
-        print("⚠️ 搵唔到「移除」按鈕")
-        try:
-            _sk('{ESC}')
-        except Exception:
-            pass
-        return False
-    
-    # 6. 關閉 dialog（如果有）
-    try:
-        for w in app.windows():
-            if w.class_name() == '#32770' and ('專家' in w.window_text() or 'Expert' in w.window_text()):
-                for b in w.children():
-                    try:
-                        if b.element_info.class_name == 'Button' and '關閉' in b.window_text():
-                            b.click()
-                            time.sleep(1)
-                            break
-                    except Exception:
-                        pass
-                break
+                except Exception:
+                    continue
+            if _txt_t:
+                import re as _re_t
+                _last_sym = None
+                for _ln_t in _txt_t.splitlines():
+                    _m_t = _re_t.search(rf'{_re_t.escape(ea_name)} \(([A-Za-z0-9._]+),[A-Z0-9]+\)', _ln_t)
+                    if _m_t:
+                        if 'removed' in _ln_t or '已停止' in _ln_t:
+                            _last_sym = None
+                        elif 'loaded successfully' in _ln_t or '已啟動' in _ln_t:
+                            _last_sym = _m_t.group(1)
+                _target_sym = _last_sym
     except Exception:
         pass
-    
+    if _target_sym:
+        print(f"🎯 目標 EA {ea_name} 掛喺 {_target_sym}（MT5 log）")
+    else:
+        print(f"⚠️ 由 MT5 log 搵唔到 {ea_name} 掛邊個 symbol（用 ListView 第一個 chart 做 target）")
+        _target_sym = None
+
+    # 5. 揀目標 chart（對應 symbol → ListView index）
+    _target_idx = None
+    if _target_sym:
+        for _i, _t in enumerate(_items):
+            if _t.upper().startswith(_target_sym.upper()):
+                _target_idx = _i
+                break
+    if _target_idx is None:
+        # fallback：用第一個 chart（冇 log 記錄時）
+        _target_idx = 0
+    print(f"📌 揀 chart [{_target_idx}]（{_items[_target_idx] if _target_idx < len(_items) else '?'}）")
+
+    # 6. click 目標行（ListView 揀選）→ Enter（關閉 dialog + 彈返 chart）
+    try:
+        _r_lv = _lv_found.rectangle()
+        _row_y = _r_lv.top + 20 + _target_idx * 22  # 每行 ~22px
+        _pg.click(_r_lv.left + 100, _row_y)
+        time.sleep(1)
+    except Exception:
+        # fallback：方向鍵揀（Home + Down ×N）
+        _sk('{HOME}')
+        time.sleep(0.3)
+        for _kd in range(_target_idx):
+            _sk('{DOWN}')
+            time.sleep(0.2)
+    _sk('{ENTER}')
+    time.sleep(2)
+
+    # 7. 確認 dialog 關咗（彈返 chart）
+    _dlgs_now = _dlgs()
+    if any('窗口' in t for t, h in _dlgs_now):
+        print("⚠️ 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
+        _sk('{ENTER}')
+        time.sleep(2)
+
+    # 8. Ctrl+W 關閉該 chart（EA 一齊移除）
+    _sk('^w')
+    time.sleep(2.5)
+
+    # 9. 驗證：MT5 log 有 removed 記錄 / 心跳停
+    _removed_ok = False
+    try:
+        _start_t = time.time()
+        while time.time() - _start_t < 15:
+            time.sleep(2)
+            # 心跳停 = 移除
+            _hb_still = False
+            _cfd2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            for _hfn2 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+                _hfp2 = os.path.join(_cfd2, _hfn2)
+                if os.path.isfile(_hfp2) and time.time() - os.path.getmtime(_hfp2) < 30:
+                    _hb_still = True
+            if not _hb_still:
+                _removed_ok = True
+                print(f"✅ {ea_name} 心跳已停（EA 已移除）")
+                break
+            # MT5 log 有 removed
+            try:
+                if _lat_r and os.path.isfile(_lat_r):
+                    _raw_r2 = open(_lat_r, 'rb').read()
+                    _txt_r2 = None
+                    for _enc_r2 in ('utf-16', 'utf-8', 'cp1252'):
+                        try:
+                            _txt_r2 = _raw_r2.decode(_enc_r2)
+                            break
+                        except Exception:
+                            continue
+                    if _txt_r2:
+                        _recent = _txt_r2.splitlines()[-30:]
+                        if any(ea_name in _l2 and 'removed' in _l2 for _l2 in _recent):
+                            _removed_ok = True
+                            print(f"✅ MT5 log 確認 {ea_name} removed")
+                            break
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    if not _removed_ok:
+        print(f"⚠️ {ea_name} 15s 內未確認移除（可能 chart 關咗但 EA 未 remove）")
+    print(f"✅ 暫停/剷除 {ea_name} 完成（Ctrl+W 關 chart）")
     return True
 
 
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='MT5 EA Auto-Attach Tool')
-    parser.add_argument('--ea', required=True, help='EA name (e.g. ADX_Trend)')
-    parser.add_argument('--symbol', default='EURUSD', help='Symbol (default: EURUSD)')
-    parser.add_argument('--tf', default='H1', help='Timeframe (default: H1)')
-    parser.add_argument('--lot', type=float, default=1.0, help='Lot size (default: 1.0)')
-    parser.add_argument('--magic', type=int, default=240701, help='Magic number')
-    parser.add_argument('--restart', action='store_true', help='Restart MT5 first')
-    parser.add_argument('--remove', action='store_true', help='Remove EA from chart (真暫停)')
-    args = parser.parse_args()
-    
-    if args.remove:
-        # 真暫停模式：移除圖表 EA
-        from control_guard import acquire, release, ControlAborted
-        try:
-            acquire(f'暫停 {args.ea}')
-        except Exception:
-            pass
-        try:
-            ok = remove_ea_from_chart(args.ea)
-            print(f"{'✅' if ok else '❌'} 暫停 {args.ea} {'成功' if ok else '（圖表可能冇 EA）'}")
-        finally:
-            try:
-                release()
-            except Exception:
-                pass
-        import sys
-        sys.exit(0 if ok else 1)
-    
-    inputs = {
-        'LotSize': f'{args.lot:.2f}',
-        'MagicNumber': str(args.magic),
-        'EnableLog': 'true',
-    }
-    
-    result = auto_attach_ea(
-        ea_name=args.ea,
-        symbol=args.symbol,
-        timeframe=args.tf,
-        inputs=inputs,
-        do_restart=args.restart,
-    )
-    
-    sys.exit(0 if result else 1)
