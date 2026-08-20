@@ -147,7 +147,9 @@ def run_auto_attach(cmd_data):
         # → 睇唔到真因。而家完整 output 寫落 file，診斷時直接讀。
         import subprocess as _sp_dbg
         _dbg = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
-        _dbg_cmd = ' '.join(cmd) + f' 2>&1 | tee -a {_dbg}'
+        # 🚨 2026-08-21 FIX：tee -a（append）累積舊 output → watcher 讀「最近 60 行」誤判（讀到上次 Breakout/Grid output → ATR_Stop 假成功）
+        # 改覆寫（>）— 每次部署 aa_debug.log 只含今次 output
+        _dbg_cmd = ' '.join(cmd) + f' 2>&1 | tee {_dbg}'
         result = _sp_dbg.run(_dbg_cmd, timeout=320, shell=True,
                              encoding='utf-8', errors='replace',
                              cwd=os.path.dirname(AUTO_ATTACH_SCRIPT))
@@ -166,6 +168,28 @@ def run_auto_attach(cmd_data):
             pass
         
         if result.returncode == 0:
+            # 🚨 2026-08-21 FIX：唔好淨靠 returncode — 確認 auto_attach output 有真 SUCCESS（return 0 都可能內部 fail — 例如開 chart 失敗 return False → argparse 都係 0）
+            _aa_output = ''
+            try:
+                with open(_dbg, 'r', encoding='utf-8', errors='replace') as _fchk:
+                    _aa_output = _fchk.read()
+            except Exception:
+                pass
+            _aa_ok = ('SUCCESS' in _aa_output) or ('成功 attach' in _aa_output) or ('附加成功' in _aa_output)
+            if not _aa_ok and _aa_output.strip():
+                print(f"   ⚠️ auto_attach output 冇 SUCCESS（可能內部 fail）— 最後幾行：")
+                for _l in _aa_output.split('\\n')[-8:]:
+                    if _l.strip():
+                        print(f"     {_l.strip()[:90]}")
+                sys.stdout.flush()
+                _append_activity_log({
+                    'time': time.time(),
+                    'action': 'deploy_result',
+                    'ea': ea_name,
+                    'message': f'{ea_name} 部署未確認（auto_attach 冇 SUCCESS — 檢查 MT5）',
+                    'source': 'watcher'
+                })
+                return False
             print(f"   🎉 {ea_name} 已成功 attach!")
             sys.stdout.flush()
             # 寫 deploy 完成 activity log（前端 poll 嚟關警告視窗）
