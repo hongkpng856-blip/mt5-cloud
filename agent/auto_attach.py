@@ -1987,7 +1987,23 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             if _act_title:
                                 break
                         _sym_u = (symbol or '').upper().split('.')[0]
-                        if _act_title and (_sym_u in _act_title.upper()):
+                        # 🚨 2026-08-20 FIX：EnumChildWindows「Chart」class 喺 MT5 搵唔到（chart 窗口係 AfxFrameOrView 類）
+                        # → 改用 MDI chart 窗口檢查（同「新方法開圖」驗證一致 — 可靠）
+                        _mdi_ok = False
+                        try:
+                            for _d_mdi in win.descendants():
+                                if _d_mdi.element_info.class_name == 'MDIClient':
+                                    for _c_mdi in _d_mdi.children():
+                                        if 'Afx' in _c_mdi.element_info.class_name:
+                                            _ct_mdi = _c_mdi.window_text()
+                                            if _sym_u in _ct_mdi.upper():
+                                                _mdi_ok = True
+                                                _act_title = _ct_mdi
+                                                break
+                                    break
+                        except Exception:
+                            pass
+                        if _mdi_ok:
                             _active_ok = True
                             print(f"   ✅ active chart 驗證: {_act_title[:40]}（目標 {_sym_u} — 啱）")
                         else:
