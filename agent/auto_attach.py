@@ -1812,101 +1812,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         _oc_ok2 = True
                         print(f"✅ 新方法開圖成功: active chart = {_sym}")
                     else:
-                        print(f"⚠️ 新方法未確認（active: {_new_title2[:50]}...）— fallback Ctrl+9")
+                        print(f"⚠️ 新方法未確認（active: {_new_title2[:50]}...）— 開 chart 失敗，唔附加！")
                 except Exception as _eneg2:
-                    print(f"⚠️ 新方法開 chart 失敗: {_eneg2} — fallback Ctrl+9")
+                    print(f"⚠️ 新方法開 chart 失敗: {_eneg2}")
 
-                # fallback: send Ctrl+9（pyautogui）— 只喺新方法失敗嘅先做
-                if not _oc_ok2:
-                    for _ocr in range(2):
-                        try:
-                            import pyautogui as _pg_oc2
-                            _pg_oc2.FAILSAFE = False
-                            _pg_oc2.hotkey('ctrl', '9')
-                        except Exception:
-                            _sk('^9')
-                        time.sleep(3.5)
-                    # 驗證目標 chart 已開（active 標題含 _sym）→ 成功就 break
-                        _chart_ok_early = False
-                        try:
-                            def _cb_early(_h3, _x3):
-                                nonlocal _chart_ok_early
-                                if _u_oc.IsWindowVisible(_h3):
-                                    _c3 = ctypes.create_unicode_buffer(64)
-                                    _u_oc.GetClassNameW(_h3, _c3, 64)
-                                    if 'MetaQuotes::MetaTrader' in _c3.value:
-                                        _l3 = _u_oc.GetWindowTextLengthW(_h3)
-                                        _b3 = ctypes.create_unicode_buffer(_l3 + 1)
-                                        _u_oc.GetWindowTextW(_h3, _b3, _l3 + 1)
-                                        if _sym in _b3.value:
-                                            _chart_ok_early = True
-                                            return False
-                                return True
-                            _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_early), None)
-                        except Exception:
-                            pass
-                        if _chart_ok_early:
-                            _oc_ok2 = True
-                            break
-                        # 目標 chart 未出 → 檢查 dialog / 重試
-                        _opt2 = False
-                        try:
-                            def _cb_opt(_h2, _x2):
-                                nonlocal _opt2
-                                if _u_oc.IsWindowVisible(_h2):
-                                    _c2 = ctypes.create_unicode_buffer(64)
-                                    _u_oc.GetClassNameW(_h2, _c2, 64)
-                                    if '#32770' in _c2.value:
-                                        _l2 = _u_oc.GetWindowTextLengthW(_h2)
-                                        _b2 = ctypes.create_unicode_buffer(_l2 + 1)
-                                        _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
-                                        if '選項' in _b2.value or 'Option' in _b2.value or '熱鍵' in _b2.value:
-                                            _opt2 = True
-                                return True
-                            _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_opt), None)
-                        except Exception:
-                            pass
-                        if _opt2:
-                            print("⚠️ Ctrl+9 彈咗視窗 — 關閉 + 重啟 MT5 reload 熱鍵")
-                            try:
-                                _sk('{ESC}'); time.sleep(1)
-                            except Exception:
-                                pass
-                            import subprocess as _sp_oc
-                            try:
-                                _sp_oc.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True); time.sleep(4)
-                                _sp_oc.run("powershell -Command \"Start-Process 'C:\\Program Files\\MetaTrader 5\\terminal64.exe'\"", shell=True, capture_output=True)
-                                time.sleep(25)
-                                print("✅ MT5 已重啟（reload 熱鍵）")
-                            except Exception as _eoc_r:
-                                print(f"⚠️ 重啟失敗: {_eoc_r}")
-                            continue
-                        else:
-                            _chart_ok2 = False
-                            try:
-                                def _cb_title(_h2, _x2):
-                                    nonlocal _chart_ok2
-                                    if _u_oc.IsWindowVisible(_h2):
-                                        _c2 = ctypes.create_unicode_buffer(64)
-                                        _u_oc.GetClassNameW(_h2, _c2, 64)
-                                        if 'MetaQuotes::MetaTrader' in _c2.value:
-                                            _l2 = _u_oc.GetWindowTextLengthW(_h2)
-                                            _b2 = ctypes.create_unicode_buffer(_l2 + 1)
-                                            _u_oc.GetWindowTextW(_h2, _b2, _l2 + 1)
-                                            if _sym in _b2.value:
-                                                _chart_ok2 = True
-                                                return False
-                                    return True
-                                _u_oc.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(_cb_title), None)
-                            except Exception:
-                                pass
-                            if not _chart_ok2:
-                                print(f"⚠️ Ctrl+9 冇開到圖表（{_sym}）— 重試")
-                                time.sleep(2)
-                                continue
-                            _oc_ok2 = True
-                            break
-                        break
                 time.sleep(1)
                 print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）" if _oc_ok2 else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
