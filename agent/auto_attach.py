@@ -1962,7 +1962,58 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             else:
                 # open_chart=True 但係真 EA → 開 chart 後用熱鍵真掛落 active chart
                 if combo:
-                    _sk(combo)
+                    # 🚨 2026-08-20 FIX（附加錯 chart 根治 — 用戶實測）：send 熱鍵前驗證 active chart 係目標 symbol
+                    # （OpenChart 開 chart 失敗 → active chart 係舊 restore 嘅 GBPUSD → 附加落去 → 代替 dialog → 一鑊泡）
+                    # → 驗證唔到目標 chart → 明確 fail（唔好附加落錯 chart）
+                    _active_ok = False
+                    try:
+                        import ctypes as _c_act
+                        _u_act = _c_act.windll.user32
+                        _act_title = ''
+                        @_c_act.WINFUNCTYPE(_c_act.c_bool, _c_act.c_size_t, _c_act.c_size_t)
+                        def _cb_act(hwnd, _):
+                            nonlocal _act_title
+                            _cls2 = _c_act.create_unicode_buffer(80)
+                            _u_act.GetClassNameW(_c_act.c_void_p(hwnd), _cls2, 80)
+                            if 'Chart' in _cls2.value:
+                                _buf2 = _c_act.create_unicode_buffer(120)
+                                _u_act.GetWindowTextW(_c_act.c_void_p(hwnd), _buf2, 120)
+                                if _buf2.value.strip():
+                                    _act_title = _buf2.value
+                                    return False
+                            return True
+                        for _w_a in _app.windows():
+                            try:
+                                _u_act.EnumChildWindows(_c_act.c_void_p(int(_w_a.element_info.handle)), _cb_act, 0)
+                            except Exception:
+                                pass
+                            if _act_title:
+                                break
+                        _sym_u = (symbol or '').upper().split('.')[0]
+                        if _act_title and (_sym_u in _act_title.upper()):
+                            _active_ok = True
+                            print(f"   ✅ active chart 驗證: {_act_title[:40]}（目標 {_sym_u} — 啱）")
+                        else:
+                            print(f"   ⚠️ active chart 唔係目標 {_sym_u}（現: {_act_title[:40] or '未知'}）— 唔附加！")
+                    except Exception as _e_act:
+                        print(f"   ⚠️ active chart 驗證異常: {_e_act}（保守 — 當唔啱）")
+                    if _active_ok:
+                        _sk(combo)
+                    else:
+                        print(f"❌ 附加中止：active chart 唔係目標 symbol（{symbol}）— 避免代替 dialog 一鑊泡")
+                        # 寫 fail steps
+                        try:
+                            import json as _jf2
+                            _stf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                            with open(_stf2, 'w', encoding='utf-8') as _f2:
+                                _jf2.dump([{'text': f'部署 {ea_name}（{symbol}）', 'status': 'done'},
+                                           {'text': f'開圖表（{symbol}）', 'status': 'done'},
+                                           {'text': f'附加 {ea_name}', 'status': 'doing'},
+                                           {'text': '驗證運行狀態', 'status': 'pending'}], _f2, ensure_ascii=False)
+                        except Exception:
+                            pass
+                        time.sleep(2)
+                        return False
                 else:
                     print(f"⚠️ {ea_name} 冇快捷鍵 combo — 用 Navigator 附加")
         time.sleep(3)
