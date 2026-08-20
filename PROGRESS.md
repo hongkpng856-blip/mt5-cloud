@@ -78,6 +78,14 @@
 | **v0.10.27** | 2026-08-20 | 🔧 **取消 Step 2b 全部定位操作**（固定 MT5 視窗/Navigator 統一/平鋪圖表 — 用戶話一開始唔需要定位；Alt+F 開 chart 用鍵盤唔靠座標）|
 | **v0.10.26** | 2026-08-20 | 🔧 **開 chart 失敗直接 return False**（移除 OpenChart script 誤導 print — 實際冇執行；用戶要求唔需要備用方案 — 失敗就 fail 唔好靜默繼續）|
 | **v0.10.25** | 2026-08-20 | 🔧 **取消 Step 2B 熱鍵 load 驗證（124 行）**（每次等 45s 好慢 + 冇用 — 用戶要求）+ **移除重試快捷鍵備用方案**（失敗直接 fail — 避免重試掛錯 chart：Heikin_Ashi 掛錯 EURUSD 案例）|
+| **v0.10.44** | 2026-08-21 | 🔧 **移除 click fallback** — 剷除揀 chart 淨係用方向鍵（HOME+DOWN×N+ENTER — 用戶一早要求；click 座標 fallback 移除 — 座標唔可靠）|
+| **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
+| **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
+| **v0.10.41** | 2026-08-21 | 🔧 **symbol picker 改用帳戶 History symbol**（bases/<帳戶>/History — 帳戶伺服器實際支援 — MetaQuotes-Demo 20 個：XAUUSD/UK100/US30/DE40 等）— symbols.sel 只係市場報價顯示（4 個 — 唔權威）；ETHUSD 真係冇（MetaQuotes-Demo 唔支援加密貨幣）|
+| **v0.10.40** | 2026-08-21 | 🔧 **網頁 symbol picker 改用帳號實際 symbols**（get_account_symbols 讀 MT5 symbols.sel — 帳號只有 4 個）→ 揀到冇嘅 symbol（ETHUSD）部署 fail（後改 v0.10.41 History 來源）|
+| **v0.10.39** | 2026-08-21 | 🔧 **修 refresh Navigator 兩次** — v0.10.38 加 _refresh_queue.put() 疊加『Experts 目錄變化』觸發 → refresh 兩次（第二次又撳右鍵）— 移除 put（剷除刪 .mq5/.ex5 已自動觸發 file-watch refresh）|
+| **v0.10.38** | 2026-08-21 | 🔧 **剷除後自動 refresh Navigator**（process_pause_cmd 完成後 _refresh_queue.put() — 用戶實測「剷除成功但 MT5 Navigator 殘留 — 要自己 refresh」）|
+| **v0.10.37** | 2026-08-21 | 🔥 **修剷除卡住** — process_pause_cmd 用 _PYEXE（未定義 — run_auto_attach 入面先定義，唔同 scope）→ NameError → auto_attach --remove 冇跑到 → 剷除卡住（用戶實測 delete EA 卡住）|
 | **v0.10.36** | 2026-08-21 | 🔧 **修剷除 _dlgs NameError**（ctypes 未定義 — 函數 import _ct alias 但 _dlgs 用 ctypes）→ 剷除中途 crash；修正 _ct — 實測剷除 ATR_Stop 成功（Alt+W → ListView → Ctrl+W → MT5 log removed）|
 | **v0.10.35** | 2026-08-21 | 🔥 **修 main 入口消失** — v0.10.33 替換 remove_ea_from_chart 時刪埋 if __name__ block → auto_attach 零 output + EXIT 0 → watcher 誤判假成功（ATR_Stop 案例）；加返 v0.10.32 main block（45 行）|
 | **v0.10.34** | 2026-08-21 | 🔥 **假成功根治（watcher 讀舊 output）** — ①aa_debug.log tee -a（append）累積舊部署 output → watcher 讀最近 60 行誤判（讀到上次 Breakout/Grid → ATR_Stop 假成功）→ 改覆寫 tee ②成功判斷唔好淨靠 returncode（return 0 都可能內部 fail）→ 檢查 auto_attach output 有真 SUCCESS |
@@ -332,6 +340,11 @@
 | 76 | 🔥 **剷除唔到（ctrl_ 方法市場收市失效）** | v0.10.29 改 ctrl_ 方法（寫 ctrl_<EA>.json → EA 自己 ExpertRemove）— 但市場收市冇 tick → EA 唔 check ctrl_ → 剷除唔到（假成功：心跳停判斷誤判 — 心跳檔已清）| v0.10.32 恢復 GUI 方法（right-click → 專家 dialog — 用戶實測可靠）+ 修 chart 偵測（MDIClient fallback — chart 標題空時 Afx 冇逗號）| 08-21 |
 | 77 | 🔥 **剷除靠座標唔可靠 + right-click menu 冇專家列表** | GUI 方法 right-click + 132px 偏移（座標 hardcode — 唔大眾化）；right-click menu 實際冇「專家列表」（有「專家列表(E) Alt+X」但 Alt+X 冇反應）| v0.10.33 改用 Alt+W 窗口 dialog 方法（唔靠座標 — ListView 即時 chart 排位 → 揀目標 → Enter → Ctrl+W 關閉）— 用戶實測 | 08-21 |
 | 78 | 🔥 **假成功（watcher 讀舊 output + main 入口消失 + ctypes NameError）** | ①aa_debug.log tee -a 累積舊部署 output → watcher 讀最近 60 行誤判（ATR_Stop 讀到 Breakout/Grid 舊記錄）②v0.10.33 替換函數刪埋 if __name__ → auto_attach 零 output + EXIT 0 → 假成功 ③剷除 _dlgs 用 ctypes（未定義）→ crash | v0.10.34 tee 改覆寫 + 檢查真 SUCCESS；v0.10.35 加返 main block（45 行）；v0.10.36 修 ctypes → _ct — 實測 5 次部署 + 5 次剷除全部 PASS | 08-21 |
+| 79 | 🔥 **剷除卡住（_PYEXE NameError）** | process_pause_cmd 用 _PYEXE（run_auto_attach 入面先定義 — 唔同 scope）→ NameError → auto_attach --remove 冇跑到 → watcher 等 timeout → 剷除卡住（用戶實測 delete EA 卡住）| v0.10.37 加 _PYEXE = _PY_EXE — 實測刪除 6 秒完成 | 08-21 |
+| 80 | **剷除成功但 MT5 Navigator 殘留** | process_pause_cmd 完成後冇 refresh Navigator（部署/配對有 — 剷除冇）→ MT5 Navigator 仲顯示已刪 EA → 要自己 refresh | v0.10.38 剷除完成後 _refresh_queue.put() 觸發 refresh Navigator | 08-21 |
+| 81 | **refresh Navigator 兩次（第二次又撳右鍵）** | v0.10.38 加 _refresh_queue.put() 疊加「Experts 目錄變化」file-watch 觸發 → refresh 兩次（用戶實測「第一次成功之後第二次又撳右鍵做多餘動作」）| v0.10.39 移除 put — 剷除刪 .mq5/.ex5 已自動觸發 file-watch refresh | 08-21 |
+| 82 | 🔥 **揀咗冇嘅 symbol（ETHUSD）部署 fail — 冇警告** | 網頁 symbol picker 顯示 static 24 個（ALL_SYMBOLS — 含 ETHUSD 但帳戶冇）；server /api/deploy 冇 symbol 驗證 → 部署 fail（Alt+F 開 chart 揀唔到 symbol）但唔話原因 | v0.10.40-41 symbol picker 改用帳戶實際 symbols（bases/<帳戶>/History — MetaQuotes-Demo 20 個）；v0.10.42 ①server 部署前驗證 symbol（唔喺 → error 400『symbol 唔存在』）②前端彈警告 modal | 08-21 |
+| 83 | 🔥 **剷除假成功（Breakout AMD — 網頁話成功但 MT5 卡窗口 dialog）** | 揀 chart 用 click 座標（_target_idx*22 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）；Ctrl+W 關唔到 → EA 冇移除；但 _removed_ok=False 照 return True → 網頁假成功 | v0.10.43 ①未確認移除 → return False ②dialog 未關 → fail ③揀 chart 改方向鍵；v0.10.44 移除 click fallback（淨係方向鍵 — 用戶一早要求）| 08-21 |
 
 ---
 
@@ -580,7 +593,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `a21f43d`（master）— v0.10.36（人手測試含剷除 5/5 PASS：Alt+W 窗口 dialog 剷除方法 + 假成功 3 連修 — tee 覆寫/main 入口/ctypes）
+**Git HEAD**: `deaefc1`（master）— v0.10.44（剷除假成功根治：方向鍵揀 chart + 未確認移除 fail + symbol 驗證機制 + refresh Navigator 修復）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
