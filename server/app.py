@@ -271,35 +271,51 @@ ALL_SYMBOLS = ['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','NZDUSD',
 TIMEFRAMES = ['M1','M5','M15','M30','H1','H4','D1','W1','MN1']
 
 def get_account_symbols():
-    """攞帳號實際可用 symbols（讀 MT5 symbols.sel — 唔係 static ALL_SYMBOLS）
-    用戶要求（2026-08-21）：網頁 symbol picker 只顯示帳號實際有嘅 symbol（揀到冇嘅 → 部署 fail）"""
+    """攞帳號實際可用 symbols
+    用戶要求（2026-08-21）：網頁 symbol picker 只顯示帳號實際有嘅 symbol（揀到冇嘅 → 部署 fail）
+    來源：bases/<帳戶>/History 目錄（帳戶伺服器實際支援過嘅 symbol — 比 symbols.sel 可靠）
+    ⚠️ symbols.sel 只係「市場報價顯示嘅 symbol」（用戶可以自己加/移除 — 唔係權威）
+    ⚠️ 揀帳戶：優先搵「有最多 History symbol」嗰個（而家登入帳戶通常係最新用嘅）"""
     try:
-        import glob as _gl_s
         _mt5d = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         for _d_s in os.listdir(_mt5d):
-            _sp_s = os.path.join(_mt5d, _d_s, 'symbols.sel')
-            if os.path.isfile(_sp_s):
-                _raw_s = open(_sp_s, 'rb').read()
-                _txt_s = None
-                for _enc_s in ('utf-8', 'utf-16'):
+            _bases_s = os.path.join(_mt5d, _d_s, 'bases')
+            if not os.path.isdir(_bases_s):
+                continue
+            _best_syms = []
+            _best_acct = None
+            for _a_s in os.listdir(_bases_s):
+                _h_s = os.path.join(_bases_s, _a_s, 'History')
+                if os.path.isdir(_h_s):
+                    _syms_s = [s for s in os.listdir(_h_s)
+                               if os.path.isdir(os.path.join(_h_s, s)) and not s.startswith('_')]
+                    if len(_syms_s) > len(_best_syms):
+                        _best_syms = _syms_s
+                        _best_acct = _a_s
+            if _best_syms:
+                print(f"[symbols] 帳號 {_best_acct} symbols ({len(_best_syms)}): {_best_syms}")
+                return _best_syms
+    except Exception as _e_s:
+        print(f"[symbols] 讀帳號 symbols 失敗: {_e_s}")
+    # fallback：symbols.sel（市場報價顯示）
+    try:
+        for _d_s2 in os.listdir(os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')):
+            _sp_s2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', _d_s2, 'symbols.sel')
+            if os.path.isfile(_sp_s2):
+                _raw_s2 = open(_sp_s2, 'rb').read()
+                _txt_s2 = None
+                for _enc_s2 in ('utf-8', 'utf-16'):
                     try:
-                        _txt_s = _raw_s.decode(_enc_s)
+                        _txt_s2 = _raw_s2.decode(_enc_s2)
                         break
                     except Exception:
                         continue
-                if _txt_s:
-                    _syms_s = []
-                    for _l_s in _txt_s.splitlines():
-                        _l_s = _l_s.strip()
-                        if '=' in _l_s:
-                            _n_s = _l_s.split('=')[0].strip()
-                            if _n_s:
-                                _syms_s.append(_n_s)
-                    if _syms_s:
-                        print(f"[symbols] 帳號 symbols ({len(_syms_s)}): {_syms_s}")
-                        return _syms_s
-    except Exception as _e_s:
-        print(f"[symbols] 讀 symbols.sel 失敗: {_e_s}")
+                if _txt_s2:
+                    _syms_s2 = [l.split('=')[0].strip() for l in _txt_s2.splitlines() if '=' in l]
+                    if _syms_s2:
+                        return _syms_s2
+    except Exception:
+        pass
     return ALL_SYMBOLS
 
 # === Frontend ===
