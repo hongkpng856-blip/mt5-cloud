@@ -1785,10 +1785,13 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _pg_new2.FAILSAFE = False
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    print(f"📌 新方法開 chart: Alt+F→Enter→Enter（{_sym}）")
+                    print(f"📌 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
                     _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
                     _pg_new2.press('enter'); time.sleep(1.5)
-                    _pg_new2.press('enter'); time.sleep(2.5)
+                    _pg_new2.press('enter'); time.sleep(2)
+                    _pg_new2.press('space'); time.sleep(1.5)
+                    _pg_new2.typewrite(_sym, interval=0.2); time.sleep(1)
+                    _pg_new2.press('enter'); time.sleep(3)
                     _new_title2 = win.window_text()
                     # 🚨 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
                     # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart 存在）— chart 開咗就算成功
