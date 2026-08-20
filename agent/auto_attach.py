@@ -2551,6 +2551,11 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                         # 開 MT5
                         subprocess.Popen([MT5_PATH])
                         _wait_until(lambda: wait_for_mt5(5), 90, 'MT5 已重開 + ready', interval=3)
+                        # 🚨 2026-08-20 FIX：restart 後更新 mt5_pid（否則後續 Navigator/平鋪/快捷鍵用舊 PID → Process not found → 部署卡死）
+                        _new_pid_t = find_mt5_pid()
+                        if _new_pid_t:
+                            mt5_pid = _new_pid_t
+                            print(f"✅ MT5 PID 已更新: {mt5_pid}")
                         # 再驗證熱鍵 load
                         _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（重開後 {_combo_t}）', interval=4)
                     except Exception as _e_rw:
