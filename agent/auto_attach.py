@@ -2060,6 +2060,47 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
                 break
 
+        # 🚨 2026-08-20 FIX（連環代替確認 — 用戶實測）：撳完「是」之後 MT5 可能連環彈多個「代替」dialog
+        # （附加 EA 落已有 EA 嘅 chart — 逐個代替 — 每個都要再撳「是」）
+        # → loop 完之後再 poll 8 秒睇有冇新代替 dialog → 有就再撳「是」（最多 5 次）
+        for _rpl in range(5):
+            _chk_abort()
+            _rpl_found = False
+            for _w_r in _app.windows():
+                try:
+                    if _w_r.class_name() != '#32770':
+                        continue
+                    _h_r = int(_w_r.element_info.handle)
+                    _t_r = _w_r.window_text()
+                    _is_rpl = '代替' in _t_r or 'replace' in _t_r.lower()
+                    if not _is_rpl:
+                        try:
+                            _dw_r = _app.window(handle=_h_r)
+                            for _s_r in _dw_r.children(class_name='Static'):
+                                _st_r = _s_r.window_text()
+                                if '代替' in _st_r or 'replace' in _st_r.lower():
+                                    _is_rpl = True
+                                    break
+                        except Exception:
+                            pass
+                    if _is_rpl:
+                        _rpl_found = True
+                        _dw_r2 = _app.window(handle=_h_r)
+                        for _b_r in _dw_r2.children(class_name='Button'):
+                            try:
+                                if '是' in _b_r.window_text() or 'Yes' in _b_r.window_text():
+                                    if _bm_click(_b_r):
+                                        print(f"✅ 已撳「是」（連環代替確認 {_rpl+1}）")
+                                    break
+                            except Exception:
+                                pass
+                        break  # 每 round 處理一個
+                except Exception:
+                    pass
+            if not _rpl_found:
+                break  # 冇代替 dialog — 完成
+            time.sleep(2)
+
         # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
         if not _saw_props:
             print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試中）...")
