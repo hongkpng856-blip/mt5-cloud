@@ -2669,16 +2669,16 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         found = []
         def cb(h, x):
             if _u.IsWindowVisible(h):
-                cls = ctypes.create_unicode_buffer(64)
+                cls = _ct.create_unicode_buffer(64)
                 _u.GetClassNameW(h, cls, 64)
                 if '#32770' in cls.value:
                     tl = _u.GetWindowTextLengthW(h)
-                    tb = ctypes.create_unicode_buffer(tl + 1)
+                    tb = _ct.create_unicode_buffer(tl + 1)
                     _u.GetWindowTextW(h, tb, tl + 1)
                     if tb.value.strip():
                         found.append((tb.value, h))
             return True
-        _u.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(cb), 0)
+        _u.EnumWindows(_ct.WINFUNCTYPE(_ct.c_bool, _ct.c_void_p, _ct.c_void_p)(cb), 0)
         return found
 
     # 0. 檢查 EA 係咪真係運行（MT5 log 最後狀態 + 心跳）
