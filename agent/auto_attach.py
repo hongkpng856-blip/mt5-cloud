@@ -2476,25 +2476,6 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                 return False
         check_abort()
         
-        # Step 2b: 固定 MT5 視窗位置 + 大小（所有操作座標穩定 — 視窗移動/縮放都唔影響）
-        try:
-            ensure_mt5_window(mt5_pid)
-        except Exception:
-            pass
-        # ⚠️ 統一 Navigator 位置（2026-08 用戶要求：操作前 Navigator 最大 + 固定位置）
-        try:
-            ensure_navigator_unified(mt5_pid)
-        except Exception:
-            pass
-        # ⚠️ 平鋪圖表（2026-08 用戶要求：有圖表就平鋪 — 座標穩定）
-        try:
-            tile_charts(mt5_pid)
-        except Exception:
-            pass
-        # Step 2c: 將 DeskIn 移去角落（還原穩定版 — 唔郁 DeskIn — 避免影響 MT5）
-        # 2026-08 還原：今日下午加 pin_deskin_away 之後 crash — 暫時唔用（穩定版冇呢個）
-        check_abort()
-        
         # Step 3: Attach EA（快捷鍵優先 — 2026-08：6093 double-click 唔 work）
         # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
         # 🚨 2026-08-19 FIX：OpenChart 係 Script（讀 open_chart_cmd.json 開 target chart）— 唔行 attach_ea_navigator（Navigator double-click 對 Script 唔 work — 卡死 not found）
