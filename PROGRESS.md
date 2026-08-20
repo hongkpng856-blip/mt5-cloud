@@ -79,6 +79,10 @@
 | **v0.10.26** | 2026-08-20 | 🔧 **開 chart 失敗直接 return False**（移除 OpenChart script 誤導 print — 實際冇執行；用戶要求唔需要備用方案 — 失敗就 fail 唔好靜默繼續）|
 | **v0.10.25** | 2026-08-20 | 🔧 **取消 Step 2B 熱鍵 load 驗證（124 行）**（每次等 45s 好慢 + 冇用 — 用戶要求）+ **移除重試快捷鍵備用方案**（失敗直接 fail — 避免重試掛錯 chart：Heikin_Ashi 掛錯 EURUSD 案例）|
 | **v0.10.46** | 2026-08-21 | 🔧 **修 is_script 冇帶出 output** — scan_ea_inventory 構建 inventory.append 漏咗 is_script 字段（info 有但 output 冇）→ 前端過濾唔到 script。加 is_script 落 output — 實測：ApplyTemplate/OpenChart/StartAgentHelper=True（script）+ Divergence=False（EA）|
+| **v0.10.47** | 2026-08-21 | 🎨 **UI 全面改做 XCHANGE 橙黑主題（Binance 風格）** — 4 頁（index/login/register/dashboard）`:root` 變數換橙黑 token（`--accent:#f0b90b`、`--bg:#0b0e11`、`--bg-card:#181a20`、`--border:#2b3139`）+ DM Sans 字體 + 金底黑字（logo/btn-primary/btn-orange — WCAG AAA）+ JS 硬編碼色全部跟換（部署 modal/checkbox/活動狀態）|
+| **v0.10.48** | 2026-08-21 | 🔧 **Dashboard 精簡** — ①Agent 卡淨顯示 Account/Balance/Equity（移除 Positions/Trades/Win Rate/Profit Factor/Total P&L）②EA 倉庫「刷新狀態」掣剷除 ③「上傳 EA 去社群庫」由橙色 btn-orange 改普通 btn |
+| **v0.10.49** | 2026-08-21 | 🔧 **配對庫排位修正** — ①狀態文字靠左（同 header「狀態」對齊 — 之前 text-align:center 起點唔同）②三粒掣（部署/報告/刪除）改細粒 + 橫排（之前 grid 2 欄太大粒）③操作按鈕靠右（inline-flex + justify-content:flex-end）|
+| **v0.10.50** | 2026-08-21 | 🔧 **配對庫表格全欄位對齊** — Magic/Symbol/Trades/Win/P&L 移除 text-align:center/right → 全部靠左同 header 一致（之前 header left + data center/right → 上下對唔齊）|
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -348,6 +352,10 @@
 | 83 | 🔥 **剷除假成功（Breakout AMD — 網頁話成功但 MT5 卡窗口 dialog）** | 揀 chart 用 click 座標（_target_idx*22 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）；Ctrl+W 關唔到 → EA 冇移除；但 _removed_ok=False 照 return True → 網頁假成功 | v0.10.43 ①未確認移除 → return False ②dialog 未關 → fail ③揀 chart 改方向鍵；v0.10.44 移除 click fallback（淨係方向鍵 — 用戶一早要求）| 08-21 |
 | 84 | **配對/剷除警告視窗有機率網頁冇彈** | showControlModal 用 `!aiControlVisible` 條件 — 如果 aiControlVisible 卡住 true（之前 modal 未關）→ 新操作 showControlModal 唔會彈 → 警告視窗冇彈（用戶實測）| v0.10.45 showControlModal 強制顯示（每次 call 都彈 — 唔靠 !aiControlVisible）| 08-21 |
 | 85 | **我的配對庫顯示 script（OpenChart/ApplyTemplate 等）** | scan_ea_inventory 掃 Experts + Scripts 目錄（冇標記邊啲係 script）→ 前端配對庫顯示晒（用戶要求只顯示 EA）| v0.10.45 detector 標記 is_script（Scripts 目錄）+ 前端過濾；v0.10.46 修 is_script 冇帶出 output（inventory.append 漏字段）— 實測 Divergence=False（EA）+ ApplyTemplate/OpenChart=True（script）| 08-21 |
+| 86 | **首頁（index.html）配色冇跟新主題（仲係綠）** | 上次只改咗 login/register/dashboard 三頁，漏咗 index.html — `:root` 仲係綠色 token + 系統字體 | v0.10.47 index.html `:root` 換橙黑 token + DM Sans + 金色漸變標題 + 金底黑字（logo/btn-primary）+ hover 色跟換 — 四頁統一 | 08-21 |
+| 87 | **Dashboard Agent 卡太多格 + EA 倉庫掣唔簡潔** | Agent 卡顯示 8 格（Account/Balance/Equity/Positions/Trades/Win Rate/PF/P&L）太迫；「刷新狀態」掣重複（已有「重新整理」）；「上傳 EA 去社群庫」橙色底大掣搶眼 | v0.10.48 ①Agent 卡淨顯示 Account/Balance/Equity ②「刷新狀態」掣剷除 ③「上傳 EA 去社群庫」改普通 btn（唔再橙色底）| 08-21 |
+| 88 | **配對庫排位唔齊（狀態/掣）** | ①狀態文字 text-align:center → 起點同 header「狀態」（靠左）唔對齊 ②三粒掣 grid 2 欄太大粒 | v0.10.49 ①狀態 cell 改靠左（status-cell class）②操作掣改細粒橫排（ea-actions flex + padding 2px 8px + font 11px）③操作按鈕靠右（inline-flex + justify-content:flex-end — 用戶要求）| 08-21 |
+| 89 | **配對庫 header/data 全欄對唔齊** | Magic/Symbol/Trades/Win 用 text-align:center + P&L 用 text-align:right，但 header 全部靠左 → 上下列對唔齊（用戶實測「來源 Magic Symbol 全部都未對齊」）| v0.10.50 移除全部 data cell 嘅 text-align:center/right → 統一靠左同 header 一致（操作欄保留靠右）— 實測 header/data 全 start/left 對齊 | 08-21 |
 
 ---
 
@@ -596,7 +604,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `7f21f00`（master）— v0.10.46（警告視窗強制顯示 + 配對庫唔顯示 script + is_script 字段修復）
+**Git HEAD**: `704317f`（master）— v0.10.50（XCHANGE 橙黑主題 4 頁統一 + Dashboard 精簡 + 配對庫排位/對齊修正）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）

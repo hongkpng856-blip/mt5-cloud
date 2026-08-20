@@ -3,31 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
     <style>
         /* ─── Design System ─── */
         :root {
-            --bg: #09090b;
-            --bg-card: #18181b;
-            --bg-sidebar: #18181b;
-            --bg-muted: #27272a;
-            --bg-subtle: #1a1a1e;
-            --bg-input: #09090b;
-            --border: #27272a;
-            --border-hover: #3f3f46;
-            --text: #fafafa;
-            --text-secondary: #a1a1aa;
-            --text-muted: #71717a;
-            --accent: #10b981;
-            --accent-hover: #34d399;
-            --accent-orange: #f59e0b;
-            --accent-orange-hover: #fbbf24;
-            --danger: #ef4444;
-            --success: #10b981;
-            --info: #3b82f6;
+            --bg: #0b0e11;
+            --bg-card: #181a20;
+            --bg-sidebar: #181a20;
+            --bg-muted: #1e2329;
+            --bg-subtle: #161a20;
+            --bg-input: #0b0e11;
+            --border: #2b3139;
+            --border-hover: #3a424c;
+            --text: #eaecef;
+            --text-secondary: #848e9c;
+            --text-muted: #5e6673;
+            --accent: #f0b90b;
+            --accent-hover: #f8d33a;
+            --accent-orange: #f0b90b;
+            --accent-orange-hover: #f8d33a;
+            --danger: #f6465d;
+            --success: #0ecb81;
+            --info: #4b9fff;
             --radius: 8px;
             --radius-lg: 12px;
-            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -210,7 +212,7 @@
         .btn-primary {
             background: var(--accent);
             border-color: var(--accent);
-            color: #fff;
+            color: #0b0e11;
         }
 
         .btn-primary:hover {
@@ -221,7 +223,7 @@
         .btn-orange {
             background: var(--accent-orange);
             border-color: var(--accent-orange);
-            color: #fff;
+            color: #0b0e11;
         }
 
         .btn-orange:hover {
@@ -308,6 +310,32 @@
         }
 
         .ea-table input { width: 55px; text-align: center; }
+
+        /* ─── 2026-08-21：配對庫排位修正 ─── */
+        /* 狀態欄位文字靠左（同 header「狀態」對齊） */
+        .ea-table td.status-cell { text-align: left !important; }
+        /* 操作掣細粒 + 橫排 + 靠右（唔好咁大粒） */
+        .ea-table td:last-child { text-align: right; }
+        .ea-actions {
+            display: inline-flex !important;
+            gap: 4px;
+            flex-wrap: nowrap;
+            align-items: center;
+            white-space: nowrap;
+            justify-content: flex-end;
+        }
+        .ea-actions .btn {
+            padding: 2px 8px;
+            font-size: 11px;
+            min-height: 22px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+        /* 狀態文字縮細（配合排位） */
+        .ea-table td .status-tip { white-space: nowrap; }
 
         /* ─── Scroll ─── */
         .scroll-box {
@@ -539,7 +567,7 @@
         </select>
         <div style="display:flex;gap:8px;justify-content:flex-end">
             <button onclick="closeSymbolPicker()" style="padding:8px 14px;background:transparent;border:1px solid #3f3f46;color:#a1a1aa;border-radius:8px;font-size:12px;cursor:pointer">取消</button>
-            <button onclick="confirmSymbolPick()" style="padding:8px 18px;background:#10b981;border:none;color:#fff;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer"><i class="icon-rocket" style="margin-right:4px"></i>確認部署</button>
+            <button onclick="confirmSymbolPick()" style="padding:8px 18px;background:#f0b90b;border:none;color:#0b0e11;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer"><i class="icon-rocket" style="margin-right:4px"></i>確認部署</button>
         </div>
     </div>
 </div>
@@ -553,11 +581,6 @@
             <div class="stat-box"><div class="label">Account</div><div class="value" id="accountLogin" style="font-size:14px">— <span id="accountServer" style="font-size:11px;color:#8b949e"></span></div></div>
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
-            <div class="stat-box"><div class="label">Positions</div><div class="value" id="posCount" title="MT5 帳戶當前持倉數量（EA 開緊嘅單）">0</div></div>
-            <div class="stat-box"><div class="label">Trades</div><div class="value" id="anTrades">—</div></div>
-            <div class="stat-box"><div class="label">Win Rate</div><div class="value" id="anWinRate" style="color:#3fb950">—</div></div>
-            <div class="stat-box"><div class="label">Profit Factor</div><div class="value" id="anPF">—</div></div>
-            <div class="stat-box"><div class="label">Total P&L</div><div class="value" id="anProfit">—</div></div>
         </div>
     </div>
 
@@ -571,8 +594,7 @@
     <!-- EA Library - 平台提供 + 社群提供 -->
                 <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);margin-bottom:12px">
                 <div class="card-title"><i class="icon-package" style="color:var(--accent)"></i> EA 倉庫 <span class="badge badge-green">平台提供</span> <span id="officialCount" class="badge">0</span>
-                <button class="btn" onclick="refreshPairingLibrary()" style="margin-left:auto;padding:2px 10px;font-size:11px" title="手動刷新 EA 倉庫 + 配對庫所有狀態"><i class="icon-refresh-cw" style="font-size:11px"></i> 刷新狀態</button>
-                <button class="btn btn-orange" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;margin-left:auto"><i class="icon-upload"></i> 上傳 EA 去社群庫</button>
+                <button class="btn" id="devUploadBtn" onclick="document.getElementById('devUploadInput').click()" style="display:none;margin-left:auto"><i class="icon-upload"></i> 上傳 EA 去社群庫</button>
                 <input type="file" id="devUploadInput" accept=".mq5" style="display:none" onchange="devUploadEA()">
                 </div>
                 <div class="scroll-box" style="max-height:250px">
@@ -614,7 +636,7 @@
     <div class="card">
         <div class="card-title"><i class="icon-history" style="color:var(--accent)"></i> 活動記錄 <span class="badge badge-gray" id="activityCount">0</span>
             <label style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);cursor:pointer" title="顯示/隱藏「已更新資料庫」恆常記錄">
-                <input type="checkbox" id="showDbUpdates" style="accent-color:#10b981" onchange="toggleDbUpdates()"> 顯示資料庫更新
+                <input type="checkbox" id="showDbUpdates" style="accent-color:#f0b90b" onchange="toggleDbUpdates()"> 顯示資料庫更新
             </label>
             <button class="btn btn-sm" onclick="fetchActivity()" title="重新整理"><i class="icon-refresh-cw"></i></button>
         </div>
@@ -900,7 +922,7 @@ async function loadEAConfig() {
             html += `<tr>
                 <td><b>${name}</b></td>
                 <td><span style="font-size:10px" class="${isSystem?'badge badge-blue':isOfficial?'badge badge-green':'badge badge-gray'}">${isSystem?'系統':isOfficial?'官方':(eaMappings[name]?'自訂':'本機')}</span></td>
-                <td style="text-align:center;white-space:nowrap">
+                <td class="status-cell" style="white-space:nowrap">
                     ${runtimeStatus[name]==='running'
                         ? '<span class="status-tip" style="font-size:11px;color:var(--success);font-weight:600" data-tip="EA 運行中 — 心跳檔案於 5 分鐘內持續更新，已成功附加至圖表並正常運作。"><i class="icon-heart" style="font-size:10px"></i> 心跳運行</span>'
                         : runtimeStatus[name]==='starting'
@@ -913,17 +935,17 @@ async function loadEAConfig() {
                         ? '<span class="status-tip" style="font-size:11px;color:var(--text-muted);font-weight:600" data-tip="MT5 記錄此 EA 已從圖表移除（關閉圖表／移除 EA）。如要恢復請按「部署」。"><i class="icon-x-circle" style="font-size:10px"></i> 圖表移除</span>'
                         : '<span class="status-tip" style="font-size:11px;color:#d29922;font-weight:600" data-tip="EA 心跳暫停 — 心跳檔案超過 30 秒未有更新。可能原因：市場休市導致心跳暫停（不代表 EA 故障）／圖表未附加 EA／EA 已終止。恢復運行後自動轉為「心跳運行」。"><i class="icon-pause-circle" style="font-size:10px"></i> 心跳暫停</span>'}
                 </td>
-                <td style="text-align:center;font-size:12px;color:${_alive?'var(--text)':'var(--text-dim)'}">${_alive?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
-                <td style="text-align:center;font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
+                <td style="font-size:12px;color:${_alive?'var(--text)':'var(--text-dim)'}">${_alive?magic:'—'}<input type="hidden" class="ea-magic" data-ea="${name}" value="${magic}"></td>
+                <td style="font-size:12px;color:var(--text-dim)" title="部署後顯示所選品種">
                     <span>${sym||'—'}</span>
                     <select class="ea-sym" data-ea="${name}" style="display:none">${allSymbols.map(s => `<option ${s===sym?'selected':''}>${s}</option>`).join('')}</select>
                     <input type="hidden" class="ea-tf" data-ea="${name}" value="${tf}">
                 </td>
-                <td style="text-align:center;color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
-                <td style="text-align:center;color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
-                <td style="text-align:right;color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
+                <td style="color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
+                <td style="color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${wr>0?wr+'%':'—'}</td>
+                <td style="color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+':'')+'$'+profit.toFixed(2):'—'}</td>
                 <td style="white-space:nowrap">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:150px">
+                    <div class="ea-actions">
                     <button class="btn" style="padding:2px 8px;font-size:11px" onclick="showSymbolPicker('${name}','${tf||'H1'}','${(magic||'240701')}','${lot||'1.00'}','${sym||''}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i> 部署</button>
                     ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-file-chart-column&quot; style=&quot;color:var(--accent)&quot;></i> 診斷報告', '顯示 <b>${name}</b> 嘅診斷報告（Magic: ${magic||'—'} / Symbol: ${sym||'—'}）？', () => showReport('${magic}','${sym}'))" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i> 報告</button>`:''}
           ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-trash-2&quot; style=&quot;color:var(--danger)&quot;></i> 刪除 EA', '確定刪除 <b>${name}</b>？<br><br>將刪除：<br>• 本機檔案（.mq5 / .ex5）<br>• 配對設定（Symbol / Magic / 時間框架）<br><br>此操作不可恢復 — 需重新配對方可使用。', () => deleteEA('${name.split('.')[0]}'))" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i> 刪除</button>`:''}
@@ -1254,7 +1276,7 @@ async function pollAiControl() {
                         var mk, cl;
                         if (txt.indexOf('失敗') >= 0) { mk = '失敗'; cl = '#f87171'; hasFail = true; }
                         else if (st === 'doing') { mk = '進行中'; cl = '#fbbf24'; hasDoing = true; }
-                        else if (st === 'done') { mk = '完成'; cl = '#34d399'; }
+                        else if (st === 'done') { mk = '完成'; cl = '#0ecb81'; }
                         else { mk = '等待'; cl = '#71717a'; }
                         html += '<div style="padding:3px 0;font-size:13px;line-height:1.6;color:' + cl + '"><span style="font-weight:600;margin-right:6px">[' + mk + ']</span>' + txt + '</div>';
                     }
@@ -1272,7 +1294,7 @@ async function pollAiControl() {
                     if (prog) {
                         if (hasFail) { prog.textContent = '失敗'; prog.style.color = '#f87171'; prog.style.display = 'block'; }
                         else if (hasDoing) { prog.textContent = '執行中'; prog.style.color = '#fbbf24'; prog.style.display = 'block'; }
-                        else { prog.textContent = '已完成'; prog.style.color = '#34d399'; prog.style.display = 'block'; }
+                        else { prog.textContent = '已完成'; prog.style.color = '#0ecb81'; prog.style.display = 'block'; }
                     }
                 }
             } else if (sc && steps.length === 0) {
