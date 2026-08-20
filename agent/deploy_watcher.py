@@ -1107,6 +1107,8 @@ def process_pause_cmd(fp):
         # 🚨 2026-08-12 FIX：步驟順序反映實際動作 — auto_attach --remove（移除圖表）期間顯示「移除圖表 EA 進行中」（唔係「檢查圖表」）
         _prog_steps([f'開始暫停 {ea_name}'], '移除圖表 EA（停止交易）')
         try:
+            # 🚨 2026-08-21 FIX：_PYEXE 未定義（run_auto_attach 入面先定義 — process_pause_cmd 唔同 scope）→ NameError → 剷除卡住
+            _PYEXE = _PY_EXE
             result = subprocess.run(
                 [_PYEXE, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
                 timeout=90, capture_output=True, encoding='utf-8', errors='replace',  # ⚠️ GBK 修
