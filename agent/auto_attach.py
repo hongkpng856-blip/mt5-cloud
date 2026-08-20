@@ -2344,11 +2344,35 @@ def _ea_loaded_in_log(ea_name, symbol):
         _sym = (symbol or '').upper()
         _found = False
         _removed_after = False
+        # 🚨 2026-08-20 FIX（假成功根治）：loaded 記錄本身要新鮮（唔可以淨係 log 檔新鮮）
+        # 舊記錄（例如 18:32 Bollinger EURUSD loaded）喺 log 檔 → log 檔新鮮 → 誤判 True → 假成功
+        # → parse log 行時間（HH:MM:SS）對比而家 — 只認最近 300s 內嘅 loaded
+        import datetime as _dt
+        _now_dt = _dt.datetime.now()
+        _cutoff_dt = _now_dt - _dt.timedelta(seconds=300)
+        _found_ts = None
         for line in text.splitlines():
             if ea_name in line and ('loaded successfully' in line.lower() or '已启动' in line or '已啟動' in line):
-                if _sym in line or 'loaded successfully' in line.lower():
-                    _found = True
-                    _removed_after = False  # 新 loaded — 重置
+                # parse 行時間（log 格式: XX\t0\tHH:MM:SS.mmm\tExperts\texpert ...）
+                _m_ts = None
+                try:
+                    _parts = line.split('\t')
+                    for _p in _parts:
+                        _p2 = _p.strip()
+                        if len(_p2) >= 8 and _p2[2] == ':' and _p2[5] == ':':
+                            _hh, _mm, _ss = int(_p2[0:2]), int(_p2[3:5]), int(_p2[6:8])
+                            _m_ts = _dt.datetime(_now_dt.year, _now_dt.month, _now_dt.day, _hh, _mm, _ss)
+                            break
+                except Exception:
+                    _m_ts = None
+                # 過午夜（23:59 → 00:00）— 日期跳一日 — 加一日修正
+                if _m_ts and _m_ts > _now_dt + _dt.timedelta(hours=12):
+                    _m_ts -= _dt.timedelta(days=1)
+                if _m_ts and _m_ts >= _cutoff_dt:
+                    if _sym in line or 'loaded successfully' in line.lower():
+                        _found = True
+                        _found_ts = _m_ts
+                        _removed_after = False  # 新 loaded — 重置
             elif _found and ea_name in line and 'removed' in line.lower():
                 _removed_after = True
         return _found and not _removed_after
