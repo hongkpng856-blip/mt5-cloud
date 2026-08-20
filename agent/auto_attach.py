@@ -1817,7 +1817,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     print(f"⚠️ 新方法開 chart 失敗: {_eneg2}")
 
                 time.sleep(1)
-                print(f"📋 OpenChart script 已執行（開 {_sym or 'EURUSD'} 圖表 — active）" if _oc_ok2 else "⚠️ OpenChart script 執行未確認（繼續 — 唔阻塞）")
+                if not _oc_ok2:
+                    print(f"❌ 開 chart 失敗（{_sym}）— 唔用備用方案（用戶要求）")
+                    return False
                 # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
