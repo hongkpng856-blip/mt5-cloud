@@ -563,6 +563,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 - v0.10.13 + stress script 修復：**5/5 PASS**（Round 1-5 全部 ✅，9 個部署 log=True + hb=True age 0.1-1.1s）
 - **Root cause 鏈（多 EA 失敗真因）**：stress script 連住 POST deploy（非阻塞）→ watcher spawn 多個 auto_attach 同時跑搶 MT5 → 有一隻失敗；改「等 deploy_result activity log（watcher 真正完成）先 deploy 下一隻」後 **5/5**
 - **已根治（v0.10.8-10.13）**：① 熱鍵 load 時序（熱鍵必須「MT5 關閉狀態下寫入」先 load — mtime vs MT5 啟動時間檢查）② 熱鍵 load 驗證 gate（開完 MT5 poll send 測試彈 Properties）③ 驗證 fail 自動 restart 重寫 ④ 批次熱鍵預載（一次 restart 寫入全部 .ex5 熱鍵 → 之後 skip restart）⑤ watcher tee auto_attach 完整 output 去 aa_debug.log（診斷用）
+- **🎉 連續兩次 5/5 PASS（stress 16 + 17 — 2026-08-20）**：穩定性確認 — 兩次全部 Round ✅，9 個部署 log=True + hb=True（age 0.3-4.0s）。⚠️ 跑 stress 前檢查：server :5001 要 listen（crash 咗 → WinError 10061 → stress 即刻死）+ watcher 一定要 python.exe（watchdog 有時用 pythonw 重啟 → auto_attach hang）
 
 **已知問題（下次 session 繼續）**：
 1. ✅ **熱鍵預載後未等 load**（v0.10.5 已修）— `_ensure_hotkey_loaded` 開完 MT5 後加熱鍵 load 驗證 gate（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試）；壓力測試 Round 1 fail（時序 race）待實機驗證修復
