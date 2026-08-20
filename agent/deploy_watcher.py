@@ -116,7 +116,8 @@ def run_auto_attach(cmd_data):
     ea_name = cmd_data.get('ea_name', '')
     symbol = cmd_data.get('symbol', 'EURUSD')
     tf = cmd_data.get('tf', 'H1')
-    magic = cmd_data.get('magic', '240701')
+    # 🚨 2026-08-20 FIX：magic 空 string → fallback default（auto_attach --magic 空 → argparse 失敗 → 假成功）
+    magic = cmd_data.get('magic') or '240701'
     lot = cmd_data.get('lot', '1.00')
     
     print(f"\n{'='*50}")

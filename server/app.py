@@ -2769,7 +2769,8 @@ def api_deploy():
     ea_name = data.get('ea_name', '')
     symbol = data.get('symbol', 'EURUSD')
     tf = data.get('tf', 'H1')
-    magic = data.get('magic', '240701')
+    # 🚨 2026-08-20 FIX：magic 空 string（前端未 alive EA 傳 ''）→ fallback default（否則 auto_attach --magic 空 → argparse 失敗 → 假成功）
+    magic = data.get('magic') or '240701'
     lot = data.get('lot', '1.00')
     _last_deploy_time[ea_name] = time.time()
     
