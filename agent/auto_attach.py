@@ -2479,130 +2479,6 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             ensure_mt5_window(mt5_pid)
         except Exception:
             pass
-        # 🚨 2026-08-20（批次預載優化 v0.10.7）：開完 MT5 之後驗證熱鍵 load（無論熱鍵新寫定已有）
-        # 問題：_ensure_hotkey_loaded「已有熱鍵 → return」skip 咗開完 MT5 嘅熱鍵 load 驗證
-        # → MT5 啱開機熱鍵未 load → send 熱鍵失效（EMA_Cross Ctrl+2 案例）
-        # 修正：呢度 poll send 測試熱鍵 → 彈 Properties = load 成功（冇熱鍵嘅 EA skip）
-        try:
-            _is_script_ea = ea_name.startswith('OpenChart') or ea_name == 'OpenChart_Helper'  # 提前定義（Step 3 都會用）
-            _hk_map_t = load_hotkey_map()
-            _combo_t = _hk_map_t.get(ea_name)
-            if _combo_t and not _is_script_ea:
-                import ctypes as _ct_t
-                def _hotkey_loads():
-                    try:
-                        from pywinauto import Application as _AppT
-                        _a_t = _AppT(backend='win32').connect(process=mt5_pid, timeout=5)
-                        _w_t = _a_t.window(class_name='MetaQuotes::MetaTrader::5.00')
-                        _w_t.set_focus()
-                        time.sleep(0.5)
-                        # click chart 區域（熱鍵附加 EA 需要 active chart）
-                        try:
-                            import pyautogui as _pg_t
-                            _pg_t.FAILSAFE = False
-                            _r_t = _w_t.rectangle()
-                            _pg_t.click(_r_t.left + _r_t.width() // 2, _r_t.top + _r_t.height() // 2)
-                            time.sleep(0.5)
-                        except Exception:
-                            pass
-                        from pywinauto.keyboard import send_keys as _sk_t
-                        _sk_t(_combo_t)
-                        time.sleep(2.5)
-                        # EnumWindows 搵 Properties dialog（標題含 EA 名）
-                        _found_t = False
-                        _dlg_t_hwnd = None
-                        def _cb_t(_h, _x):
-                            nonlocal _found_t, _dlg_t_hwnd
-                            if _ct_t.windll.user32.IsWindowVisible(_h):
-                                _cls_t = _ct_t.create_unicode_buffer(64)
-                                _ct_t.windll.user32.GetClassNameW(_h, _cls_t, 64)
-                                if '#32770' in _cls_t.value:
-                                    _tl_t = _ct_t.windll.user32.GetWindowTextLengthW(_h)
-                                    _tb_t = _ct_t.create_unicode_buffer(_tl_t + 1)
-                                    _ct_t.windll.user32.GetWindowTextW(_h, _tb_t, _tl_t + 1)
-                                    if ea_name in _tb_t.value or '1.00' in _tb_t.value:
-                                        _found_t = True
-                                        _dlg_t_hwnd = _h
-                                        return False
-                            return True
-                        _ct_t.windll.user32.EnumWindows(_ct_t.WINFUNCTYPE(_ct_t.c_bool, _ct_t.c_size_t, _ct_t.c_size_t)(_cb_t), 0)
-                        if _found_t:
-                            # 撳「取消」關 dialog（唔好誤掛 EA）
-                            try:
-                                from pywinauto import Application as _AppD
-                                _d_t = _AppD(backend='win32').connect(handle=_dlg_t_hwnd, timeout=3)
-                                _dw_t = _d_t.window(handle=_dlg_t_hwnd)
-                                for _b in _dw_t.children(class_name='Button'):
-                                    if '取消' in _b.window_text() or 'Cancel' in _b.window_text():
-                                        _ct_t.windll.user32.SendMessageW(_ct_t.c_void_p(int(_b.element_info.handle)), 0x00F5, 0, 0)
-                                        break
-                            except Exception:
-                                _sk_t('{ESC}')
-                            return True
-                        try:
-                            _sk_t('{ESC}')
-                        except Exception:
-                            pass
-                        return False
-                    except Exception:
-                        return False
-                # 🚨 2026-08-20 v0.10.13：熱鍵 load 驗證 fail → restart MT5（關→寫→開）→ 再驗證一次
-                # （多 EA 場景：第二隻部署時 MT5 啱 restart 完/熱鍵未 load → send 失效 → 要 restart 重寫）
-                _hk_ok_t = _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（{_combo_t} 彈 Properties）', interval=4)
-                if not _hk_ok_t:
-                    print(f"⚠️ 熱鍵 load 驗證 fail（{_combo_t} 45s 冇彈）— restart MT5 重寫熱鍵再試")
-                    try:
-                        _closed_t = _wait_until(lambda: not _mt5_alive(), 20, 'MT5 已關閉（重寫前）', interval=2)
-                        if not _closed_t:
-                            import subprocess as _sp_t
-                            _sp_t.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
-                            time.sleep(4)
-                        # 重寫 hotkeys.ini（保留現有 mapping — 確保 ea_name 喺入面）
-                        import ctypes as _ct_rw
-                        _hk_ini_rw = None
-                        _root_rw = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                        for _d_rw in os.listdir(_root_rw):
-                            _pp_rw = os.path.join(_root_rw, _d_rw, 'config', 'hotkeys.ini')
-                            if os.path.isfile(_pp_rw):
-                                _hk_ini_rw = _pp_rw
-                                break
-                        if _hk_ini_rw:
-                            _experts_rw = {}
-                            try:
-                                _raw_rw = open(_hk_ini_rw, 'rb').read()
-                                _txt_rw = _raw_rw.decode('utf-16', errors='ignore')
-                                _sec_rw = None
-                                for _ln_rw in _txt_rw.splitlines():
-                                    _ls_rw = _ln_rw.strip().replace('\r\n', '')
-                                    if _ls_rw == '<experts>': _sec_rw = True; continue
-                                    if _ls_rw == '</experts>': _sec_rw = None; continue
-                                    if '=' in _ls_rw and _sec_rw:
-                                        _kk_rw, _vv_rw = _ls_rw.split('=', 1)
-                                        _experts_rw[_kk_rw] = _vv_rw
-                            except Exception:
-                                pass
-                            _experts_rw[f'Experts\\{ea_name}.ex5'] = _combo_t.replace('^', 'Ctrl+').replace('!', 'Alt+')
-                            _lines_rw = ['<experts>']
-                            for _k_rw, _v_rw in _experts_rw.items():
-                                _lines_rw.append(f'{_k_rw}={_v_rw}')
-                            _lines_rw.append('</experts>')
-                            with open(_hk_ini_rw, 'wb') as _f_rw:
-                                _f_rw.write(('\r\n'.join(_lines_rw) + '\r\n').encode('utf-16'))
-                            print(f"✅ 熱鍵已重寫（含 {ea_name}={_combo_t}）")
-                        # 開 MT5
-                        subprocess.Popen([MT5_PATH])
-                        _wait_until(lambda: wait_for_mt5(5), 90, 'MT5 已重開 + ready', interval=3)
-                        # 🚨 2026-08-20 FIX：restart 後更新 mt5_pid（否則後續 Navigator/平鋪/快捷鍵用舊 PID → Process not found → 部署卡死）
-                        _new_pid_t = find_mt5_pid()
-                        if _new_pid_t:
-                            mt5_pid = _new_pid_t
-                            print(f"✅ MT5 PID 已更新: {mt5_pid}")
-                        # 再驗證熱鍵 load
-                        _wait_until(_hotkey_loads, 45, f'熱鍵 load 驗證（重開後 {_combo_t}）', interval=4)
-                    except Exception as _e_rw:
-                        print(f"⚠️ restart 重寫熱鍵失敗: {_e_rw}")
-        except Exception:
-            pass
         # ⚠️ 統一 Navigator 位置（2026-08 用戶要求：操作前 Navigator 最大 + 固定位置）
         try:
             ensure_navigator_unified(mt5_pid)
@@ -2627,16 +2503,9 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         else:
             success = attach_ea_navigator(ea_name, mt5_pid)
         if not success:
-            # 🚨 2026-08-12 FIX：重試時唔建立新圖表（open_chart=False — 重用現有圖表 — 之前每次重試建立新圖表 → 「開好多圖表」）
-            print(f"⚠️ 快捷鍵方法失敗 — 自動重試快捷鍵（×2，唔再建立新圖表）...")
-            for _rt2 in range(2):
-                check_abort()
-                success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol, open_chart=False)
-                if success:
-                    break
-                time.sleep(2)
-        if not success:
-            print("⚠️ 快捷鍵重試後都失敗（不再試 Navigator — 6093 免疫）")
+            # 🚨 2026-08-20（用戶要求：唔需要備用方案）：失敗直接 fail — 唔重試快捷鍵
+            # （之前重試 ×2 唔開新 chart → 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡：Heikin_Ashi 掛錯 EURUSD 案例）
+            print(f"❌ 附加失敗（{ea_name}）— 唔重試（避免掛錯 chart）")
         
         if not success:
             print("❌ Failed to attach EA")
