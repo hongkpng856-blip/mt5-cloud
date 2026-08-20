@@ -2896,3 +2896,49 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     return True
 
 
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='MT5 EA Auto-Attach Tool')
+    parser.add_argument('--ea', required=True, help='EA name (e.g. ADX_Trend)')
+    parser.add_argument('--symbol', default='EURUSD', help='Symbol (default: EURUSD)')
+    parser.add_argument('--tf', default='H1', help='Timeframe (default: H1)')
+    parser.add_argument('--lot', type=float, default=1.0, help='Lot size (default: 1.0)')
+    parser.add_argument('--magic', type=int, default=240701, help='Magic number')
+    parser.add_argument('--restart', action='store_true', help='Restart MT5 first')
+    parser.add_argument('--remove', action='store_true', help='Remove EA from chart (真暫停)')
+    args = parser.parse_args()
+    
+    if args.remove:
+        # 真暫停模式：移除圖表 EA
+        from control_guard import acquire, release, ControlAborted
+        try:
+            acquire(f'暫停 {args.ea}')
+        except Exception:
+            pass
+        try:
+            ok = remove_ea_from_chart(args.ea)
+            print(f"{'✅' if ok else '❌'} 暫停 {args.ea} {'成功' if ok else '（圖表可能冇 EA）'}")
+        finally:
+            try:
+                release()
+            except Exception:
+                pass
+        import sys
+        sys.exit(0 if ok else 1)
+    
+    inputs = {
+        'LotSize': f'{args.lot:.2f}',
+        'MagicNumber': str(args.magic),
+        'EnableLog': 'true',
+    }
+    
+    result = auto_attach_ea(
+        ea_name=args.ea,
+        symbol=args.symbol,
+        timeframe=args.tf,
+        inputs=inputs,
+        do_restart=args.restart,
+    )
+    
+    sys.exit(0 if result else 1)
