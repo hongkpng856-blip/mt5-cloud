@@ -1779,40 +1779,19 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 # Alt+F → Enter → Enter → Space → 打 symbol → Enter
                 # （pyautogui 實測 work — 取代 Ctrl+9 熱鍵 — 唔受 MT5 重啟洗走 hotkeys.ini <scripts> 區影響）
                 # 成功（active chart = _sym）→ skip Ctrl+9
-                # 🚨 2026-08-20 FIX（chart 累積根治 — 用戶指正）：開新 chart 前，檢查有冇「目標 symbol 嘅現有 chart」— 有就 focus 用返（唔開新）
                 _oc_ok2 = False
-                try:
-                    for _d_r in win.descendants():
-                        if _d_r.element_info.class_name == 'MDIClient':
-                            for _c_r in _d_r.children():
-                                if 'Afx' in _c_r.element_info.class_name:
-                                    _ct_r = _c_r.window_text()
-                                    if _sym in _ct_r.upper():
-                                        try:
-                                            _c_r.set_focus()
-                                            print(f"♻️ 重用現有 {_sym} chart（{_ct_r[:30]}）— 唔開新")
-                                            _oc_ok2 = True
-                                        except Exception:
-                                            pass
-                                        break
-                            break
-                except Exception:
-                    pass
                 try:
                     import pyautogui as _pg_new2
                     _pg_new2.FAILSAFE = False
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    if _oc_ok2:
-                        pass  # 重用咗 — skip 開新 chart
-                    else:
-                        print(f"📌 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
-                        _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
-                        _pg_new2.press('enter'); time.sleep(1.5)
-                        _pg_new2.press('enter'); time.sleep(2)
-                        _pg_new2.press('space'); time.sleep(1.5)
-                        _pg_new2.typewrite(_sym, interval=0.2); time.sleep(1)
-                        _pg_new2.press('enter'); time.sleep(3)
+                    print(f"📌 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
+                    _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
+                    _pg_new2.press('enter'); time.sleep(1.5)
+                    _pg_new2.press('enter'); time.sleep(2)
+                    _pg_new2.press('space'); time.sleep(1.5)
+                    _pg_new2.typewrite(_sym, interval=0.2); time.sleep(1)
+                    _pg_new2.press('enter'); time.sleep(3)
                     _new_title2 = win.window_text()
                     # 🚨 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
                     # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart 存在）— chart 開咗就算成功
