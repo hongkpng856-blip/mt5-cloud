@@ -2667,7 +2667,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                 import re as _re_r
                 _last_r = None
                 for _ln_r in _txt_r.splitlines():
-                    if _re_r.search(rf'{re.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)', _ln_r):
+                    if _re_r.search(rf'{_re_r.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)', _ln_r):
                         if 'removed' in _ln_r or '已停止' in _ln_r:
                             _last_r = 'stopped'
                         elif 'loaded successfully' in _ln_r or '已啟動' in _ln_r:
