@@ -2876,6 +2876,28 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         except Exception as e:
             print(f"⚠️ 移除按鈕 click 失敗: {e}")
             return False
+        # 🚨 2026-08-20 FIX（用戶實測「導航剷除咗但圖表冇剷除」）：移除 EA 後關埋 chart 窗口
+        # （之前只 ExpertRemove — chart 留低 → 用戶見圖表冇剷除）
+        # 關 active chart（移除 dialog 係喺 active chart 開嘅 — 移除完嗰個 chart 唔需要留）
+        try:
+            import ctypes as _ct_c
+            _u_c = _ct_c.windll.user32
+            # 搵 active chart（Afx class + 有標題）— 關第一個（active 通常係第一個）
+            for _d_c in win.descendants():
+                if _d_c.element_info.class_name == 'MDIClient':
+                    for _c_c in _d_c.children():
+                        if 'Afx' in _c_c.element_info.class_name and _c_c.window_text().strip():
+                            _ctxt_c = _c_c.window_text()
+                            try:
+                                _u_c.SendMessageW(_ct_c.c_void_p(int(_c_c.element_info.handle)), 0x0010, 0, 0)
+                                print(f"✅ 已關 chart: {_ctxt_c[:30]}")
+                                time.sleep(1)
+                            except Exception:
+                                pass
+                            break
+                    break
+        except Exception:
+            pass
     else:
         print("⚠️ 搵唔到「移除」按鈕")
         try:
