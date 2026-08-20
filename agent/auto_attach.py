@@ -2824,21 +2824,26 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         _target_idx = 0
     print(f"📌 揀 chart [{_target_idx}]（{_items[_target_idx] if _target_idx < len(_items) else '?'}）")
 
-    # 6. click 目標行（ListView 揀選）→ Enter（關閉 dialog + 彈返 chart）
+    # 6. 揀目標 chart → Enter（關閉 dialog + 彈返 chart）
+    # 🚨 2026-08-21 FIX（Breakout AMD 案例）：用方向鍵揀（唔靠座標 — click 行座標 _target_idx*22 唔可靠 — ListView 可能 scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）
     try:
-        _r_lv = _lv_found.rectangle()
-        _row_y = _r_lv.top + 20 + _target_idx * 22  # 每行 ~22px
-        _pg.click(_r_lv.left + 100, _row_y)
-        time.sleep(1)
-    except Exception:
-        # fallback：方向鍵揀（Home + Down ×N）
         _sk('{HOME}')
-        time.sleep(0.3)
+        time.sleep(0.5)
         for _kd in range(_target_idx):
             _sk('{DOWN}')
-            time.sleep(0.2)
-    _sk('{ENTER}')
-    time.sleep(2)
+            time.sleep(0.3)
+        _sk('{ENTER}')
+        time.sleep(2)
+    except Exception:
+        try:
+            _r_lv = _lv_found.rectangle()
+            _row_y = _r_lv.top + 20 + _target_idx * 22
+            _pg.click(_r_lv.left + 100, _row_y)
+            time.sleep(1)
+            _sk('{ENTER}')
+            time.sleep(2)
+        except Exception:
+            pass
 
     # 7. 確認 dialog 關咗（彈返 chart）
     _dlgs_now = _dlgs()
@@ -2846,6 +2851,16 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         print("⚠️ 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
         _sk('{ENTER}')
         time.sleep(2)
+        _dlgs_now2 = _dlgs()
+        if any('窗口' in t for t, h in _dlgs_now2):
+            # 🚨 2026-08-21 FIX（Breakout AMD 案例 — 網頁話成功但 MT5 卡窗口 dialog）：
+            # dialog 再試都未關 → fail（唔好繼續 Ctrl+W 亂關 — 關唔到 + 誤判成功）
+            print(f"❌ 窗口 dialog 未關（再試 Enter 都冇效）— 剷除中止（唔好誤判成功）")
+            try:
+                _sk('{ESC}')
+            except Exception:
+                pass
+            return False
 
     # 8. Ctrl+W 關閉該 chart（EA 一齊移除）
     _sk('^w')
@@ -2891,7 +2906,10 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         pass
 
     if not _removed_ok:
-        print(f"⚠️ {ea_name} 15s 內未確認移除（可能 chart 關咗但 EA 未 remove）")
+        print(f"❌ {ea_name} 15s 內未確認移除（chart 可能冇關 / dialog 卡住 — Breakout AMD 案例）")
+        # 🚨 2026-08-21 FIX（用戶實測「網頁話成功但 MT5 卡窗口 dialog」）：未確認移除 → return False（唔好話成功）
+        # 之前無條件 print「✅ 完成」+ return True → 假成功（activity log pause_result → 網頁話成功）
+        return False
     print(f"✅ 暫停/剷除 {ea_name} 完成（Ctrl+W 關 chart）")
     return True
 
