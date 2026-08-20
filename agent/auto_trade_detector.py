@@ -186,6 +186,8 @@ def scan_ea_inventory():
     # （Free Robots/Examples/Advisors — 樣本 EA 唔應該顯示）
     eas = {}
     for exp_dir in experts_dirs:
+        # 🚨 2026-08-21 FIX（用戶要求「我的配對庫唔顯示 script — 只顯示 EA」）：標記 Scripts 目錄 = script
+        _is_scr_dir = 'Scripts' in exp_dir
         scan_dirs = [exp_dir]
         for scan_dir in scan_dirs:
             if not os.path.isdir(scan_dir):
@@ -202,7 +204,8 @@ def scan_ea_inventory():
                         'file': f,
                         'size': stat.st_size,
                         'modified': time.strftime('%Y-%m-%d %H:%M', time.localtime(stat.st_mtime)),
-                        'path': path
+                        'path': path,
+                        'is_script': _is_scr_dir  # 🚨 Scripts 目錄 = script（前端配對庫過濾用）
                     }
 
     # 🚨 2026-08-13 改：deployed 判斷用熱鍵（hotkeys.ini — 實際部署配置 — 唔靠歷史 log）

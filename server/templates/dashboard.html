@@ -806,7 +806,8 @@ async function fetchEAInventory() {
             eaDeployStatus[ea.name] = {
                 deployed: ea.deployed,
                 configured: ea.configured,
-                config_status: ea.config_status
+                config_status: ea.config_status,
+                is_script: ea.is_script  // 🚨 Scripts 目錄標記（配對庫過濾 — 唔顯示 script）
             };
         });
     } catch(e) {
@@ -839,10 +840,10 @@ async function loadEAConfig() {
         const removed = eaMappings['_removed'] || [];
 
         // 過濾：只要未刪除嘅 + 本機有檔案（detector inventory）— MT5 刪除咗就自動消失
-        const activeEAs = pairedEAs.filter(name => !removed.includes(name) && eaDeployStatus[name]);
+        const activeEAs = pairedEAs.filter(name => !removed.includes(name) && eaDeployStatus[name] && !(eaDeployStatus[name].is_script));
 
     // 2026-08-11：配對庫顯示「本機 EA」（未配對都顯示 — 用戶想要）+ 每行有狀態標記（已配對/未配對 — 唔會誤會）
-        const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n));
+        const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n) && !(eaDeployStatus[n] && eaDeployStatus[n].is_script));
         const allEAs = [...new Set([...activeEAs, ...localEA])];
 
     // 排序： 運行中喺上面， 停止中喺下面；已配對優先
@@ -1202,7 +1203,9 @@ function showControlModal(actionDesc, detailMsg) {
   // 2026-08-10：操作名（prog）隱藏 — 已併入步驟第一條（用戶要求：操作名整合步驟列表 — 同電腦版一致）
     if (prog) { prog.style.display = 'none'; prog.textContent = actionDesc || '正在處理'; prog.style.color = 'inherit'; }
     if (desc) desc.textContent = detailMsg || '請勿操作鍵盤或滑鼠！';
-    if (modal && !aiControlVisible) { modal.classList.add('show'); aiControlVisible = true; }
+    // 🚨 2026-08-21 FIX（用戶實測「配對/剷除警告視窗有機率網頁冇彈」）：強制顯示 — 唔好淨靠 !aiControlVisible
+    // （如果 aiControlVisible 卡住 true — 之前 modal 未關 — 新操作 showControlModal 唔會彈 → 警告視窗冇彈）
+    if (modal) { modal.classList.add('show'); aiControlVisible = true; }
   // 2026-08-11：記錄「當前任務」時間戳（poll 用嚟判斷舊 steps 唔顯示 — 新任務開始唔殘留上一個操作）
     window._modalShownAt = Date.now();
   // 2026-08-12：新任務開始 → 清空步驟區 + 顯示「等待操作開始」
