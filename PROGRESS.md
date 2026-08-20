@@ -83,6 +83,10 @@
 | **v0.10.48** | 2026-08-21 | 🔧 **Dashboard 精簡** — ①Agent 卡淨顯示 Account/Balance/Equity（移除 Positions/Trades/Win Rate/Profit Factor/Total P&L）②EA 倉庫「刷新狀態」掣剷除 ③「上傳 EA 去社群庫」由橙色 btn-orange 改普通 btn |
 | **v0.10.49** | 2026-08-21 | 🔧 **配對庫排位修正** — ①狀態文字靠左（同 header「狀態」對齊 — 之前 text-align:center 起點唔同）②三粒掣（部署/報告/刪除）改細粒 + 橫排（之前 grid 2 欄太大粒）③操作按鈕靠右（inline-flex + justify-content:flex-end）|
 | **v0.10.50** | 2026-08-21 | 🔧 **配對庫表格全欄位對齊** — Magic/Symbol/Trades/Win/P&L 移除 text-align:center/right → 全部靠左同 header 一致（之前 header left + data center/right → 上下對唔齊）|
+| **v0.10.51** | 2026-08-21 | 🔧 **Trades/Win/P&L 真實數據** — ①agent.py `get_mt5_status` 加收集 history deals（之前冇 → `/api/analysis` 永遠「No data yet」）②`/api/analysis` 過濾 magic 0（平台手動交易唔計入 EA 統計）③前端改 magic 聚合（EA config 冇存 symbol — 之前 msKey 對唔上）④Win 顯示 0%（唔再隱藏）+ P&L 格式修正（`-$1.27` 唔係 `$-1.27`）|
+| **v0.10.52** | 2026-08-21 | 🎯 **新增 TestTrades.mq5 測試 EA** — 持續開單→平倉（每 15 秒開 0.10 lot，持倉 10 秒平，交替買賣）產生真實 Trades/Win/P&L。**EA 自己 track 統計寫入 `state_<EA>.json`**（trades/wins/losses/profit — 因 MT5 Python history API 讀唔到新 deals（build 6120 caching）→ EA 層面自己計最準）→ server `/api/ea-config` 讀 EA stats 返回前端。實測：164 單 / 18.9% / -$13.00 持續跳動 |
+| **v0.10.53** | 2026-08-21 | 🔧 **休市偵測（非交易時間）** — server 用 `symbol_info_tick` 最後 tick（正規化 UTC+3）> 5 分鐘 = 休市 → `market_closed` map 返回前端；心跳暫停 + 休市 → 顯示「休市」（灰色 — 正常，唔係 EA 故障）vs 心跳暫停 + 開市 → 顯示「心跳暫停」（黃色 — 有問題）。實測：AMD 休市偵測到（true）/ EURUSD 開市（false）|
+| **v0.10.54** | 2026-08-21 | 🧹 **清歷史 script 殘留** — OpenChart/StartAgentHelper config 配對刪除（歷史測試遺留 — script 唔係 EA，唔應該配對；`market_closed` 唔再見到佢哋）— config 淨返 Divergence + TestTrades 兩隻真 EA |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -356,6 +360,10 @@
 | 87 | **Dashboard Agent 卡太多格 + EA 倉庫掣唔簡潔** | Agent 卡顯示 8 格（Account/Balance/Equity/Positions/Trades/Win Rate/PF/P&L）太迫；「刷新狀態」掣重複（已有「重新整理」）；「上傳 EA 去社群庫」橙色底大掣搶眼 | v0.10.48 ①Agent 卡淨顯示 Account/Balance/Equity ②「刷新狀態」掣剷除 ③「上傳 EA 去社群庫」改普通 btn（唔再橙色底）| 08-21 |
 | 88 | **配對庫排位唔齊（狀態/掣）** | ①狀態文字 text-align:center → 起點同 header「狀態」（靠左）唔對齊 ②三粒掣 grid 2 欄太大粒 | v0.10.49 ①狀態 cell 改靠左（status-cell class）②操作掣改細粒橫排（ea-actions flex + padding 2px 8px + font 11px）③操作按鈕靠右（inline-flex + justify-content:flex-end — 用戶要求）| 08-21 |
 | 89 | **配對庫 header/data 全欄對唔齊** | Magic/Symbol/Trades/Win 用 text-align:center + P&L 用 text-align:right，但 header 全部靠左 → 上下列對唔齊（用戶實測「來源 Magic Symbol 全部都未對齊」）| v0.10.50 移除全部 data cell 嘅 text-align:center/right → 統一靠左同 header 一致（操作欄保留靠右）— 實測 header/data 全 start/left 對齊 | 08-21 |
+| 90 | **Trades/Win/P&L 全部「—」（冇真實數據）** | ①agent.py `get_mt5_status` 根本冇收集 history deals → `agent.deals` 永遠空 → `/api/analysis`「No data yet」②agent 冇行緊（冇人同步 MT5 數據）③前端用 `magic_symbol` 精確匹配但 EA config 冇存 symbol → key 對唔上 | v0.10.51 ①agent 加收集 deals ②analysis 過濾 magic 0 ③前端改 magic 聚合 ④Win 顯示 0% + P&L 格式 — 實測 Divergence 顯示 1 單 / -$1.27（真 deal）| 08-21 |
+| 91 | 🔥 **MT5 Python history API 讀唔到新 deals（build 6120 caching）** | `history_deals_get` 喺 terminal 開住時只讀到舊 cache（測試發現 14 個舊 deals 讀到，最新嘅 TestTrades deals 讀唔到；重啟 MT5 都唔得）→ agent 同步唔到新交易 → Trades/Win/P&L 停喺舊值 | v0.10.52 TestTrades EA 自己 track 統計（MQL5 HistorySelect 計 wins/losses/profit）寫入 `state_<EA>.json` → server `/api/ea-config` 讀 EA stats 優先 + fallback analysis — 繞過 Python API 限制，EA 層面最準 | 08-21 |
+| 92 | **心跳暫停原因唔知（可能係休市但顯示「心跳暫停」誤導）** | 系統淨睇心跳檔 mtime（<30 秒 = running）冇判斷「係咪因為非交易時間」— 週末/收市時段心跳暫停會誤顯示「心跳暫停」（令人以為 EA 故障）| v0.10.53 server `_market_closed_for_symbol`：`symbol_info_tick` 最後 tick（tick.time 係 UTC+3 — 正規化）> 5 分鐘 = 休市 → `market_closed` map；前端心跳暫停 + 休市 → 顯示「休市」（灰色 + tooltip「非交易時間 — 開市自動恢復」）。實測 AMD=true（美股凌晨休市）/ EURUSD=false（24 小時開市）| 08-21 |
+| 93 | **OpenChart/StartAgentHelper 歷史 script 殘留 config** | 之前測試遺留嘅 script 配對（AMD — 帳戶唔支援 symbol）— 唔係 EA 但 config 有 → `market_closed`/runtime 見到佢哋（誤導）| v0.10.54 刪除 OpenChart/StartAgentHelper config 配對（`/api/ea-config/<name>` DELETE）— config 淨返 Divergence + TestTrades 兩隻真 EA（`_removed` 記錄）| 08-21 |
 
 ---
 
@@ -604,7 +612,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `704317f`（master）— v0.10.50（XCHANGE 橙黑主題 4 頁統一 + Dashboard 精簡 + 配對庫排位/對齊修正）
+**Git HEAD**: `bbdf92a`（master）— v0.10.54（Trades/Win/P&L 真實數據 + TestTrades 測試 EA + 休市偵測 + 清歷史殘留）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）

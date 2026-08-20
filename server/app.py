@@ -417,18 +417,45 @@ def logout():
     return redirect(url_for('index'))
 
 # === API: EA 配對表 ===
-@app.route('/api/ea-config', methods=['GET','POST'])
+
+def _market_closed_for_symbol(symbol):
+    """🚨 2026-08-21：偵測 symbol 係咪非交易時間（休市）
+    - 用 MT5 symbol_info_tick 最後 tick 時間（tick.time 係 UTC+3 伺服器時間 — 正規化）
+    - 最後 tick > 5 分鐘 = 冇報價 = 休市/非交易時間
+    - 回傳 None（攞唔到資料）/ True（休市）/ False（開市）
+    """
+    try:
+        import MetaTrader5 as _mt5
+        # 唔 initialize 新連線 — 用 agent 已有嘅？唔得，呢度獨立。輕量 initialize + shutdown
+        if not _mt5.initialize(timeout=4000):
+            return None
+        try:
+            _tick = _mt5.symbol_info_tick(symbol)
+            if _tick is None:
+                return None
+            # tick.time 係 UTC+3（EET 夏令）— 正規化做 UTC
+            _tick_utc = _tick.time - 3 * 3600
+            _age = time.time() - _tick_utc
+            _mt5.shutdown()
+            return _age > 300  # > 5 分鐘冇 tick = 休市
+        except Exception:
+            try: _mt5.shutdown()
+            except Exception: pass
+            return None
+    except Exception:
+        return None
+
+@app.route('/api/ea-config', methods=['GET', 'POST'])
 @login_required
 def api_ea_config():
     if request.method == 'GET':
-        # 🚨 2026-08-11：直接 SQL 讀 DB（SQLAlchemy session 有隔離問題 — current_user.ea_config 返回舊值含已刪除 EA）
+        # 直接讀 DB（繞過 ORM 隔離）
         try:
-            import sqlite3 as _sq2
-            _dbp2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'mt5cloud.db')
-            _c2 = _sq2.connect(_dbp2)
-            _c2.row_factory = _sq2.Row
-            _r2 = _c2.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
-            _c2.close()
+            import sqlite3 as _sq3
+            _db3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+            _c3 = _sq3.connect(_db3)
+            _r2 = _c3.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+            _c3.close()
             config = json.loads(_r2['ea_config'] or '{}') if _r2 else {}
         except Exception:
             config = json.loads(current_user.ea_config or '{}')
@@ -542,7 +569,46 @@ def api_ea_config():
                 runtime[ea] = st
         except Exception:
             pass
-        return jsonify({"mappings": config, "all_symbols": get_account_symbols(), "timeframes": TIMEFRAMES, "runtime_status": runtime})
+        # 🚨 2026-08-21：讀 EA 自寫統計（state_<ea>.json 入面 trades/wins/losses/profit — TestTrades 測試 EA 寫）
+        # 原因：MT5 Python history API 讀唔到新 deals（build 6120 caching）→ EA 自己 track 寫檔 → 呢度讀
+        ea_stats = {}
+        try:
+            _cf2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            for _ea in ea_names:
+                _sf2 = os.path.join(_cf2, f'state_{_ea}.json')
+                if os.path.isfile(_sf2):
+                    try:
+                        with open(_sf2, 'rb') as _f2:
+                            _raw2 = _f2.read()
+                        try:
+                            _sd2 = json.loads(_raw2.decode('utf-8'))
+                        except Exception:
+                            _sd2 = json.loads(_raw2.decode('utf-16'))
+                        if isinstance(_sd2, dict) and ('trades' in _sd2 or 'profit' in _sd2):
+                            ea_stats[_ea] = {
+                                "trades": _sd2.get('trades', 0),
+                                "wins": _sd2.get('wins', 0),
+                                "losses": _sd2.get('losses', 0),
+                                "profit": _sd2.get('profit', 0),
+                            }
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        # 🚨 2026-08-21：非交易時間偵測（休市）— 對每隻 EA 嘅 symbol 檢查最後 tick
+        # 心跳暫停 + market_closed → 前端顯示「休市」而唔係「心跳暫停」（唔係 EA 故障）
+        market_closed = {}
+        try:
+            for _ea in ea_names:
+                _sym2 = config.get(_ea)
+                if not _sym2 or not isinstance(_sym2, str):
+                    continue
+                _mc = _market_closed_for_symbol(_sym2)
+                if _mc is not None:
+                    market_closed[_ea] = _mc
+        except Exception:
+            pass
+        return jsonify({"mappings": config, "all_symbols": get_account_symbols(), "timeframes": TIMEFRAMES, "runtime_status": runtime, "ea_stats": ea_stats, "market_closed": market_closed})
     else:
         data = request.json
         current_user.ea_config = json.dumps(data.get('mappings', {}))
@@ -962,6 +1028,9 @@ def api_analysis():
     # Per-EA by (magic, symbol)
     per_ea = defaultdict(lambda: {"trades":0,"profit":0,"wins":0,"losses":0})
     for d in deals_data:
+        # 🚨 2026-08-21：過濾 magic 0（平台手動交易/存款 — 唔係 EA 交易，唔應該顯示喺 EA 統計）
+        if not d.get('magic') or d.get('magic') == 0:
+            continue
         key = f"{d['magic']}_{d['symbol']}"
         per_ea[key]["trades"] += 1
         per_ea[key]["profit"] += d['profit']
@@ -1008,6 +1077,8 @@ def api_analysis():
     # Correlation
     daily_pnl = defaultdict(lambda: defaultdict(float))
     for d in deals_data:
+        if not d.get('magic') or d.get('magic') == 0:
+            continue
         date_key = str(d.get('time',''))[:10]
         key = f"{d['magic']}_{d['symbol']}"
         daily_pnl[key][date_key] += d['profit']
@@ -1030,13 +1101,15 @@ def api_analysis():
             row[ek2] = round(pearson(matrix[ek1],matrix[ek2]),2)
         corr_matrix.append(row)
 
-    total_profit = sum(d['profit'] for d in deals_data)
-    wins = sum(1 for d in deals_data if d['profit']>0)
-    losses = sum(1 for d in deals_data if d['profit']<0)
+    # Filter magic 0 for summary too (platform trades, not EA)
+    ea_deals = [d for d in deals_data if d.get('magic') and d.get('magic') != 0]
+    total_profit = sum(d['profit'] for d in ea_deals)
+    wins = sum(1 for d in ea_deals if d['profit']>0)
+    losses = sum(1 for d in ea_deals if d['profit']<0)
     wr = round(wins/(wins+losses)*100,2) if (wins+losses)>0 else 0
 
     return jsonify({
-        "summary":{"total_trades":len(deals_data),"wins":wins,"losses":losses,
+        "summary":{"total_trades":len(ea_deals),"wins":wins,"losses":losses,
                    "win_rate":wr,"total_profit":round(total_profit,2)},
         "per_ea": per_ea_list,
         "per_ea_by_symbol": per_ea_by_symbol,

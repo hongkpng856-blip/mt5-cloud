@@ -1075,6 +1075,38 @@ def get_mt5_status():
         "server": account.server if account else "",
         "positions": len(mt5.positions_get() or []),
     }
+    # 🚨 2026-08-21：收集 history deals（Trades/Win/P&L 真實數據）
+    # 之前冇收集 → agent.deals 永遠空 → /api/analysis「No data yet」→ 前端 Trades/Win/P&L 全部「—」
+    # 🚨 2026-08-21 FIX：history_deals_get(since, now) 有 caching 問題 — 用 (0, now) 攞全部（實測攞到全部 deals）
+    try:
+        from datetime import datetime, timedelta
+        since = datetime.now() - timedelta(days=30)
+        deals = mt5.history_deals_get(0, datetime.now())
+        deal_list = []
+        if deals:
+            for d in deals:
+                # 只收集有 profit 嘅 closed deals（成交記錄 — 開倉冇 profit）
+                if d.profit != 0 or d.entry == mt5.DEAL_ENTRY_OUT:
+                    deal_list.append({
+                        "ticket": d.ticket,
+                        "magic": d.magic,
+                        "symbol": d.symbol,
+                        "profit": d.profit,
+                        "time": d.time,
+                        "entry": d.entry,
+                        "type": d.type,
+                        "volume": d.volume,
+                        "price": d.price,
+                        "comment": d.comment or '',
+                    })
+        status["deals"] = deal_list
+        status["deals_count"] = len(deal_list)
+        if deal_list:
+            print(f"📊 Synced {len(deal_list)} deals to server")
+            sys.stdout.flush()
+    except Exception as e:
+        print(f"   [DEALS] Error: {e}")
+        status["deals"] = []
     mt5.shutdown()
     return status
 
