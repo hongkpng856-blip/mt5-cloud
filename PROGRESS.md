@@ -78,7 +78,10 @@
 | **v0.10.27** | 2026-08-20 | 🔧 **取消 Step 2b 全部定位操作**（固定 MT5 視窗/Navigator 統一/平鋪圖表 — 用戶話一開始唔需要定位；Alt+F 開 chart 用鍵盤唔靠座標）|
 | **v0.10.26** | 2026-08-20 | 🔧 **開 chart 失敗直接 return False**（移除 OpenChart script 誤導 print — 實際冇執行；用戶要求唔需要備用方案 — 失敗就 fail 唔好靜默繼續）|
 | **v0.10.25** | 2026-08-20 | 🔧 **取消 Step 2B 熱鍵 load 驗證（124 行）**（每次等 45s 好慢 + 冇用 — 用戶要求）+ **移除重試快捷鍵備用方案**（失敗直接 fail — 避免重試掛錯 chart：Heikin_Ashi 掛錯 EURUSD 案例）|
-| **v0.10.24** | 2026-08-20 | 🔧 **剷除 Ctrl+9 fallback（90 行）** — 開 chart 主力係 Alt+F→Enter→Enter→Space→打symbol→Enter（用戶方法 — 可靠）；Ctrl+9 依賴熱鍵 load（批次預載清咗 <scripts> 段 → 失效）+ 開嘅 chart 唔知係咩 symbol → 刪除簡化 |
+| **v0.10.36** | 2026-08-21 | 🔧 **修剷除 _dlgs NameError**（ctypes 未定義 — 函數 import _ct alias 但 _dlgs 用 ctypes）→ 剷除中途 crash；修正 _ct — 實測剷除 ATR_Stop 成功（Alt+W → ListView → Ctrl+W → MT5 log removed）|
+| **v0.10.35** | 2026-08-21 | 🔥 **修 main 入口消失** — v0.10.33 替換 remove_ea_from_chart 時刪埋 if __name__ block → auto_attach 零 output + EXIT 0 → watcher 誤判假成功（ATR_Stop 案例）；加返 v0.10.32 main block（45 行）|
+| **v0.10.34** | 2026-08-21 | 🔥 **假成功根治（watcher 讀舊 output）** — ①aa_debug.log tee -a（append）累積舊部署 output → watcher 讀最近 60 行誤判（讀到上次 Breakout/Grid → ATR_Stop 假成功）→ 改覆寫 tee ②成功判斷唔好淨靠 returncode（return 0 都可能內部 fail）→ 檢查 auto_attach output 有真 SUCCESS |
+| **v0.10.33** | 2026-08-21 | 🔧 **剷除改用 Alt+W 窗口 dialog 方法**（用戶實測 — 唔靠座標）— Alt+W 開窗口 dialog → ListView 即時讀 chart 排位（唔用 .chr 檔 — 延遲/id=0）→ 對應 EA symbol（MT5 log）→ 揀目標 chart → Enter（關 dialog 彈返 chart）→ Ctrl+W 關閉（EA 一齊移除）|
 | **v0.10.23** | 2026-08-20 | 🔧 **revert v0.10.22 重用邏輯** — 每次部署都開新 chart（確保 chart 對應目標 symbol + 乾淨冇 EA）— 用戶指正：唔應該重用舊 chart（可能掛咗其他 EA/狀態唔啱） |
 | **v0.10.22** | 2026-08-20 | 🔧 **chart 累積根治（後 revert v0.10.23）** — 開新 chart 前檢查有冇目標 symbol 現有 chart → 有就 focus 重用；用戶指正唔應該重用 → revert |
 | **v0.10.21** | 2026-08-20 | 🔧 **恢復完整開 chart 流程 Alt+F→Enter→Enter→Space→打symbol→Enter**（v0.10.19 誤刪咗 Space→打symbol 步 — 開 chart 唔係目標 symbol；用戶指正完整流程係 5 步）|
@@ -325,6 +328,10 @@
 | 72 | **部署等好耐（Step 2B 熱鍵 load 驗證 45s）** | Step 2B 每次部署 send 測試熱鍵 + poll 45s（fail 時 restart MT5 再驗證 45s）→ 成個部署等好耐；而且驗證方法本身唔可靠（誤判） | v0.10.25 取消 Step 2B 熱鍵 load 驗證（124 行）— 熱鍵預載（_ensure_hotkey_loaded）已經確保熱鍵寫入，唔需要額外驗證 | 08-20 |
 | 73 | **重試快捷鍵掛錯 chart（Heikin_Ashi 掛錯 EURUSD）** | 開 chart 失敗 → 重試快捷鍵 ×2（唔開新 chart）→ 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡（Heikin 目標 GBPUSD 但掛咗落 EURUSD） | v0.10.25 移除重試快捷鍵（失敗直接 fail）；v0.10.26 開 chart 失敗直接 return False（唔用備用方案）| 08-20 |
 | 74 | **Step 2b 定位操作唔必要** | 固定 MT5 視窗/Navigator 統一/平鋪圖表 — 用戶話一開始唔需要定位（Alt+F 開 chart 用鍵盤唔靠座標）| v0.10.27 取消 Step 2b 全部定位操作（19 行）| 08-20 |
+| 75 | 🔥 **剷除唔到（remove_ea_from_chart NameError）** | `re.escape` 用咗未定義嘅 re（import re as _re_r 但用 re.escape）→ NameError → 檢查 EA 運行永遠 fail → 剷除誤判「未運行」→ 冇嘢做（用戶實測剷除唔到）| v0.10.31 修正 _re_r.escape — 實測：偵測 started → 寫 ctrl_ → EA ExpertRemove → 心跳停 → 剷除成功 | 08-21 |
+| 76 | 🔥 **剷除唔到（ctrl_ 方法市場收市失效）** | v0.10.29 改 ctrl_ 方法（寫 ctrl_<EA>.json → EA 自己 ExpertRemove）— 但市場收市冇 tick → EA 唔 check ctrl_ → 剷除唔到（假成功：心跳停判斷誤判 — 心跳檔已清）| v0.10.32 恢復 GUI 方法（right-click → 專家 dialog — 用戶實測可靠）+ 修 chart 偵測（MDIClient fallback — chart 標題空時 Afx 冇逗號）| 08-21 |
+| 77 | 🔥 **剷除靠座標唔可靠 + right-click menu 冇專家列表** | GUI 方法 right-click + 132px 偏移（座標 hardcode — 唔大眾化）；right-click menu 實際冇「專家列表」（有「專家列表(E) Alt+X」但 Alt+X 冇反應）| v0.10.33 改用 Alt+W 窗口 dialog 方法（唔靠座標 — ListView 即時 chart 排位 → 揀目標 → Enter → Ctrl+W 關閉）— 用戶實測 | 08-21 |
+| 78 | 🔥 **假成功（watcher 讀舊 output + main 入口消失 + ctypes NameError）** | ①aa_debug.log tee -a 累積舊部署 output → watcher 讀最近 60 行誤判（ATR_Stop 讀到 Breakout/Grid 舊記錄）②v0.10.33 替換函數刪埋 if __name__ → auto_attach 零 output + EXIT 0 → 假成功 ③剷除 _dlgs 用 ctypes（未定義）→ crash | v0.10.34 tee 改覆寫 + 檢查真 SUCCESS；v0.10.35 加返 main block（45 行）；v0.10.36 修 ctypes → _ct — 實測 5 次部署 + 5 次剷除全部 PASS | 08-21 |
 
 ---
 
@@ -573,7 +580,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `4d037b2`（master）— v0.10.27（人手測試 7/7 PASS：取消 Step 2B/定位操作/fallback — 部署精簡 + 全部掛啱 symbol）
+**Git HEAD**: `a21f43d`（master）— v0.10.36（人手測試含剷除 5/5 PASS：Alt+W 窗口 dialog 剷除方法 + 假成功 3 連修 — tee 覆寫/main 入口/ctypes）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
@@ -593,6 +600,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 - **已根治（v0.10.8-10.13）**：① 熱鍵 load 時序（熱鍵必須「MT5 關閉狀態下寫入」先 load — mtime vs MT5 啟動時間檢查）② 熱鍵 load 驗證 gate（開完 MT5 poll send 測試彈 Properties）③ 驗證 fail 自動 restart 重寫 ④ 批次熱鍵預載（一次 restart 寫入全部 .ex5 熱鍵 → 之後 skip restart）⑤ watcher tee auto_attach 完整 output 去 aa_debug.log（診斷用）
 - **🎉 連續兩次 5/5 PASS（stress 16 + 17 — 2026-08-20）**：穩定性確認 — 兩次全部 Round ✅，9 個部署 log=True + hb=True（age 0.3-4.0s）。⚠️ 跑 stress 前檢查：server :5001 要 listen（crash 咗 → WinError 10061 → stress 即刻死）+ watcher 一定要 python.exe（watchdog 有時用 pythonw 重啟 → auto_attach hang）
 - **🎉 人手模擬壓力測試 7/7 PASS（2026-08-20 v0.10.27 — 網頁撳按鈕完整鏈路）**：Bollinger→EURUSD、EMA→USDJPY、MACD→AUDUSD、Heikin→GBPUSD、Ichimoku→XAUUSD、Breakout→GBPUSD、Grid→USDJPY — 全部 MT5 log `loaded successfully`（對應 symbol）+ 心跳 fresh + 冇代替 dialog + 冇掛錯 chart。**環境空白開始（0 chart + 刪晒 EA + 清 hotkeys）→ 每次部署開新 chart（每個 EA 一個 chart 對應 symbol）**
+- **🎉 人手模擬壓力測試 5/5（含剷除 — 2026-08-21 v0.10.36 — 隨機 EA/symbol）**：ATR_Stop→USDJPY、SMA_Cross→GBPUSD、Mean_Reversion→AUDUSD、Parabolic_SAR→EURUSD、Support_Resist→XAUUSD — **每次部署 PASS（MT5 log loaded + 心跳 fresh + 正確 symbol）+ 每次剷除 PASS（Alt+W 窗口 dialog → ListView 揀 chart → Ctrl+W 關閉 → MT5 log removed）** — 最終 charts 0 全部清淨。**測試逼出 3 個假成功 bug（v0.10.34-36）：watcher 讀舊 output / main 入口消失 / ctypes NameError**
 
 **已知問題（下次 session 繼續）**：
 1. ✅ **熱鍵預載後未等 load**（v0.10.5 已修）— `_ensure_hotkey_loaded` 開完 MT5 後加熱鍵 load 驗證 gate（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試）；壓力測試 Round 1 fail（時序 race）待實機驗證修復
