@@ -75,6 +75,17 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.10.24** | 2026-08-20 | 🔧 **剷除 Ctrl+9 fallback（90 行）** — 開 chart 主力係 Alt+F→Enter→Enter→Space→打symbol→Enter（用戶方法 — 可靠）；Ctrl+9 依賴熱鍵 load（批次預載清咗 <scripts> 段 → 失效）+ 開嘅 chart 唔知係咩 symbol → 刪除簡化 |
+| **v0.10.23** | 2026-08-20 | 🔧 **revert v0.10.22 重用邏輯** — 每次部署都開新 chart（確保 chart 對應目標 symbol + 乾淨冇 EA）— 用戶指正：唔應該重用舊 chart（可能掛咗其他 EA/狀態唔啱） |
+| **v0.10.22** | 2026-08-20 | 🔧 **chart 累積根治（後 revert v0.10.23）** — 開新 chart 前檢查有冇目標 symbol 現有 chart → 有就 focus 重用；用戶指正唔應該重用 → revert |
+| **v0.10.21** | 2026-08-20 | 🔧 **恢復完整開 chart 流程 Alt+F→Enter→Enter→Space→打symbol→Enter**（v0.10.19 誤刪咗 Space→打symbol 步 — 開 chart 唔係目標 symbol；用戶指正完整流程係 5 步）|
+| **v0.10.20** | 2026-08-20 | 🔧 **修 active chart 驗證誤判** — EnumChildWindows「Chart」class 喺 MT5 搵唔到（chart 係 AfxFrameOrView 類）→ 改用 MDI chart 窗口檢查（同開圖驗證一致）— v0.10.18 誤殺導致部署中止 |
+| **v0.10.19** | 2026-08-20 | 🔧 **開 chart 簡化做 Alt+F→Enter→Enter**（後 revert v0.10.21 — 用戶指正要打 symbol） |
+| **v0.10.18** | 2026-08-20 | 🔧 **附加錯 chart 根治** — send 熱鍵前驗證 active chart 係目標 symbol（OpenChart 開 chart 失敗 → active 係舊 restore 嘅 GBPUSD → 附加落去 → 代替 dialog → 一鑊泡：Bollinger/EMA 都掛咗落 GBPUSD 而唔係目標 EURUSD/USDJPY）→ 驗證唔到就明確 fail 唔好代替 |
+| **v0.10.17** | 2026-08-20 | 🔧 **連環代替確認 dialog 根治** — 撳完「是」之後 MT5 可能連環彈多個「代替」dialog（附加 EA 落已有 EA 嘅 chart）→ loop 完後再 poll 8 秒撳晒所有代替 dialog「是」（最多 5 次）— 用戶實測「確定完仲要再確定多次」 |
+| **v0.10.16** | 2026-08-20 | 🔧 **假成功根治** — _ea_loaded_in_log 加 loaded 記錄時間戳檢查（只認最近 300s 內嘅 loaded — 之前只 check log 檔 mtime 新鮮，舊記錄喺 log 檔 → 誤判 True → 假成功：Bollinger 部署話 SUCCESS 但實際冇掛到 chart）|
+| **v0.10.15** | 2026-08-20 | 🔧 **修復 restart 重寫熱鍵後 MT5 PID 未更新** — v0.10.13 熱鍵 load 驗證 fail → restart 開新 MT5 之後，後續 Navigator/平鋪/快捷鍵用舊 PID → Process not found → 部署卡死（用戶實測「電腦好耐冇反應」）|
+| **v0.10.14** | 2026-08-20 | 🔧 **修復 magic 空 string 令部署假成功** — 前端未 alive EA 傳 magic='' → server/watcher data.get('magic') 收到空 string（default 唔生效）→ auto_attach --magic 空 → argparse 失敗 → watcher 誤報「attach 成功」（4 秒假成功 — Heikin_Ashi 案例）。三層 fallback：前端 (magic||'240701') + server data.get('magic') or '240701' + watcher 同 |
 | **v0.10.13** | 2026-08-20 | 🔧 **熱鍵 load 驗證 fail 自動修復** — Step 2b 驗證 gate fail（45s 冇彈 Properties）→ restart MT5（關→寫→開）→ 再驗證一次（多 EA 場景第二隻撞到 MT5 啱 restart 完/熱鍵未 load → send 失效 → 自動 restart 重寫）|
 | **v0.10.12** | 2026-08-20 | 🔧 **修批次預載段 indentation bug**（縮排錯咗喺 except block 入面 → 正常情況 skip → _experts_hk NameError）+ _combo_n 提前定義（experts 空 NameError）。實測：批次預載 → 第一隻 restart 一次 → 第二隻 skip restart 直接部署 → 兩隻連續成功 |
 | **v0.10.11** | 2026-08-20 | 🔧 **恢復批次熱鍵預載（多 EA 時序根治）** — 一次 restart 寫入全部 .ex5 熱鍵 → 之後每隻 skip restart（冇逐隻 restart 時序問題）；保留 v0.10.8/10.10 驗證 gate + 修 _combo_n 被覆寫 bug |
@@ -301,6 +312,13 @@
 | 62 | ⭐ **熱鍵 load 時序（MT5 開住寫唔 load / 開機後未 load 就 send）** | ① MT5 開住時寫 hotkeys.ini → 唔 load → Ctrl+N 失效 ② 開完 MT5 未等熱鍵 load 就 send → 失效 ③「已有熱鍵」skip 咗開完 MT5 嘅驗證 | v0.10.8 開完 MT5 後熱鍵 load 驗證 gate（poll send 測試彈 Properties）；v0.10.10「已有熱鍵」時檢查 hotkeys.ini mtime vs MT5 啟動時間（開機後先寫 → restart 重寫）；v0.10.13 驗證 fail 自動 restart 重寫 | 08-20 |
 | 63 | **批次熱鍵預載「全新熱鍵」MT5 唔 load** | 一次過寫入全部 EA 熱鍵（含 MT5 內部未記住嘅全新熱鍵）→ MT5 唔 load → send 失效（用戶實測知識：直接寫 file 只對「已記住」熱鍵 work） | v0.10.9 revert 批次預載；v0.10.11 恢復批次預載 + 保留驗證 gate（45s poll 等 MT5 load 完）→ 實測 work（第一隻 restart 一次 → 之後 skip restart） | 08-20 |
 | 64 | 🔥 **壓力測試多 EA 失敗（2/5 → 3/5 → 5/5）真正 root cause** | stress script 連住 POST deploy（非阻塞即刻返）→ watcher spawn 多個 auto_attach 同時跑 → 搶 MT5 控制權 → 有一隻失敗；就算加「等 MT5 log/hb 當完成」，watcher deploy worker 收尾 + queue 有 gap（`auto_attach.py already running, queuing X`）→ deploy_cmd 排隊 → auto_attach 未 spawn → 誤判失敗 | stress script 每隻 deploy 後等 `deploy_result` activity log（watcher 真正寫「部署完成」）先 deploy 下一隻 + watcher tee auto_attach 完整 output 去 aa_debug.log（診斷）→ **連續兩次 5/5 PASS（stress 16+17）** | 08-20 |
+| 65 | 🔥 **magic 空 string 令部署假成功（4 秒完成）** | 前端未 alive EA 部署時傳 magic=''（`magic||''`）→ server `data.get('magic', '240701')` 收到空 string（default 唔生效 — `''` 唔係 None）→ deploy_cmd magic 空 → auto_attach `--magic` 空 → argparse 失敗 → watcher 誤報「attach 成功」→ 網頁警告視窗未完成就彈走 | v0.10.14 三層 fallback：前端 `(magic||'240701')` + server `data.get('magic') or '240701'` + watcher 同 | 08-20 |
+| 66 | 🔥 **restart 重寫熱鍵後 MT5 PID 未更新 → 部署卡死（電腦好耐冇反應）** | v0.10.13 熱鍵 load 驗證 fail → restart 開新 MT5 之後，後續 Navigator/平鋪/快捷鍵用舊 PID → Process not found → 部署卡死 | v0.10.15 restart 後 `find_mt5_pid()` 更新 mt5_pid | 08-20 |
+| 67 | 🔥 **假成功（log 驗證讀舊記錄）** | `_ea_loaded_in_log` 只 check log 檔 mtime 新鮮（<300s）→ 舊 loaded 記錄（18:32 Bollinger）喺 log 檔 → log 檔新鮮（MT5 有寫其他嘢）→ 誤判 True → 部署話成功但 EA 實際冇掛到（Bollinger/EMA 掛落 GBPUSD 而唔係目標 symbol） | v0.10.16 `_ea_loaded_in_log` 加 loaded 記錄時間戳檢查（parse log 行 HH:MM:SS — 只認最近 300s 內） | 08-20 |
+| 68 | 🔥 **連環代替確認 dialog（確定完仲要再確定多次）** | 附加 EA 落已有 EA 嘅 chart → MT5 連環彈多個「代替」dialog（代替確認「是」+ Properties「確定」）→ auto_attach 撳完第一個「是」之後 loop 完 → 第二個彈出無人處理 → 卡住（用戶實測） | v0.10.17 dialog loop 完後再 poll 8 秒撳晒所有代替 dialog「是」（最多 5 次） | 08-20 |
+| 69 | 🔥 **附加錯 chart（掛咗落舊 restore 嘅 GBPUSD）** | OpenChart 開 chart 失敗 → active chart 係舊 restore 嘅 GBPUSD（有 MACD 掛住）→ auto_attach 附加新 EA 落去 → 代替 dialog → 一鑊泡（Bollinger/EMA 都掛錯 chart） | v0.10.18 send 熱鍵前驗證 active chart 係目標 symbol（唔係就明確 fail）+ v0.10.20 修正驗證方法（EnumChildWindows Chart class 搵唔到 → 改用 MDI chart 窗口）| 08-20 |
+| 70 | **開 chart 方法失效（Alt+F 流程唔完整 + Ctrl+9/OpenChart 依賴熱鍵）** | v0.10.19 誤刪 Space→打symbol 步（開 chart 唔係目標 symbol）；Ctrl+9 fallback 依賴熱鍵 load（批次預載清咗 <scripts> 段 → 失效）+ 開嘅 chart symbol 唔知；OpenChart script（Ctrl+O）同樣依賴 <scripts> 熱鍵 | v0.10.21 恢復完整流程 Alt+F→Enter→Enter→Space→打symbol→Enter；v0.10.24 剷除 Ctrl+9 fallback（90 行）— 主力係 Alt+F 用戶方法 | 08-20 |
+| 71 | **chart 累積（每個部署開一個新 chart）** | 每次部署都開新 chart（Alt+F）→ N 次部署 = N 個 chart | 用戶指正：每個 EA 一個 chart 係正常（唔應該重用 — 重用可能掛咗其他 EA）；v0.10.22 嘗試重用 → v0.10.23 revert（保留每次開新） | 08-20 |
 
 ---
 
@@ -549,7 +567,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `0c2f058`（master）— v0.10.13 + stress script 修復 + docs（連續兩次 5/5 PASS）
+**Git HEAD**: `b0ff2fa`（master）— v0.10.24（人手壓力測試 bug 根治：magic fallback/PID 更新/log 新鮮度/連環代替 dialog/附加錯 chart/開 chart 流程/Ctrl+9 剷除）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
