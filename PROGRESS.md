@@ -75,6 +75,9 @@
 
 | 版本 | 日期 | 內容 |
 |------|------|------|
+| **v0.10.27** | 2026-08-20 | 🔧 **取消 Step 2b 全部定位操作**（固定 MT5 視窗/Navigator 統一/平鋪圖表 — 用戶話一開始唔需要定位；Alt+F 開 chart 用鍵盤唔靠座標）|
+| **v0.10.26** | 2026-08-20 | 🔧 **開 chart 失敗直接 return False**（移除 OpenChart script 誤導 print — 實際冇執行；用戶要求唔需要備用方案 — 失敗就 fail 唔好靜默繼續）|
+| **v0.10.25** | 2026-08-20 | 🔧 **取消 Step 2B 熱鍵 load 驗證（124 行）**（每次等 45s 好慢 + 冇用 — 用戶要求）+ **移除重試快捷鍵備用方案**（失敗直接 fail — 避免重試掛錯 chart：Heikin_Ashi 掛錯 EURUSD 案例）|
 | **v0.10.24** | 2026-08-20 | 🔧 **剷除 Ctrl+9 fallback（90 行）** — 開 chart 主力係 Alt+F→Enter→Enter→Space→打symbol→Enter（用戶方法 — 可靠）；Ctrl+9 依賴熱鍵 load（批次預載清咗 <scripts> 段 → 失效）+ 開嘅 chart 唔知係咩 symbol → 刪除簡化 |
 | **v0.10.23** | 2026-08-20 | 🔧 **revert v0.10.22 重用邏輯** — 每次部署都開新 chart（確保 chart 對應目標 symbol + 乾淨冇 EA）— 用戶指正：唔應該重用舊 chart（可能掛咗其他 EA/狀態唔啱） |
 | **v0.10.22** | 2026-08-20 | 🔧 **chart 累積根治（後 revert v0.10.23）** — 開新 chart 前檢查有冇目標 symbol 現有 chart → 有就 focus 重用；用戶指正唔應該重用 → revert |
@@ -319,6 +322,9 @@
 | 69 | 🔥 **附加錯 chart（掛咗落舊 restore 嘅 GBPUSD）** | OpenChart 開 chart 失敗 → active chart 係舊 restore 嘅 GBPUSD（有 MACD 掛住）→ auto_attach 附加新 EA 落去 → 代替 dialog → 一鑊泡（Bollinger/EMA 都掛錯 chart） | v0.10.18 send 熱鍵前驗證 active chart 係目標 symbol（唔係就明確 fail）+ v0.10.20 修正驗證方法（EnumChildWindows Chart class 搵唔到 → 改用 MDI chart 窗口）| 08-20 |
 | 70 | **開 chart 方法失效（Alt+F 流程唔完整 + Ctrl+9/OpenChart 依賴熱鍵）** | v0.10.19 誤刪 Space→打symbol 步（開 chart 唔係目標 symbol）；Ctrl+9 fallback 依賴熱鍵 load（批次預載清咗 <scripts> 段 → 失效）+ 開嘅 chart symbol 唔知；OpenChart script（Ctrl+O）同樣依賴 <scripts> 熱鍵 | v0.10.21 恢復完整流程 Alt+F→Enter→Enter→Space→打symbol→Enter；v0.10.24 剷除 Ctrl+9 fallback（90 行）— 主力係 Alt+F 用戶方法 | 08-20 |
 | 71 | **chart 累積（每個部署開一個新 chart）** | 每次部署都開新 chart（Alt+F）→ N 次部署 = N 個 chart | 用戶指正：每個 EA 一個 chart 係正常（唔應該重用 — 重用可能掛咗其他 EA）；v0.10.22 嘗試重用 → v0.10.23 revert（保留每次開新） | 08-20 |
+| 72 | **部署等好耐（Step 2B 熱鍵 load 驗證 45s）** | Step 2B 每次部署 send 測試熱鍵 + poll 45s（fail 時 restart MT5 再驗證 45s）→ 成個部署等好耐；而且驗證方法本身唔可靠（誤判） | v0.10.25 取消 Step 2B 熱鍵 load 驗證（124 行）— 熱鍵預載（_ensure_hotkey_loaded）已經確保熱鍵寫入，唔需要額外驗證 | 08-20 |
+| 73 | **重試快捷鍵掛錯 chart（Heikin_Ashi 掛錯 EURUSD）** | 開 chart 失敗 → 重試快捷鍵 ×2（唔開新 chart）→ 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡（Heikin 目標 GBPUSD 但掛咗落 EURUSD） | v0.10.25 移除重試快捷鍵（失敗直接 fail）；v0.10.26 開 chart 失敗直接 return False（唔用備用方案）| 08-20 |
+| 74 | **Step 2b 定位操作唔必要** | 固定 MT5 視窗/Navigator 統一/平鋪圖表 — 用戶話一開始唔需要定位（Alt+F 開 chart 用鍵盤唔靠座標）| v0.10.27 取消 Step 2b 全部定位操作（19 行）| 08-20 |
 
 ---
 
@@ -567,7 +573,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `b0ff2fa`（master）— v0.10.24（人手壓力測試 bug 根治：magic fallback/PID 更新/log 新鮮度/連環代替 dialog/附加錯 chart/開 chart 流程/Ctrl+9 剷除）
+**Git HEAD**: `4d037b2`（master）— v0.10.27（人手測試 7/7 PASS：取消 Step 2B/定位操作/fallback — 部署精簡 + 全部掛啱 symbol）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
@@ -586,6 +592,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 - **Root cause 鏈（多 EA 失敗真因）**：stress script 連住 POST deploy（非阻塞）→ watcher spawn 多個 auto_attach 同時跑搶 MT5 → 有一隻失敗；改「等 deploy_result activity log（watcher 真正完成）先 deploy 下一隻」後 **5/5**
 - **已根治（v0.10.8-10.13）**：① 熱鍵 load 時序（熱鍵必須「MT5 關閉狀態下寫入」先 load — mtime vs MT5 啟動時間檢查）② 熱鍵 load 驗證 gate（開完 MT5 poll send 測試彈 Properties）③ 驗證 fail 自動 restart 重寫 ④ 批次熱鍵預載（一次 restart 寫入全部 .ex5 熱鍵 → 之後 skip restart）⑤ watcher tee auto_attach 完整 output 去 aa_debug.log（診斷用）
 - **🎉 連續兩次 5/5 PASS（stress 16 + 17 — 2026-08-20）**：穩定性確認 — 兩次全部 Round ✅，9 個部署 log=True + hb=True（age 0.3-4.0s）。⚠️ 跑 stress 前檢查：server :5001 要 listen（crash 咗 → WinError 10061 → stress 即刻死）+ watcher 一定要 python.exe（watchdog 有時用 pythonw 重啟 → auto_attach hang）
+- **🎉 人手模擬壓力測試 7/7 PASS（2026-08-20 v0.10.27 — 網頁撳按鈕完整鏈路）**：Bollinger→EURUSD、EMA→USDJPY、MACD→AUDUSD、Heikin→GBPUSD、Ichimoku→XAUUSD、Breakout→GBPUSD、Grid→USDJPY — 全部 MT5 log `loaded successfully`（對應 symbol）+ 心跳 fresh + 冇代替 dialog + 冇掛錯 chart。**環境空白開始（0 chart + 刪晒 EA + 清 hotkeys）→ 每次部署開新 chart（每個 EA 一個 chart 對應 symbol）**
 
 **已知問題（下次 session 繼續）**：
 1. ✅ **熱鍵預載後未等 load**（v0.10.5 已修）— `_ensure_hotkey_loaded` 開完 MT5 後加熱鍵 load 驗證 gate（等主視窗 ready 90s → send Ctrl+N 測試彈 Properties = load 成功，×3 重試）；壓力測試 Round 1 fail（時序 race）待實機驗證修復
