@@ -270,6 +270,38 @@ ALL_SYMBOLS = ['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','NZDUSD',
                'BTCUSD','ETHUSD']
 TIMEFRAMES = ['M1','M5','M15','M30','H1','H4','D1','W1','MN1']
 
+def get_account_symbols():
+    """攞帳號實際可用 symbols（讀 MT5 symbols.sel — 唔係 static ALL_SYMBOLS）
+    用戶要求（2026-08-21）：網頁 symbol picker 只顯示帳號實際有嘅 symbol（揀到冇嘅 → 部署 fail）"""
+    try:
+        import glob as _gl_s
+        _mt5d = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        for _d_s in os.listdir(_mt5d):
+            _sp_s = os.path.join(_mt5d, _d_s, 'symbols.sel')
+            if os.path.isfile(_sp_s):
+                _raw_s = open(_sp_s, 'rb').read()
+                _txt_s = None
+                for _enc_s in ('utf-8', 'utf-16'):
+                    try:
+                        _txt_s = _raw_s.decode(_enc_s)
+                        break
+                    except Exception:
+                        continue
+                if _txt_s:
+                    _syms_s = []
+                    for _l_s in _txt_s.splitlines():
+                        _l_s = _l_s.strip()
+                        if '=' in _l_s:
+                            _n_s = _l_s.split('=')[0].strip()
+                            if _n_s:
+                                _syms_s.append(_n_s)
+                    if _syms_s:
+                        print(f"[symbols] 帳號 symbols ({len(_syms_s)}): {_syms_s}")
+                        return _syms_s
+    except Exception as _e_s:
+        print(f"[symbols] 讀 symbols.sel 失敗: {_e_s}")
+    return ALL_SYMBOLS
+
 # === Frontend ===
 @app.route('/')
 def index():
@@ -494,7 +526,7 @@ def api_ea_config():
                 runtime[ea] = st
         except Exception:
             pass
-        return jsonify({"mappings": config, "all_symbols": ALL_SYMBOLS, "timeframes": TIMEFRAMES, "runtime_status": runtime})
+        return jsonify({"mappings": config, "all_symbols": get_account_symbols(), "timeframes": TIMEFRAMES, "runtime_status": runtime})
     else:
         data = request.json
         current_user.ea_config = json.dumps(data.get('mappings', {}))
