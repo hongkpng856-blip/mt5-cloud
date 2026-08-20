@@ -2825,25 +2825,15 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     print(f"📌 揀 chart [{_target_idx}]（{_items[_target_idx] if _target_idx < len(_items) else '?'}）")
 
     # 6. 揀目標 chart → Enter（關閉 dialog + 彈返 chart）
-    # 🚨 2026-08-21 FIX（Breakout AMD 案例）：用方向鍵揀（唔靠座標 — click 行座標 _target_idx*22 唔可靠 — ListView 可能 scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）
-    try:
-        _sk('{HOME}')
-        time.sleep(0.5)
-        for _kd in range(_target_idx):
-            _sk('{DOWN}')
-            time.sleep(0.3)
-        _sk('{ENTER}')
-        time.sleep(2)
-    except Exception:
-        try:
-            _r_lv = _lv_found.rectangle()
-            _row_y = _r_lv.top + 20 + _target_idx * 22
-            _pg.click(_r_lv.left + 100, _row_y)
-            time.sleep(1)
-            _sk('{ENTER}')
-            time.sleep(2)
-        except Exception:
-            pass
+    # 🚨 2026-08-21 FIX（Breakout AMD 案例 + 用戶要求）：用方向鍵揀（用戶一早講咗 — 唔靠座標）
+    # 唔好有 click fallback（座標唔可靠 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）
+    _sk('{HOME}')
+    time.sleep(0.5)
+    for _kd in range(_target_idx):
+        _sk('{DOWN}')
+        time.sleep(0.3)
+    _sk('{ENTER}')
+    time.sleep(2)
 
     # 7. 確認 dialog 關咗（彈返 chart）
     _dlgs_now = _dlgs()
