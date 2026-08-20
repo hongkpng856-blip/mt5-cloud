@@ -58,6 +58,25 @@ def find_hb(ea):
             return f
     return None
 
+def _has_deploy_result(ea):
+    """檢查 activity log 有冇 <ea> 嘅 deploy_result 記錄（watcher 真正完成信號）
+    讀 server/activity_log.jsonl 最後 50 行 — deploy_result + ea 名"""
+    try:
+        alog = 'C:/Users/hongk/Desktop/mt5-cloud/server/activity_log.jsonl'
+        with open(alog, 'r', encoding='utf-8') as f:
+            lines = f.readlines()[-50:]
+        for ln in lines:
+            try:
+                d = json.loads(ln)
+                if d.get('action') == 'deploy_result' and d.get('ea') == ea:
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return False
+
+
 def mt5_log_loaded(ea, symbol):
     """MT5 Terminal log 最近有 'expert <EA> (<SYM>,H1) loaded successfully' 且無隨後 removed"""
     logs = sorted(glob.glob(os.path.join(MT5ROOT, '*', 'logs', '2026*.log')), key=os.path.getmtime)
@@ -147,28 +166,38 @@ for ri, round_ea in enumerate(ROUNDS, 1):
         time.sleep(2)
 
     # 3. 部署 N 個 EA（對應數量）
-    # 🚨 2026-08-20 FIX：每隻 deploy 後要等佢完成先 deploy 下一隻！
-    # （之前連住 POST — watcher spawn 多個 auto_attach 同時跑 → 搶 MT5 → 有一隻失敗）
+    # 🚨 2026-08-20 FIX：每隻 deploy 後要等 watcher 真正完成（deploy_result activity log）先 deploy 下一隻！
+    # （之前等 MT5 log/hb 當「完成」— 但 watcher deploy worker 收尾有 gap → 第二隻 deploy_cmd 被 queue
+    #   → auto_attach 未 spawn → 等 180s 冇 log/hb → 誤判失敗 — activity log 實錘：deploy Divergence 早過 ADX deploy_result）
     for i, (ea, sym) in enumerate(round_ea, 1):
         magic = '2407' + str(ri) + str(i)
         r2 = post(op, '/api/deploy', {'ea_name': ea, 'symbol': sym, 'tf': 'H1', 'magic': magic, 'lot': 1})
         print(f"  [3.{i}] 部署 {ea} -> {sym}: success={r2.get('success')}")
-        # 等呢隻部署完成（MT5 log loaded 或心跳新鮮 — 最多 180s）先部署下一隻
+        # 等 watcher 真正完成（deploy_result activity log 有 <ea> 記錄 — 最多 240s）
         _dep_done = False
-        for _d_wait in range(90):  # 180s
-            if mt5_log_loaded(ea, sym):
-                _dep_done = True
-                break
-            f = find_hb(ea)
-            if f and time.time() - os.path.getmtime(f) < 120:
+        for _d_wait in range(120):  # 240s
+            if _has_deploy_result(ea):
                 _dep_done = True
                 break
             time.sleep(2)
         if _dep_done:
-            print(f"       ✅ {ea} 部署完成確認")
+            print(f"       ✅ {ea} 部署完成確認（watcher deploy_result）")
         else:
-            print(f"       ⚠️ {ea} 等咗 180s 未確認完成（繼續下一隻）")
-        time.sleep(2)
+            # 後備：MT5 log loaded / 心跳新鮮（watcher 可能用緊舊 code 冇寫 deploy_result）
+            for _d_wait2 in range(30):  # 60s
+                if mt5_log_loaded(ea, sym):
+                    _dep_done = True
+                    break
+                f = find_hb(ea)
+                if f and time.time() - os.path.getmtime(f) < 120:
+                    _dep_done = True
+                    break
+                time.sleep(2)
+            if _dep_done:
+                print(f"       ✅ {ea} 部署完成確認（log/hb 後備）")
+            else:
+                print(f"       ⚠️ {ea} 等咗 300s 未確認完成（繼續下一隻）")
+        time.sleep(3)
 
     # 4. 驗證（每個 EA：MT5 log loaded + 心跳新鮮）
     for i, (ea, sym) in enumerate(round_ea, 1):
