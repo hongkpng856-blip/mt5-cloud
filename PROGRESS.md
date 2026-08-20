@@ -297,6 +297,10 @@
 | 58 | ⭐ **熱鍵注入正確流程確認（用戶實測 2026-08-20）** | 之前直接寫 hotkeys.ini 喺 MT5 開住時寫 → 唔被認/被覆寫 → Ctrl+N 失效。用戶實測成功流程：① 網頁配對 EA（install-local → Navigator 見 EA）② 等 MT5 refresh ③ 關閉 MT5 ④ 寫 hotkeys.ini `<experts>Experts\<EA>.ex5=Ctrl+N</experts>`（UTF-16）⑤ save ⑥ 開 MT5 → 熱鍵 work。破綻：EA 必須本機有 .ex5（EMA_Cross 冇 .ex5 → 熱鍵失效；配對返後 work）；熱鍵重用（Ctrl+8 俾 Breakout → 放空 → 俾 EMA_Cross）可行 | 08-20 |
 | 59 | ⭐ **部署時熱鍵失效（MT5 開住寫唔 load）** | server ensure_hotkey_for_ea 喺 MT5 開住時寫 hotkeys.ini → MT5 唔 load → Ctrl+N 失效 | v0.10.2 _ensure_hotkey_loaded 部署前熱鍵預載（關 MT5 → 寫 → 開 → load）；v0.10.3 部署時唔再 restart（restart 覆寫熱鍵）；v0.10.4 .ex5 檢查 | 08-20 |
 | 60 | **部署流程冇「每步驗證 gate」（用戶要求：成功先落下一步）** | 而家每步做完就算/等固定時間，冇驗證（熱鍵 load 未等 → 部署失敗） | docs/deployment-checkpoint-system.md 設計每步驗證 gate（檔案/視窗/log 程式化檢測，唔靠 AI）+ _wait_until poll；待改 code 落地 | 08-20 |
+| 61 | ⭐ **部署假失敗（EA 掛到但報失敗）** | attach_ea_hotkey 內部 log 驗證太嚴格 — MT5 restart 後 log 寫入延遲 → 誤判「圖表不符」→ return False → 外層 Step 4 gate 永遠行唔到 | v0.10.6 attach_ea_hotkey 驗證失敗唔再 return False（交外層 Step 4 gate + Step 5 心跳後備判定）+ _ea_loaded_in_log 加新鮮度檢查（log mtime<300s 防 stale 假 True） | 08-20 |
+| 62 | ⭐ **熱鍵 load 時序（MT5 開住寫唔 load / 開機後未 load 就 send）** | ① MT5 開住時寫 hotkeys.ini → 唔 load → Ctrl+N 失效 ② 開完 MT5 未等熱鍵 load 就 send → 失效 ③「已有熱鍵」skip 咗開完 MT5 嘅驗證 | v0.10.8 開完 MT5 後熱鍵 load 驗證 gate（poll send 測試彈 Properties）；v0.10.10「已有熱鍵」時檢查 hotkeys.ini mtime vs MT5 啟動時間（開機後先寫 → restart 重寫）；v0.10.13 驗證 fail 自動 restart 重寫 | 08-20 |
+| 63 | **批次熱鍵預載「全新熱鍵」MT5 唔 load** | 一次過寫入全部 EA 熱鍵（含 MT5 內部未記住嘅全新熱鍵）→ MT5 唔 load → send 失效（用戶實測知識：直接寫 file 只對「已記住」熱鍵 work） | v0.10.9 revert 批次預載；v0.10.11 恢復批次預載 + 保留驗證 gate（45s poll 等 MT5 load 完）→ 實測 work（第一隻 restart 一次 → 之後 skip restart） | 08-20 |
+| 64 | 🔥 **壓力測試多 EA 失敗（2/5 → 3/5 → 5/5）真正 root cause** | stress script 連住 POST deploy（非阻塞即刻返）→ watcher spawn 多個 auto_attach 同時跑 → 搶 MT5 控制權 → 有一隻失敗；就算加「等 MT5 log/hb 當完成」，watcher deploy worker 收尾 + queue 有 gap（`auto_attach.py already running, queuing X`）→ deploy_cmd 排隊 → auto_attach 未 spawn → 誤判失敗 | stress script 每隻 deploy 後等 `deploy_result` activity log（watcher 真正寫「部署完成」）先 deploy 下一隻 + watcher tee auto_attach 完整 output 去 aa_debug.log（診斷）→ **連續兩次 5/5 PASS（stress 16+17）** | 08-20 |
 
 ---
 
@@ -545,7 +549,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `e7abd44`（master）— v0.10.4 + docs
+**Git HEAD**: `0c2f058`（master）— v0.10.13 + stress script 修復 + docs（連續兩次 5/5 PASS）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
@@ -577,10 +581,14 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 - 部署時唔可以再 restart MT5（restart 會令 MT5 覆寫 hotkeys.ini → 熱鍵失效）
 
 **重要 code 狀態**：
-- `_ensure_hotkey_loaded`（auto_attach.py ~1280）— 熱鍵預載（關→寫→開）+ .ex5 檢查（v0.10.4）
+- `_ensure_hotkey_loaded`（auto_attach.py ~1310）— 熱鍵預載（關→寫→開）+ .ex5 檢查 + 熱鍵 load 時序（v0.10.4/10.10/10.11 批次預載）
+- `_wait_until(check_fn, timeout, desc, interval)`（v0.10.5）— 每步驗證 gate poll helper
+- `_ea_loaded_in_log(ea_name, symbol)`（v0.10.5/10.6）— MT5 log loaded 驗證（新鮮度檢查 mtime<300s）
+- `_mt5_alive()`（v0.10.5）— tasklist 檢查 MT5 有冇運行
 - `_HK_RESTART_DISABLED = True`（v0.10.3）— 部署時唔 restart
-- watcher `_PY_EXE`（v0.10.0）— auto_attach 用 python.exe 絕對路徑
-- 壓力測試：`agent/_stress_test_5x_multi.py`
+- watcher `_PY_EXE`（v0.10.0）— auto_attach 用 python.exe 絕對路徑；`run_auto_attach` tee 去 aa_debug.log（v0.10.13 後）
+- 熱鍵 load 驗證 gate（auto_attach_ea Step 2b，v0.10.8/10.13）— 開完 MT5 poll send 測試彈 Properties；fail → restart 重寫
+- 壓力測試：`agent/_stress_test_5x_multi.py`（等 deploy_result activity log 先 deploy 下一隻 — 5/5 關鍵）
 
 **運行中 process（交接時）**：server :5001、watcher python.exe、MT5 terminal64
 
