@@ -1127,12 +1127,9 @@ def process_pause_cmd(fp):
         _prog_steps(['清理設定並釋放快捷鍵'], '完成刪除')
         _prog_steps(['完成刪除'])
         # 🚨 2026-08-21 FIX（用戶實測「剷除成功但 MT5 Navigator 仲殘留 — 要自己 refresh」）：
-        # 剷除完成 → 觸發 refresh Navigator（同部署/配對一樣 — 移除 MT5 入面殘留顯示）
-        try:
-            _refresh_queue.put(True)
-            print(f"   🔄 剷除完成 → 排隊 refresh Navigator")
-        except Exception:
-            pass
+        # 剷除完成 → 觸發 refresh Navigator。⚠️ v0.10.38 用 _refresh_queue.put() 會疊加「Experts 目錄變化」觸發
+        # → refresh 兩次（第二次又撳右鍵做多餘動作）→ 用戶實測「第一次成功之後第二次又撳右鍵」
+        # → 唔好 put — 剷除刪 .mq5/.ex5 已經觸發 file-watch「Experts 目錄變化 → 自動 refresh Navigator」
         # 通知 server
         try:
             _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
