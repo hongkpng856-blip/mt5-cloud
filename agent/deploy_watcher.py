@@ -141,20 +141,28 @@ def run_auto_attach(cmd_data):
     sys.stdout.flush()
     
     try:
-        result = subprocess.run(
-            cmd,
-            timeout=300,  # 5 min max for attach
-            capture_output=True,
-            encoding='utf-8', errors='replace',  # ⚠️ GBK 中文輸出 decode 炸（text=True）— 2026-08 修
-            cwd=os.path.dirname(AUTO_ATTACH_SCRIPT),
-        )
+        # 🚨 2026-08-20（watcher-aa-debug-tee）：auto_attach 完整 stdout tee 去 aa_debug.log
+        # 之前 capture_output 只 print keyword lines → 真實失敗 output（not found under / attempt x/3）被過濾
+        # → 睇唔到真因。而家完整 output 寫落 file，診斷時直接讀。
+        import subprocess as _sp_dbg
+        _dbg = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
+        _dbg_cmd = ' '.join(cmd) + f' 2>&1 | tee -a {_dbg}'
+        result = _sp_dbg.run(_dbg_cmd, timeout=320, shell=True,
+                             encoding='utf-8', errors='replace',
+                             cwd=os.path.dirname(AUTO_ATTACH_SCRIPT))
         
-        # Print output (only key lines)
+        # Print output (only key lines — 讀 aa_debug.log 最新段)
         print(f"   Exit code: {result.returncode}")
-        for line in result.stdout.split('\n'):
-            line_s = line.strip()
-            if any(kw in line_s for kw in ['🎉', '✅', '❌', '🟢', '🔴', '⚠️', '💓', '📋', '🎯', 'SUCCESS', 'FAIL']):
-                print(f"   {line_s}")
+        try:
+            with open(_dbg, 'r', encoding='utf-8', errors='replace') as _fdbg:
+                _dbg_lines = _fdbg.read().split('\n')
+            # 只印最近 60 行嘅 keyword lines（避免成個 log 太長）
+            for line in _dbg_lines[-60:]:
+                line_s = line.strip()
+                if any(kw in line_s for kw in ['🎉', '✅', '❌', '🟢', '🔴', '⚠️', '💓', '📋', '🎯', 'SUCCESS', 'FAIL', 'not found', 'attempt']):
+                    print(f"   {line_s}")
+        except Exception:
+            pass
         
         if result.returncode == 0:
             print(f"   🎉 {ea_name} 已成功 attach!")
