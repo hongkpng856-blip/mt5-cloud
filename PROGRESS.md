@@ -78,7 +78,8 @@
 | **v0.10.27** | 2026-08-20 | 🔧 **取消 Step 2b 全部定位操作**（固定 MT5 視窗/Navigator 統一/平鋪圖表 — 用戶話一開始唔需要定位；Alt+F 開 chart 用鍵盤唔靠座標）|
 | **v0.10.26** | 2026-08-20 | 🔧 **開 chart 失敗直接 return False**（移除 OpenChart script 誤導 print — 實際冇執行；用戶要求唔需要備用方案 — 失敗就 fail 唔好靜默繼續）|
 | **v0.10.25** | 2026-08-20 | 🔧 **取消 Step 2B 熱鍵 load 驗證（124 行）**（每次等 45s 好慢 + 冇用 — 用戶要求）+ **移除重試快捷鍵備用方案**（失敗直接 fail — 避免重試掛錯 chart：Heikin_Ashi 掛錯 EURUSD 案例）|
-| **v0.10.44** | 2026-08-21 | 🔧 **移除 click fallback** — 剷除揀 chart 淨係用方向鍵（HOME+DOWN×N+ENTER — 用戶一早要求；click 座標 fallback 移除 — 座標唔可靠）|
+| **v0.10.46** | 2026-08-21 | 🔧 **修 is_script 冇帶出 output** — scan_ea_inventory 構建 inventory.append 漏咗 is_script 字段（info 有但 output 冇）→ 前端過濾唔到 script。加 is_script 落 output — 實測：ApplyTemplate/OpenChart/StartAgentHelper=True（script）+ Divergence=False（EA）|
+| **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
 | **v0.10.41** | 2026-08-21 | 🔧 **symbol picker 改用帳戶 History symbol**（bases/<帳戶>/History — 帳戶伺服器實際支援 — MetaQuotes-Demo 20 個：XAUUSD/UK100/US30/DE40 等）— symbols.sel 只係市場報價顯示（4 個 — 唔權威）；ETHUSD 真係冇（MetaQuotes-Demo 唔支援加密貨幣）|
@@ -345,6 +346,8 @@
 | 81 | **refresh Navigator 兩次（第二次又撳右鍵）** | v0.10.38 加 _refresh_queue.put() 疊加「Experts 目錄變化」file-watch 觸發 → refresh 兩次（用戶實測「第一次成功之後第二次又撳右鍵做多餘動作」）| v0.10.39 移除 put — 剷除刪 .mq5/.ex5 已自動觸發 file-watch refresh | 08-21 |
 | 82 | 🔥 **揀咗冇嘅 symbol（ETHUSD）部署 fail — 冇警告** | 網頁 symbol picker 顯示 static 24 個（ALL_SYMBOLS — 含 ETHUSD 但帳戶冇）；server /api/deploy 冇 symbol 驗證 → 部署 fail（Alt+F 開 chart 揀唔到 symbol）但唔話原因 | v0.10.40-41 symbol picker 改用帳戶實際 symbols（bases/<帳戶>/History — MetaQuotes-Demo 20 個）；v0.10.42 ①server 部署前驗證 symbol（唔喺 → error 400『symbol 唔存在』）②前端彈警告 modal | 08-21 |
 | 83 | 🔥 **剷除假成功（Breakout AMD — 網頁話成功但 MT5 卡窗口 dialog）** | 揀 chart 用 click 座標（_target_idx*22 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）；Ctrl+W 關唔到 → EA 冇移除；但 _removed_ok=False 照 return True → 網頁假成功 | v0.10.43 ①未確認移除 → return False ②dialog 未關 → fail ③揀 chart 改方向鍵；v0.10.44 移除 click fallback（淨係方向鍵 — 用戶一早要求）| 08-21 |
+| 84 | **配對/剷除警告視窗有機率網頁冇彈** | showControlModal 用 `!aiControlVisible` 條件 — 如果 aiControlVisible 卡住 true（之前 modal 未關）→ 新操作 showControlModal 唔會彈 → 警告視窗冇彈（用戶實測）| v0.10.45 showControlModal 強制顯示（每次 call 都彈 — 唔靠 !aiControlVisible）| 08-21 |
+| 85 | **我的配對庫顯示 script（OpenChart/ApplyTemplate 等）** | scan_ea_inventory 掃 Experts + Scripts 目錄（冇標記邊啲係 script）→ 前端配對庫顯示晒（用戶要求只顯示 EA）| v0.10.45 detector 標記 is_script（Scripts 目錄）+ 前端過濾；v0.10.46 修 is_script 冇帶出 output（inventory.append 漏字段）— 實測 Divergence=False（EA）+ ApplyTemplate/OpenChart=True（script）| 08-21 |
 
 ---
 
@@ -593,7 +596,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `deaefc1`（master）— v0.10.44（剷除假成功根治：方向鍵揀 chart + 未確認移除 fail + symbol 驗證機制 + refresh Navigator 修復）
+**Git HEAD**: `7f21f00`（master）— v0.10.46（警告視窗強制顯示 + 配對庫唔顯示 script + is_script 字段修復）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
