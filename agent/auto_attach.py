@@ -2356,6 +2356,28 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 pass
         except Exception:
             pass
+        # 🚨 2026-08-21 FIX（RSI Properties dialog 殘留 — 用戶實測）：部署完成後清理任何殘留 dialog
+        # （撳「確定」後 dialog 可能冇關 → 殘留 → 下次部署被 modal 擋 → 開 chart 失敗）
+        try:
+            import ctypes as _ct_fin
+            _u_fin = _ct_fin.windll.user32
+            _fin_dlgs = []
+            def _enum_fin(hwnd, _):
+                _cls_buf_fin = _ct_fin.create_unicode_buffer(128)
+                _u_fin.GetClassNameW(_ct_fin.c_void_p(hwnd), _cls_buf_fin, 128)
+                if _cls_buf_fin.value == '#32770':
+                    _fin_dlgs.append(hwnd)
+                return True
+            _u_fin.EnumWindows(_ct_fin.WINFUNCTYPE(_ct_fin.c_bool, _ct_fin.c_size_t, _ct_fin.c_size_t)(_enum_fin), 0)
+            for _hw_fin in _fin_dlgs:
+                try:
+                    _u_fin.PostMessageW(_ct_fin.c_void_p(_hw_fin), 0x0010, 0, 0)  # WM_CLOSE
+                except Exception:
+                    pass
+            if _fin_dlgs:
+                print(f"🧹 部署後清理殘留 dialog: {len(_fin_dlgs)} 個（WM_CLOSE）")
+        except Exception:
+            pass
         return True
     except Exception as e:
         print(f"⚠️ 快捷鍵附加失敗: {e}")
@@ -2527,22 +2549,11 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
 
     # 🚨 2026-08-21 FIX（用戶實測：關 chart 後部署卡 dialog）：部署前先清理所有殘留 dialog
     # （之前 RSI 部署彈嘅 Properties dialog 殘留未關 → 之後開 chart Alt+F 被 modal 擋 → 開 chart 失敗 → 代替 dialog 一鑊泡）
+    # 🚨 2026-08-21 FIX2：ESC/撳取消對 modal dialog 唔 work（實測撳「確定」/ESC 都關唔到 — RSI Properties 卡死）
+    # → 用 WM_CLOSE（PostMessage 0x0010 — 實測有效）
     try:
         import ctypes as _ct_cl
         _u_cl = _ct_cl.windll.user32
-        def _enum_close(hwnd, _):
-            _cls_buf = _ct_cl.create_unicode_buffer(128)
-            _u_cl.GetClassNameW(_ct_cl.c_void_p(hwnd), _cls_buf, 128)
-            if _cls_buf.value == '#32770':
-                # 任何 dialog（Properties/代替/其他）→ 先 ESC，再撳「取消/否」關閉
-                try:
-                    _u_cl.PostMessageW(_ct_cl.c_void_p(hwnd), 0x0100, 0x1B, 0)  # WM_KEYDOWN ESC
-                except Exception:
-                    pass
-            return True
-        _u_cl.EnumWindows(_ct_cl.WINFUNCTYPE(_ct_cl.c_bool, _ct_cl.c_size_t, _ct_cl.c_size_t)(_enum_close), 0)
-        time.sleep(0.5)
-        # 再掃一次 — 有 dialog 剩 → 撳「取消/否」
         _dlg_list = []
         def _enum_find(hwnd, _):
             _cls_buf2 = _ct_cl.create_unicode_buffer(128)
@@ -2551,11 +2562,26 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                 _dlg_list.append(hwnd)
             return True
         _u_cl.EnumWindows(_ct_cl.WINFUNCTYPE(_ct_cl.c_bool, _ct_cl.c_size_t, _ct_cl.c_size_t)(_enum_find), 0)
-        if _dlg_list:
+        for _hw in _dlg_list:
+            try:
+                _u_cl.PostMessageW(_ct_cl.c_void_p(_hw), 0x0010, 0, 0)  # WM_CLOSE — 直接關
+            except Exception:
+                pass
+        time.sleep(0.8)
+        # 再掃一次 — 有剩 → 撳「取消/否」（WM_CLOSE 可能被攔截）
+        _dlg_list2 = []
+        def _enum_find2(hwnd, _):
+            _cls_buf3 = _ct_cl.create_unicode_buffer(128)
+            _u_cl.GetClassNameW(_ct_cl.c_void_p(hwnd), _cls_buf3, 128)
+            if _cls_buf3.value == '#32770':
+                _dlg_list2.append(hwnd)
+            return True
+        _u_cl.EnumWindows(_ct_cl.WINFUNCTYPE(_ct_cl.c_bool, _ct_cl.c_size_t, _ct_cl.c_size_t)(_enum_find2), 0)
+        if _dlg_list2:
             try:
                 from pywinauto import Application as _App_cl
                 _app_cl = _App_cl(backend='win32').connect(process=find_mt5_pid(), timeout=5)
-                for _hw in _dlg_list:
+                for _hw in _dlg_list2:
                     try:
                         _dw_cl = _app_cl.window(handle=int(_hw))
                         for _b_cl in _dw_cl.children(class_name='Button'):
@@ -2570,7 +2596,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                         pass
             except Exception:
                 pass
-        print(f"🧹 部署前清理殘留 dialog: {len(_dlg_list)} 個已處理")
+        print(f"🧹 部署前清理殘留 dialog: {len(_dlg_list)} 個已處理（WM_CLOSE）")
     except Exception:
         pass
 

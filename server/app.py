@@ -470,11 +470,21 @@ def api_ea_config():
             _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             _latest2 = None
             for _d3 in os.listdir(_lg2):
-                _lgd3 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+                # 🚨 2026-08-21 FIX：優先讀 terminal Logs（<hash>/Logs/ — 英文「loaded successfully/removed」）
+                # 之前讀 MQL5/Logs（MetaEditor 編譯日誌 — 中文「已启动/已停止」）→ 誤判 chart_removed（RSI_Over 掛住但顯示 removed）
+                _lgd3 = os.path.join(_lg2, _d3, 'Logs')
                 if os.path.isdir(_lgd3):
                     for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
                         if _latest2 is None or os.path.getmtime(_f3) > os.path.getmtime(_latest2):
                             _latest2 = _f3
+            # fallback: MQL5/Logs（MetaEditor 日誌）
+            if not _latest2:
+                for _d3 in os.listdir(_lg2):
+                    _lgd3 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+                    if os.path.isdir(_lgd3):
+                        for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
+                            if _latest2 is None or os.path.getmtime(_f3) > os.path.getmtime(_latest2):
+                                _latest2 = _f3
             if _latest2:
                 _raw2 = open(_latest2, 'rb').read()
                 _txt2 = None
@@ -486,7 +496,8 @@ def api_ea_config():
                 if _txt2:
                     import re as _re2
                     for _line2 in _txt2.splitlines():
-                        _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已啟動|已停止|removed)', _line2)
+                        # 🚨 2026-08-21 FIX：加「loaded successfully」（英文 log — 之前淨 match 中文 已启动/已停止 + removed → 英文 log 嘅 loaded 唔 match → 淨係 match 到 removed → 誤判 chart_removed）
+                        _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已啟動|已停止|removed|loaded successfully)', _line2)
                         if _m2:
                             _log_last[_m2.group(1)] = _m2.group(2)
         except Exception:
@@ -1795,11 +1806,21 @@ def api_refresh_status():
         _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         _latest2 = None
         for _d3 in os.listdir(_lg2):
-            _lgd3 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+            # 🚨 2026-08-21 FIX：優先讀 terminal Logs（<hash>/Logs/ — 英文「loaded successfully/removed」）
+            # 之前讀 MQL5/Logs（MetaEditor 編譯日誌 — 中文「已启动/已停止」）→ 誤判 chart_removed（RSI_Over 掛住但顯示 removed）
+            _lgd3 = os.path.join(_lg2, _d3, 'Logs')
             if os.path.isdir(_lgd3):
                 for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
                     if _latest2 is None or os.path.getmtime(_f3) > os.path.getmtime(_latest2):
                         _latest2 = _f3
+        # fallback: MQL5/Logs（MetaEditor 日誌）
+        if not _latest2:
+            for _d3 in os.listdir(_lg2):
+                _lgd3 = os.path.join(_lg2, _d3, 'MQL5', 'Logs')
+                if os.path.isdir(_lgd3):
+                    for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
+                        if _latest2 is None or os.path.getmtime(_f3) > os.path.getmtime(_latest2):
+                            _latest2 = _f3
         if _latest2:
             _raw2 = open(_latest2, 'rb').read()
             _txt2 = None
@@ -1859,8 +1880,11 @@ def api_refresh_status():
                 if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
                     st = 'running'
             # 🚨 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表即刻「圖表移除」）
+            # 🚨 2026-08-21 FIX：英文 log「loaded successfully」= EA 掛住 chart → running（之前淨 match removed → 誤判 chart_removed）
             if _log_last.get(base) in ('已停止', 'removed'):
                 st = 'chart_removed'
+            elif _log_last.get(base) == 'loaded successfully':
+                st = 'running'
             if st == 'unknown' and config.get(base + '_status') == 'paused':
                 st = 'paused'
             runtime[base] = st

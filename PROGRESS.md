@@ -95,6 +95,7 @@
 | **v0.10.60** | 2026-08-21 | 🔧 **配對庫數據一致 + 更新修復** — ①之前 500+ 單變百幾：trades json 新加先開始記錄 → RebuildTradesFile 重建完整歷史（629 行）②配對庫冇更新：state json 被系統心跳覆寫（得 ea/status/ts）→ server `/api/ea-config` 改讀 trades json（完整）優先 + fallback state。實測配對庫/報告完全一致（634 單 / 153 勝 / 478 負 / -$47.70） |
 | **v0.10.61** | 2026-08-21 | 🎯 **Correlation Matrix 真實數據** — `/api/analysis` 合併 trades json（完整歷史）→ summary 750 單 / 26.74%；correlation key 改 EA 名（TestTrades 顯示真名）；修 JS bug：精簡 Agent 卡後 loadAnalysis 攞唔到已刪 element → null error → correlation 唔渲染 → 加 null check 修復。實測：2x2 matrix（240701_USDJPY + TestTrades）渲染 |
 | **v0.10.62** | 2026-08-21 | 🔥 **部署代替 dialog 根治（用戶實測：關 chart 後部署取代咗 TestTrades）** — ①代替 dialog 由「撳是接受」改「撳否拒絕」+ 部署 fail（唔可以取代其他 EA — 之前撳是 → 其他 EA 被取代 + 心跳殘留假成功）②部署前清理所有殘留 dialog（Properties 殘留 → 之後開 chart Alt+F 被 modal 擋 → 開 chart 失敗 → 代替 dialog 一鑊泡）③開 chart/active chart 驗證改用 EnumChildWindows（pywinauto descendants 對 MT5 chart 窗口不可靠 — 開 chart 成功但驗證假失敗 → 部署 fail）— 實測：Divergence → AUDJPY 部署成功（開圖驗證 ✅ active chart ✅ 心跳 ✅ log loaded ✅）|
+| **v0.10.63** | 2026-08-21 | 🔥 **部署後 dialog 殘留根治（用戶實測：RSI 部署後 dialog 一直開住 → 之後部署全部被擋）** — ①部署後加 dialog 清理（WM_CLOSE — 實測有效；之前 ESC/撳取消對 modal dialog 唔 work — RSI Properties 卡死）②部署前清理改用 WM_CLOSE（唔再 ESC）③修 runtime_status log 判斷：讀 terminal Logs（英文 loaded successfully/removed）而唔係 MQL5/Logs（MetaEditor 中文已启动/已停止 — 誤判 chart_removed）— 實測：RSI_Over → UK100 部署成功 + 部署後 dialog 0 個 |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -380,6 +381,7 @@
 | 99 | **配對庫數據唔一致（500+ 變百幾）+ 配對庫唔更新** | ①trades json 新加先開始記錄（舊單冇入）→ 報告得百幾但 EA 自己 track 500+ ②state json 被系統心跳覆寫（`{"ea","status","ts"}` 格式 — 冇 stats）→ 配對庫讀唔到新數據 | v0.10.60 ①EA `RebuildTradesFile()` OnInit 重建完整歷史（149→629 行）②server `/api/ea-config` 改讀 `trades_<EA>.json`（完整逐單）優先 + fallback state — 配對庫/報告同源。實測：配對庫 639 單 / 報告 634 單（一致，跳動中）| 08-21 |
 | 100 | **Correlation Matrix 冇真實數據（得舊 1 個 EA / 唔渲染）** | ①`/api/analysis` 靠 agent.deals（舊）→ 得 240701_USDJPY 1 個 ②精簡 Agent 卡後 loadAnalysis 攞唔到已刪 element（anTrades 等）→ null error → 成個函數死 → correlation 唔渲染 | v0.10.61 ①analysis 合併 trades json（完整歷史）→ summary 750 單 / 2 個 EA ②correlation key 改 EA 名 ③loadAnalysis 加 null check（_setTxt/_setColor — element 唔存在就 skip）。實測：2x2 matrix（240701_USDJPY + TestTrades）渲染 | 08-21 |
 | 101 | **🔥 關 chart 後部署卡 dialog + 代替其他 EA（用戶實測：剷 RSI → 部署 → 取代咗 TestTrades + 網頁仍心跳）** | ①殘留 dialog（Properties 未關）→ 開 chart Alt+F 被 modal 擋 → 開 chart 失敗 ②開 chart 失敗 → active chart 係舊（TestTrades）→ 熱鍵附加落去 → 代替 dialog → code 撳「是」→ TestTrades 被取代 ③TestTrades 心跳檔殘留 → 網頁仍顯示心跳（假成功）④pywinauto descendants 對 MT5 chart 窗口讀唔到 → 開 chart 成功但驗證假失敗 | v0.10.62 ①部署前清理所有殘留 dialog（ESC + 取消/否）②代替 dialog 改撳「否」+ 部署 fail（唔接受取代）③開 chart/active chart 驗證改用 EnumChildWindows（Afx + 標題含 symbol — 實測可靠）— 實測 Divergence → AUDJPY 部署成功（開圖 ✅ active ✅ 心跳 ✅ log loaded ✅）冇取代其他 EA | 08-21 |
+| 102 | **🔥 部署後 Properties dialog 殘留（RSI dialog 一直開住 → 之後部署全部被擋 — 用戶實測「重新部署都係有問題」）** | 部署撳「確定」後 dialog 冇真正關閉（殘留 `RSI_Over 1.00 Properties`）→ modal 擋住之後所有開 chart Alt+F → 部署 fail；ESC/撳取消對 modal dialog 唔 work（實測撳確定/ESC 都關唔到）；另外 runtime_status 誤讀 MQL5/Logs（MetaEditor 中文日誌 — 已启动/已停止）而唔係 terminal Logs（英文 loaded/removed）→ EA 掛住都誤判 chart_removed | v0.10.63 ①部署前 + 部署後都用 WM_CLOSE（PostMessage 0x0010 — 實測有效）清理 dialog ②runtime_status 改讀 terminal Logs（<hash>/Logs/）+ regex 加 loaded successfully ③log 判斷加 loaded successfully → running。實測：RSI_Over → UK100 部署成功 + 部署後 dialog 0 個 + runtime 正確 | 08-21 |
 
 ---
 
@@ -650,7 +652,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `d93a5ff`（master）— v0.10.62（部署代替 dialog 根治：代替拒絕 + 殘留 dialog 清理 + EnumChildWindows 開圖驗證）；TODO：數據注入選擇功能未實行（見 TODO 段）
+**Git HEAD**: `dfc9cb8`（master）— v0.10.63（部署前/後 dialog WM_CLOSE 清理 + runtime_status 讀 terminal Logs + loaded successfully 判斷）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
