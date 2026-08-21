@@ -1795,17 +1795,27 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _new_title2 = win.window_text()
                     # 🚨 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
                     # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart 存在）— chart 開咗就算成功
+                    # 🚨 2026-08-21 FIX：改用 EnumChildWindows（pywinauto descendants 對 MT5 chart 窗口不可靠 — 實測開 chart 成功但 descendants check fail → 假失敗）
                     _chart_found2 = False
                     try:
-                        for _d2 in win.descendants():
-                            if _d2.element_info.class_name == 'MDIClient':
-                                for _c2 in _d2.children():
-                                    if 'Afx' in _c2.element_info.class_name:
-                                        _ctxt2 = _c2.window_text()
-                                        if _sym in _ctxt2:
-                                            _chart_found2 = True
-                                            break
-                                break
+                        import ctypes as _ct_f2
+                        _u_f2 = _ct_f2.windll.user32
+                        _main_hwnd_f2 = int(win.element_info.handle)
+                        @_ct_f2.WINFUNCTYPE(_ct_f2.c_bool, _ct_f2.c_size_t, _ct_f2.c_size_t)
+                        def _cb_f2(hwnd, _):
+                            nonlocal _chart_found2
+                            _cls2 = _ct_f2.create_unicode_buffer(128)
+                            _u_f2.GetClassNameW(_ct_f2.c_void_p(hwnd), _cls2, 128)
+                            if 'Afx' in _cls2.value and 'ControlBar' not in _cls2.value:
+                                _len2 = _u_f2.GetWindowTextLengthW(hwnd)
+                                if _len2 > 0:
+                                    _buf2 = _ct_f2.create_unicode_buffer(_len2 + 1)
+                                    _u_f2.GetWindowTextW(hwnd, _buf2, _len2 + 1)
+                                    if ',' in _buf2.value and _sym.upper() in _buf2.value.upper():
+                                        _chart_found2 = True
+                                        return False  # 停
+                            return True
+                        _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
                     except Exception:
                         pass
                     if _sym in _new_title2 or _chart_found2:
@@ -1903,18 +1913,29 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         _sym_u = (symbol or '').upper().split('.')[0]
                         # 🚨 2026-08-20 FIX：EnumChildWindows「Chart」class 喺 MT5 搵唔到（chart 窗口係 AfxFrameOrView 類）
                         # → 改用 MDI chart 窗口檢查（同「新方法開圖」驗證一致 — 可靠）
+                        # 🚨 2026-08-21 FIX：改用 EnumChildWindows Afx 檢查（pywinauto descendants 不可靠 — 假失敗）
                         _mdi_ok = False
                         try:
-                            for _d_mdi in win.descendants():
-                                if _d_mdi.element_info.class_name == 'MDIClient':
-                                    for _c_mdi in _d_mdi.children():
-                                        if 'Afx' in _c_mdi.element_info.class_name:
-                                            _ct_mdi = _c_mdi.window_text()
-                                            if _sym_u in _ct_mdi.upper():
-                                                _mdi_ok = True
-                                                _act_title = _ct_mdi
-                                                break
-                                    break
+                            import ctypes as _ct_mdi2
+                            _u_mdi2 = _ct_mdi2.windll.user32
+                            _main_hwnd_mdi = int(win.element_info.handle)
+                            @_ct_mdi2.WINFUNCTYPE(_ct_mdi2.c_bool, _ct_mdi2.c_size_t, _ct_mdi2.c_size_t)
+                            def _cb_mdi(hwnd, _):
+                                nonlocal _mdi_ok, _act_title
+                                _cls_mdi = _ct_mdi2.create_unicode_buffer(128)
+                                _u_mdi2.GetClassNameW(_ct_mdi2.c_void_p(hwnd), _cls_mdi, 128)
+                                if 'Afx' in _cls_mdi.value and 'ControlBar' not in _cls_mdi.value:
+                                    _len_mdi = _u_mdi2.GetWindowTextLengthW(hwnd)
+                                    if _len_mdi > 0:
+                                        _buf_mdi = _ct_mdi2.create_unicode_buffer(_len_mdi + 1)
+                                        _u_mdi2.GetWindowTextW(hwnd, _buf_mdi, _len_mdi + 1)
+                                        _tt_mdi = _buf_mdi.value
+                                        if ',' in _tt_mdi and _sym_u in _tt_mdi.upper():
+                                            _mdi_ok = True
+                                            _act_title = _tt_mdi
+                                            return False  # 停
+                                return True
+                            _u_mdi2.EnumChildWindows(_ct_mdi2.c_void_p(_main_hwnd_mdi), _cb_mdi, 0)
                         except Exception:
                             pass
                         if _mdi_ok:
@@ -1957,9 +1978,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     return False
 
-        # 檢查 dialog（循環處理所有 — Properties 確定 → 代替確認「是」→ 可能有多個）
+        # 檢查 dialog（循環處理所有 — Properties 確定 → 代替確認 → 可能有多個）
         _last_dlg_count = 0
         _clicked_once = set()  # 🚨 防卡死：撳過冇效果嘅 dialog 唔再撳（2026-08-07）
+        _replace_blocked = False  # 🚨 2026-08-21：代替被拒標記（見到代替 dialog → fail 部署）
         for _ in range(8):
             _chk_abort()  # 🚨 每 round 檢查緊急停止
             acted = False
@@ -1985,17 +2007,30 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             except Exception:
                                 pass
                         if _is_replace:
+                            # 🚨 2026-08-21 FIX（用戶實測：關 chart 後部署代替咗 TestTrades）：代替 dialog 出現 = 目標 chart 已有 EA
+                            # = 開 chart 失敗/掛錯 chart → 唔可以接受代替（會取代其他 EA）→ 撳「否」+ fail
+                            # （之前撳「是」→ 取代 TestTrades → 其他 EA 消失 + 心跳殘留假成功）
+                            print("🚨 偵測到「代替」dialog — 唔接受（會取代其他 EA）— 撳「否」+ 中止部署")
                             _dw = _app.window(handle=_h)
+                            _clicked_no = False
                             for _b in _dw.children(class_name='Button'):
                                 try:
-                                    if '是' in _b.window_text() or 'Yes' in _b.window_text():
+                                    if '否' in _b.window_text() or 'No' in _b.window_text() or 'Cancel' in _b.window_text():
                                         if _bm_click(_b):
-                                            print("✅ 已撳「是」（代替確認）")
-                                        acted = True
-                                        _clicked_once.add(_h)
-                                        break
+                                            _clicked_no = True
+                                            print("✅ 已撳「否」（拒絕代替）")
+                                            break
                                 except Exception:
                                     pass
+                            if not _clicked_no:
+                                try:
+                                    _sk('{ESC}')
+                                    print("✅ 已 ESC 關閉代替 dialog")
+                                except Exception:
+                                    pass
+                            _clicked_once.add(_h)
+                            acted = True
+                            _replace_blocked = True  # 🚨 2026-08-21：標記代替被拒 → 部署失敗
                         elif any(_k in _t for _k in (ea_name, '1.00', '2.00', '3.00', '.ex5')):
                             _saw_props = True  # 🚨 Properties 彈出過（快捷鍵有效）
                             _dw = _app.window(handle=_h)
@@ -2038,6 +2073,27 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
                 break
 
+        # 🚨 2026-08-21 FIX（代替 dialog 唔接受）：如果部署過程見到代替 dialog → 部署失敗
+        # （代替 = 目標 chart 已有 EA — 開 chart 失敗/掛錯 → 唔可以繼續 — 唔好取代其他 EA）
+        if _replace_blocked:
+            print("❌ 部署中止：偵測到「代替」dialog（目標 chart 已有 EA）— 唔接受取代")
+            try:
+                _sk('{ESC}')
+            except Exception:
+                pass
+            try:
+                import json as _jf3
+                _stf3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                with open(_stf3, 'w', encoding='utf-8') as _f3:
+                    _jf3.dump([{'text': f'部署 {ea_name}（{symbol}）', 'status': 'done'},
+                               {'text': f'開圖表（{symbol}）', 'status': 'done'},
+                               {'text': f'附加 {ea_name}', 'status': 'doing'},
+                               {'text': '⚠️ 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
+                               {'text': '驗證運行狀態', 'status': 'pending'}], _f3, ensure_ascii=False)
+            except Exception:
+                pass
+            return False
+
         # 🚨 2026-08-20 FIX（連環代替確認 — 用戶實測）：撳完「是」之後 MT5 可能連環彈多個「代替」dialog
         # （附加 EA 落已有 EA 嘅 chart — 逐個代替 — 每個都要再撳「是」）
         # → loop 完之後再 poll 8 秒睇有冇新代替 dialog → 有就再撳「是」（最多 5 次）
@@ -2062,13 +2118,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         except Exception:
                             pass
                     if _is_rpl:
+                        # 🚨 2026-08-21 FIX：連環代替都唔接受（撳「否」— 唔好取代其他 EA）
                         _rpl_found = True
+                        _replace_blocked = True
                         _dw_r2 = _app.window(handle=_h_r)
                         for _b_r in _dw_r2.children(class_name='Button'):
                             try:
-                                if '是' in _b_r.window_text() or 'Yes' in _b_r.window_text():
+                                if '否' in _b_r.window_text() or 'No' in _b_r.window_text() or 'Cancel' in _b_r.window_text():
                                     if _bm_click(_b_r):
-                                        print(f"✅ 已撳「是」（連環代替確認 {_rpl+1}）")
+                                        print(f"✅ 已撳「否」（拒絕連環代替 {_rpl+1}）")
                                     break
                             except Exception:
                                 pass
@@ -2078,6 +2136,26 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             if not _rpl_found:
                 break  # 冇代替 dialog — 完成
             time.sleep(2)
+
+        # 🚨 2026-08-21 FIX：連環代替 loop 完 → 如果有代替被拒 → 部署失敗
+        if _replace_blocked:
+            print("❌ 部署中止：代替 dialog 被拒絕（目標 chart 已有 EA — 唔接受取代）")
+            try:
+                _sk('{ESC}')
+            except Exception:
+                pass
+            try:
+                import json as _jf4
+                _stf4 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                with open(_stf4, 'w', encoding='utf-8') as _f4:
+                    _jf4.dump([{'text': f'部署 {ea_name}（{symbol}）', 'status': 'done'},
+                               {'text': f'開圖表（{symbol}）', 'status': 'done'},
+                               {'text': f'附加 {ea_name}', 'status': 'doing'},
+                               {'text': '⚠️ 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
+                               {'text': '驗證運行狀態', 'status': 'pending'}], _f4, ensure_ascii=False)
+            except Exception:
+                pass
+            return False
 
         # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
         if not _saw_props:
@@ -2446,6 +2524,55 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         release = lambda: None
         ControlAborted = Exception
         acquire = lambda *a, **k: None
+
+    # 🚨 2026-08-21 FIX（用戶實測：關 chart 後部署卡 dialog）：部署前先清理所有殘留 dialog
+    # （之前 RSI 部署彈嘅 Properties dialog 殘留未關 → 之後開 chart Alt+F 被 modal 擋 → 開 chart 失敗 → 代替 dialog 一鑊泡）
+    try:
+        import ctypes as _ct_cl
+        _u_cl = _ct_cl.windll.user32
+        def _enum_close(hwnd, _):
+            _cls_buf = _ct_cl.create_unicode_buffer(128)
+            _u_cl.GetClassNameW(_ct_cl.c_void_p(hwnd), _cls_buf, 128)
+            if _cls_buf.value == '#32770':
+                # 任何 dialog（Properties/代替/其他）→ 先 ESC，再撳「取消/否」關閉
+                try:
+                    _u_cl.PostMessageW(_ct_cl.c_void_p(hwnd), 0x0100, 0x1B, 0)  # WM_KEYDOWN ESC
+                except Exception:
+                    pass
+            return True
+        _u_cl.EnumWindows(_ct_cl.WINFUNCTYPE(_ct_cl.c_bool, _ct_cl.c_size_t, _ct_cl.c_size_t)(_enum_close), 0)
+        time.sleep(0.5)
+        # 再掃一次 — 有 dialog 剩 → 撳「取消/否」
+        _dlg_list = []
+        def _enum_find(hwnd, _):
+            _cls_buf2 = _ct_cl.create_unicode_buffer(128)
+            _u_cl.GetClassNameW(_ct_cl.c_void_p(hwnd), _cls_buf2, 128)
+            if _cls_buf2.value == '#32770':
+                _dlg_list.append(hwnd)
+            return True
+        _u_cl.EnumWindows(_ct_cl.WINFUNCTYPE(_ct_cl.c_bool, _ct_cl.c_size_t, _ct_cl.c_size_t)(_enum_find), 0)
+        if _dlg_list:
+            try:
+                from pywinauto import Application as _App_cl
+                _app_cl = _App_cl(backend='win32').connect(process=find_mt5_pid(), timeout=5)
+                for _hw in _dlg_list:
+                    try:
+                        _dw_cl = _app_cl.window(handle=int(_hw))
+                        for _b_cl in _dw_cl.children(class_name='Button'):
+                            try:
+                                _bt_cl = _b_cl.window_text()
+                                if '取消' in _bt_cl or '否' in _bt_cl or 'Cancel' in _bt_cl or 'No' in _bt_cl:
+                                    _b_cl.click()
+                                    break
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        print(f"🧹 部署前清理殘留 dialog: {len(_dlg_list)} 個已處理")
+    except Exception:
+        pass
 
     try:
         # Step 1: Generate template
