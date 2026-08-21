@@ -96,6 +96,7 @@
 | **v0.10.61** | 2026-08-21 | 🎯 **Correlation Matrix 真實數據** — `/api/analysis` 合併 trades json（完整歷史）→ summary 750 單 / 26.74%；correlation key 改 EA 名（TestTrades 顯示真名）；修 JS bug：精簡 Agent 卡後 loadAnalysis 攞唔到已刪 element → null error → correlation 唔渲染 → 加 null check 修復。實測：2x2 matrix（240701_USDJPY + TestTrades）渲染 |
 | **v0.10.62** | 2026-08-21 | 🔥 **部署代替 dialog 根治（用戶實測：關 chart 後部署取代咗 TestTrades）** — ①代替 dialog 由「撳是接受」改「撳否拒絕」+ 部署 fail（唔可以取代其他 EA — 之前撳是 → 其他 EA 被取代 + 心跳殘留假成功）②部署前清理所有殘留 dialog（Properties 殘留 → 之後開 chart Alt+F 被 modal 擋 → 開 chart 失敗 → 代替 dialog 一鑊泡）③開 chart/active chart 驗證改用 EnumChildWindows（pywinauto descendants 對 MT5 chart 窗口不可靠 — 開 chart 成功但驗證假失敗 → 部署 fail）— 實測：Divergence → AUDJPY 部署成功（開圖驗證 ✅ active chart ✅ 心跳 ✅ log loaded ✅）|
 | **v0.10.63** | 2026-08-21 | 🔥 **部署後 dialog 殘留根治（用戶實測：RSI 部署後 dialog 一直開住 → 之後部署全部被擋）** — ①部署後加 dialog 清理（WM_CLOSE — 實測有效；之前 ESC/撳取消對 modal dialog 唔 work — RSI Properties 卡死）②部署前清理改用 WM_CLOSE（唔再 ESC）③修 runtime_status log 判斷：讀 terminal Logs（英文 loaded successfully/removed）而唔係 MQL5/Logs（MetaEditor 中文已启动/已停止 — 誤判 chart_removed）— 實測：RSI_Over → UK100 部署成功 + 部署後 dialog 0 個 |
+| **v0.10.64** | 2026-08-21 | 🔥 **剷除多個同名 chart 揀錯根治（用戶實測：3 個 UK100 時剷除揀錯 → 假成功）** — remove_ea_from_chart 改「逐個試」策略：候選 chart（symbol match）→ Ctrl+W 關 → 驗證 EA 真係移除（心跳停/log removed）→ 未移除就下一個；+ FIX index 移位 bug（移除 chart 後 ListView 重新排位 — 舊 index 指錯 chart → 每次試之前重新對應 symbol → 最新 index）— 實測：3 個候選 chart 逐個試 → 第 3 個 UK100 先係 RSI_Over → 成功移除。同時確認：MT5 唔會即時自動 restore chart（關晒後 30 秒冇自動開返 — 之前「restore」其實係重複 chart 殘留）|
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -382,6 +383,7 @@
 | 100 | **Correlation Matrix 冇真實數據（得舊 1 個 EA / 唔渲染）** | ①`/api/analysis` 靠 agent.deals（舊）→ 得 240701_USDJPY 1 個 ②精簡 Agent 卡後 loadAnalysis 攞唔到已刪 element（anTrades 等）→ null error → 成個函數死 → correlation 唔渲染 | v0.10.61 ①analysis 合併 trades json（完整歷史）→ summary 750 單 / 2 個 EA ②correlation key 改 EA 名 ③loadAnalysis 加 null check（_setTxt/_setColor — element 唔存在就 skip）。實測：2x2 matrix（240701_USDJPY + TestTrades）渲染 | 08-21 |
 | 101 | **🔥 關 chart 後部署卡 dialog + 代替其他 EA（用戶實測：剷 RSI → 部署 → 取代咗 TestTrades + 網頁仍心跳）** | ①殘留 dialog（Properties 未關）→ 開 chart Alt+F 被 modal 擋 → 開 chart 失敗 ②開 chart 失敗 → active chart 係舊（TestTrades）→ 熱鍵附加落去 → 代替 dialog → code 撳「是」→ TestTrades 被取代 ③TestTrades 心跳檔殘留 → 網頁仍顯示心跳（假成功）④pywinauto descendants 對 MT5 chart 窗口讀唔到 → 開 chart 成功但驗證假失敗 | v0.10.62 ①部署前清理所有殘留 dialog（ESC + 取消/否）②代替 dialog 改撳「否」+ 部署 fail（唔接受取代）③開 chart/active chart 驗證改用 EnumChildWindows（Afx + 標題含 symbol — 實測可靠）— 實測 Divergence → AUDJPY 部署成功（開圖 ✅ active ✅ 心跳 ✅ log loaded ✅）冇取代其他 EA | 08-21 |
 | 102 | **🔥 部署後 Properties dialog 殘留（RSI dialog 一直開住 → 之後部署全部被擋 — 用戶實測「重新部署都係有問題」）** | 部署撳「確定」後 dialog 冇真正關閉（殘留 `RSI_Over 1.00 Properties`）→ modal 擋住之後所有開 chart Alt+F → 部署 fail；ESC/撳取消對 modal dialog 唔 work（實測撳確定/ESC 都關唔到）；另外 runtime_status 誤讀 MQL5/Logs（MetaEditor 中文日誌 — 已启动/已停止）而唔係 terminal Logs（英文 loaded/removed）→ EA 掛住都誤判 chart_removed | v0.10.63 ①部署前 + 部署後都用 WM_CLOSE（PostMessage 0x0010 — 實測有效）清理 dialog ②runtime_status 改讀 terminal Logs（<hash>/Logs/）+ regex 加 loaded successfully ③log 判斷加 loaded successfully → running。實測：RSI_Over → UK100 部署成功 + 部署後 dialog 0 個 + runtime 正確 | 08-21 |
+| 103 | **🔥 剷除多個同名 chart 揀錯（3 個 UK100 → 揀第一個 → 冇掛 EA → 假成功）** | remove_ea_from_chart 揀第一個 symbol match 嘅 chart（ListView index）→ 但 EA 可能掛喺第 2/3 個同名 chart → 移除錯 chart → EA 仲運行 → 「15s 未確認」假成功；移除 chart 後 ListView 重新排位（index 移位）→ 第二次用舊 index 揀錯 chart | v0.10.64 改「逐個試」：候選 chart（symbol match）→ Ctrl+W 關 → 驗證 EA 真係移除（心跳停/log removed）→ 未移除就重新讀 ListView + 重新對應 symbol → 下一個；實測：3 個候選逐個試 → 第 3 個先係 RSI_Over → 成功移除（心跳停 + log removed）| 08-21 |
 
 ---
 
@@ -652,7 +654,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `dfc9cb8`（master）— v0.10.63（部署前/後 dialog WM_CLOSE 清理 + runtime_status 讀 terminal Logs + loaded successfully 判斷）；TODO：數據注入選擇功能未實行（見 TODO 段）
+**Git HEAD**: `a676fdb`（master）— v0.10.64（剷除多個同名 chart 逐個試 + index 移位 FIX）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）

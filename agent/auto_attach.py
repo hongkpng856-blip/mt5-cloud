@@ -1577,6 +1577,75 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         print(f"⚠️ 熱鍵預載失敗: {_e_hk}")
         return mt5_pid
 
+def _ensure_no_dialog(desc='', max_wait=8, close_btn=True):
+    """🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）
+    Dialog 檢查閘門 — 確保冇任何 #32770 dialog 阻住先繼續
+    - 有 dialog → WM_CLOSE 強制關閉（實測有效）+ 等 0.5 秒再確認
+    - 關唔到（max_wait 內仲有）→ return False（Caller 要 fail，唔好硬嚟）
+    - return True = 確認冇 dialog（可以繼續下一步）
+    """
+    import ctypes as _ct_nd
+    _u_nd = _ct_nd.windll.user32
+
+    def _scan():
+        _dlgs = []
+        def _cb(hwnd, _):
+            _cls = _ct_nd.create_unicode_buffer(128)
+            _u_nd.GetClassNameW(_ct_nd.c_void_p(hwnd), _cls, 128)
+            if _cls.value == '#32770':
+                _dlgs.append(hwnd)
+            return True
+        _u_nd.EnumWindows(_ct_nd.WINFUNCTYPE(_ct_nd.c_bool, _ct_nd.c_size_t, _ct_nd.c_size_t)(_cb), 0)
+        return _dlgs
+
+    _dlgs = _scan()
+    if not _dlgs:
+        return True  # 冇 dialog — 可以直接繼續
+
+    print(f"🚧 [Dialog Gate] {desc}: 發現 {len(_dlgs)} 個 dialog — 清理中...")
+    _deadline = time.time() + max_wait
+    _closed = set()
+    while time.time() < _deadline:
+        _dlgs = [h for h in _scan() if h not in _closed]
+        if not _dlgs:
+            print(f"✅ [Dialog Gate] {desc}: dialog 已全部關閉 — 可以繼續")
+            return True
+        for _h in _dlgs:
+            try:
+                _u_nd.PostMessageW(_ct_nd.c_void_p(_h), 0x0010, 0, 0)  # WM_CLOSE
+                _closed.add(_h)
+            except Exception:
+                pass
+        if close_btn:
+            try:
+                from pywinauto import Application as _App_nd
+                try:
+                    _app_nd = _App_nd(backend='win32').connect(process=find_mt5_pid(), timeout=3)
+                    for _h in _dlgs:
+                        try:
+                            _dw_nd = _app_nd.window(handle=int(_h))
+                            for _b_nd in _dw_nd.children(class_name='Button'):
+                                try:
+                                    _bt_nd = _b_nd.window_text()
+                                    if '取消' in _bt_nd or '否' in _bt_nd or 'Cancel' in _bt_nd or 'No' in _bt_nd:
+                                        _b_nd.click()
+                                        break
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            except Exception:
+                pass
+        time.sleep(0.5)
+    _left = _scan()
+    if _left:
+        print(f"❌ [Dialog Gate] {desc}: {len(_left)} 個 dialog 關唔到（WM_CLOSE 無效）— 唔繼續下一步！")
+        return False
+    return True
+
+
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
     """🎯 快捷鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
     每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
@@ -1786,6 +1855,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
                     print(f"📌 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
+                    # 🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）：開 chart 前檢查閘門 — 有 dialog 擋住 Alt+F menu → 開 chart 必失敗
+                    if not _ensure_no_dialog(f'開 chart {_sym} 前', max_wait=8):
+                        print(f"❌ 開 chart 中止：dialog 關唔到 — 唔開 chart（避免假失敗）")
+                        return False
                     _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
                     _pg_new2.press('enter'); time.sleep(1.5)
                     _pg_new2.press('enter'); time.sleep(2)
@@ -1946,6 +2019,11 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     except Exception as _e_act:
                         print(f"   ⚠️ active chart 驗證異常: {_e_act}（保守 — 當唔啱）")
                     if _active_ok:
+                        # 🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）：send 熱鍵前檢查閘門
+                        # 有 dialog（Properties 殘留）→ 熱鍵 send 咗會彈錯 dialog / 被擋 → 先確認冇 dialog
+                        if not _ensure_no_dialog(f'附加 {ea_name} 前', max_wait=8):
+                            print(f"❌ 附加中止：dialog 關唔到 — 唔 send 熱鍵（避免彈錯 dialog）")
+                            return False
                         _sk(combo)
                     else:
                         print(f"❌ 附加中止：active chart 唔係目標 symbol（{symbol}）— 避免代替 dialog 一鑊泡")
@@ -2194,6 +2272,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 time.sleep(2)
             if not _saw_props:
                 print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
+
+        # 🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）：心跳驗證前檢查閘門
+        # 撳「確定」後 Properties dialog 可能殘留 → 唔可以當成功（下次部署會被擋）→ 確認冇 dialog 先繼續
+        if not _ensure_no_dialog(f'{ea_name} 部署完成後', max_wait=8):
+            print(f"❌ {ea_name} 部署後有 dialog 關唔到 — 唔當成功（會擋下次部署）")
+            return False
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
@@ -2966,95 +3050,159 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         _target_sym = None
 
     # 5. 揀目標 chart（對應 symbol → ListView index）
-    _target_idx = None
+    # 🚨 2026-08-21 FIX（多個同名 chart 揀錯 — 用戶實測）：唔可以淨揀第一個 match symbol 嘅 chart
+    # （3 個 UK100 時 EA 可能掛喺第 2/3 個 → 移除錯 chart → 假成功）
+    # → 策略：逐個試（由 symbol match 開始）→ Ctrl+W 關 → 檢查 EA 真係移除（心跳停/log removed）→ 未移除就下一個
+    _candidates = []
     if _target_sym:
         for _i, _t in enumerate(_items):
             if _t.upper().startswith(_target_sym.upper()):
-                _target_idx = _i
+                _candidates.append(_i)
+    if not _candidates:
+        # fallback：全部 chart 都試（冇 log 記錄時）
+        _candidates = list(range(len(_items)))
+    print(f"📌 目標 symbol {_target_sym or '?'} → 候選 chart: {_candidates}")
+
+    _removed_ok = False
+    _attempted = set()  # 🚨 2026-08-21：已試過嘅 symbol+index 組合（重新讀 ListView 後 index 會移位）
+    for _target_idx in _candidates:
+        # 🚨 2026-08-21 FIX（index 移位 bug）：每次試之前重新對應 symbol → 最新 index
+        # （移除 chart 後 ListView 重新排位 — 舊 index 會指錯 chart）
+        _cur_idx = _target_idx
+        if _target_sym:
+            _found_cur = None
+            for _i3, _t3 in enumerate(_items):
+                if _t3.upper().startswith(_target_sym.upper()) and (_i3, _t3) not in _attempted:
+                    _found_cur = _i3
+                    break
+            if _found_cur is not None:
+                _cur_idx = _found_cur
+            else:
+                print(f"⚠️ 冇新嘅 {_target_sym} chart（試過晒）— 停止")
                 break
-    if _target_idx is None:
-        # fallback：用第一個 chart（冇 log 記錄時）
-        _target_idx = 0
-    print(f"📌 揀 chart [{_target_idx}]（{_items[_target_idx] if _target_idx < len(_items) else '?'}）")
-
-    # 6. 揀目標 chart → Enter（關閉 dialog + 彈返 chart）
-    # 🚨 2026-08-21 FIX（Breakout AMD 案例 + 用戶要求）：用方向鍵揀（用戶一早講咗 — 唔靠座標）
-    # 唔好有 click fallback（座標唔可靠 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）
-    _sk('{HOME}')
-    time.sleep(0.5)
-    for _kd in range(_target_idx):
-        _sk('{DOWN}')
-        time.sleep(0.3)
-    _sk('{ENTER}')
-    time.sleep(2)
-
-    # 7. 確認 dialog 關咗（彈返 chart）
-    _dlgs_now = _dlgs()
-    if any('窗口' in t for t, h in _dlgs_now):
-        print("⚠️ 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
+        if _cur_idx >= len(_items):
+            continue
+        _attempted.add((_cur_idx, _items[_cur_idx]))
+        print(f"📌 試移除 chart [{_cur_idx}]（{_items[_cur_idx]}）...")
+        # 6. 揀目標 chart → Enter（關閉 dialog + 彈返 chart）
+        # 🚨 2026-08-21 FIX（Breakout AMD 案例 + 用戶要求）：用方向鍵揀（用戶一早講咗 — 唔靠座標）
+        # 唔好有 click fallback（座標唔可靠 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）
+        _sk('{HOME}')
+        time.sleep(0.5)
+        for _kd in range(_cur_idx):
+            _sk('{DOWN}')
+            time.sleep(0.3)
         _sk('{ENTER}')
         time.sleep(2)
-        _dlgs_now2 = _dlgs()
-        if any('窗口' in t for t, h in _dlgs_now2):
-            # 🚨 2026-08-21 FIX（Breakout AMD 案例 — 網頁話成功但 MT5 卡窗口 dialog）：
-            # dialog 再試都未關 → fail（唔好繼續 Ctrl+W 亂關 — 關唔到 + 誤判成功）
-            print(f"❌ 窗口 dialog 未關（再試 Enter 都冇效）— 剷除中止（唔好誤判成功）")
+
+        # 7. 確認 dialog 關咗（彈返 chart）
+        _dlgs_now = _dlgs()
+        if any('窗口' in t for t, h in _dlgs_now):
+            print("⚠️ 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
+            _sk('{ENTER}')
+            time.sleep(2)
+            _dlgs_now2 = _dlgs()
+            if any('窗口' in t for t, h in _dlgs_now2):
+                # 🚨 2026-08-21 FIX（Breakout AMD 案例 — 網頁話成功但 MT5 卡窗口 dialog）：
+                # dialog 再試都未關 → fail（唔好繼續 Ctrl+W 亂關 — 關唔到 + 誤判成功）
+                print(f"❌ 窗口 dialog 未關（再試 Enter 都冇效）— 剷除中止（唔好誤判成功）")
+                try:
+                    _sk('{ESC}')
+                except Exception:
+                    pass
+                return False
+
+        # 8. Ctrl+W 關閉該 chart（EA 一齊移除）
+        _sk('^w')
+        time.sleep(2.5)
+
+        # 9. 驗證：MT5 log 有 removed 記錄 / 心跳停（🎯 逐個試 — 冇移除就下一個 candidate）
+        _this_removed = False
+        try:
+            _start_t = time.time()
+            while time.time() - _start_t < 10:
+                time.sleep(2)
+                # 心跳停 = 移除
+                _hb_still = False
+                _cfd2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+                for _hfn2 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+                    _hfp2 = os.path.join(_cfd2, _hfn2)
+                    if os.path.isfile(_hfp2) and time.time() - os.path.getmtime(_hfp2) < 30:
+                        _hb_still = True
+                if not _hb_still:
+                    _this_removed = True
+                    print(f"✅ {ea_name} 心跳已停（EA 已移除）")
+                    break
+                # MT5 log 有 removed
+                try:
+                    if _lat_r and os.path.isfile(_lat_r):
+                        _raw_r2 = open(_lat_r, 'rb').read()
+                        _txt_r2 = None
+                        for _enc_r2 in ('utf-16', 'utf-8', 'cp1252'):
+                            try:
+                                _txt_r2 = _raw_r2.decode(_enc_r2)
+                                break
+                            except Exception:
+                                continue
+                        if _txt_r2:
+                            _recent = _txt_r2.splitlines()[-30:]
+                            if any(ea_name in _l2 and 'removed' in _l2 for _l2 in _recent):
+                                _this_removed = True
+                                print(f"✅ MT5 log 確認 {ea_name} removed")
+                                break
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        if _this_removed:
+            _removed_ok = True
+            break
+        # 未移除 → 可能移除咗冇 EA 嘅 chart — 再開窗口 dialog 試下一個
+        print(f"⚠️ chart [{_target_idx}] 移除後 {ea_name} 仲運行緊 — 試下一個 chart")
+        # 重新開窗口 dialog（Ctrl+W 關咗 chart 之後 dialog 已關）
+        time.sleep(1)
+        _sk('%w')
+        time.sleep(2)
+        # 重新讀 ListView（chart 數目可能少咗）
+        _lv_found2 = None
+        for _w_a2 in _app.windows():
+            try:
+                if _w_a2.class_name() == '#32770' and '窗口' in _w_a2.window_text():
+                    for _c_a2 in _w_a2.children():
+                        if _c_a2.element_info.class_name == 'SysListView32':
+                            _lv_found2 = _c_a2
+                            break
+                    break
+            except Exception:
+                continue
+        if not _lv_found2:
+            print("⚠️ 再開窗口 dialog 失敗 — 剷除中止")
             try:
                 _sk('{ESC}')
             except Exception:
                 pass
             return False
-
-    # 8. Ctrl+W 關閉該 chart（EA 一齊移除）
-    _sk('^w')
-    time.sleep(2.5)
-
-    # 9. 驗證：MT5 log 有 removed 記錄 / 心跳停
-    _removed_ok = False
-    try:
-        _start_t = time.time()
-        while time.time() - _start_t < 15:
-            time.sleep(2)
-            # 心跳停 = 移除
-            _hb_still = False
-            _cfd2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-            for _hfn2 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
-                _hfp2 = os.path.join(_cfd2, _hfn2)
-                if os.path.isfile(_hfp2) and time.time() - os.path.getmtime(_hfp2) < 30:
-                    _hb_still = True
-            if not _hb_still:
-                _removed_ok = True
-                print(f"✅ {ea_name} 心跳已停（EA 已移除）")
-                break
-            # MT5 log 有 removed
+        _cnt2 = _u.SendMessageW(_ct.c_void_p(int(_lv_found2.element_info.handle)), 0x1004, 0, 0)
+        _items = []
+        for _i2 in range(max(_cnt2, 0)):
             try:
-                if _lat_r and os.path.isfile(_lat_r):
-                    _raw_r2 = open(_lat_r, 'rb').read()
-                    _txt_r2 = None
-                    for _enc_r2 in ('utf-16', 'utf-8', 'cp1252'):
-                        try:
-                            _txt_r2 = _raw_r2.decode(_enc_r2)
-                            break
-                        except Exception:
-                            continue
-                    if _txt_r2:
-                        _recent = _txt_r2.splitlines()[-30:]
-                        if any(ea_name in _l2 and 'removed' in _l2 for _l2 in _recent):
-                            _removed_ok = True
-                            print(f"✅ MT5 log 確認 {ea_name} removed")
-                            break
+                _t2 = _lv_found2.get_item(_i2).text()
+                _items.append(_t2)
             except Exception:
-                pass
+                _items.append('')
+        print(f"📋 重新讀 ListView（{_cnt2} 個 chart）")
+        for _i2, _t2 in enumerate(_items):
+            print(f"  [{_i2}] {_t2}")
+
+    if _removed_ok:
+        print(f"✅ 暫停/剷除 {ea_name} 完成（Ctrl+W 關 chart）")
+        return True
+    print(f"❌ {ea_name} 未能確認移除（試晒所有候選 chart 都仲運行緊）")
+    try:
+        _sk('{ESC}')
     except Exception:
         pass
-
-    if not _removed_ok:
-        print(f"❌ {ea_name} 15s 內未確認移除（chart 可能冇關 / dialog 卡住 — Breakout AMD 案例）")
-        # 🚨 2026-08-21 FIX（用戶實測「網頁話成功但 MT5 卡窗口 dialog」）：未確認移除 → return False（唔好話成功）
-        # 之前無條件 print「✅ 完成」+ return True → 假成功（activity log pause_result → 網頁話成功）
-        return False
-    print(f"✅ 暫停/剷除 {ea_name} 完成（Ctrl+W 關 chart）")
-    return True
+    return False
 
 
 
