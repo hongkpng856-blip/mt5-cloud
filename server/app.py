@@ -575,6 +575,47 @@ def api_ea_config():
         try:
             _cf2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             for _ea in ea_names:
+                # 🚨 2026-08-21 FIX：優先讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫嘅逐單明細 — 完整歷史）
+                # state json 會被系統心跳覆寫（得 ea/status/ts — 冇 stats）→ 唔可靠
+                _tf2 = os.path.join(_cf2, f'trades_{_ea}.json')
+                _trade_stats = None
+                if os.path.isfile(_tf2):
+                    try:
+                        with open(_tf2, 'rb') as _f2:
+                            _raw2 = _f2.read()
+                        _txt2 = None
+                        for _enc2 in ('utf-8', 'utf-16'):
+                            try:
+                                _txt2 = _raw2.decode(_enc2)
+                                break
+                            except Exception:
+                                continue
+                        if _txt2:
+                            _tlist = []
+                            for _line2 in _txt2.splitlines():
+                                _line2 = _line2.strip()
+                                if not _line2:
+                                    continue
+                                try:
+                                    _td2 = json.loads(_line2)
+                                    if 'profit' in _td2:
+                                        _tlist.append(_td2)
+                                except Exception:
+                                    continue
+                            if _tlist:
+                                _profits = [_t2.get('profit', 0) for _t2 in _tlist]
+                                _trade_stats = {
+                                    "trades": len(_profits),
+                                    "wins": sum(1 for p in _profits if p > 0),
+                                    "losses": sum(1 for p in _profits if p < 0),
+                                    "profit": round(sum(_profits), 2),
+                                }
+                    except Exception:
+                        pass
+                if _trade_stats:
+                    ea_stats[_ea] = _trade_stats
+                    continue
+                # fallback: state json（如果有 stats）
                 _sf2 = os.path.join(_cf2, f'state_{_ea}.json')
                 if os.path.isfile(_sf2):
                     try:
@@ -1022,6 +1063,64 @@ def compute_auto_trade_status(user):
 def api_analysis():
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     deals_data = json.loads(agent.deals or '[]')
+
+    # 🚨 2026-08-21：合併 EA 自寫逐單明細（trades_<EA>.json — 完整歷史）
+    # MT5 Python history API 讀唔到新 deals（build 6120 caching）→ agent.deals 得舊嘢
+    # → 讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫）合併做分析數據源
+    try:
+        import glob as _gl_a
+        _cf_a = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        # 搵返 EA 名 → magic 對應
+        _ea_magic_map = {}
+        try:
+            import sqlite3 as _sq_a
+            _db_a = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+            _c_a = _sq_a.connect(_db_a)
+            _r_a = _c_a.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+            _c_a.close()
+            if _r_a:
+                _cfg_a = json.loads(_r_a[0] or '{}')
+                for _k_a, _v_a in _cfg_a.items():
+                    if not _k_a.startswith('_') and not _k_a.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v_a, str):
+                        _ea_magic_map[_k_a] = str(_cfg_a.get(_k_a + '_magic', ''))
+        except Exception:
+            pass
+        for _f_a in _gl_a.glob(os.path.join(_cf_a, 'trades_*.json')):
+            _ea_a = os.path.basename(_f_a)[7:-5]  # trades_<EA>.json → <EA>
+            _magic_a = _ea_magic_map.get(_ea_a, '')
+            if not _magic_a:
+                continue
+            try:
+                with open(_f_a, 'rb') as _fh_a:
+                    _raw_a = _fh_a.read()
+                _txt_a = None
+                for _enc_a in ('utf-8', 'utf-16'):
+                    try:
+                        _txt_a = _raw_a.decode(_enc_a)
+                        break
+                    except Exception:
+                        continue
+                if _txt_a:
+                    for _line_a in _txt_a.splitlines():
+                        _line_a = _line_a.strip()
+                        if not _line_a:
+                            continue
+                        try:
+                            _td_a = json.loads(_line_a)
+                            if 'profit' in _td_a:
+                                deals_data.append({
+                                    "magic": int(_magic_a),
+                                    "symbol": _cfg_a.get(_ea_a, ''),
+                                    "profit": _td_a.get('profit', 0),
+                                    "time": _td_a.get('time', 0),
+                                })
+                        except Exception:
+                            continue
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     if not deals_data:
         return jsonify({"error":"No data yet"})
 
@@ -1074,14 +1173,39 @@ def api_analysis():
     # Collect unique magic numbers
     all_magics = sorted(set(str(d['magic']) for d in deals_data if d['magic'] != 0))
 
+    # 🚨 2026-08-21：EA 名對應（correlation matrix 顯示 EA 名 — 用戶易睇）
+    ea_name_by_key = {}
+    try:
+        import sqlite3 as _sq_c
+        _db_c = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+        _c_c = _sq_c.connect(_db_c)
+        _r_c = _c_c.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+        _c_c.close()
+        if _r_c:
+            _cfg_c = json.loads(_r_c[0] or '{}')
+            for _k_c, _v_c in _cfg_c.items():
+                if not _k_c.startswith('_') and not _k_c.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v_c, str):
+                    _mk_c = f"{_cfg_c.get(_k_c + '_magic', '')}_{_v_c}"
+                    ea_name_by_key[_mk_c] = _k_c
+    except Exception:
+        pass
+
     # Correlation
     daily_pnl = defaultdict(lambda: defaultdict(float))
     for d in deals_data:
         if not d.get('magic') or d.get('magic') == 0:
             continue
-        date_key = str(d.get('time',''))[:10]
+        # 🚨 2026-08-21：trades json 嘅 time 係 epoch（數字）— 轉做 YYYY-MM-DD
+        _t_val = d.get('time', '')
+        if isinstance(_t_val, (int, float)) and _t_val > 1000000000:
+            try:
+                _date_key = datetime.fromtimestamp(_t_val).strftime('%Y-%m-%d')
+            except Exception:
+                _date_key = str(_t_val)[:10]
+        else:
+            _date_key = str(_t_val)[:10]
         key = f"{d['magic']}_{d['symbol']}"
-        daily_pnl[key][date_key] += d['profit']
+        daily_pnl[key][_date_key] += d['profit']
 
     ea_keys = sorted(daily_pnl.keys())
     all_dates = sorted(set(d for dates in daily_pnl.values() for d in dates.keys()))
@@ -1096,10 +1220,13 @@ def api_analysis():
 
     corr_matrix = []
     for ek1 in ea_keys:
-        row = {"ea":ek1}
+        row = {"ea": ea_name_by_key.get(ek1, ek1)}
         for ek2 in ea_keys:
-            row[ek2] = round(pearson(matrix[ek1],matrix[ek2]),2)
+            row[ea_name_by_key.get(ek2, ek2)] = round(pearson(matrix[ek1], matrix[ek2]), 2)
         corr_matrix.append(row)
+
+    # 🚨 2026-08-21：correlation keys 用 EA 名（前端顯示）
+    corr_keys_display = [ea_name_by_key.get(k, k) for k in ea_keys]
 
     # Filter magic 0 for summary too (platform trades, not EA)
     ea_deals = [d for d in deals_data if d.get('magic') and d.get('magic') != 0]
@@ -1116,27 +1243,191 @@ def api_analysis():
         "per_ea_by_magic_symbol": per_ea_by_magic_symbol,
         "all_magics": all_magics,
         "correlation_matrix": corr_matrix,
-        "correlation_keys": ea_keys
+        "correlation_keys": corr_keys_display
     })
 
 
 @app.route('/api/ea-report')
 @login_required
 def api_ea_report():
-    """EA 診斷報告：equity curve + 詳細 stats"""
+    """EA 診斷報告：equity curve + 詳細 stats
+    🚨 2026-08-21：加 EA 自寫統計 fallback（MT5 Python history API 讀唔到新 deals → agent.deals 得舊嘢）
+    → 讀 state_<EA>.json（TestTrades 自己 track 真實 trades/wins/losses/profit）
+    """
     magic = request.args.get('magic', '')
     symbol = request.args.get('symbol', '')
-    if not magic or not symbol:
-        return jsonify({"error": "需要 magic + symbol"}), 400
+    if not magic:
+        return jsonify({"error": "需要 magic"}), 400
 
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     deals_data = json.loads(agent.deals or '[]')
 
-    # 過濾指定 EA
+    # 過濾指定 EA（by magic — 唔理 symbol，EA config 冇存 symbol）
     ea_deals = [d for d in deals_data
                 if str(d.get('magic', '')) == str(magic)
-                and d.get('symbol', '') == symbol
                 and d.get('profit', 0) != 0]
+
+    # 🚨 2026-08-21：讀 EA 自寫統計（state_<EA>.json — TestTrades 寫真實 trades/wins/losses/profit）
+    # 因為 MT5 Python history API 讀唔到新 deals（build 6120 caching）→ agent.deals 冇最新數據
+    ea_stats = {}
+    try:
+        import glob as _gl
+        _cf = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        for _f in _gl.glob(os.path.join(_cf, 'state_*.json')):
+            try:
+                with open(_f, 'rb') as _fh:
+                    _raw = _fh.read()
+                try:
+                    _sd = json.loads(_raw.decode('utf-8'))
+                except Exception:
+                    _sd = json.loads(_raw.decode('utf-16'))
+                if isinstance(_sd, dict) and _sd.get('status') == 'running' and 'trades' in _sd:
+                    ea_stats[_sd.get('ea', '')] = _sd
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # 搵返 EA 名（by magic — 從 config）
+    ea_name = ''
+    try:
+        import sqlite3 as _sq
+        _db = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+        _c = _sq.connect(_db)
+        _r = _c.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+        _c.close()
+        if _r:
+            _cfg = json.loads(_r[0] or '{}')
+            for _k, _v in _cfg.items():
+                if not _k.startswith('_') and not _k.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v, str):
+                    if str(_cfg.get(_k + '_magic', '')) == str(magic):
+                        ea_name = _k
+                        break
+    except Exception:
+        pass
+
+    # 如果 agent.deals 冇數據 → 用 EA 自寫統計（真實數據）
+    # 🚨 2026-08-21 FIX：唔好靠 state json 嘅 stats（系統心跳注入覆寫咗 state json 格式 — 得 ea/status/ts）
+    # → 用 trades_<EA>.json（AppendTrade 寫嘅逐單明細 — 冇衝突）計全部統計
+    stat = ea_stats.get(ea_name) if ea_name else None
+
+    # 🚨 2026-08-21：讀 trades_<EA>.json（EA 寫嘅逐單明細 — JSONL）→ 畫 equity curve / distribution / monthly
+    # ⚠️ MQL5 FileWriteString 寫 UTF-16 LE（BOM）— 要 fallback decode
+    trade_list = []
+    try:
+        _tf = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'trades_{ea_name}.json')
+        if os.path.isfile(_tf):
+            with open(_tf, 'rb') as _fh:
+                _raw_bytes = _fh.read()
+            _txt = None
+            for _enc in ('utf-8', 'utf-16'):
+                try:
+                    _txt = _raw_bytes.decode(_enc)
+                    break
+                except Exception:
+                    continue
+            if _txt:
+                for _line in _txt.splitlines():
+                    _line = _line.strip()
+                    if not _line:
+                        continue
+                    try:
+                        _td = json.loads(_line)
+                        if 'profit' in _td:
+                            trade_list.append(_td)
+                    except Exception:
+                        continue
+    except Exception:
+        pass
+
+    if not ea_deals and (trade_list or stat):
+
+        # Equity curve（cumulative）+ distribution + monthly
+        equity_curve = []
+        dist = {"bins": ["0-50", "50-100", "100-200", "200-500", "500+"], "wins": [0]*5, "losses": [0]*5}
+        monthly_pnl = {}
+        cum = 0.0
+        # 🚨 2026-08-21 FIX：trade_list 有數據 → 用逐單明細計全部統計（最準確）；冇 → fallback state stats
+        if trade_list:
+            trade_list.sort(key=lambda x: x.get('time', 0))
+            for _t in trade_list:
+                _p = _t.get('profit', 0)
+                cum += _p
+                equity_curve.append({
+                    "time": datetime.fromtimestamp(_t.get('time', 0)).strftime('%Y-%m-%d %H:%M') if _t.get('time') else '',
+                    "profit": round(_p, 2),
+                    "cumulative": round(cum, 2)
+                })
+                # distribution
+                amt = abs(_p)
+                idx = 4 if amt >= 500 else (3 if amt >= 200 else (2 if amt >= 100 else (1 if amt >= 50 else 0)))
+                if _p > 0: dist['wins'][idx] += 1
+                else: dist['losses'][idx] += 1
+                # monthly
+                if _t.get('time'):
+                    ym = datetime.fromtimestamp(_t['time']).strftime('%Y-%m')
+                    monthly_pnl[ym] = monthly_pnl.get(ym, 0) + round(_p, 2)
+            # stats from trades
+            profits = [_t.get('profit', 0) for _t in trade_list]
+            total = len(profits)
+            wins = sum(1 for p in profits if p > 0)
+            losses = sum(1 for p in profits if p < 0)
+            total_profit = sum(profits)
+            win_sum = sum(p for p in profits if p > 0)
+            loss_sum = sum(p for p in profits if p < 0)
+            win_rate = round(wins / (wins + losses) * 100, 2) if (wins + losses) > 0 else 0
+            avg_win = round(win_sum / wins, 2) if wins > 0 else 0
+            avg_loss = round(loss_sum / losses, 2) if losses > 0 else 0
+            pf = round(abs(win_sum / loss_sum), 2) if loss_sum != 0 else float('inf')
+            # max drawdown
+            peak = -float('inf')
+            max_dd = 0
+            max_dd_pct = 0
+            for _e in equity_curve:
+                if _e['cumulative'] > peak:
+                    peak = _e['cumulative']
+                dd = peak - _e['cumulative']
+                if dd > max_dd:
+                    max_dd = round(dd, 2)
+                    max_dd_pct = round(dd / peak * 100, 2) if peak > 0 else 0
+        elif stat:
+            total = stat.get('trades', 0)
+            wins = stat.get('wins', 0)
+            losses = stat.get('losses', 0)
+            total_profit = stat.get('profit', 0)
+            win_sum = stat.get('win_sum', 0)
+            loss_sum = stat.get('loss_sum', 0)
+            win_rate = round(wins / (wins + losses) * 100, 2) if (wins + losses) > 0 else 0
+            avg_win = round(win_sum / wins, 2) if wins > 0 else 0
+            avg_loss = round(loss_sum / losses, 2) if losses > 0 else 0
+            pf = round(abs(win_sum / loss_sum), 2) if loss_sum != 0 else float('inf')
+            max_dd = 0
+            max_dd_pct = 0
+        else:
+            total = 0; wins = 0; losses = 0; total_profit = 0
+            win_rate = 0; avg_win = 0; avg_loss = 0; pf = 0
+            max_dd = 0; max_dd_pct = 0
+
+        return jsonify({
+            "magic": magic,
+            "symbol": symbol or '—',
+            "ea_name": ea_name,
+            "total_trades": total,
+            "wins": wins,
+            "losses": losses,
+            "win_rate": win_rate,
+            "total_profit": round(total_profit, 2),
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "profit_factor": pf,
+            "max_drawdown": max_dd,
+            "max_drawdown_pct": max_dd_pct,
+            "equity_curve": equity_curve[-100:],
+            "distribution": dist,
+            "monthly_pnl": monthly_pnl,
+            "source": "ea_stats",
+            "note": "數據來自 EA 自寫統計（MT5 history API 讀唔到新 deals — 已知限制）"
+        })
 
     # 按時間排序
     ea_deals.sort(key=lambda x: x.get('time', ''))
@@ -2063,6 +2354,33 @@ void __mt5c_process() {
       FileClose(h);
    }
 }
+// 🚨 2026-08-21：逐單記錄（trades_<EA>.json — 報告/correlation 真實數據）
+// 部署時用戶可選注入（default 注入）— 每次平倉記錄一單（ticket/time/profit）
+string __mt5c_trades_file = "";
+void __mt5c_append_trade() {
+   if(__mt5c_trades_file == "")
+      __mt5c_trades_file = "trades_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
+   // 掃最近一筆已平倉嘅 deal（OnTradeTransaction 後由 history 攞）
+   if(HistorySelect(TimeCurrent() - 3600, TimeCurrent())) {
+      int _tot = HistoryDealsTotal();
+      for(int _i = _tot - 1; _i >= 0; _i--) {
+         ulong _t = HistoryDealGetTicket(_i);
+         if(_t <= 0) continue;
+         if((long)HistoryDealGetInteger(_t, DEAL_MAGIC) == 0) continue;
+         if(HistoryDealGetInteger(_t, DEAL_ENTRY) != DEAL_ENTRY_OUT) continue;
+         double _p = HistoryDealGetDouble(_t, DEAL_PROFIT);
+         if(_p == 0) continue;
+         // 寫入（append — FILE_READ|FILE_WRITE + SEEK_END）
+         int _fh = FileOpen(__mt5c_trades_file, FILE_READ|FILE_WRITE|FILE_TXT|FILE_COMMON);
+         if(_fh != INVALID_HANDLE) {
+            FileSeek(_fh, 0, SEEK_END);
+            FileWriteString(_fh, StringFormat("{\\"ticket\\":%I64d,\\"time\\":%I64d,\\"profit\\":%.2f}\\n", _t, (long)TimeCurrent(), _p));
+            FileClose(_fh);
+         }
+         break;  // 每次 transaction 只記一筆
+      }
+   }
+}
 // ---- 心跳結束 ----
 '''
                         _c_hb = _c_hb.rstrip() + '\n' + _hb_mod + '\n'
@@ -2070,6 +2388,11 @@ void __mt5c_process() {
                         _c_hb2 = _re_hb.sub(r'(\s*)return\s*\(\s*INIT_SUCCEEDED\s*\)\s*;', r'\1   EventSetTimer(1);\n\1   return(INIT_SUCCEEDED);', _c_hb, count=1)
                         # OnTimer 掛鉤（調用 __mt5c_process — OnDeinit 前）
                         _c_hb2 = _c_hb2.replace('void OnDeinit(const int reason)', 'void OnTimer()\n{\n   __mt5c_process();\n}\n\nvoid OnDeinit(const int reason)', 1)
+                        # 🚨 2026-08-21：OnTradeTransaction 掛鉤（逐單記錄 — 平倉時 append trades json）
+                        # 冇 OnTradeTransaction 就加；有就喺入面加 call
+                        if 'OnTradeTransaction' not in _c_hb2:
+                            _c_hb2 = _c_hb2.replace('void OnDeinit(const int reason)',
+                                'void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest &request, const MqlTradeResult &result)\n{\n   __mt5c_append_trade();\n}\n\nvoid OnDeinit(const int reason)', 1)
                         # OnDeinit EventKillTimer（Print 已停止 前）
                         _c_hb2 = _re_hb.sub(r'(\s*)if\(EnableLog\) Print\("🛑', r'\1   EventKillTimer();\n\1   if(EnableLog) Print("🛑', _c_hb2, count=1)
                         if _c_hb2 != _c_hb:
@@ -2902,6 +3225,9 @@ def api_deploy():
     # 🚨 2026-08-20 FIX：magic 空 string（前端未 alive EA 傳 ''）→ fallback default（否則 auto_attach --magic 空 → argparse 失敗 → 假成功）
     magic = data.get('magic') or '240701'
     lot = data.get('lot', '1.00')
+    # 🚨 2026-08-21：數據注入選擇（用戶部署時揀 — 注入逐單記錄 / 唔注入）
+    # 預設 true（注入）— 前端 modal 可選「唔注入」+「不再顯示」
+    inject_trades = data.get('inject_trades', True)
     _last_deploy_time[ea_name] = time.time()
     
     # Save EA config first
@@ -3033,6 +3359,7 @@ def api_deploy():
                     'tf': tf,
                     'magic': str(magic),
                     'lot': str(lot),
+                    'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
                     'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
                     'source': 'api_deploy'
                 }, f)
@@ -3046,6 +3373,7 @@ def api_deploy():
                 'tf': tf,
                 'magic': str(magic),
                 'lot': str(lot),
+                'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
                 'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
                 'source': 'api_deploy'
             }, f)

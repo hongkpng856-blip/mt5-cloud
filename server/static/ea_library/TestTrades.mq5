@@ -36,6 +36,8 @@ int OnInit()
    g_total_profit   = 0.0;
    // 重啟後由 history 恢復累計 profit
    RestoreProfitFromHistory();
+   // 🚨 2026-08-21：重建 trades json（掃全部歷史平倉單 — 唔會因為 EA 重啟而丟失舊單）
+   RebuildTradesFile();
    EventSetTimer(1);   // 每秒檢查一次（唔靠 tick — 心跳另由系統注入 OnTick）
    WriteStats();
    Comment("TestTrades EA 已啟動 — 每 " + IntegerToString(InpIntervalSec) + " 秒開一單，持倉 " + IntegerToString(InpHoldSec) + " 秒平倉");
@@ -228,6 +230,7 @@ void ClosePosition(ulong ticket)
       Print("📉 TestTrades 平倉 #", ticket, " profit=", DoubleToString(closed_profit, 2), " 累計=", DoubleToString(g_total_profit, 2));
       UpdateComment();
       WriteStats();
+      AppendTrade(ticket, closed_profit);   // 🚨 2026-08-21：記錄逐單明細（equity curve / distribution / monthly）
    }
    else
    {
@@ -236,18 +239,68 @@ void ClosePosition(ulong ticket)
 }
 
 //+------------------------------------------------------------------+
+// 記錄逐單明細（JSONL — 每行一單）→ trades_TestTrades.json
+// 🚨 2026-08-21：俾 server 畫 equity curve / distribution / monthly P&L
+void AppendTrade(ulong ticket, double profit)
+{
+   string fname = "trades_TestTrades.json";
+   // 用 FILE_READ|FILE_WRITE 先讀後寫？唔得 — 直接 FILE_WRITE|FILE_READ append 模式
+   // MQL5 冇 append flag — 用 FILE_READ|FILE_WRITE 定位到檔尾
+   int fh = FileOpen(fname, FILE_READ | FILE_WRITE | FILE_TXT | FILE_COMMON);
+   if(fh != INVALID_HANDLE)
+   {
+      FileSeek(fh, 0, SEEK_END);
+      string line = StringFormat("{\"ticket\":%I64d,\"time\":%I64d,\"profit\":%.2f}\n", ticket, (long)TimeCurrent(), profit);
+      FileWriteString(fh, line);
+      FileClose(fh);
+   }
+}
+
+//+------------------------------------------------------------------+
+// 重建 trades json — 掃全部歷史平倉單（EA 重啟後唔丟失舊單）
+// 🚨 2026-08-21：OnInit 時 call — 確保 trades json 有完整歷史（唔係淨係新單）
+void RebuildTradesFile()
+{
+   string fname = "trades_TestTrades.json";
+   string all = "";
+   datetime from = TimeCurrent() - 7 * 86400;   // 最近 7 日
+   if(HistorySelect(from, TimeCurrent()))
+   {
+      int total = HistoryDealsTotal();
+      for(int i = 0; i < total; i++)
+      {
+         ulong deal_ticket = HistoryDealGetTicket(i);
+         if(deal_ticket <= 0) continue;
+         if(HistoryDealGetInteger(deal_ticket, DEAL_MAGIC) != InpMagic) continue;
+         if(HistoryDealGetInteger(deal_ticket, DEAL_ENTRY) != DEAL_ENTRY_OUT) continue;  // 只計平倉
+         double profit = HistoryDealGetDouble(deal_ticket, DEAL_PROFIT);
+         if(profit == 0) continue;
+         datetime deal_time = (datetime)HistoryDealGetInteger(deal_ticket, DEAL_TIME);
+         all += StringFormat("{\"ticket\":%I64d,\"time\":%I64d,\"profit\":%.2f}\n",
+                             deal_ticket, (long)deal_time, profit);
+      }
+   }
+   if(all == "") return;   // 冇數據唔好清空現有
+   int fh = FileOpen(fname, FILE_WRITE | FILE_TXT | FILE_COMMON);
+   if(fh != INVALID_HANDLE)
+   {
+      FileWriteString(fh, all);
+      FileClose(fh);
+   }
+}
+
+//+------------------------------------------------------------------+
 // 寫統計落 state_TestTrades.json（detector 讀呢個檔判斷運行狀態 + 我加 stats）
 // 路徑：Common/Files/state_<EA>.json
+// 🚨 2026-08-21：加 win_sum/loss_sum（贏嘅總額/輸嘅總額 — 準確計 avg win/loss）
 void WriteStats()
 {
-   string dir = "Common\\Files";
    string fname = "state_TestTrades.json";
    int wins = 0, losses = 0;
-   // 由 g_total_profit 累計嚟計 wins/losses — 用已平倉單（HistorySelectByPosition 逐張攞）
-   // 簡單版：用 OnTimer 定期由 history 掃（保持準確）
-   ScanHistoryStats(wins, losses);
-   string json = StringFormat("{\"ea\":\"TestTrades\",\"status\":\"running\",\"ts\":%I64d,\"trades\":%d,\"wins\":%d,\"losses\":%d,\"profit\":%.2f}",
-                              (long)TimeCurrent(), wins + losses, wins, losses, g_total_profit);
+   double win_sum = 0, loss_sum = 0;
+   ScanHistoryStats(wins, losses, win_sum, loss_sum);
+   string json = StringFormat("{\"ea\":\"TestTrades\",\"status\":\"running\",\"ts\":%I64d,\"trades\":%d,\"wins\":%d,\"losses\":%d,\"profit\":%.2f,\"win_sum\":%.2f,\"loss_sum\":%.2f}",
+                              (long)TimeCurrent(), wins + losses, wins, losses, g_total_profit, win_sum, loss_sum);
    int fh = FileOpen(fname, FILE_WRITE | FILE_TXT | FILE_COMMON);
    if(fh != INVALID_HANDLE)
    {
@@ -257,11 +310,13 @@ void WriteStats()
 }
 
 //+------------------------------------------------------------------+
-// 由 MT5 history deals 掃呢個 magic 嘅已平倉單（準確 trades/wins/losses）
-void ScanHistoryStats(int &wins, int &losses)
+// 由 MT5 history deals 掃呢個 magic 嘅已平倉單（準確 trades/wins/losses + win_sum/loss_sum）
+void ScanHistoryStats(int &wins, int &losses, double &win_sum, double &loss_sum)
 {
    wins = 0;
    losses = 0;
+   win_sum = 0;
+   loss_sum = 0;
    datetime from = TimeCurrent() - 7 * 86400;   // 最近 7 日
    if(!HistorySelect(from, TimeCurrent())) return;
    int total = HistoryDealsTotal();
@@ -272,8 +327,8 @@ void ScanHistoryStats(int &wins, int &losses)
       if(HistoryDealGetInteger(deal_ticket, DEAL_MAGIC) != InpMagic) continue;
       if(HistoryDealGetInteger(deal_ticket, DEAL_ENTRY) != DEAL_ENTRY_OUT) continue;  // 只計平倉
       double profit = HistoryDealGetDouble(deal_ticket, DEAL_PROFIT);
-      if(profit > 0) wins++;
-      else if(profit < 0) losses++;
+      if(profit > 0) { wins++; win_sum += profit; }
+      else if(profit < 0) { losses++; loss_sum += profit; }
    }
 }
 

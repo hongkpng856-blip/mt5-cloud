@@ -685,6 +685,8 @@
         </div>
         <!-- Summary Stats -->
         <div class="stat-row" id="reportStats" style="margin-bottom:20px"></div>
+        <!-- 🚨 2026-08-21：數據來源 note（ea_stats fallback 時顯示） -->
+        <div id="reportNote" style="display:none;margin-bottom:16px;padding:10px 14px;background:rgba(240,185,11,0.08);border:1px solid rgba(240,185,11,0.25);border-radius:8px;font-size:12px;color:var(--text-muted)"></div>
         <!-- Equity Chart (simple CSS bar chart) -->
         <div class="card" style="margin-bottom:16px">
             <div class="card-title"><i class="icon-trending-up" style="color:var(--accent)"></i> Equity Curve</div>
@@ -740,15 +742,28 @@ function closeReport() {
 
 function renderReport(data) {
     // Stats
+    // 🚨 2026-08-21：處理 ea_stats fallback（冇 equity curve / distribution — 顯示 note）
+    const pf = data.profit_factor === Infinity ? '∞' : data.profit_factor;
     document.getElementById('reportStats').innerHTML = `
         <div class="stat-box"><div class="label">Trades</div><div class="value">${data.total_trades}</div></div>
         <div class="stat-box"><div class="label">Win Rate</div><div class="value" style="color:${data.win_rate>=60?'#3fb950':'#d29922'}">${data.win_rate}%</div></div>
-        <div class="stat-box"><div class="label">Profit Factor</div><div class="value">${data.profit_factor===Infinity?'∞':data.profit_factor}</div></div>
+        <div class="stat-box"><div class="label">Profit Factor</div><div class="value">${pf}</div></div>
         <div class="stat-box"><div class="label">Total P&L</div><div class="value" style="color:${data.total_profit>=0?'#3fb950':'#f85149'}">${data.total_profit>=0?'+':''}$${data.total_profit.toFixed(2)}</div></div>
         <div class="stat-box"><div class="label">Avg Win</div><div class="value" style="color:#3fb950">$${data.avg_win.toFixed(2)}</div></div>
         <div class="stat-box"><div class="label">Avg Loss</div><div class="value" style="color:#f85149">-$${Math.abs(data.avg_loss).toFixed(2)}</div></div>
         <div class="stat-box"><div class="label">Max DD</div><div class="value" style="color:#f85149">${data.max_drawdown_pct.toFixed(1)}%</div></div>
     `;
+
+    // 🚨 2026-08-21：ea_stats 來源 → 顯示 note（冇 equity curve）
+    const noteEl = document.getElementById('reportNote');
+    if (noteEl) {
+        if (data.note) {
+            noteEl.style.display = 'block';
+            noteEl.textContent = data.note;
+        } else {
+            noteEl.style.display = 'none';
+        }
+    }
 
     // Equity curve
     const eq = data.equity_curve;
@@ -1236,11 +1251,15 @@ async function loadAnalysis() {
         if (analysisData.error) return;
 
         const s = analysisData.summary;
-        document.getElementById('anTrades').textContent = s.total_trades;
-        document.getElementById('anWinRate').textContent = s.win_rate+'%';
-        document.getElementById('anProfit').textContent = (s.total_profit>=0?'+':'')+'$'+s.total_profit.toFixed(2);
-        document.getElementById('anProfit').style.color = s.total_profit>=0?'#3fb950':'#f85149';
-        document.getElementById('anPF').textContent = s.wins&&s.losses ? (s.wins/s.losses).toFixed(2) : '∞';
+        // 🚨 2026-08-21：null check（Agent 卡已精簡 — 冇 Trades/WinRate/PF/P&L element — 刪咗 stat-box）
+        // 之前直接 .textContent → null error → 成個 loadAnalysis 死 → correlation matrix 都唔渲染
+        const _setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        const _setColor = (id, color) => { const el = document.getElementById(id); if (el) el.style.color = color; };
+        _setTxt('anTrades', s.total_trades);
+        _setTxt('anWinRate', s.win_rate+'%');
+        _setTxt('anProfit', (s.total_profit>=0?'+':'')+'$'+s.total_profit.toFixed(2));
+        _setColor('anProfit', s.total_profit>=0?'#3fb950':'#f85149');
+        _setTxt('anPF', s.wins&&s.losses ? (s.wins/s.losses).toFixed(2) : '∞');
 
         // 只更新 summary 數字，唔 rebuild 成個 EA 表（防止 dropdown 彈走）
         _updateEAData(s);

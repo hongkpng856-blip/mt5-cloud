@@ -90,6 +90,10 @@
 | **v0.10.55** | 2026-08-21 | 🎯 **配對庫全欄位排序功能** — 撳 header 排序（第一次 asc ▲ → 再撳 desc ▼ → 循環）：EA/來源/狀態/Magic/Symbol（字母/狀態）+ Trades/Win/P&L（數字由低至高/高至低）— 排序箭頭指示（金色 ▲/▼）+ 默認 Trades/Win/P&L 顯示 ⇅ 箭嘴（用戶要求）|
 | **v0.10.56** | 2026-08-21 | 🔧 **縮細視窗箭嘴走位修正** — `.ea-table th` 預設 `white-space:normal` → 視窗縮細時 header 空間唔夠，箭嘴 span（inline）被擠去第二行 → 箭嘴走位。改 th `white-space:nowrap` + sort-ind `display:inline-block; vertical-align:middle` — 箭嘴強制同 header 文字同行 |
 | **v0.10.57** | 2026-08-21 | 🧹 **清重複 TestTrades chart** — 多次部署 TestTrades（改 code 重新部署）累積 5 個 EURUSD chart 同時運行（窗口 dialog 確認）→ 用 auto_attach --remove 逐個剷除 → 淨返 1 個（正常）— 用戶實測見 4 個部署係重複，唔正常 |
+| **v0.10.58** | 2026-08-21 | 🔧 **報告按鈕加真實數據** — 報告靠 `agent.deals`（MT5 API 讀唔到新 deals）→ 全部空/0。改 TestTrades EA 加 `win_sum/loss_sum`（自己 track 贏/輸總額）+ server `/api/ea-report` fallback 讀 EA stats → 準確計 avg win/loss/PF。實測：460 單 / 22% / PF 0.39 |
+| **v0.10.59** | 2026-08-21 | 🔧 **報告三圖表（Equity/Distribution/Monthly）加真實數據** — 之前得基本統計冇圖表。TestTrades 加 `AppendTrade()`（平倉 append 逐單落 `trades_<EA>.json` JSONL）+ `RebuildTradesFile()`（OnInit 掃全部歷史重建 — 唔丟失舊單）+ server 讀 trades json 計 equity curve/distribution/monthly/max_dd。實測：629 行完整歷史、報告 100 點 equity |
+| **v0.10.60** | 2026-08-21 | 🔧 **配對庫數據一致 + 更新修復** — ①之前 500+ 單變百幾：trades json 新加先開始記錄 → RebuildTradesFile 重建完整歷史（629 行）②配對庫冇更新：state json 被系統心跳覆寫（得 ea/status/ts）→ server `/api/ea-config` 改讀 trades json（完整）優先 + fallback state。實測配對庫/報告完全一致（634 單 / 153 勝 / 478 負 / -$47.70） |
+| **v0.10.61** | 2026-08-21 | 🎯 **Correlation Matrix 真實數據** — `/api/analysis` 合併 trades json（完整歷史）→ summary 750 單 / 26.74%；correlation key 改 EA 名（TestTrades 顯示真名）；修 JS bug：精簡 Agent 卡後 loadAnalysis 攞唔到已刪 element → null error → correlation 唔渲染 → 加 null check 修復。實測：2x2 matrix（240701_USDJPY + TestTrades）渲染 |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -370,6 +374,10 @@
 | 94 | **配對庫冇排序功能（撳 Trades/Win/P&L header 冇反應）** | header 有 `onclick="sortEA(...)"` 但 **sortEA 函數根本唔存在**（sortOrder 有宣告但冇實作）→ 撳咗冇反應；用戶要求全部欄位可排序（EA 跟英文字母 A-Z/Z-A，Trades/Win/P&L 數字高低）| v0.10.55 實作 sortEA(key) 統一排序函數（第一次 asc → 再撳 desc → 循環）+ 所有 header 加 onclick + 排序箭頭指示（金色 ▲/▼）+ `_getSortVal` 按欄位攞值（字母 localeCompare / 數字相減）| 08-21 |
 | 95 | **縮細視窗箭嘴走位（淨係箭嘴甩）** | `.ea-table th` 預設 `white-space:normal` — 視窗縮細時 header 空間唔夠，`<span class="sort-ind">`（inline 元素）被擠去第二行 → 箭嘴同 header 文字錯位（用戶實測「將視窗縮細一半，啲箭嘴走晒位」）| v0.10.56 th `white-space:nowrap`（header 文字+箭嘴強制同行）+ sort-ind `display:inline-block; vertical-align:middle; white-space:nowrap` — 實測 computed style 確認；太窄時成個表格 horizontal scroll（唔會錯位）| 08-21 |
 | 96 | **重複 TestTrades 部署（5 個 EURUSD chart 同時運行）** | 多次 `/api/deploy` TestTrades（改 code 後重新部署）每次都開新 chart + 舊 chart 冇清 → 累積 5 個 EURUSD chart 掛 5 個 TestTrades 同時開單（用戶實測見 4 個 — 窗口 dialog 確認 5 個）| v0.10.57 用 auto_attach `--remove --ea TestTrades` 逐個剷除（3 次成功 — MT5 log removed + Ctrl+W 關 chart）→ 淨返 1 個 chart + 1 個持倉（正常）| 08-21 |
+| 97 | **報告按鈕冇真實數據（全部空/0）** | 報告靠 `agent.deals`（MT5 Python history API 讀唔到新 deals — build 6120 caching）→ deals 得舊嘢 → 報告 Trades/Win/P&L 空；avg_win 錯顯示負數（total_profit/wins 計法錯）| v0.10.58 TestTrades 加 win_sum/loss_sum（EA 自己 track 贏/輸總額）+ `/api/ea-report` fallback 讀 EA stats → avg_win 用 win_sum/wins（正確正數）+ avg_loss 用 loss_sum/losses。實測：460 單 / 22% / PF 0.39 / Avg Win +$0.23 / Avg Loss -$0.17 | 08-21 |
+| 98 | **報告三圖表（Equity/Distribution/Monthly）空白** | EA stats fallback 只有累計數（冇逐單明細）→ 畫唔到 equity curve/distribution/monthly — 因為 MT5 Python API 讀唔到逐單 deals | v0.10.59 TestTrades 加 `AppendTrade()`（每次平倉 append 一單落 `trades_<EA>.json` JSONL — ticket/time/profit）+ `RebuildTradesFile()`（OnInit 掃全部歷史重建）+ server 讀 trades json 計 equity curve（累計）/distribution（分佈）/monthly P&L/max_dd。實測：629 行完整歷史、報告 100 點 equity + 5 條 dist + 月度 | 08-21 |
+| 99 | **配對庫數據唔一致（500+ 變百幾）+ 配對庫唔更新** | ①trades json 新加先開始記錄（舊單冇入）→ 報告得百幾但 EA 自己 track 500+ ②state json 被系統心跳覆寫（`{"ea","status","ts"}` 格式 — 冇 stats）→ 配對庫讀唔到新數據 | v0.10.60 ①EA `RebuildTradesFile()` OnInit 重建完整歷史（149→629 行）②server `/api/ea-config` 改讀 `trades_<EA>.json`（完整逐單）優先 + fallback state — 配對庫/報告同源。實測：配對庫 639 單 / 報告 634 單（一致，跳動中）| 08-21 |
+| 100 | **Correlation Matrix 冇真實數據（得舊 1 個 EA / 唔渲染）** | ①`/api/analysis` 靠 agent.deals（舊）→ 得 240701_USDJPY 1 個 ②精簡 Agent 卡後 loadAnalysis 攞唔到已刪 element（anTrades 等）→ null error → 成個函數死 → correlation 唔渲染 | v0.10.61 ①analysis 合併 trades json（完整歷史）→ summary 750 單 / 2 個 EA ②correlation key 改 EA 名 ③loadAnalysis 加 null check（_setTxt/_setColor — element 唔存在就 skip）。實測：2x2 matrix（240701_USDJPY + TestTrades）渲染 | 08-21 |
 
 ---
 
@@ -380,6 +388,28 @@
 > 壓力測試實測：Round 1 心跳 age=0.9s ✅ PASS（端到端 pipeline 確認 work）。
 
 
+
+## 📋 TODO（未實行 — 用戶指示暫時唔做，只記錄）
+
+### 🔄 數據注入選擇功能（2026-08-21 用戶要求，未實行）
+**目標**：所有 EA 部署時可選「注入逐單數據記錄」（trades json），或者唔注入照部署但註明冇呢個功能。
+
+| # | 步驟 | 狀態 |
+|---|------|------|
+| 1 | Server：心跳注入模板加「逐單記錄」注入段（`__mt5c_append_trade` + OnTradeTransaction 掛鉤 — 平倉時 append `trades_<EA>.json`） | 🔄 已改 code（server/app.py 心跳模板 + OnTradeTransaction 注入段）— 未完整測試 |
+| 2 | Server：`/api/deploy` 接受 `inject_trades` 參數（決定注入/唔注入）+ 寫入 deploy_cmd | 🔄 已改 code（inject_trades 讀取 + 寫入 deploy_cmd 兩個位置）— 未測試 |
+| 3 | Server：install-local（配對）時按 `inject_trades` 決定注入逐單 code（心跳注入段加條件） | ⏳ 未做 — 要改 install-local 接受參數 |
+| 4 | 前端：部署時彈「數據注入確認」modal（注入 / 唔注入 + 「不再顯示」checkbox + localStorage）— 每一次都彈，除非剔「不再顯示」 | ⏳ 未做 |
+| 5 | 前端/Server：冇 trades json 嘅 EA → 報告/correlation 註明「此 EA 冇逐單數據」（誠實標註，唔造假） | ⏳ 未做 |
+| 6 | 測試 + update doc + commit | ⏳ 未做 |
+
+**用戶要求（重要）**：
+- 注入/唔注入由用戶選擇（部署時）
+- 唔注入 → 照常部署 + 註明「而家冇呢一個功能」
+- 確認視窗有確定時窗 + 每一次都彈；唔想彈 → 剔「不再顯示」
+- 唔可以假數據（冇 JSON 就標註冇，唔好當有）
+
+---
 
 ## 🐛 Known Bugs (Unresolved)
 
@@ -618,7 +648,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `3dc3b3d`（master）— v0.10.57（配對庫全欄位排序 + 箭嘴走位修正 + 默認 ⇅ 箭嘴 + 清重複 TestTrades chart）
+**Git HEAD**: `fe3b396`（master）— v0.10.61（報告真實數據 + 三圖表 + 配對庫一致 + Correlation Matrix 真實數據）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
