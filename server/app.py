@@ -673,6 +673,13 @@ def api_ea_config_delete(ea_name):
     """刪除一個 EA 嘅配對
     ⚠️ 用戶要求（2026-08）：刪除配對庫 EA = 連埋 MT5 圖表嘅 EA 一齊移除
     → 寫 pause_cmd 俾 watcher（auto_attach --remove 移除圖表 EA）"""
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：刪除前檢查 UAC
+    try:
+        _uac_del = _detect_uac_server()
+        if _uac_del:
+            print(f"[ea-config-delete] ⚠️ 偵測到 UAC 授權窗口: {_uac_del[0]} — 刪除會等 auto_attach UAC Gate 處理")
+    except Exception:
+        pass
     # ⚠️ 系統檔案保護（Controller — 唔可以刪除）
     if ea_name == 'Controller':
         return jsonify({"success": False, "error": "系統檔案（Controller）唔可以刪除"}), 403
@@ -2233,6 +2240,13 @@ def api_ea_install_local(filename):
     """將 EA 倉庫（官方/社群/用戶）嘅 EA 複製去本機 MT5 Experts 目錄 — 配對庫即刻見到
     聯動：EA 倉庫「移去配對」/ 上傳自己 EA 之後自動安裝落本機
     """
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：配對前檢查 UAC
+    try:
+        _uac_inst = _detect_uac_server()
+        if _uac_inst:
+            print(f"[install-local] ⚠️ 偵測到 UAC 授權窗口: {_uac_inst[0]} — 配對/編譯可能被擋")
+    except Exception:
+        pass
     import shutil as _sh
     import re as _re
     if not _re.fullmatch(r'[A-Za-z0-9_.]+', filename):
@@ -3219,10 +3233,46 @@ def handle_deploy_ea(data):
         db.session.commit()
         emit('install_result', {"status": "sent", "ea": data.get('ea_name')})
 
+def _detect_uac_server():
+    """🚨 2026-08-22（用戶要求：UAC 檢測機制）：server 端偵測 UAC/授權窗口
+    部署/刪除/配對前檢查 — 有 UAC → 返回 True（前端可顯示警告）
+    用 ctypes EnumWindows 掃「授權/Client Terminal/要求」窗口"""
+    try:
+        import ctypes as _ct_u
+        _u_u = _ct_u.windll.user32
+        _found = []
+        def _cb_u(h, _):
+            try:
+                _l = _u_u.GetWindowTextLengthW(h)
+                if _l > 0:
+                    _b = _ct_u.create_unicode_buffer(_l + 1)
+                    _u_u.GetWindowTextW(h, _b, _l + 1)
+                    _t = _b.value
+                    _c = _ct_u.create_unicode_buffer(128)
+                    _u_u.GetClassNameW(h, _c, 128)
+                    _cl = _c.value
+                    if ('授權' in _t or 'Client Terminal' in _t or '要求' in _t or '允許' in _t) or ('Secure UAP' in _cl or 'consent' in _cl.lower()):
+                        _found.append(_t[:50])
+            except Exception:
+                pass
+            return True
+        _u_u.EnumWindows(_ct_u.WINFUNCTYPE(_ct_u.c_bool, _ct_u.c_size_t, _ct_u.c_size_t)(_cb_u), 0)
+        return _found
+    except Exception:
+        return []
+
 @app.route('/api/deploy', methods=['POST'])
 @login_required
 def api_deploy():
     """HTTP deploy (唔靠 Socket.IO，更可靠)"""
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署前檢查 UAC — 有授權窗口 → 警告（唔阻部署 — 等 auto_attach 處理）
+    try:
+        _uac_now = _detect_uac_server()
+        if _uac_now:
+            print(f"[deploy] ⚠️ 偵測到 UAC 授權窗口: {_uac_now[0]} — 部署會等 auto_attach UAC Gate 處理")
+            log_activity('deploy', f'⚠️ MT5 需要授權（{_uac_now[0][:40]}）— 請確認', ea='MT5')
+    except Exception:
+        pass
     # 🚨 2026-08-12 FIX：防重複部署（同一 EA 30 秒內唔可以再 deploy — 前端 double-click / 重複觸發 → 兩個 deploy_cmd → 「完成又彈又執行」）
     global _last_deploy_time
     try:
@@ -3256,6 +3306,16 @@ def api_deploy():
     
     # Save EA config first
     config = json.loads(current_user.ea_config or '{}')
+    # 🚨 2026-08-22 FIX（配對庫消失 bug）：重新部署 = 唔再係「已刪除」→ 由 _removed 移除
+    # （之前刪除加 _removed，但重新部署冇清 → 前端過濾走晒 → 配對庫空）
+    try:
+        _rm_dp = config.get('_removed', [])
+        if ea_name in _rm_dp:
+            _rm_dp.remove(ea_name)
+            config['_removed'] = _rm_dp
+            print(f"[deploy] ✅ {ea_name} 已由 _removed 移除（重新配對）")
+    except Exception:
+        pass
     config[ea_name] = symbol
     config[f'{ea_name}_tf'] = tf
     config[f'{ea_name}_magic'] = str(magic)

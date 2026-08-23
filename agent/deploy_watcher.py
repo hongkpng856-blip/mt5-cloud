@@ -119,7 +119,21 @@ def run_auto_attach(cmd_data):
     # 🚨 2026-08-20 FIX：magic 空 string → fallback default（auto_attach --magic 空 → argparse 失敗 → 假成功）
     magic = cmd_data.get('magic') or '240701'
     lot = cmd_data.get('lot', '1.00')
-    
+
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署前檢查有冇 UAC alert（auto_attach 寫嘅 — 需要用戶手動撳授權）
+    try:
+        _uac_flag = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), '.uac_alert')
+        if os.path.isfile(_uac_flag):
+            _uac_txt = open(_uac_flag, encoding='utf-8').read().strip()
+            print(f"⚠️ [WATCHER] 偵測到 UAC 授權需要處理: {_uac_txt[:80]}")
+            # 通知用戶（activity log）
+            try:
+                _append_activity_log({'type': 'uac', 'message': f'MT5 需要授權 — 請喺電腦撳「允許/是」({_uac_txt[:60]})'})
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     print(f"\n{'='*50}")
     print(f"  🚀 [WATCHER] Deploying: {ea_name} → {symbol} {tf}")
     print(f"     Magic: {magic}, Lot: {lot}")

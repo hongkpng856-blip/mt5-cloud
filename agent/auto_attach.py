@@ -165,6 +165,13 @@ def do_restart_mt5():
     # Wait for ready
     pid = wait_for_mt5(timeout=90)
     if pid:
+        # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：MT5 重啟後檢查 UAC/授權窗口
+        # （MT5 更新/異常 → 彈「Client Terminal AVX2 授權」→ 唔處理會擋住之後部署）
+        try:
+            if not _detect_and_handle_uac('MT5 重啟後 UAC 檢查', max_wait=30):
+                print("⚠️ MT5 重啟後有 UAC 授權窗口未處理（可能係 MT5 更新要求授權）— 等用戶手動處理")
+        except Exception:
+            pass
         # Extra wait for Navigator to fully load + refresh
         time.sleep(10)
         # 🚨 2026-08-12 FIX：重啟完成 → 唔好寫「等待操作開始」覆寫（保留現有 steps — 更新重啟 3 步 done — 完整流程唔消失）
@@ -336,7 +343,14 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
     user32 = ctypes.windll.user32
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
-    
+
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：Navigator 附加前檢查 UAC/授權窗口
+    try:
+        if not _detect_and_handle_uac(f'Navigator 附加 {ea_name} UAC 檢查', max_wait=20):
+            print(f"⚠️ Navigator 附加 {ea_name}：UAC 授權窗口未處理")
+    except Exception:
+        pass
+
     for attempt in range(max_retries):
         try:
             app = Application(backend='win32').connect(process=mt5_pid)
@@ -1501,6 +1515,13 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             print("⚠️ 熱鍵預載：MT5 主視窗 90s 未 ready（繼續 — 部署時會再驗證）")
         else:
             print("✅ 熱鍵預載：MT5 主視窗 ready")
+            # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：熱鍵預載開完 MT5 檢查 UAC/授權窗口
+            # （MT5 更新/異常 → 彈「Client Terminal AVX2 授權」→ 唔處理會擋熱鍵 load 測試）
+            try:
+                if not _detect_and_handle_uac('熱鍵預載 UAC 檢查', max_wait=30):
+                    print("⚠️ 熱鍵預載：UAC 授權窗口未處理（等用戶手動撳）")
+            except Exception:
+                pass
             # 熱鍵 load 驗證：send Ctrl+N 測試 — 彈出 <EA> Properties = 熱鍵 load 成功（失敗關閉 dialog 再重試）
             _hk_loaded_ok = False
             for _hk_try in range(3):
@@ -1576,6 +1597,90 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
     except Exception as _e_hk:
         print(f"⚠️ 熱鍵預載失敗: {_e_hk}")
         return mt5_pid
+
+def _detect_and_handle_uac(desc='', max_wait=30):
+    """🚨 2026-08-22（用戶要求：UAC 檢測機制 — MT5 更新/授權都會問）
+    偵測「Client Terminal 授權」/ UAC consent 窗口（$$$Secure UAP Dummy Window Class）
+    處理策略：
+    1. 偵測到授權窗口 → 記錄 + 嘗試按鈕撳「允許/是」（SendMessage BM_CLICK + Enter）
+    2. 撳唔到（Windows 安全層拒絕自動化）→ 通知用戶（寫 alert flag — 網頁顯示「請撳允許」）
+    3. max_wait 內一直有 → return False（唔好繼續部署 — 會被擋）
+    """
+    import ctypes as _ct_uac
+    _u_uac = _ct_uac.windll.user32
+
+    def _scan():
+        found = []
+        def _cb(h, _):
+            try:
+                _l = _u_uac.GetWindowTextLengthW(h)
+                if _l > 0:
+                    _b = _ct_uac.create_unicode_buffer(_l + 1)
+                    _u_uac.GetWindowTextW(h, _b, _l + 1)
+                    _t = _b.value
+                    _c = _ct_uac.create_unicode_buffer(128)
+                    _u_uac.GetClassNameW(h, _c, 128)
+                    _cl = _c.value
+                    # UAC consent / 授權窗口特徵
+                    _is_uac = (
+                        ('授權' in _t or 'Client Terminal' in _t or '要求' in _t or '允許' in _t)
+                        or ('Secure UAP' in _cl or 'consent' in _cl.lower())
+                    )
+                    if _is_uac:
+                        _pid = _ct_uac.c_ulong()
+                        _u_uac.GetWindowThreadProcessId(h, _ct_uac.byref(_pid))
+                        found.append((h, _t[:60], _cl[:30], _pid.value))
+            except Exception:
+                pass
+            return True
+        _u_uac.EnumWindows(_ct_uac.WINFUNCTYPE(_ct_uac.c_bool, _ct_uac.c_size_t, _ct_uac.c_size_t)(_cb), 0)
+        return found
+
+    _found = _scan()
+    if not _found:
+        return True  # 冇 UAC — 可以繼續
+
+    print(f"🚨 [UAC Gate] {desc}: 偵測到 {len(_found)} 個授權窗口 — {_found[0][1]}")
+    # 嘗試自動撳「允許/是」（SendMessage BM_CLICK — 對 consent 通常唔 work，但試下）
+    for _h, _t, _cl, _pid in _found:
+        try:
+            _u_uac.SendMessageW(_ct_uac.c_void_p(_h), 0x0100, 0x0D, 0)  # WM_KEYDOWN Enter（撳默認）
+            _u_uac.SendMessageW(_ct_uac.c_void_p(_h), 0x0101, 0x0D, 0)  # WM_KEYUP
+        except Exception:
+            pass
+        try:
+            _u_uac.PostMessageW(_ct_uac.c_void_p(_h), 0x0010, 0, 0)  # WM_CLOSE 試關
+        except Exception:
+            pass
+    time.sleep(2)
+    _still = _scan()
+    if _still:
+        # 關唔到 — Windows 安全層拒絕自動化 → 通知用戶手動撳
+        print(f"⚠️ [UAC Gate] {desc}: {len(_still)} 個授權窗口關唔到（Windows 安全層）— 通知用戶手動處理")
+        try:
+            # 寫 alert flag（網頁/tkinter 顯示）
+            _adir_u = os.path.dirname(os.path.abspath(__file__))
+            with open(os.path.join(_adir_u, '.uac_alert'), 'w', encoding='utf-8') as _f:
+                _f.write(f"MT5 需要授權（{desc}）— 請喺電腦撳「允許/是」\n窗口: {_still[0][1]}")
+        except Exception:
+            pass
+        # 等 max_wait 秒（俾用戶手動撳）— 撳完自動繼續
+        _deadline = time.time() + max_wait
+        while time.time() < _deadline:
+            time.sleep(3)
+            _now = _scan()
+            if not _now:
+                print(f"✅ [UAC Gate] {desc}: 授權窗口已處理（用戶撳咗/自動關）— 可以繼續")
+                try:
+                    os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.uac_alert'))
+                except Exception:
+                    pass
+                return True
+        print(f"❌ [UAC Gate] {desc}: {max_wait}s 內授權窗口未處理（可能係 MT5 更新要求授權）— 部署中止")
+        return False
+    print(f"✅ [UAC Gate] {desc}: 授權窗口已自動處理")
+    return True
+
 
 def _ensure_no_dialog(desc='', max_wait=8, close_btn=True):
     """🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）
@@ -1675,6 +1780,14 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         else:
             print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+        # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署前先檢查 UAC/授權窗口
+        # （MT5 更新後/帳戶異常 → 彈「Client Terminal AVX2 授權」→ 擋住部署 → 先處理）
+        try:
+            if not _detect_and_handle_uac(f'{ea_name} 部署前 UAC 檢查', max_wait=30):
+                print(f"❌ {ea_name} 部署中止：UAC 授權窗口未處理")
+                return False
+        except Exception:
+            pass
         # 🚨 2026-08-12 FIX：部署前檢查有冇 pending compile_cmd（配對後未編譯 — 等編譯完成先部署 — 唔會「部署完又彈編譯視窗」）
         try:
             _cf_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
@@ -2631,6 +2744,15 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         ControlAborted = Exception
         acquire = lambda *a, **k: None
 
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署流程最開頭檢查 UAC/授權窗口
+    # （MT5 更新/帳戶異常 → 授權窗口 → 先處理再部署）
+    try:
+        if not _detect_and_handle_uac(f'{ea_name} 部署 UAC 檢查', max_wait=30):
+            print(f"❌ {ea_name} 部署中止：UAC 授權窗口未處理（可能係 MT5 更新要求授權）")
+            return False
+    except Exception:
+        pass
+
     # 🚨 2026-08-21 FIX（用戶實測：關 chart 後部署卡 dialog）：部署前先清理所有殘留 dialog
     # （之前 RSI 部署彈嘅 Properties dialog 殘留未關 → 之後開 chart Alt+F 被 modal 擋 → 開 chart 失敗 → 代替 dialog 一鑊泡）
     # 🚨 2026-08-21 FIX2：ESC/撳取消對 modal dialog 唔 work（實測撳「確定」/ESC 都關唔到 — RSI Properties 卡死）
@@ -2772,6 +2894,12 @@ def _exec_open_chart_script():
     """🚨 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — 用戶實測方法）
     取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
     try:
+        # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：開 chart script 前檢查 UAC/授權窗口
+        try:
+            if not _detect_and_handle_uac('開 chart script UAC 檢查', max_wait=20):
+                print("⚠️ 開 chart script：UAC 授權窗口未處理")
+        except Exception:
+            pass
         import subprocess as _sp2
         from pywinauto import Application as _App2
         from pywinauto.keyboard import send_keys as _sk2
@@ -2901,6 +3029,13 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     _win = _app.window(class_name='MetaQuotes::MetaTrader::5.00')
     _win.set_focus()
     time.sleep(1)
+
+    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：剷除流程都檢查 UAC/授權窗口
+    try:
+        if not _detect_and_handle_uac(f'剷除 {ea_name} UAC 檢查', max_wait=20):
+            print(f"⚠️ 剷除 {ea_name}：UAC 授權窗口未處理（等用戶手動撳）")
+    except Exception:
+        pass
 
     def _dlgs():
         found = []
