@@ -154,7 +154,18 @@ def run_auto_attach(cmd_data):
     
     print(f"   Running: {' '.join(cmd)}")
     sys.stdout.flush()
-    
+
+    # 🚨 2026-08-22 FIX（Breakout 假成功 — watcher 讀舊 output）：spawn 前先清 aa_debug.log
+    # （auto_attach 死喺中途 → tee 覆寫唔完整 → watcher 讀到上次 SUCCESS 殘留 → 假成功）
+    # → 先清空，確保讀到嘅一定係今次 output
+    try:
+        _dbg_clear = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
+        if os.path.isfile(_dbg_clear):
+            with open(_dbg_clear, 'w', encoding='utf-8') as _fclr:
+                _fclr.write('')
+    except Exception:
+        pass
+
     try:
         # 🚨 2026-08-20（watcher-aa-debug-tee）：auto_attach 完整 stdout tee 去 aa_debug.log
         # 之前 capture_output 只 print keyword lines → 真實失敗 output（not found under / attempt x/3）被過濾
@@ -1135,6 +1146,23 @@ def process_pause_cmd(fp):
                     print(f"   {ls}")
         except subprocess.TimeoutExpired:
             print(f"   ⚠️ 暫停 {ea_name} timeout")
+        # 🚨 2026-08-22 FIX（用戶實測「刪除咗但圖表仲掛住 EA」— 剷除假成功）：
+        # 之前冇 check auto_attach returncode/output → 剷除失敗都照寫「已暫停」假成功
+        # → 而家 check：returncode + output 有冇「✅ 暫停/剷除完成」— 冇 → 寫「剷除失敗」+ 通知用戶
+        _remove_ok = False
+        try:
+            if 'result' in dir() and result.returncode == 0:
+                _out_txt = (result.stdout or '')
+                if '已暫停' in _out_txt or '剷除' in _out_txt or '完成' in _out_txt or '移除成功' in _out_txt or '唔使移除' in _out_txt:
+                    _remove_ok = True
+                elif '未能確認移除' in _out_txt or '失敗' in _out_txt:
+                    _remove_ok = False
+                else:
+                    # 冇明確成功/失敗 — 用 exit code 0 當成功（但 warn）
+                    _remove_ok = True
+                    print(f"   ⚠️ 暫停 {ea_name} output 冇明確成功標記（exit 0 — 當成功）")
+        except Exception:
+            _remove_ok = False
         # 🚨 2026-08-12：逐步（auto_attach 完成 → 移除 done → 刪檔 doing → …）
         _prog_steps(['移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
         _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
@@ -1146,8 +1174,14 @@ def process_pause_cmd(fp):
         # → 唔好 put — 剷除刪 .mq5/.ex5 已經觸發 file-watch「Experts 目錄變化 → 自動 refresh Navigator」
         # 通知 server
         try:
-            _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
-                                  'message': f'{ea_name} 已暫停（EA 已從圖表移除）', 'source': 'watcher'})
+            if _remove_ok:
+                _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
+                                      'message': f'{ea_name} 已暫停（EA 已從圖表移除）', 'source': 'watcher'})
+                print(f"   ✅ 暫停 {ea_name} 成功")
+            else:
+                _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
+                                      'message': f'❌ {ea_name} 剷除失敗（EA 可能仲掛住圖表 — 請檢查 MT5 或再試）', 'source': 'watcher'})
+                print(f"   ❌ 暫停 {ea_name} 失敗（auto_attach 冇確認移除）")
         except Exception:
             pass
         # 🚨 2026-08-10：刪除完成 → 步驟全部 done（累積更新）

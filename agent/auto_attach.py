@@ -2535,7 +2535,17 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
+        # 🚨 2026-08-24 FIX（用戶實測假成功）：之前淨係 check 心跳檔存在（os.path.isfile — 舊檔殘留都話「心跳存在」→ 假成功）
+        # → 改 check age（< 300s 先算新鮮 — 舊檔 = EA 未掛到）
+        _hb_fresh = False
         if os.path.isfile(hb):
+            try:
+                _hb_age = time.time() - os.path.getmtime(hb)
+                if _hb_age < 300:
+                    _hb_fresh = True
+            except Exception:
+                pass
+        if _hb_fresh:
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
             print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
@@ -2741,12 +2751,14 @@ def verify_heartbeat(ea_name, timeout=60):
         time.sleep(3)
     
     # 🚨 2026-08-10：心跳冇 → 睇 MT5 log「已啟動」（市場收市冇 tick — EA 其實啟動咗）
+    # 🚨 2026-08-24 FIX（用戶實測假成功）：之前讀 MQL5/Logs（MetaEditor 日誌 — 中文「已启动」殘留 → 誤判「已啟動」→ 假成功）
+    # → 改讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）+ 只認「loaded successfully」（唔好認「started」— 太濫）
     try:
         log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         import glob as _g
         latest = None
         for d in os.listdir(log_dir):
-            lg = os.path.join(log_dir, d, 'MQL5', 'Logs')
+            lg = os.path.join(log_dir, d, 'Logs')
             if os.path.isdir(lg):
                 for f in _g.glob(os.path.join(lg, '*.log')):
                     if latest is None or os.path.getmtime(f) > os.path.getmtime(latest):
@@ -2754,15 +2766,27 @@ def verify_heartbeat(ea_name, timeout=60):
         if latest and time.time() - os.path.getmtime(latest) < 300:
             with open(latest, 'rb') as f:
                 raw = f.read()
+            text = None
             for enc in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
                 try:
                     text = raw.decode(enc)
                     break
                 except Exception:
                     continue
-            if ea_name in text and ('已启动' in text or '已啟動' in text or 'started' in text.lower()):
-                print(f"✅ {ea_name} MT5 log 顯示已啟動（市場收市冇 tick — 心跳後備確認）")
-                return True
+            if text and ea_name in text:
+                # 只認「loaded successfully」+ 有新鮮度（最後出現 < 5 分鐘）
+                import re as _re_hb
+                _lines_hb = text.splitlines()
+                _last_state = None
+                for _ln in _lines_hb:
+                    if ea_name in _ln and 'expert' in _ln.lower():
+                        if 'loaded successfully' in _ln:
+                            _last_state = 'loaded'
+                        elif 'removed' in _ln:
+                            _last_state = 'removed'
+                if _last_state == 'loaded':
+                    print(f"✅ {ea_name} MT5 log 顯示已啟動（market close 冇 tick — 心跳後備確認）")
+                    return True
     except Exception:
         pass
     
@@ -2948,8 +2972,9 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         pass
 
     try:
-        # Step 1: Generate template
-        tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
+        # 🚨 2026-08-24 用戶要求：熱鍵先係主力 — 唔使生成模板（掛 EA 唔需要模板 — 開 chart + 撳熱鍵就成功）
+        # Step 1: Generate template（跳過 — 熱鍵方法唔使模板；模板只係輔助開 chart — 而家用 Alt+F 開 chart）
+        # tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
         check_abort()  # 每步檢查緊急停止
 
         # 🚨 2026-08-20（用戶實測成功流程）：熱鍵預載 — 確保 EA 熱鍵寫入 hotkeys.ini（MT5 關閉狀態下）→ MT5 load
@@ -3156,7 +3181,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     _u = _ct.windll.user32
 
     if not mt5_pid:
-        out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True, text=True).stdout
+        out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True, text=True, errors='replace').stdout or ''
         for line in out.splitlines():
             parts = [p.strip().strip('"') for p in line.split(',')]
             if len(parts) >= 2 and parts[0] == 'terminal64.exe' and parts[1].isdigit():
