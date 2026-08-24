@@ -100,6 +100,7 @@
 | **v0.10.65** | 2026-08-22 | 🔥 **UAC/授權窗口檢測機制（用戶要求：MT5 更新都會問授權）** — ①`_detect_and_handle_uac()`：偵測「授權/Client Terminal/要求/允許」窗口（class Secure UAP/consent）→ 自動處理（SendMessage Enter + WM_CLOSE）→ 關唔到（Windows 安全層）→ 寫 `.uac_alert` 通知用戶手動撳（等 30 秒自動繼續）②加入所有部署流程（8 處）：attach_ea_hotkey / auto_attach_ea / 熱鍵預載 / do_restart_mt5 / 剷除 / Navigator 附加 / 開 chart script / watcher / server 3 個 API（deploy/delete/install-local）— 實測：模擬授權窗口偵測到 + 自動處理；冇 UAC 時 0.0s 即刻 pass；實測 MT5 單一 instance 正常部署唔會彈 UAC（之前 4 個 UAC 係多 instance 撞帳戶安全機制）|
 | **v0.10.66** | 2026-08-22 | 🎯 **壓力測試 2 號 ×5 全 PASS（部署 3 隻 EA → 剷除 1 隻 → 驗證其他冇被影響）** — 5 輪：ADX(EURUSD)+EMA(GBPUSD)+Bollinger(USDJPY) 部署 → 輪流剷除 EMA/Bollinger/ADX/EMA/Bollinger → 每次只關目標 chart，其他 2 隻完整保留（chart 數 3→2 啱 + 心跳新鮮）— 驗證剷除「逐個試」機制喺多 EA 場景完全可靠 + 冇誤傷 + 冇 UAC |
 | **v0.10.67** | 2026-08-22 | 🔧 **配對庫消失 bug（電腦有已配對 EA 但網頁冇顯示）** — 壓力測試輪流剷除 → 每次 DELETE 加 `_removed` → 但 **api_deploy 重新部署時冇由 `_removed` 清走**（只有 install-local 有清 — Bug #64）→ `_removed` 累積 ADX_Trend + EMA_Cross → 前端 `!removed.includes(name)` 過濾走晒 → 配對庫空。修復：①api_deploy 加「重新部署 = 由 _removed 移除」②修正現有 DB 數據 — 實測配對庫顯示返兩隻（心跳運行 + 正確 symbol/magic）|
+| **v0.10.68** | 2026-08-22 | 🔥 **熱鍵改為 Ctrl+1 重用（用戶要求：每次部署都用 Ctrl+1，部署完釋放，下隻 EA 又用返）** — ①`_ensure_hotkey_loaded` 寫入邏輯改：唔再批次分配 Ctrl+1~9 — 清空 hotkeys.ini 舊 mapping + 只寫「新 EA = Ctrl+1」+ 同步 hotkeys.json（只保留當前 EA=^1）②**restart 前記錄所有 chart**（EnumChildWindows — 修 window match bug：MT5 標題含 MetaQuotes 唔含 MetaTrader）→ **restart 後檢查 + 補開遺失 chart**（根治「部署 Grid 搞走 EMA_Cross」— restore 唔齊）③熱鍵 load 實測（send Ctrl+1 → 彈 Properties = load 咗 → 唔 restart）— 實測：Bollinger→USDJPY + Grid→DE40 部署成功，其他 EA 全部保留（chart 冇遺失），hotkeys.ini 每次只有當前 EA=Ctrl+1 |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -389,6 +390,7 @@
 | 103 | **🔥 剷除多個同名 chart 揀錯（3 個 UK100 → 揀第一個 → 冇掛 EA → 假成功）** | remove_ea_from_chart 揀第一個 symbol match 嘅 chart（ListView index）→ 但 EA 可能掛喺第 2/3 個同名 chart → 移除錯 chart → EA 仲運行 → 「15s 未確認」假成功；移除 chart 後 ListView 重新排位（index 移位）→ 第二次用舊 index 揀錯 chart | v0.10.64 改「逐個試」：候選 chart（symbol match）→ Ctrl+W 關 → 驗證 EA 真係移除（心跳停/log removed）→ 未移除就重新讀 ListView + 重新對應 symbol → 下一個；實測：3 個候選逐個試 → 第 3 個先係 RSI_Over → 成功移除（心跳停 + log removed）| 08-21 |
 | 104 | **🔥 UAC/授權窗口擋住部署（MT5 更新/異常 → 彈「Client Terminal AVX2 授權」）** | MT5 彈授權窗口（consent.exe / Secure UAP class）→ modal 擋住部署流程（開 chart/附加全部被擋）→ 部署卡死/失敗；之前完全冇檢測機制 | v0.10.65 `_detect_and_handle_uac()` 偵測 + 自動處理（Enter + WM_CLOSE）+ 關唔到寫 `.uac_alert` 通知用戶 + 等 30 秒；接入全部 8 個部署流程點 + server 3 個 API。實測：模擬窗口偵測到 + 自動處理；實測 MT5 單一 instance 正常部署唔會彈 UAC（之前 4 個 UAC 係多 instance 撞帳戶安全機制）| 08-22 |
 | 105 | **🔥 配對庫消失（電腦有已配對 EA 但網頁冇顯示）** | 壓力測試輪流剷除 → 每次 DELETE 加 `_removed` → api_deploy 重新部署時**冇由 `_removed` 清走**（只有 install-local 有 — Bug #64）→ `_removed` 累積 ADX_Trend + EMA_Cross → 前端 `!removed.includes(name)` 過濾走晒 → allEAs 空 → 配對庫顯示「仲未加入任何 EA」| v0.10.67 ①api_deploy 加「重新部署 = 由 _removed 移除」（同 install-local 一致）②修正現有 DB（清 _removed 入面嘅 ADX_Trend/EMA_Cross）。實測：配對庫顯示返兩隻（心跳運行 + 正確 symbol/magic）| 08-22 |
+| 106 | **🔥 部署 EA 搞走其他 EA（部署 Grid 之後 EMA_Cross 從圖表消失 — 用戶實測）** | `_ensure_hotkey_loaded` 熱鍵判斷用 hotkeys.ini mtime vs MT5 啟動時間（MT5 自己/其他部署會更新 ini → mtime 誤判「未 load」）→ 無謂 restart → MT5 restart 後 profile restore 唔齊（EMA_Cross chart 消失）；另外熱鍵批次分配 Ctrl+1~9 令 mapping 越嚟越多（hotkeys.json 同 ini 唔同步）| v0.10.68 ①熱鍵改 Ctrl+1 重用（每次部署清空舊 mapping + 只寫新 EA=Ctrl+1 + 同步 hotkeys.json）②restart 前記錄所有 chart（EnumChildWindows）+ restart 後檢查補開遺失 chart ③熱鍵 load 實測（send Ctrl+1 → 彈 Properties = load 咗 → 唔 restart）。實測：Bollinger→USDJPY + Grid→DE40 部署成功，其他 EA 全部保留（chart 冇遺失）| 08-22 |
 
 ---
 
@@ -659,7 +661,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `33675e1`（master）— v0.10.67（UAC 檢測機制 + 壓力測試 2 號 5/5 + 配對庫 _removed bug 修復）；TODO：數據注入選擇功能未實行（見 TODO 段）
+**Git HEAD**: `a6c3db1`（master）— v0.10.68（熱鍵 Ctrl+1 重用 + 部署搞走 EA 根治：restart 前記錄 chart + 補開）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）

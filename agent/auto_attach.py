@@ -1384,23 +1384,58 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         for _k in experts:
             if ea_name in _k:
                 _combo_exist = experts[_k]
-                # 攞 MT5 啟動時間（psutil）
-                _mt5_start_hk = None
+                # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross）：唔可以淨靠 hotkeys.ini mtime 判斷「未 load」
+                # （MT5 自己/其他 EA 部署都會更新 hotkeys.ini → mtime 比 MT5 啟動新 → 誤判 → 無謂 restart → 搞走其他 EA）
+                # → 直接 send 熱鍵測試 — 彈到 Properties = 熱鍵真係 load 咗 = 唔使 restart
+                _hk_actually_loaded = False
                 try:
-                    import psutil as _ps_hk
-                    for _p in _ps_hk.process_iter(['name', 'create_time']):
-                        if _p.info['name'] and 'terminal64' in _p.info['name'].lower():
-                            _mt5_start_hk = _p.info['create_time']
-                            break
+                    from pywinauto import Application as _App_hkt
+                    _app_hkt = _App_hkt(backend='win32').connect(process=find_mt5_pid() or mt5_pid, timeout=8)
+                    _w_hkt = _app_hkt.window(class_name_re='MetaQuotes::MetaTrader')
+                    _w_hkt.set_focus()
+                    time.sleep(1)
+                    from pywinauto.keyboard import send_keys as _sk_hkt
+                    # 🚨 2026-08-22 FIX：熱鍵測試前先 click MT5 中央（確保有 active chart — 熱鍵要先有 chart 先彈 Properties）
+                    # （冇 active chart → Ctrl+N 唔彈 → 誤判「未 load」→ 無謂 restart → 搞走其他 EA — Grid 案例）
+                    try:
+                        import pyautogui as _pg_hkt
+                        _pg_hkt.FAILSAFE = False
+                        _r_hkt = _w_hkt.rectangle()
+                        _pg_hkt.click(_r_hkt.left + _r_hkt.width() // 2, _r_hkt.top + _r_hkt.height() // 2)
+                        time.sleep(0.8)
+                    except Exception:
+                        pass
+                    _sk_hkt(_combo_exist)
+                    time.sleep(3)
+                    # EnumWindows 搵 Properties dialog（標題含 EA 名）
+                    _dlg_hkt = False
+                    def _cb_hkt(h, x):
+                        nonlocal _dlg_hkt
+                        if _ct_hk.windll.user32.IsWindowVisible(h):
+                            _tl_hkt = _ct_hk.windll.user32.GetWindowTextLengthW(h)
+                            if _tl_hkt > 0:
+                                _tb_hkt = _ct_hk.create_unicode_buffer(_tl_hkt + 1)
+                                _ct_hk.windll.user32.GetWindowTextW(h, _tb_hkt, _tl_hkt + 1)
+                                if ea_name in _tb_hkt.value:
+                                    _dlg_hkt = True
+                                    return False
+                        return True
+                    _ct_hk.windll.user32.EnumWindows(_ct_hk.WINFUNCTYPE(_ct_hk.c_bool, _ct_hk.c_size_t, _ct_hk.c_size_t)(_cb_hkt), 0)
+                    if _dlg_hkt:
+                        _hk_actually_loaded = True
+                        # 撳「取消」關 dialog
+                        try:
+                            _sk_hkt('{ESC}')
+                        except Exception:
+                            pass
                 except Exception:
                     pass
-                _hk_mtime_hk = os.path.getmtime(_hk_ini) if os.path.isfile(_hk_ini) else 0
-                if _mt5_start_hk and _hk_mtime_hk > _mt5_start_hk:
-                    print(f"⚠️ {ea_name} 熱鍵（{_combo_exist}）喺 MT5 開機後先寫入 — MT5 未 load → 要 restart 重寫")
-                    _combo_n = _combo_exist  # 保留原本 combo（重寫用返）
-                    break  # 唔 return — 繼續落去 restart（關→寫→開）
-                print(f"✅ {ea_name} 已有熱鍵（{_combo_exist}）— 唔使預載")
-                return mt5_pid
+                if _hk_actually_loaded:
+                    print(f"✅ {ea_name} 熱鍵（{_combo_exist}）實測 load 成功（彈 Properties）— 唔使 restart")
+                    return mt5_pid
+                print(f"⚠️ {ea_name} 熱鍵（{_combo_exist}）測試冇彈 Properties — 可能要 restart 重寫")
+                _combo_n = _combo_exist  # 保留原本 combo（重寫用返）
+                break  # 唔 return — 繼續落去 restart（關→寫→開）
         # 3. 分配未用 Ctrl+N（如果 break 落嚟已有 _combo_n — skip）
         _used = set()
         for _k, _v in experts.items():
@@ -1417,6 +1452,42 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             print(f"⚠️ 冇可用熱鍵 — 唔做預載")
             return mt5_pid
         print(f"🔄 熱鍵預載：{ea_name}（關 MT5 → 批次寫入熱鍵 → 開）")
+        # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross — restore 唔齊）：restart 前記錄所有 chart
+        # → restart 後檢查 restore 咗幾多 → 唔齊就補開（開返同 symbol 嘅 chart — EA 會自動 restore？唔會 — 但至少 chart 喺度）
+        _charts_before_hk = []
+        try:
+            import ctypes as _ct_cb
+            _u_cb = _ct_cb.windll.user32
+            _mt5_win_cb = None
+            def _cb_win(h, r):
+                nonlocal _mt5_win_cb
+                _l = _u_cb.GetWindowTextLengthW(h)
+                if _l > 0:
+                    _b = _ct_cb.create_unicode_buffer(_l + 1)
+                    _u_cb.GetWindowTextW(h, _b, _l + 1)
+                    _c2 = _ct_cb.create_unicode_buffer(128)
+                    _u_cb.GetClassNameW(h, _c2, 128)
+                    if 'MetaQuotes::MetaTrader' in _c2.value or ('5053721681' in _b.value and 'MetaQuotes' in _b.value):
+                        _mt5_win_cb = h
+                        return False
+                return True
+            _u_cb.EnumWindows(_ct_cb.WINFUNCTYPE(_ct_cb.c_bool, _ct_cb.c_size_t, _ct_cb.c_size_t)(_cb_win), 0)
+            if _mt5_win_cb:
+                def _cb_child(h, r):
+                    _cls = _ct_cb.create_unicode_buffer(128)
+                    _u_cb.GetClassNameW(h, _cls, 128)
+                    if 'Afx' in _cls.value and 'ControlBar' not in _cls.value:
+                        _l2 = _u_cb.GetWindowTextLengthW(h)
+                        if _l2 > 0:
+                            _b2 = _ct_cb.create_unicode_buffer(_l2 + 1)
+                            _u_cb.GetWindowTextW(h, _b2, _l2 + 1)
+                            if ',' in _b2.value:
+                                _charts_before_hk.append(_b2.value)
+                    return True
+                _u_cb.EnumChildWindows(_ct_cb.c_void_p(_mt5_win_cb), _ct_cb.WINFUNCTYPE(_ct_cb.c_bool, _ct_cb.c_size_t, _ct_cb.c_size_t)(_cb_child), 0)
+            print(f"📋 restart 前 chart: {_charts_before_hk}")
+        except Exception as _e_cb:
+            print(f"⚠️ restart 前記錄 chart 失敗: {_e_cb}")
         # 4. 關 MT5（WM_CLOSE 正常關閉）
         try:
             _out_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
@@ -1443,11 +1514,10 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             except Exception:
                 pass
         # 5. 寫熱鍵（MT5 關閉狀態下寫 — 用戶實測先 load）
-        # 🚨 2026-08-20 v0.10.11（多 EA 時序根治）：恢復批次預載（v0.10.7 邏輯）+ 保留 v0.10.8/10.10 驗證 gate
-        # 之前批次預載失敗係因為冇等 MT5 load 完熱鍵（3 次 send 測試唔夠）— 而家有 45s poll gate 搞掂
-        # → 一次 restart 寫入全部 .ex5 熱鍵 → 之後每隻 skip restart → 冇「逐隻 restart」時序問題
-        _experts_hk = dict(experts)
-        # 掃描 Experts 目錄全部 .ex5（排除子目錄 — 只掃根目錄）
+        # 🚨 2026-08-22 用戶要求：每次部署都用 Ctrl+1（單一熱鍵重用）— 部署完釋放，下隻 EA 又用返 Ctrl+1
+        # → 唔再批次分配 Ctrl+1~9 — 只寫「新 EA = Ctrl+1」+ 清走舊 mapping
+        _experts_hk = {}
+        # 掃描 Experts 目錄全部 .ex5（排除子目錄 — 只掃根目錄）— 只留「新 EA」熱鍵
         _all_ex5 = []
         try:
             for _d_root in os.listdir(_data_root):
@@ -1458,29 +1528,8 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             _all_ex5.append(_f5[:-4])
         except Exception:
             pass
-        # 分配熱鍵：已存在嘅保持，冇嘅分配未用 Ctrl+N
-        _used_n = set()
-        for _k2, _v2 in _experts_hk.items():
-            if _v2 and _v2.startswith('Ctrl+'):
-                try: _used_n.add(int(_v2.replace('Ctrl+', '')))
-                except: pass
-        # 確保 ea_name 一定喺入面（用原本 combo）
-        _experts_hk[f'Experts\\{ea_name}.ex5'] = _combo_n
-        _used_n.add(int(_combo_n.replace('Ctrl+', '')))
-        _next_n = 1
-        for _ea5 in sorted(_all_ex5):
-            _hk_key = f'Experts\\{_ea5}.ex5'
-            if _hk_key in _experts_hk:
-                continue  # 已有熱鍵
-            while _next_n in _used_n:
-                _next_n += 1
-            if _next_n > 9:
-                print(f"⚠️ 熱鍵已滿（9 個用晒）— {_ea5} 冇熱鍵")
-                break
-            _experts_hk[_hk_key] = f'Ctrl+{_next_n}'
-            _used_n.add(_next_n)
-            _next_n += 1
-            print(f"   ➕ 批次預載: {_ea5} → Ctrl+{_next_n-1}")
+        # 🚨 2026-08-22：只用 Ctrl+1（重用）— 每次部署都係 Ctrl+1
+        _experts_hk[f'Experts\\{ea_name}.ex5'] = 'Ctrl+1'
         _lines_hk = ['<experts>']
         for _k2, _v2 in _experts_hk.items():
             _lines_hk.append(f'{_k2}={_v2}')
@@ -1488,7 +1537,22 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         _text_out_hk = '\r\n'.join(_lines_hk) + '\r\n'
         with open(_hk_ini, 'wb') as _f_hk:
             _f_hk.write(_text_out_hk.encode('utf-16'))
-        print(f"✅ 熱鍵已寫入 hotkeys.ini（共 {len(_experts_hk)} 個 mapping — 含 {ea_name}={_combo_n}）")
+        print(f"✅ 熱鍵已寫入 hotkeys.ini（只用 Ctrl+1 — {ea_name}=Ctrl+1，舊 mapping 已清）")
+        # 同步更新 hotkeys.json（agent 記憶 — 保持一致）
+        try:
+            import json as _json_hk
+            _hj_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hotkeys.json')
+            _hj_data = {}
+            try:
+                _hj_data = _json_hk.load(open(_hj_path, 'r', encoding='utf-8'))
+            except Exception:
+                pass
+            _hj_data = {k: v for k, v in _hj_data.items() if k == ea_name}
+            _hj_data[ea_name] = '^1'
+            with open(_hj_path, 'w', encoding='utf-8') as _f_hj:
+                _json_hk.dump(_hj_data, _f_hj, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
         # 6. 開 MT5
         subprocess.Popen([MT5_PATH])
         # 🚨 2026-08-20（部署流程檢測系統落地）：開完 MT5 唔可以即刻部署 — 要等 MT5 load 完熱鍵
@@ -1589,6 +1653,83 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     time.sleep(3)
             if not _hk_loaded_ok:
                 print(f"⚠️ 熱鍵 load 3 次測試都冇彈 Properties — 部署時 attach_ea_hotkey 會再驗證（失敗會明確報錯）")
+        # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross — restore 唔齊）：restart 後檢查 chart 有冇 restore 齊
+        # → 唔齊就補開（記錄咗 restart 前嘅 chart — 逐個 check 有冇喺度）
+        if _charts_before_hk:
+            try:
+                import ctypes as _ct_rc
+                _u_rc = _ct_rc.windll.user32
+                _mt5_win_rc = None
+                def _cb_win2(h, r):
+                    nonlocal _mt5_win_rc
+                    _l = _u_rc.GetWindowTextLengthW(h)
+                    if _l > 0:
+                        _b = _ct_rc.create_unicode_buffer(_l + 1)
+                        _u_rc.GetWindowTextW(h, _b, _l + 1)
+                        _c3 = _ct_rc.create_unicode_buffer(128)
+                        _u_rc.GetClassNameW(h, _c3, 128)
+                        if 'MetaQuotes::MetaTrader' in _c3.value or ('5053721681' in _b.value and 'MetaQuotes' in _b.value):
+                            _mt5_win_rc = h
+                            return False
+                    return True
+                _u_rc.EnumWindows(_ct_rc.WINFUNCTYPE(_ct_rc.c_bool, _ct_rc.c_size_t, _ct_rc.c_size_t)(_cb_win2), 0)
+                _charts_after = []
+                if _mt5_win_rc:
+                    def _cb_child2(h, r):
+                        _cls = _ct_rc.create_unicode_buffer(128)
+                        _u_rc.GetClassNameW(h, _cls, 128)
+                        if 'Afx' in _cls.value and 'ControlBar' not in _cls.value:
+                            _l2 = _u_rc.GetWindowTextLengthW(h)
+                            if _l2 > 0:
+                                _b2 = _ct_rc.create_unicode_buffer(_l2 + 1)
+                                _u_rc.GetWindowTextW(h, _b2, _l2 + 1)
+                                if ',' in _b2.value:
+                                    _charts_after.append(_b2.value)
+                        return True
+                    _u_rc.EnumChildWindows(_ct_rc.c_void_p(_mt5_win_rc), _ct_rc.WINFUNCTYPE(_ct_rc.c_bool, _ct_rc.c_size_t, _ct_rc.c_size_t)(_cb_child2), 0)
+                print(f"📋 restart 後 chart: {_charts_after}")
+                # 搵遺失 chart（restart 前有但 restart 後冇）
+                _missing = []
+                for _c1 in _charts_before_hk:
+                    _sym1 = _c1.split(',')[0]
+                    _found_m = False
+                    for _c2 in _charts_after:
+                        if _c2.split(',')[0] == _sym1:
+                            _found_m = True
+                            break
+                    if not _found_m:
+                        _missing.append(_sym1)
+                if _missing:
+                    print(f"🚨 restart 後遺失 {len(_missing)} 個 chart: {_missing} — 補開")
+                    from pywinauto.keyboard import send_keys as _sk_rc
+                    for _msym in _missing:
+                        try:
+                            _w_rc = _App_hkt.window(class_name_re='MetaQuotes::MetaTrader') if '_App_hkt' in dir() else None
+                            if _w_rc is None:
+                                from pywinauto import Application as _AppRC
+                                _a_rc = _AppRC(backend='win32').connect(process=find_mt5_pid(), timeout=8)
+                                _w_rc = _a_rc.window(class_name_re='MetaQuotes::MetaTrader')
+                            _w_rc.set_focus()
+                            time.sleep(0.5)
+                            _sk_rc('{ALT down}{F down}{F up}{ALT up}')  # Alt+F menu
+                            time.sleep(1.5)
+                            _sk_rc('{ENTER}')  # 文件
+                            time.sleep(1)
+                            _sk_rc('{ENTER}')  # 新圖表
+                            time.sleep(1)
+                            _sk_rc('{SPACE}')  # symbol picker
+                            time.sleep(1.5)
+                            _sk_rc(_msym)
+                            time.sleep(1)
+                            _sk_rc('{ENTER}')
+                            time.sleep(2)
+                            print(f"  ✅ 補開 chart: {_msym}")
+                        except Exception as _e_rc:
+                            print(f"  ⚠️ 補開 {_msym} 失敗: {_e_rc}")
+                else:
+                    print("✅ restart 後 chart 齊全（冇遺失）")
+            except Exception as _e_rc2:
+                print(f"⚠️ restart 後檢查 chart 失敗: {_e_rc2}")
         # 7. 攞新 PID
         _new_pid = find_mt5_pid()
         if _new_pid:

@@ -1,18 +1,3 @@
 {
-  "Bollinger_Band": "^1",
-  "EMA_Cross": "^2",
-  "SMA_Cross": "^3",
-  "RSI_Over": "^4",
-  "MACD_Cross": "^5",
-  "Support_Resist": "^6",
-  "Breakout": "^7",
-  "Correlation": "^8",
-  "Divergence": "^9",
-  "Volume_Spike": "^0",
-  "Swing_Trader": "^!1",
-  "Heikin_Ashi": "^!2",
-  "ATR_Stop": "^!3",
-  "AgentHelper": "^!4",
-  "TestRunner": "^!5",
-  "Controller": "^!0"
+  "Grid_Trading": "^1"
 }
