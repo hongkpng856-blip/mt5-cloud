@@ -1617,7 +1617,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                 _tl_hk = _ct_hk.windll.user32.GetWindowTextLengthW(_h)
                                 _tb_hk = _ct_hk.create_unicode_buffer(_tl_hk + 1)
                                 _ct_hk.windll.user32.GetWindowTextW(_h, _tb_hk, _tl_hk + 1)
-                                if ea_name in _tb_hk.value or '1.00' in _tb_hk.value or '2.00' in _tb_hk.value:
+                                if ea_name in _tb_hk.value:
                                     _dlg_hk_found = True
                                     _dlg_hk_hwnd = _h
                                     return False
@@ -1652,7 +1652,71 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     print(f"⚠️ 熱鍵 load 測試異常: {_ehk_t}")
                     time.sleep(3)
             if not _hk_loaded_ok:
-                print(f"⚠️ 熱鍵 load 3 次測試都冇彈 Properties — 部署時 attach_ea_hotkey 會再驗證（失敗會明確報錯）")
+                # 🚨 2026-08-24 FIX（熱鍵 load 唔穩定 — MT5 開機 cache 舊 hotkeys）：第一次 restart 後 load 測試失敗
+                # → 再 restart 一次（第二次開機 load 到新寫入嘅 hotkeys）— 唔好即刻部署（會彈錯 EA / 附加失敗）
+                print(f"⚠️ 熱鍵 load 3 次測試都冇彈 Properties — 再 restart 一次 reload 熱鍵")
+                try:
+                    # 關 MT5（WM_CLOSE → 等 → 強制 kill 兜底）
+                    _sp_hk.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
+                    time.sleep(4)
+                    # 開 MT5
+                    subprocess.Popen([MT5_PATH])
+                    # 等 ready（90s）
+                    _start_hk2 = time.time()
+                    _ready2 = False
+                    while time.time() - _start_hk2 < 90:
+                        _p2 = find_mt5_pid()
+                        if _p2:
+                            try:
+                                from pywinauto import Application as _App2r
+                                _a2r = _App2r(backend='win32').connect(process=_p2, timeout=5)
+                                _w2r = _a2r.window(class_name='MetaQuotes::MetaTrader::5.00')
+                                if _w2r.exists():
+                                    _ready2 = True
+                                    break
+                            except Exception:
+                                pass
+                        time.sleep(3)
+                    if _ready2:
+                        print("✅ 熱鍵預載：第二次 restart 完成（reload 熱鍵）")
+                        # 再測熱鍵
+                        for _hk_try2 in range(3):
+                            try:
+                                _w2r.set_focus()
+                                time.sleep(1)
+                                import pyautogui as _pg_hk2
+                                _pg_hk2.FAILSAFE = False
+                                _r2 = _w2r.rectangle()
+                                _pg_hk2.click(_r2.left + _r2.width() // 2, _r2.top + _r2.height() // 2)
+                                time.sleep(0.8)
+                                _sk_hk(_combo_actual)
+                                time.sleep(3)
+                                _dlg2 = False
+                                def _cb_hk2b(_h3, _):
+                                    nonlocal _dlg2
+                                    _cls3 = _ct_hk.create_unicode_buffer(64)
+                                    _ct_hk.windll.user32.GetClassNameW(_h3, _cls3, 64)
+                                    if '#32770' in _cls3.value:
+                                        _tl3 = _ct_hk.windll.user32.GetWindowTextLengthW(_h3)
+                                        _tb3 = _ct_hk.create_unicode_buffer(_tl3 + 1)
+                                        _ct_hk.windll.user32.GetWindowTextW(_h3, _tb3, _tl3 + 1)
+                                        if ea_name in _tb3.value:
+                                            _dlg2 = True
+                                            return False
+                                    return True
+                                _ct_hk.windll.user32.EnumWindows(_ct_hk.WINFUNCTYPE(_ct_hk.c_bool, _ct_hk.c_size_t, _ct_hk.c_size_t)(_cb_hk2b), 0)
+                                if _dlg2:
+                                    _hk_loaded_ok = True
+                                    print(f"✅ 第二次 restart 後熱鍵 load 驗證通過（{ea_name} Properties）")
+                                    _sk_hk('{ESC}')
+                                    break
+                            except Exception:
+                                pass
+                            time.sleep(3)
+                    if not _hk_loaded_ok:
+                        print(f"⚠️ 第二次 restart 後熱鍵仍然冇 load — 部署時會再驗證（失敗會明確報錯）")
+                except Exception as _ehk_r:
+                    print(f"⚠️ 第二次 restart 失敗: {_ehk_r}")
         # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross — restore 唔齊）：restart 後檢查 chart 有冇 restore 齊
         # → 唔齊就補開（記錄咗 restart 前嘅 chart — 逐個 check 有冇喺度）
         if _charts_before_hk:
@@ -1913,11 +1977,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         if not open_chart and not combo:
             print(f"⚠️ {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
             return False
-        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過「附加熱鍵」步驟
-        # （之前：套模板掛咗 EA 之後仲行「附加」（send 熱鍵 → 落 active 圖表 — 掛錯圖表 — 用戶部署 Breakout 掛咗 EURUSD 案例）
-        if open_chart:
+        # 🚨 2026-08-24（用戶要求：Ctrl+O / OpenChart 已失效 — 回復熱鍵為主）：
+        # 一體化（Ctrl+O 套模板）已失效（MT5 build 6140 — OpenChart script 熱鍵冇 load）
+        # → 真 EA 一律用熱鍵（Ctrl+1）附加 — send 快捷鍵 → EA 掛 active chart
+        if open_chart and _is_script_att:
             print(f"✅ 一體化：{ea_name} 已由套模板掛落圖表（跳過附加熱鍵）")
-            _saw_props = True  # 當附加完成（套模板已掛）
+            _saw_props = True  # Script（OpenChart）一體化假裝已掛
         else:
             print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
@@ -2278,7 +2343,40 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         if not _ensure_no_dialog(f'附加 {ea_name} 前', max_wait=8):
                             print(f"❌ 附加中止：dialog 關唔到 — 唔 send 熱鍵（避免彈錯 dialog）")
                             return False
-                        _sk(combo)
+                        # 🚨 2026-08-24 FIX（熱鍵 load 慢 — 人手模擬測試 ATR/ATR 附加失敗）：send 前等耐啲（MT5 開機後熱鍵 load 慢）
+                        # + send 後冇彈 Properties → 重試（最多 5 次 — 每次等 3 秒）
+                        time.sleep(5)
+                        _hk_ok = False
+                        for _hk_try in range(5):
+                            _sk(combo)
+                            time.sleep(3)
+                            # check 有冇彈 Properties dialog（含 EA 名 / 版本）
+                            _props_found = False
+                            try:
+                                import ctypes as _ct_hk2
+                                _u_hk2 = _ct_hk2.windll.user32
+                                def _cb_hk2(_h2, _):
+                                    nonlocal _props_found
+                                    if _u_hk2.IsWindowVisible(_h2):
+                                        _l2 = _u_hk2.GetWindowTextLengthW(_h2)
+                                        if _l2 > 0:
+                                            _b2 = _ct_hk2.create_unicode_buffer(_l2 + 1)
+                                            _u_hk2.GetWindowTextW(_h2, _b2, _l2 + 1)
+                                            if ea_name in _b2.value and '1.00' in _b2.value:
+                                                _props_found = True
+                                                return False
+                                    return True
+                                _u_hk2.EnumWindows(_ct_hk2.WINFUNCTYPE(_ct_hk2.c_bool, _ct_hk2.c_size_t, _ct_hk2.c_size_t)(_cb_hk2), 0)
+                            except Exception:
+                                pass
+                            if _props_found:
+                                print(f"✅ 快捷鍵 {combo} 彈出 Properties（try {_hk_try+1}）")
+                                _hk_ok = True
+                                break
+                            print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試 {_hk_try+1}/5）...")
+                            time.sleep(3)
+                        if not _hk_ok:
+                            print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
                     else:
                         print(f"❌ 附加中止：active chart 唔係目標 symbol（{symbol}）— 避免代替 dialog 一鑊泡")
                         # 寫 fail steps
@@ -2535,17 +2633,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
 
         # 心跳驗證
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
-        # 🚨 2026-08-24 FIX（用戶實測假成功）：之前淨係 check 心跳檔存在（os.path.isfile — 舊檔殘留都話「心跳存在」→ 假成功）
-        # → 改 check age（< 300s 先算新鮮 — 舊檔 = EA 未掛到）
-        _hb_fresh = False
         if os.path.isfile(hb):
-            try:
-                _hb_age = time.time() - os.path.getmtime(hb)
-                if _hb_age < 300:
-                    _hb_fresh = True
-            except Exception:
-                pass
-        if _hb_fresh:
             print(f"✅ {ea_name} 附加成功（心跳存在）")
         else:
             print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
@@ -2751,8 +2839,8 @@ def verify_heartbeat(ea_name, timeout=60):
         time.sleep(3)
     
     # 🚨 2026-08-10：心跳冇 → 睇 MT5 log「已啟動」（市場收市冇 tick — EA 其實啟動咗）
-    # 🚨 2026-08-24 FIX（用戶實測假成功）：之前讀 MQL5/Logs（MetaEditor 日誌 — 中文「已启动」殘留 → 誤判「已啟動」→ 假成功）
-    # → 改讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）+ 只認「loaded successfully」（唔好認「started」— 太濫）
+    # 🚨 2026-08-24 FIX（假成功根治）：讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）而唔係 MQL5/Logs（MetaEditor 中文「已启动」殘留 → 誤判）
+    # + 只認「loaded successfully」+ 最後狀態判斷（removed 後唔算 loaded）
     try:
         log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         import glob as _g
@@ -2774,11 +2862,8 @@ def verify_heartbeat(ea_name, timeout=60):
                 except Exception:
                     continue
             if text and ea_name in text:
-                # 只認「loaded successfully」+ 有新鮮度（最後出現 < 5 分鐘）
-                import re as _re_hb
-                _lines_hb = text.splitlines()
                 _last_state = None
-                for _ln in _lines_hb:
+                for _ln in text.splitlines():
                     if ea_name in _ln and 'expert' in _ln.lower():
                         if 'loaded successfully' in _ln:
                             _last_state = 'loaded'
@@ -2972,9 +3057,8 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         pass
 
     try:
-        # 🚨 2026-08-24 用戶要求：熱鍵先係主力 — 唔使生成模板（掛 EA 唔需要模板 — 開 chart + 撳熱鍵就成功）
-        # Step 1: Generate template（跳過 — 熱鍵方法唔使模板；模板只係輔助開 chart — 而家用 Alt+F 開 chart）
-        # tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
+        # Step 1: Generate template
+        tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
         check_abort()  # 每步檢查緊急停止
 
         # 🚨 2026-08-20（用戶實測成功流程）：熱鍵預載 — 確保 EA 熱鍵寫入 hotkeys.ini（MT5 關閉狀態下）→ MT5 load
@@ -3181,7 +3265,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     _u = _ct.windll.user32
 
     if not mt5_pid:
-        out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True, text=True, errors='replace').stdout or ''
+        out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True, text=True).stdout
         for line in out.splitlines():
             parts = [p.strip().strip('"') for p in line.split(',')]
             if len(parts) >= 2 and parts[0] == 'terminal64.exe' and parts[1].isdigit():
