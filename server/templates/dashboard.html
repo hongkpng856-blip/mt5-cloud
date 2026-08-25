@@ -734,7 +734,19 @@
 // === EA 診斷報告 ===
 let currentReport = null;
 
-async function showReport(magic, symbol) {
+async function showReport(magic, symbol, eaName) {
+    // 🚨 2026-08-26 FIX v2（用戶：「未部署嘅頁面應該寫啲咩？」）— 未部署（冇 magic/冇 EA 名）→ 直接提示
+    if (!magic || magic === '' || magic === 'undefined' || !eaName) {
+        document.getElementById('reportTitle').innerHTML = '<i class="icon-file-chart-column" style="color:var(--accent)"></i> 診斷報告';
+        document.getElementById('reportModal').style.display = 'block';
+        document.getElementById('reportStats').innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted)"><i class="icon-circle-x" style="font-size:32px;color:#f85149;margin-bottom:12px;display:block"></i><b style="font-size:15px">未部署 — 冇報告可顯示</b><br><span style="font-size:12px">此 EA 未部署到 MT5（冇 Magic / Symbol）<br>部署後先有交易數據（Trades / P&L / Equity Curve 等）</span></div>';
+        const noteEl = document.getElementById('reportNote');
+        if (noteEl) noteEl.style.display = 'none';
+        document.getElementById('reportEquity').innerHTML = '';
+        document.getElementById('reportDist').innerHTML = '';
+        document.getElementById('reportMonthly').innerHTML = '';
+        return;
+    }
     document.getElementById('reportTitle').innerHTML = '<i class="icon-file-chart-column" style="color:var(--accent)"></i> 診斷報告 — Magic ' + magic + ' / ' + symbol;
     document.getElementById('reportModal').style.display = 'block';
     document.getElementById('reportStats').innerHTML = '<div class="loading" style="margin:20px auto"></div>';
@@ -1110,7 +1122,7 @@ async function loadEAConfig() {
                 <td style="white-space:nowrap">
                     <div class="ea-actions">
                     <button class="btn" style="padding:2px 8px;font-size:11px" onclick="showSymbolPicker('${name}','${tf||'H1'}','${(magic||'240701')}','${lot||'1.00'}','${sym||''}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i> 部署</button>
-                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-file-chart-column&quot; style=&quot;color:var(--accent)&quot;></i> 診斷報告', '顯示 <b>${name}</b> 嘅診斷報告（Magic: ${magic||'—'} / Symbol: ${sym||'—'}）？', () => showReport('${magic}','${sym}'))" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i> 報告</button>`:''}
+                    ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-file-chart-column&quot; style=&quot;color:var(--accent)&quot;></i> 診斷報告', '顯示 <b>${name}</b> 嘅診斷報告（Magic: ${magic||'—'} / Symbol: ${sym||'—'}）？', () => showReport('${magic}','${sym}','${name}'))" title="診斷報告"><i class="icon-file-chart-column" style="font-size:11px"></i> 報告</button>`:''}
           ${!isSystem?`<button class="btn" style="padding:2px 8px;font-size:11px" onclick="showConfirm('<i class=&quot;icon-trash-2&quot; style=&quot;color:var(--danger)&quot;></i> 刪除 EA', '確定刪除 <b>${name}</b>？<br><br>將刪除：<br>• 本機檔案（.mq5 / .ex5）<br>• 配對設定（Symbol / Magic / 時間框架）<br><br>此操作不可恢復 — 需重新配對方可使用。', () => deleteEA('${name.split('.')[0]}'))" title="刪除 ${name}"><i class="icon-trash-2" style="font-size:11px"></i> 刪除</button>`:''}
                     ${isSystem?'<span style="font-size:10px;color:#58a6ff;margin-left:2px" title="系統控制中樞 — 自動運行"><i class="icon-shield-check" style="font-size:11px"></i></span>':''}
                     </div>

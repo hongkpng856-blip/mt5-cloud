@@ -1408,7 +1408,10 @@ def api_ea_report():
     except Exception:
         pass
 
-    if not ea_deals and (trade_list or stat):
+    # 🚨 2026-08-26 FIX v2（報告顯示舊數據問題）：優先 trades_<EA>.json（EA 逐單真實記錄 — 最準）
+    # → 之前 `if not ea_deals`（agent.deals 冇數據先行詳細計算）— 但 agent.deals 有舊記錄（舊 symbol/magic）→ 報告顯示舊嘢
+    # → 改：只要有 trade_list（trades_<EA>.json 有記錄）→ 一定用佢計（唔理 agent.deals）
+    if trade_list or (not ea_deals and stat):
 
         # Equity curve（cumulative）+ distribution + monthly
         equity_curve = []
