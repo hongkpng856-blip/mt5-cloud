@@ -1011,12 +1011,152 @@ def execute_deploy(data):
 #  Main Sync Loop
 # ================================================================
 
+def build_files_snapshot():
+    """🚨 2026-08-26（multi-user Phase 1）：收集本機 MT5 檔案快照（heartbeats/trades/log_last/hotkeys）
+    → 每 10 秒上報俾 server — server 讀呢個（每機獨立）而唔係直接讀本機
+    格式: {"heartbeats": {ea: {last_check, age_sec, status}}, "trades_stats": {ea: {trades,wins,losses,profit,...}},
+           "log_last": {ea: "loaded successfully"/"removed"}, "hotkeys": [ea, ...], "ts": epoch}
+    """
+    snap = {"ts": time.time(), "heartbeats": {}, "trades_stats": {}, "log_last": {}, "hotkeys": []}
+    appdata = os.environ.get('APPDATA', '')
+    terminal_dir = os.path.join(appdata, 'MetaQuotes', 'Terminal')
+    common_files = os.path.join(terminal_dir, 'Common', 'Files')
+    now = time.time()
+    # 1. heartbeats（state_*.json + hb_*.txt — 帶 age）
+    try:
+        import glob as _gl_s
+        cf_s = common_files
+        for _f_s in _gl_s.glob(os.path.join(cf_s, 'state_*.json')):
+            _ea_s = os.path.basename(_f_s)[6:-5]
+            _age_s = now - os.path.getmtime(_f_s)
+            snap['heartbeats'][_ea_s] = {"last_check": os.path.getmtime(_f_s), "age_sec": round(_age_s), "status": "alive" if _age_s < 300 else "stale"}
+        for _f_s in _gl_s.glob(os.path.join(cf_s, 'hb_*.txt')):
+            _ea_s = os.path.basename(_f_s)[3:-4]
+            _age_s = now - os.path.getmtime(_f_s)
+            if _ea_s not in snap['heartbeats']:
+                snap['heartbeats'][_ea_s] = {"last_check": os.path.getmtime(_f_s), "age_sec": round(_age_s), "status": "alive" if _age_s < 300 else "stale"}
+    except Exception:
+        pass
+    # 2. trades stats（trades_<EA>.json — 逐單計完整指標）
+    try:
+        import glob as _gl_t2
+        for _f_t2 in _gl_t2.glob(os.path.join(common_files, 'trades_*.json')):
+            _ea_t2 = os.path.basename(_f_t2)[7:-5]
+            try:
+                with open(_f_t2, 'rb') as _fh_t2:
+                    _raw_t2 = _fh_t2.read()
+                _txt_t2 = None
+                for _enc_t2 in ('utf-8', 'utf-16'):
+                    try:
+                        _txt_t2 = _raw_t2.decode(_enc_t2); break
+                    except Exception:
+                        continue
+                if not _txt_t2:
+                    continue
+                _pl = []
+                for _ln_t2 in _txt_t2.splitlines():
+                    _ln_t2 = _ln_t2.strip()
+                    if not _ln_t2:
+                        continue
+                    try:
+                        _td_t2 = json.loads(_ln_t2)
+                        if 'profit' in _td_t2:
+                            _pl.append(_td_t2.get('profit', 0))
+                    except Exception:
+                        continue
+                if _pl:
+                    _gp = sum(p for p in _pl if p > 0)
+                    _gl_v = sum(-p for p in _pl if p < 0)
+                    _w = sum(1 for p in _pl if p > 0)
+                    _l = sum(1 for p in _pl if p < 0)
+                    _aw = round(_gp / _w, 2) if _w > 0 else 0
+                    _al = round(_gl_v / _l, 2) if _l > 0 else 0
+                    _cum2 = 0.0; _peak2 = 0.0; _dd2 = 0.0
+                    for _p2 in _pl:
+                        _cum2 += _p2
+                        if _cum2 > _peak2: _peak2 = _cum2
+                        _d2 = _peak2 - _cum2
+                        if _d2 > _dd2: _dd2 = round(_d2, 2)
+                    _wr2 = (_w + _l) > 0 and _w / (_w + _l) or 0
+                    snap['trades_stats'][_ea_t2] = {
+                        "trades": len(_pl), "wins": _w, "losses": _l,
+                        "profit": round(sum(_pl), 2), "gross_profit": round(_gp, 2),
+                        "gross_loss": round(_gl_v, 2), "avg_win": _aw, "avg_loss": _al,
+                        "max_dd": _dd2, "expectancy": round(_wr2 * _aw - (1 - _wr2) * _al, 2),
+                        "profit_factor": round(_gp / _gl_v, 2) if _gl_v > 0 else (99.99 if _gp > 0 else 0)
+                    }
+            except Exception:
+                continue
+    except Exception:
+        pass
+    # 3. log_last（terminal Logs — 每 EA 最後狀態）
+    try:
+        import glob as _gl_l
+        _latest_l = None
+        if os.path.isdir(terminal_dir):
+            for _d_l in os.listdir(terminal_dir):
+                _lgd_l = os.path.join(terminal_dir, _d_l, 'Logs')
+                if os.path.isdir(_lgd_l):
+                    for _f_l in _gl_l.glob(os.path.join(_lgd_l, '2026*.log')):
+                        if _latest_l is None or os.path.getmtime(_f_l) > os.path.getmtime(_latest_l):
+                            _latest_l = _f_l
+        if _latest_l:
+            with open(_latest_l, 'rb') as _f_l:
+                _raw_l = _f_l.read()
+            _txt_l = None
+            for _enc_l in ('utf-16-le', 'utf-8'):
+                try:
+                    _txt_l = _raw_l.decode(_enc_l, errors='ignore'); break
+                except Exception:
+                    continue
+            if _txt_l:
+                import re as _re_l
+                for _ln_l in _txt_l.splitlines()[-80:]:
+                    _m_l = _re_l.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(removed|loaded successfully)', _ln_l)
+                    if _m_l:
+                        snap['log_last'][_m_l.group(1)] = _m_l.group(2)
+    except Exception:
+        pass
+    # 4. hotkeys（config/hotkeys.ini — 有部署過嘅 EA）
+    try:
+        if os.path.isdir(terminal_dir):
+            import re as _re_h
+            for _d_h in os.listdir(terminal_dir):
+                _hkf_h = os.path.join(terminal_dir, _d_h, 'config', 'hotkeys.ini')
+                if os.path.isfile(_hkf_h):
+                    _c_h = open(_hkf_h, 'r', encoding='utf-16-le', errors='ignore').read()
+                    for _m_h in _re_h.finditer(r'Experts\\([A-Za-z_][A-Za-z0-9_]*)\.ex5\s*=', _c_h):
+                        if _m_h.group(1) not in snap['hotkeys']:
+                            snap['hotkeys'].append(_m_h.group(1))
+                    break
+    except Exception:
+        pass
+    return snap
+
+
+def _ensure_connected():
+    """🚨 2026-08-26（multi-user Phase 1）：確保 SocketIO 連線（connect() 失敗但背景未連 → 重試）"""
+    if sio.connected:
+        return True
+    try:
+        sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False)
+        return True
+    except Exception:
+        return False
+
+
 def sync_loop():
     """每 2 秒 poll deploy + 每 10 秒 sync + 每 30 秒 auto-trade"""
     last_sync = 0
     last_trade = 0
+    last_reconn = 0
     while True:
         try:
+            # 🚨 2026-08-26：未連線 → 每 5 秒嘗試重連（唔好永遠斷）
+            if not sio.connected:
+                if time.time() - last_reconn >= 5:
+                    _ensure_connected()
+                    last_reconn = time.time()
             # Sync MT5 data every 10 seconds
             now = time.time()
             if sio.connected and now - last_sync >= 10:
@@ -1038,6 +1178,12 @@ def sync_loop():
                     print(f'   [HB] Error: {e}')
                     import traceback
                     traceback.print_exc()
+                # 🚨 2026-08-26（multi-user Phase 1）：上報「本機 MT5 檔案快照」
+                # → server 讀呢個（每機獨立）— 唔再直接讀本機檔案
+                try:
+                    data['files_snapshot'] = build_files_snapshot()
+                except Exception as _e_snap:
+                    print(f'   [SNAP] Error: {_e_snap}')
                 sio.emit('agent_sync', data)
                 last_sync = now
 
@@ -1128,9 +1274,14 @@ print("  Connecting...\n")
 try:
     sio.connect(f"{SERVER_URL}", transports=['polling'])  # 強制 polling，Flask dev server 唔支援 WebSocket
 except Exception as e:
-    print(f"❌ Cannot connect to server: {e}")
-    print(f"   Make sure {SERVER_URL} is running")
-    sys.exit(1)
+    # 🚨 2026-08-26 FIX（multi-user Phase 1）：python-socketio 5.x connect() 有時 raise
+    # 「One or more namespaces failed to connect」— 但背景 namespace 已連接（polling ack 時序）
+    # → 唔好 exit — 繼續跑（sync_loop 會 check sio.connected + 自動重連）
+    print(f"⚠️ connect() 警告（可能已連 — 背景再接）: {e}")
+    try:
+        sio.connect(f"{SERVER_URL}", transports=['polling'], retry=True)
+    except Exception as e2:
+        print(f"⚠️ retry connect 都警告: {e2}")
 
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()

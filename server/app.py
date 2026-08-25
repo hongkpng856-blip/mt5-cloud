@@ -245,6 +245,9 @@ class Agent(db.Model):
     deals = db.Column(db.Text, default='[]')
     deploy_queue = db.Column(db.Text, default='')
     ea_heartbeats = db.Column(db.Text, default='{}')
+    # 🚨 2026-08-26（multi-user Phase 1）：Agent 上報「本機 MT5 檔案快照」（heartbeats/trades_stats/log_last/hotkeys）
+    # → server 優先讀呢個（每機獨立）— 唔再直接讀本機檔案（支持第二部機接入）
+    files_snapshot = db.Column(db.Text, default='{}')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -252,6 +255,19 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
+    # 🚨 2026-08-26（multi-user Phase 1）：migration — agent 表加 files_snapshot 欄（create_all 唔會加去現有表）
+    try:
+        import sqlite3 as _sq_m
+        _dbm = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+        _cm = _sq_m.connect(_dbm)
+        _agent_cols = [r[1] for r in _cm.execute('PRAGMA table_info(agent)')]
+        if 'files_snapshot' not in _agent_cols:
+            _cm.execute("ALTER TABLE agent ADD COLUMN files_snapshot TEXT DEFAULT '{}'")
+            _cm.commit()
+            print("✅ migration: agent.files_snapshot 欄加咗")
+        _cm.close()
+    except Exception as _e_mig:
+        print(f"⚠️ migration files_snapshot 失敗（唔阻啟動）: {_e_mig}")
     # 建立固定 Dev Account（如果未存在）
     if not User.query.filter_by(username='dev').first():
         dev_user = User(username='dev', email='dev@mt5cloud.com',
@@ -445,6 +461,21 @@ def _market_closed_for_symbol(symbol):
     except Exception:
         return None
 
+def _current_agent_snapshot():
+    """🚨 2026-08-26（multi-user Phase 1）：攞當前用戶 agent 上報嘅檔案快照（每機獨立）
+    有 snapshot（agent 上報過）→ 用佢（支持多機）; 冇 → None（server fallback 讀本機 — 單機向後兼容）
+    """
+    try:
+        agent = Agent.query.filter_by(user_id=current_user.id).first()
+        if agent and agent.files_snapshot:
+            _snap = json.loads(agent.files_snapshot or '{}')
+            if _snap and isinstance(_snap, dict) and _snap.get('ts'):
+                return _snap
+    except Exception:
+        pass
+    return None
+
+
 @app.route('/api/ea-config', methods=['GET', 'POST'])
 @login_required
 def api_ea_config():
@@ -462,9 +493,16 @@ def api_ea_config():
         # ⚠️ 控制層心跳狀態（CONTROL_LAYER_DESIGN.md）：讀 Common/Files/state_<ea>.json
         # running（ts 新鮮 <30 秒）/ stopped / unknown（冇檔或過期）
         # ⚠️ 2026-08 修：config 冇 _status key（只有 ea_name/ea_lot/ea_magic/ea_tf）→ 唔可以靠 _status 尾
+        # 🚨 2026-08-26（multi-user Phase 1）：agent 上報 snapshot 優先（每機獨立 — 支持多機）
+        # → 有 agent 上報 → 用佢嘅 heartbeats/log_last/hotkeys；冇 → 讀本機（單機向後兼容）
+        _snap_s = _current_agent_snapshot()
+        _use_snapshot = _snap_s is not None
+        _snap_hb = (_snap_s or {}).get('heartbeats') or {}
+        _snap_log = (_snap_s or {}).get('log_last') or {}
+        _snap_hk = (_snap_s or {}).get('hotkeys') or []
         runtime = {}
         # 🚨 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（已啟動/已停止/removed — 圖表實際狀態）
-        _log_last = {}
+        _log_last = dict(_snap_log) if _use_snapshot else {}
         try:
             import glob as _gl2
             _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -535,11 +573,17 @@ def api_ea_config():
             for ea in ea_names:
                 sf = os.path.join(common_files, f'state_{ea}.json')
                 hb_txt = os.path.join(common_files, f'hb_{ea}.txt')
+                # 🚨 2026-08-26（multi-user Phase 1）：snapshot 模式 — 心跳判斷用 agent 上報（每機獨立）
+                _sn_hb_info = _snap_hb.get(ea) if _use_snapshot else None
+                _sn_hb_fresh = bool(_sn_hb_info and (_sn_hb_info.get('age_sec', 999) < 300))
+                _sn_hk_has = (ea in _snap_hk) if _use_snapshot else None
                 # 🚨 2026-08-13：冇任何心跳檔案（state/hb 都唔存在）
                 # 判斷：有熱鍵（部署過）→ 啱啱部署（hotkeys.ini 新 — <10 分鐘）→ 'starting'（等心跳）；部署好耐都冇心跳 → 'no_hb'（冇心跳設定 — Ichimoku 案例）
                 #       冇熱鍵（未部署）→ 'unpaired'（未配對 — 未部署唔知有冇心跳 — Seasonal 案例）
-                if not os.path.isfile(sf) and not os.path.isfile(hb_txt):
-                    if ea in _hk_has:
+                _has_hb_file = _sn_hb_info is not None if _use_snapshot else (os.path.isfile(sf) or os.path.isfile(hb_txt))
+                _in_hk = _sn_hk_has if _use_snapshot else (ea in _hk_has)
+                if not _has_hb_file:
+                    if _in_hk:
                         runtime[ea] = 'starting' if (time.time() - _hk_mtime < 600) else 'no_hb'
                     else:
                         runtime[ea] = 'unpaired'
@@ -549,42 +593,51 @@ def api_ea_config():
                 # 🚨 2026-08-26 FIX（問題 1：部署第二隻 EA 後第一隻心跳 check 唔到）— 熱鍵而家 Ctrl+1 重用
                 # （每次部署清空舊 mapping + 只寫新 EA）→ hotkeys.ini 只反映最後部署嗰隻 → 舊 EA 唔喺 _hk_has → 誤判 unpaired
                 # → 修正：有心跳檔 + 心跳新鮮（<300s）= 真係運行緊（唔理熱鍵）— 淨係「有檔但心跳舊」先當殘留
-                _hb_fresh_ea = False
-                try:
-                    _sf_hb = os.path.join(common_files, f'state_{ea}.json')
-                    _hb_txt_hb = os.path.join(common_files, f'hb_{ea}.txt')
-                    for _hfp_hb in (_sf_hb, _hb_txt_hb):
-                        if os.path.isfile(_hfp_hb) and time.time() - os.path.getmtime(_hfp_hb) < 300:
-                            _hb_fresh_ea = True
-                            break
-                except Exception:
-                    pass
-                if ea not in _hk_has and not _hb_fresh_ea:
+                _hb_fresh_ea = _sn_hb_fresh if _use_snapshot else False
+                if not _use_snapshot:
+                    try:
+                        _sf_hb = os.path.join(common_files, f'state_{ea}.json')
+                        _hb_txt_hb = os.path.join(common_files, f'hb_{ea}.txt')
+                        for _hfp_hb in (_sf_hb, _hb_txt_hb):
+                            if os.path.isfile(_hfp_hb) and time.time() - os.path.getmtime(_hfp_hb) < 300:
+                                _hb_fresh_ea = True
+                                break
+                    except Exception:
+                        pass
+                _in_hk2 = _sn_hk_has if _use_snapshot else (ea in _hk_has)
+                if not _in_hk2 and not _hb_fresh_ea:
                     runtime[ea] = 'unpaired'
                     continue
                 st = 'unknown'
-                if os.path.isfile(sf):
-                    try:
-                        # ⚠️ MQL5 FileWrite 寫 UTF-16 LE（BOM \xff\xfe）— 要 fallback decode
-                        with open(sf, 'rb') as f:
-                            raw = f.read()
-                        try:
-                            sd = json.loads(raw.decode('utf-8'))
-                        except Exception:
-                            sd = json.loads(raw.decode('utf-16'))
-                        # 🚨 2026-08-13：心跳運行 = status=running + 心跳新鮮（mtime <300 秒 — EA 而家寫緊心跳（市場收市心跳疏 — 300 秒寬限 cover；關圖表後心跳停 >5 分鐘 → 「沒有心跳」））
-                        # （之前淨睇 status → 歷史殘留（EA 最後一次寫嘅 running — 之後停咗）→ 全部誤顯示「心跳運行」— 用戶質疑）
-                        age = time.time() - os.path.getmtime(sf)
-                        if sd.get('status') == 'running' and age < 30:
-                            st = 'running'
-                        elif sd.get('status') == 'stopped':
-                            st = 'stopped'
-                    except Exception:
-                        st = 'unknown'
-                # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt（舊版 EA 格式）— state_*.json 揾唔到 → 檢查 hb_*.txt
-                if st != 'running':
-                    if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
+                if _use_snapshot:
+                    # snapshot 模式：心跳新鮮（age<300）= running（agent 上報 status=alive）
+                    if _sn_hb_info and _sn_hb_info.get('age_sec', 999) < 300:
                         st = 'running'
+                    elif _sn_hb_info and _sn_hb_info.get('status') == 'stopped':
+                        st = 'stopped'
+                else:
+                    if os.path.isfile(sf):
+                        try:
+                            # ⚠️ MQL5 FileWrite 寫 UTF-16 LE（BOM \xff\xfe）— 要 fallback decode
+                            with open(sf, 'rb') as f:
+                                raw = f.read()
+                            try:
+                                sd = json.loads(raw.decode('utf-8'))
+                            except Exception:
+                                sd = json.loads(raw.decode('utf-16'))
+                            # 🚨 2026-08-13：心跳運行 = status=running + 心跳新鮮（mtime <300 秒 — EA 而家寫緊心跳（市場收市心跳疏 — 300 秒寬限 cover；關圖表後心跳停 >5 分鐘 → 「沒有心跳」））
+                            # （之前淨睇 status → 歷史殘留（EA 最後一次寫嘅 running — 之後停咗）→ 全部誤顯示「心跳運行」— 用戶質疑）
+                            age = time.time() - os.path.getmtime(sf)
+                            if sd.get('status') == 'running' and age < 30:
+                                st = 'running'
+                            elif sd.get('status') == 'stopped':
+                                st = 'stopped'
+                        except Exception:
+                            st = 'unknown'
+                    # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt（舊版 EA 格式）— state_*.json 揾唔到 → 檢查 hb_*.txt
+                    if st != 'running':
+                        if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
+                            st = 'running'
                 # 🚨 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表即刻「圖表移除」— 唔使等心跳停 30 秒）
                 # （log 最後「已停止/removed」= 圖表冇 EA — 心跳新鮮都只係 EA 停止前殘留 → chart_removed）
                 if _log_last.get(ea) in ('已停止', 'removed'):
@@ -596,6 +649,7 @@ def api_ea_config():
         # 🚨 2026-08-21：讀 EA 自寫統計（state_<ea>.json 入面 trades/wins/losses/profit — TestTrades 測試 EA 寫）
         # 原因：MT5 Python history API 讀唔到新 deals（build 6120 caching）→ EA 自己 track 寫檔 → 呢度讀
         ea_stats = {}
+        _snap_ts2 = (_snap_s or {}).get('trades_stats') or {}
         try:
             _cf2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             for _ea in ea_names:
@@ -606,6 +660,10 @@ def api_ea_config():
                 except Exception:
                     _ea_rt = ''
                 if _ea_rt not in ('running', 'starting'):
+                    continue
+                # 🚨 2026-08-26（multi-user Phase 1）：snapshot 模式 — 直接用 agent 上報嘅 trades_stats（每機獨立）
+                if _use_snapshot and _ea in _snap_ts2:
+                    ea_stats[_ea] = _snap_ts2[_ea]
                     continue
                 # 🚨 2026-08-21 FIX：優先讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫嘅逐單明細 — 完整歷史）
                 # state json 會被系統心跳覆寫（得 ea/status/ts — 冇 stats）→ 唔可靠
@@ -3372,6 +3430,9 @@ def handle_sync(data):
         agent.positions = json.dumps(data.get('positions',[]))
         agent.deals = json.dumps(data.get('deals',[]))
         agent.ea_heartbeats = json.dumps(data.get('heartbeats', {}))
+        # 🚨 2026-08-26（multi-user Phase 1）：儲存 agent 上報嘅檔案快照（每機獨立 — server 唔再直接讀本機）
+        if data.get('files_snapshot'):
+            agent.files_snapshot = json.dumps(data.get('files_snapshot'))
         agent.last_seen = datetime.utcnow()
         agent.status = data.get('status','connected')
         db.session.commit()
