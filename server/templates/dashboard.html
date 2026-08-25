@@ -593,13 +593,41 @@
 
     <!-- Agent Status + Performance（2026-08-13 融合：Agent 4 格 + Performance 4 格 → 一張卡） -->
     <div class="card">
-        <div class="card-title"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></div>
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+            <span><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></span>
+            <!-- 🚨 2026-08-26：交易歷史報告（帳戶層 — popup + 下載 HTML） -->
+            <button class="btn" style="padding:4px 12px;font-size:11px" onclick="openTradeReport()" title="下載 / 檢視 MT5 交易歷史報告"><i class="icon-file-text" style="font-size:11px"></i> 交易報告</button>
+        </div>
         <div class="stat-row">
             <div class="stat-box"><div class="label">Account</div><div class="value" id="accountLogin" style="font-size:14px">— <span id="accountServer" style="font-size:11px;color:#8b949e"></span></div></div>
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
         </div>
     </div>
+
+<!-- 🚨 2026-08-26：交易歷史報告 modal（popup — 表格 + 統計 + 下載 HTML） -->
+<div id="tradeReportModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto" onclick="if(event.target===this)closeTradeReport()">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;margin:30px auto;max-width:1100px;padding:24px;position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h2 style="font-size:18px;font-weight:600"><i class="icon-file-text" style="color:var(--accent)"></i> 交易歷史報告 <span id="trAccount" style="font-size:12px;color:var(--text-muted)"></span></h2>
+            <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn" style="padding:4px 12px;font-size:11px" onclick="downloadTradeReport()" title="下載 HTML 報告"><i class="icon-download" style="font-size:11px"></i> 下載 HTML</button>
+                <button onclick="closeTradeReport()" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer"><i class="icon-x"></i></button>
+            </div>
+        </div>
+        <!-- 統計 -->
+        <div class="stat-row" id="trStats" style="margin-bottom:16px;display:flex;gap:12px"></div>
+        <!-- 表格 -->
+        <div style="overflow-x:auto;max-height:55vh;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+            <table class="ea-table" id="trTable" style="font-size:12px">
+                <thead><tr>
+                    <th>時間</th><th>EA</th><th>Symbol</th><th>Magic</th><th>類型</th><th>手數</th><th>價格</th><th>Profit</th>
+                </tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 
 <!-- 🚨 2026-08-11：EA 倉庫 + 我的配對庫 放喺一個大 card（重新整理掣喺大 card） -->
@@ -733,6 +761,116 @@
 <script>
 // === EA 診斷報告 ===
 let currentReport = null;
+
+// 🚨 2026-08-26：交易歷史報告（popup + 下載 HTML）
+let _trData = null;
+let _trRows = null;
+async function openTradeReport() {
+    document.getElementById('tradeReportModal').style.display = 'block';
+    document.getElementById('trStats').innerHTML = '<div class="loading" style="margin:20px auto"></div>';
+    document.getElementById('trTable').querySelector('tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px">載入中…</td></tr>';
+    try {
+        const res = await fetch('/api/trade-report?t=' + Date.now());
+        const data = await res.json();
+        if (data.error) { alert(data.error); return; }
+        _trData = data;
+        renderTradeReport(data);
+    } catch(e) {
+        document.getElementById('trStats').innerHTML = '<span style="color:var(--danger)"><i class="icon-circle-x"></i> ' + e.message + '</span>';
+    }
+}
+function renderTradeReport(data) {
+    const s = data.summary;
+    // 統計
+    document.getElementById('trAccount').textContent = '';
+    const acct = document.getElementById('accountLogin') ? document.getElementById('accountLogin').textContent.replace('—','').trim() : '';
+    if (acct) document.getElementById('trAccount').textContent = '(' + acct.split(' ')[0] + ')';
+    document.getElementById('trStats').innerHTML = `
+        <div class="stat-box" style="flex:1"><div class="label">Total Trades</div><div class="value">${s.total}</div></div>
+        <div class="stat-box" style="flex:1"><div class="label">Win Rate</div><div class="value" style="color:${s.win_rate>=60?'#3fb950':'#d29922'}">${s.win_rate}%</div></div>
+        <div class="stat-box" style="flex:1"><div class="label">Wins / Losses</div><div class="value" style="font-size:14px"><span style="color:#3fb950">${s.wins}</span> / <span style="color:#f85149">${s.losses}</span></div></div>
+        <div class="stat-box" style="flex:1"><div class="label">Total P&L</div><div class="value" style="color:${s.total_profit>=0?'#3fb950':'#f85149'}">${s.total_profit>=0?'+':''}$${s.total_profit.toFixed(2)}</div></div>
+    `;
+    // 表格
+    const tbody = document.getElementById('trTable').querySelector('tbody');
+    _trRows = data.trades;
+    if (!data.trades.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">暫時冇交易記錄</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.trades.slice().reverse().map(t => {
+        const tt = t.time ? new Date(t.time * 1000).toLocaleString('zh-HK', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+        const typeName = t.type === 0 ? '買入' : t.type === 1 ? '賣出' : t.type === 2 ? '存款' : (t.type === 1 || t.type === 5 ? '賣出' : ('#'+t.type));
+        const ea = t.ea_name || '—';
+        const pp = t.profit;
+        return `<tr>
+            <td style="white-space:nowrap">${tt}</td>
+            <td>${ea}</td>
+            <td>${t.symbol || '—'}</td>
+            <td>${t.magic || '—'}</td>
+            <td>${typeName}</td>
+            <td>${t.volume !== undefined && t.volume !== null ? t.volume : '—'}</td>
+            <td>${t.price !== undefined && t.price !== null ? t.price : '—'}</td>
+            <td style="color:${pp>0?'#3fb950':pp<0?'#f85149':'#484f58'};font-weight:600">${pp !== 0 ? (pp>0?'+':'')+pp.toFixed(2) : '—'}</td>
+        </tr>`;
+    }).join('');
+}
+function closeTradeReport() {
+    document.getElementById('tradeReportModal').style.display = 'none';
+}
+function downloadTradeReport() {
+    if (!_trData) { alert('未有數據'); return; }
+    const s = _trData.summary;
+    const acct = (document.getElementById('accountLogin') ? document.getElementById('accountLogin').textContent.replace('—','').trim() : '') || 'MT5';
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0,10);
+    // 生成完整 HTML（單檔 — 可獨立開啟/email/列印）
+    const rows = _trRows.slice().reverse().map(t => {
+        const tt = t.time ? new Date(t.time * 1000).toLocaleString('zh-HK', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+        const typeName = t.type === 0 ? '買入(Buy)' : t.type === 1 ? '賣出(Sell)' : t.type === 2 ? '存款' : ('#'+t.type);
+        return `<tr style="border-bottom:1px solid #eee">
+            <td style="padding:6px 10px">${tt}</td>
+            <td style="padding:6px 10px">${t.ea_name || '—'}</td>
+            <td style="padding:6px 10px">${t.symbol || '—'}</td>
+            <td style="padding:6px 10px">${t.magic || '—'}</td>
+            <td style="padding:6px 10px">${typeName}</td>
+            <td style="padding:6px 10px">${t.volume ?? '—'}</td>
+            <td style="padding:6px 10px">${t.price ?? '—'}</td>
+            <td style="padding:6px 10px;color:${t.profit>0?'#188038':t.profit<0?'#c5221f':'#666'};font-weight:600">${t.profit !== 0 ? (t.profit>0?'+':'')+t.profit.toFixed(2) : '—'}</td>
+        </tr>`;
+    }).join('');
+    const html = `<!DOCTYPE html><html lang="zh-HK"><head><meta charset="utf-8"><title>Tradotcom 交易歷史報告 ${dateStr}</title>
+<style>body{font-family:-apple-system,'Segoe UI',sans-serif;margin:24px;color:#222}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;color:#555;font-weight:400;margin:0 0 16px}
+.stats{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.stat{background:#f6f8fa;border:1px solid #e1e4e8;border-radius:6px;padding:10px 16px}
+.stat .l{font-size:11px;color:#666}.stat .v{font-size:18px;font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{background:#f0f3f6;text-align:left;padding:8px 10px;border-bottom:2px solid #ddd;position:sticky;top:0}
+.footer{margin-top:16px;font-size:11px;color:#888}</style></head><body>
+<h1>Tradotcom 交易歷史報告</h1>
+<h2>帳戶 ${acct} — ${dateStr} 匯出</h2>
+<div class="stats">
+<div class="stat"><div class="l">Total Trades</div><div class="v">${s.total}</div></div>
+<div class="stat"><div class="l">Win Rate</div><div class="v">${s.win_rate}%</div></div>
+<div class="stat"><div class="l">Wins / Losses</div><div class="v">${s.wins} / ${s.losses}</div></div>
+<div class="stat"><div class="l">Total P&L</div><div class="v" style="color:${s.total_profit>=0?'#188038':'#c5221f'}">${s.total_profit>=0?'+':''}$${s.total_profit.toFixed(2)}</div></div>
+</div>
+<table><thead><tr><th>時間</th><th>EA</th><th>Symbol</th><th>Magic</th><th>類型</th><th>手數</th><th>價格</th><th>Profit</th></tr></thead><tbody>
+${rows}
+</tbody></table>
+<div class="footer">由 Tradotcom 生成 — ${new Date().toLocaleString('zh-HK')}</div>
+</body></html>`;
+    // 下載（Blob）
+    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Tradotcom_交易報告_${dateStr}.html`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+}
 
 async function showReport(magic, symbol, eaName) {
     // 🚨 2026-08-26 FIX v2（用戶：「未部署嘅頁面應該寫啲咩？」）— 未部署（冇 magic/冇 EA 名）→ 直接提示

@@ -1315,6 +1315,120 @@ def api_analysis():
         })
 
 
+@app.route('/api/trade-report')
+@login_required
+def api_trade_report():
+    """交易歷史報告（帳戶層面 — 全部交易 + 統計）
+    🚨 2026-08-26 新增（用戶要求：下載 MT5 交易歷史報告 HTML / popup 睇）
+    — 數據源：agent.deals（MT5 API 收集）+ trades_<EA>.json（EA 逐單）合併
+    """
+    agent = Agent.query.filter_by(user_id=current_user.id).first()
+    deals_data = json.loads(agent.deals or '[]')
+
+    # EA 名對應（magic → EA 名）
+    ea_name_map = {}
+    try:
+        import sqlite3 as _sq_t
+        _db_t = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+        _c_t = _sq_t.connect(_db_t)
+        _r_t = _c_t.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+        _c_t.close()
+        if _r_t:
+            _cfg_t = json.loads(_r_t[0] or '{}')
+            for _k_t, _v_t in _cfg_t.items():
+                if not _k_t.startswith('_') and not _k_t.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v_t, str):
+                    _m_t = str(_cfg_t.get(_k_t + '_magic', ''))
+                    if _m_t and _m_t not in ea_name_map:
+                        ea_name_map[_m_t] = _k_t
+    except Exception:
+        pass
+
+    # 合併 trades_<EA>.json（EA 自寫逐單 — 補充 agent.deals 冇嘅新交易）
+    merged = []
+    seen_tickets = set()
+    try:
+        import glob as _gl_t
+        _cf_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        for _f_t in _gl_t.glob(os.path.join(_cf_t, 'trades_*.json')):
+            _ea_t = os.path.basename(_f_t)[7:-5]
+            try:
+                with open(_f_t, 'rb') as _fh_t:
+                    _raw_t = _fh_t.read()
+                _txt_t = None
+                for _enc_t in ('utf-8', 'utf-16'):
+                    try:
+                        _txt_t = _raw_t.decode(_enc_t); break
+                    except Exception:
+                        continue
+                if _txt_t:
+                    for _line_t in _txt_t.splitlines():
+                        _line_t = _line_t.strip()
+                        if not _line_t: continue
+                        try:
+                            _td_t = json.loads(_line_t)
+                            if 'profit' in _td_t:
+                                _tk = _td_t.get('ticket') or _td_t.get('time') or f"{_ea_t}_{len(merged)}"
+                                seen_tickets.add(str(_tk))
+                                merged.append({
+                                    "time": _td_t.get('time') or _td_t.get('ts') or 0,
+                                    "symbol": _td_t.get('symbol', ''),
+                                    "profit": _td_t.get('profit', 0),
+                                    "magic": _td_t.get('magic', ''),
+                                    "type": _td_t.get('type', ''),
+                                    "volume": _td_t.get('volume', 0),
+                                    "price": _td_t.get('price', 0),
+                                    "ticket": _tk,
+                                    "comment": f"(EA {_ea_t})",
+                                    "ea_name": _ea_t
+                                })
+                        except Exception:
+                            continue
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # agent.deals（跳過已見 ticket）
+    for d in deals_data:
+        _tk_d = d.get('ticket') or d.get('time') or 0
+        if str(_tk_d) in seen_tickets:
+            continue
+        merged.append({
+            "time": d.get('time', 0),
+            "symbol": d.get('symbol', ''),
+            "profit": d.get('profit', 0),
+            "magic": d.get('magic', ''),
+            "type": d.get('type', ''),
+            "volume": d.get('volume', 0),
+            "price": d.get('price', 0),
+            "ticket": _tk_d,
+            "comment": d.get('comment', ''),
+            "ea_name": ea_name_map.get(str(d.get('magic', '')), '')
+        })
+
+    # 排序（時間）
+    merged.sort(key=lambda x: x.get('time', 0))
+
+    # 統計
+    valid = [d for d in merged if d.get('profit') != 0]
+    total_profit = round(sum(d.get('profit', 0) for d in valid), 2)
+    wins = sum(1 for d in valid if d.get('profit', 0) > 0)
+    losses = sum(1 for d in valid if d.get('profit', 0) < 0)
+    win_rate = round(wins / (wins + losses) * 100, 2) if (wins + losses) > 0 else 0
+
+    return jsonify({
+        "trades": merged,
+        "summary": {
+            "total": len(merged),
+            "valid": len(valid),
+            "wins": wins,
+            "losses": losses,
+            "win_rate": win_rate,
+            "total_profit": total_profit
+        }
+    })
+
+
 @app.route('/api/ea-report')
 @login_required
 def api_ea_report():
