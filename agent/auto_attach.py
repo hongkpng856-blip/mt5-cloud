@@ -1587,6 +1587,9 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             except Exception:
                 pass
             # 熱鍵 load 驗證：send Ctrl+N 測試 — 彈出 <EA> Properties = 熱鍵 load 成功（失敗關閉 dialog 再重試）
+                        # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：主視窗 ready 唔等於熱鍵 load 完
+            # → 等 MT5 完全穩定（10 秒）先 send 測試 — MT5 初始化順序：UI → 數據 → 設定 → 熱鍵
+            time.sleep(10)
             _hk_loaded_ok = False
             for _hk_try in range(3):
                 try:
@@ -2219,6 +2222,35 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     print(f"⚠️ 新方法開 chart 失敗: {_eneg2}")
 
                 time.sleep(1)
+                if not _oc_ok2:
+                    # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：開 chart 失敗重試 2 次
+                    # （Alt+F menu 時序 — MT5 restart 後 UI 未完全穩定 → 第一次開 chart 可能失敗 → 重試成功）
+                    _oc_retried = False
+                    for _oc_r2 in range(2):
+                        print(f"🔄 開 chart 重試 {_oc_r2+1}/2（{_sym}）...")
+                        try:
+                            import pyautogui as _pg_r2
+                            _pg_r2.FAILSAFE = False
+                            _pg_r2.hotkey('alt', 'f'); time.sleep(1.5)
+                            _pg_r2.press('enter'); time.sleep(1.5)
+                            _pg_r2.press('enter'); time.sleep(2)
+                            _pg_r2.press('space'); time.sleep(1.5)
+                            _pg_r2.typewrite(_sym, interval=0.2); time.sleep(1)
+                            _pg_r2.press('enter'); time.sleep(3)
+                            # 驗證 chart 出現
+                            try:
+                                _chart_found2 = False
+                                _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
+                            except Exception:
+                                pass
+                            if _chart_found2:
+                                _oc_ok2 = True
+                                _oc_retried = True
+                                print(f"✅ 開 chart 重試成功（{_sym} chart 出現）")
+                                break
+                        except Exception:
+                            pass
+                        time.sleep(2)
                 if not _oc_ok2:
                     print(f"❌ 開 chart 失敗（{_sym}）— 唔用備用方案（用戶要求）")
                     return False
