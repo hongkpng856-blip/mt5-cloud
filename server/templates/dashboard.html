@@ -603,13 +603,6 @@
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
         </div>
-        <!-- 🚨 2026-08-26：Agent ID + 連接狀態（多機 — 睇到連緊邊部機嘅 agent） -->
-        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-muted)">
-            <i class="icon-satellite" style="font-size:11px"></i>
-            <span>Agent ID:</span>
-            <b id="agentId" style="color:var(--text)">—</b>
-            <span id="agentConn" style="margin-left:auto;display:inline-flex;align-items:center;gap:4px"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:#484f58;display:inline-block"></span><span id="agentConnTxt">連線中…</span></span>
-        </div>
     </div>
 
 <!-- 🚨 2026-08-26：交易歷史報告 modal（popup — 表格 + 統計 + 下載 HTML） -->
@@ -1485,24 +1478,7 @@ async function loadDashboard() {
         const res = await fetch('/api/dashboard?t=' + Date.now());
         const d = await res.json();
     // 2026-08-12：Agent card 簡潔化（刪 agentId/binding）— 全部元素 null check（HTML cache 舊版冇 accountServer → 之前炸 → Balance/Equity 唔更新）
-        // 🚨 2026-08-26：加返 Agent ID + 連接狀態顯示（多機 — 睇到連緊邊部機）
-        const _idEl = document.getElementById('agentId');
-        if (_idEl) _idEl.textContent = d.agent_id || '—';
-        const _connDot = document.querySelector('#agentConn .dot');
-        const _connTxt = document.getElementById('agentConnTxt');
-        const _connStatus = d.status || '';
-        if (_connDot && _connTxt) {
-            if (_connStatus === 'connected' || _connStatus === 'online') {
-                _connDot.style.background = '#3fb950';
-                _connTxt.textContent = '已連接';
-            } else if (_connStatus === 'offline') {
-                _connDot.style.background = '#f85149';
-                _connTxt.textContent = '離線';
-            } else {
-                _connDot.style.background = '#d29922';
-                _connTxt.textContent = _connStatus || '連線中…';
-            }
-        }
+
         const _alEl = document.getElementById('accountLogin');
         if (_alEl) _alEl.textContent = d.account?.login || '—';
         const _asEl = document.getElementById('accountServer');
@@ -1531,11 +1507,12 @@ async function loadDashboard() {
 
         const badge = document.getElementById('statusBadge');
         if (badge) {
+            // 🚨 2026-08-26：badge 直接顯示「DEV」（online/offline 用顏色表示）
             if (d.status === 'connected' || d.status === 'running') {
-                badge.textContent = 'Online'; badge.className = 'badge badge-green';
+                badge.textContent = 'DEV'; badge.className = 'badge badge-green';
                 heartbeats = d.ea_heartbeats || {};
             } else {
-                badge.textContent = 'Offline'; badge.className = 'badge badge-red';
+                badge.textContent = 'DEV'; badge.className = 'badge badge-red';
             }
         }
 
