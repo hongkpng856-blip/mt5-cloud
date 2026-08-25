@@ -161,3 +161,101 @@
 ---
 
 *準備好可以開始 Phase 1 — 要開始就話我知*
+
+
+---
+
+## 8. ☁️ 雲端部署建議（正式版 — Server 上雲）
+
+> 用戶問題：「點解用我部機做終端？唔係應該有 server/database 咩？」
+> 解答：交易一定要喺實體機（MT5 桌面 App 冇得喺雲端虛擬跑），但 Server/DB 可以（亦應該）上雲。
+> 你部機 = 開發模式（server + 第一個終端二合一）；正式版 = server 上雲 + 你部機淨做終端。
+
+### 8.1 正式架構（雲端）
+
+```
+┌─────── 雲端 VPS（24/7 online）────────┐
+│  • Tradotcom Server（Flask + SocketIO） │
+│  • Database（SQLite → 可升 PostgreSQL） │
+│  • Cloudflare Tunnel（或固定 IP + SSL） │
+│  = 腦（決策/網頁/帳戶/DB）              │
+└───────────────┬───────────────────────┘
+                │ HTTPS（tunnel / 域名）
+┌───────────────┼───────────────────────┐
+│ 客戶 A 部機    │   客戶 B 部機           │
+│  ├ MT5 Terminal│  ├ MT5 Terminal        │
+│  ├ Agent       │  ├ Agent               │
+│  └ Watcher     │  └ Watcher             │
+│  = 手腳        │  = 手腳                │
+└───────────────┴───────────────────────┘
+```
+
+### 8.2 VPS 揀咩（行內人建議）
+
+| 方案 | 適合 | 成本 |
+|------|------|------|
+| **最低（起步）** | 2 vCPU / 2GB RAM / 40GB SSD — 5-10 用戶 | ~HK$60-100/月 |
+| **標準（推薦）** | 2 vCPU / 4GB RAM / 80GB SSD — 20-50 用戶 | ~HK$150-250/月 |
+| **進階** | 4 vCPU / 8GB RAM + PostgreSQL — 50+ 用戶 | ~HK$400+/月 |
+
+**供應商**：DigitalOcean / Vultr / Linode / AWS Lightsail / 阿里雲 / 騰訊雲（香港節點 — 延遲低）
+**OS**：Ubuntu 22.04 LTS（或 Windows Server — 如果想保留 Windows 環境）
+
+### 8.3 Server 部署步驟（VPS）
+
+```
+1. VPS 裝 Python 3.11 + git
+2. git clone mt5-cloud（server 部分 — server/ + instance/）
+3. pip install -r requirements.txt
+4. 環境變數：PORT / SECRET_KEY / DB 路徑
+5. 啟動：systemd service（自動重啟）+ 開機自啟
+6. Cloudflare Tunnel（或 Nginx + Let's Encrypt SSL）
+7. 域名指向（tradotcom.com 或子域）
+```
+
+### 8.4 數據庫升級
+
+| 而家 | 正式版 |
+|------|--------|
+| SQLite（單檔 — 單機 OK） | **PostgreSQL 14+**（多人並發 — 建議）|
+| 或者繼續 SQLite（20 用戶內都 OK — 唔使急）| 但要 backup 排程（每日 dump）|
+
+**簡化建議**：起步可以照用 SQLite（用戶少）→ 用戶多先遷移 PostgreSQL。
+
+### 8.5 客戶機（終端）要求
+
+| 項目 | 要求 |
+|------|------|
+| OS | **Windows 10/11**（MT5 + pywinauto GUI 操作需要）|
+| 軟件 | MT5 terminal（客戶自己登入自己帳戶）|
+| Python | 3.11 + pywinauto / MetaTrader5 / requests |
+| Agent 套件 | 由平台 `/api/agent-download` 下載安裝 |
+| 開機自啟 | watchdog.py（自癒 + 重啟）|
+| 網絡 | 能 reach 平台 server（HTTPS — tunnel 冇問題）|
+
+### 8.6 你部機嘅角色（遷移後）
+
+```
+而家（開發模式）：你部機 = server + agent + MT5 全部
+正式版之後：      你部機 = 淨做「agent 終端」+ 你自己嘅 MT5
+                 （server 搬上 VPS — 你部機唔使 24/7 開住做 server）
+```
+
+**遷移步驟（唔使好急）**：
+1. 先用而家 code 將 server 部署上 VPS（照跑單機 mode — 但你部機 agent 連過去）
+2. Phase 1-2 完成後（agent 上報分離）→ 你部機正式變「終端」
+3. 第三部機（用戶 B）加入 → 驗證多用戶
+
+### 8.7 安全（雲端版必做）
+
+| 項目 | 做法 |
+|------|------|
+| HTTPS | Cloudflare Tunnel 自動（免費 SSL）或 Nginx + certbot |
+| 登入 | Rate limit + 密碼強度 + 可選 2FA（Phase 4）|
+| Agent token | 每 agent 安裝時生成 — server 驗證來源 |
+| DB backup | 每日自動 dump（cron）|
+| 防火牆 | VPS 只開 80/443 + SSH（限定 IP）|
+
+---
+
+*雲端部署可以喺 Phase 1-2 完成後隨時開始（server 照跑單機 mode 上雲 — agent 分離前都 work）*
