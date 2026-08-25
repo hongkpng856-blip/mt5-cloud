@@ -739,12 +739,18 @@ async function showReport(magic, symbol, eaName) {
     if (!magic || magic === '' || magic === 'undefined' || !eaName) {
         document.getElementById('reportTitle').innerHTML = '<i class="icon-file-chart-column" style="color:var(--accent)"></i> 診斷報告';
         document.getElementById('reportModal').style.display = 'block';
-        document.getElementById('reportStats').innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted)"><i class="icon-circle-x" style="font-size:32px;color:#f85149;margin-bottom:12px;display:block"></i><b style="font-size:15px">未部署 — 冇報告可顯示</b><br><span style="font-size:12px">此 EA 未部署到 MT5（冇 Magic / Symbol）<br>部署後先有交易數據（Trades / P&L / Equity Curve 等）</span></div>';
+        // 🚨 2026-08-26 FIX v2（用戶：「未部署顯示提示置中 + Equity Curve 唔應該出現」）：
+        // 置中提示 + 隱藏 equity/dist/monthly cards（唔淨係清 chart）
+        document.getElementById('reportStats').innerHTML = '<div style="padding:50px 20px;text-align:center;color:var(--text-muted);margin:0 auto;max-width:420px"><i class="icon-circle-x" style="font-size:36px;color:#f85149;margin-bottom:14px;display:block"></i><b style="font-size:16px">未部署 — 冇報告可顯示</b><br><br><span style="font-size:13px;line-height:1.8">此 EA 未部署到 MT5（冇 Magic / Symbol）<br>部署後先有交易數據<br>（Trades / Win Rate / P&amp;L / Equity Curve 等）</span></div>';
         const noteEl = document.getElementById('reportNote');
         if (noteEl) noteEl.style.display = 'none';
-        document.getElementById('reportEquity').innerHTML = '';
-        document.getElementById('reportDist').innerHTML = '';
-        document.getElementById('reportMonthly').innerHTML = '';
+        // 隱藏全部 chart cards（未部署唔應該見到）
+        ['equityChart','distChart','monthlyChart','eqStart','eqEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+        // 隱藏 card container（用 parent card）
+        ['equityChart','distChart','monthlyChart'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.closest('.card')) el.closest('.card').style.display = 'none';
+        });
         return;
     }
     document.getElementById('reportTitle').innerHTML = '<i class="icon-file-chart-column" style="color:var(--accent)"></i> 診斷報告 — Magic ' + magic + ' / ' + symbol;
@@ -767,6 +773,11 @@ function closeReport() {
 }
 
 function renderReport(data) {
+    // 🚨 2026-08-26 FIX v2：顯示返 cards（如果之前 showReport 未部署隱藏咗）
+    ['equityChart','distChart','monthlyChart'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.closest('.card')) el.closest('.card').style.display = '';
+    });
     // Stats
     // 🚨 2026-08-21：處理 ea_stats fallback（冇 equity curve / distribution — 顯示 note）
     const pf = data.profit_factor === Infinity ? '∞' : data.profit_factor;
@@ -791,21 +802,60 @@ function renderReport(data) {
         }
     }
 
-    // Equity curve
+    // Equity curve — 🚨 2026-08-26 FIX v2（用戶：「清晰啲」）：Chart.js 線圖（數值軸 + tooltip + 填充）取代簡陋柱狀
     const eq = data.equity_curve;
     if (eq.length > 0) {
-        const vals = eq.map(d => d.cumulative);
-        const min = Math.min(...vals);
-        const max = Math.max(...vals);
-        const range = max - min || 1;
-        const chart = document.getElementById('equityChart');
-        // Show every Nth label
-        const step = Math.max(1, Math.floor(eq.length / 20));
-        chart.innerHTML = eq.map((d, i) => {
-            const h = ((d.cumulative - min) / range * 100);
-            const c = d.cumulative >= 0 ? '#3fb950' : '#f85149';
-            return `<div title="${d.time}: $${d.cumulative.toFixed(2)}" style="flex:1;height:${h}%;background:${c};border-radius:2px 2px 0 0;min-height:2px"></div>`;
-        }).join('');
+        const chartEl = document.getElementById('equityChart');
+        // 清空舊內含（換 canvas）
+        chartEl.innerHTML = '<canvas id="eqCanvas" style="width:100%;height:100%"></canvas>';
+        const canvas = document.getElementById('eqCanvas');
+        const eqVals = eq.map(d => d.cumulative);
+        const eqMax = Math.max(...eqVals), eqMin = Math.min(...eqVals);
+        const eqMid = eqMin + (eqMax - eqMin) / 2;
+        const isPos = eqVals[eqVals.length-1] >= 0;
+        const lineCol = isPos ? '#3fb950' : '#f85149';
+        if (window._eqChart) window._eqChart.destroy();
+        window._eqChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: eq.map(d => d.time ? String(d.time).substring(5,16) : ''),
+                datasets: [{
+                    label: 'Cumulative P&L',
+                    data: eqVals,
+                    borderColor: lineCol,
+                    backgroundColor: lineCol + '22',
+                    fill: true,
+                    tension: 0.25,
+                    pointRadius: 0,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' $' + ctx.parsed.y.toFixed(2)
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#8b949e', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: '#21262d' } },
+                    y: {
+                        ticks: { color: '#8b949e', font: { size: 10 }, callback: v => '$' + v.toFixed(0) },
+                        grid: { color: '#21262d' },
+                        // 零軸突出（清晰）
+                        ...(eqMin < 0 && eqMax > 0 ? { ...null } : {})
+                    }
+                }
+            }
+        });
+        // 加零線（有正有負時）
+        if (eqMin < 0 && eqMax > 0 && window._eqChart) {
+            window._eqChart.options.scales.y.grid.color = ctx => Math.abs(ctx.tick.value) < 0.5 ? '#f0b90b' : '#21262d';
+            window._eqChart.update();
+        }
         document.getElementById('eqStart').textContent = eq[0].time?.substring(0,10) || '';
         document.getElementById('eqEnd').textContent = eq[eq.length-1].time?.substring(0,10) || '';
     }
