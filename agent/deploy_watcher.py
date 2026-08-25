@@ -173,11 +173,25 @@ def run_auto_attach(cmd_data):
         import subprocess as _sp_dbg
         _dbg = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
         # 🚨 2026-08-21 FIX：tee -a（append）累積舊 output → watcher 讀「最近 60 行」誤判（讀到上次 Breakout/Grid output → ATR_Stop 假成功）
-        # 改覆寫（>）— 每次部署 aa_debug.log 只含今次 output
-        _dbg_cmd = ' '.join(cmd) + f' 2>&1 | tee {_dbg}'
-        result = _sp_dbg.run(_dbg_cmd, timeout=320, shell=True,
-                             encoding='utf-8', errors='replace',
+        # 🚨 2026-08-25 FIX（人手模擬測試 0/5 — auto_attach spawn 255）：之前用 shell=True + tee + encoding='utf-8'
+        # → auto_attach output 有 GBK 中文字節（0xb8 等）→ subprocess reader thread decode crash（即使 errors='replace' 都 crash — Windows subprocess bug）
+        # → exit 255 → 部署全部失敗
+        # 改：唔用 shell/tee — 直接 run（bytes — 無 reader crash）+ 手動寫 output 去 aa_debug.log
+        _dbg = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
+        try:
+            with open(_dbg, 'wb') as _fdbg2:
+                _fdbg2.write(b'')  # 清空
+        except Exception:
+            pass
+        result = _sp_dbg.run(cmd, timeout=320, capture_output=True,
                              cwd=os.path.dirname(AUTO_ATTACH_SCRIPT))
+        # 寫 output（bytes）去 aa_debug.log
+        try:
+            with open(_dbg, 'wb') as _fdbg3:
+                _fdbg3.write(result.stdout or b'')
+                _fdbg3.write(result.stderr or b'')
+        except Exception:
+            pass
         
         # Print output (only key lines — 讀 aa_debug.log 最新段)
         print(f"   Exit code: {result.returncode}")
