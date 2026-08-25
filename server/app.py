@@ -546,7 +546,20 @@ def api_ea_config():
                     continue
                 # 🚨 2026-08-14：有 state/hb 檔案但冇熱鍵（未部署 — 歷史殘留心跳檔案 — MACD_Cross 案例）→ unpaired（未配對）
                 # （之前只判斷「冇檔案」→ 有檔案 + 冇熱鍵 → unknown → 前端誤顯示 Magic/Symbol — 用戶質疑「冇配對嘅都有 magic」）
-                if ea not in _hk_has:
+                # 🚨 2026-08-26 FIX（問題 1：部署第二隻 EA 後第一隻心跳 check 唔到）— 熱鍵而家 Ctrl+1 重用
+                # （每次部署清空舊 mapping + 只寫新 EA）→ hotkeys.ini 只反映最後部署嗰隻 → 舊 EA 唔喺 _hk_has → 誤判 unpaired
+                # → 修正：有心跳檔 + 心跳新鮮（<300s）= 真係運行緊（唔理熱鍵）— 淨係「有檔但心跳舊」先當殘留
+                _hb_fresh_ea = False
+                try:
+                    _sf_hb = os.path.join(common_files, f'state_{ea}.json')
+                    _hb_txt_hb = os.path.join(common_files, f'hb_{ea}.txt')
+                    for _hfp_hb in (_sf_hb, _hb_txt_hb):
+                        if os.path.isfile(_hfp_hb) and time.time() - os.path.getmtime(_hfp_hb) < 300:
+                            _hb_fresh_ea = True
+                            break
+                except Exception:
+                    pass
+                if ea not in _hk_has and not _hb_fresh_ea:
                     runtime[ea] = 'unpaired'
                     continue
                 st = 'unknown'
@@ -586,6 +599,14 @@ def api_ea_config():
         try:
             _cf2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             for _ea in ea_names:
+                # 🚨 2026-08-26 FIX（問題 3：未部署嘅 EA 顯示舊 trades stats — TestTrades 殘留 substituted 運行緊 EA）
+                # → 只有「運行緊/啱啱部署」先顯示 stats（runtime status = running/starting）— 未部署/已剷除 → 唔顯示
+                try:
+                    _ea_rt = runtime.get(_ea, '')
+                except Exception:
+                    _ea_rt = ''
+                if _ea_rt not in ('running', 'starting'):
+                    continue
                 # 🚨 2026-08-21 FIX：優先讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫嘅逐單明細 — 完整歷史）
                 # state json 會被系統心跳覆寫（得 ea/status/ts — 冇 stats）→ 唔可靠
                 _tf2 = os.path.join(_cf2, f'trades_{_ea}.json')

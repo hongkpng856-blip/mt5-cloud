@@ -100,7 +100,17 @@ def main():
         _start([sys.executable, '-u', 'agent/auto_trade_detector.py'], 'detector')
     if status['alert_worker'] == 'MISSING':
         # 🚨 2026-08-10：單實例保護（已行就唔起 — 防重複警告視窗 — 用戶報「兩個相同嘅嘢」）
-        if not _is_running(_py_cmdlines(), 'alert_worker'):
+        # 🚨 2026-08-26 FIX（多個 alert_worker 暴增 — race）：_is_running 用 process check 有 race（_py_cmdlines snapshot 舊）
+        # → 改用 5004 port LISTEN check（alert_worker bind 5004 — 有 LISTEN = 已有 instance 行緊 → 唔起）
+        _aw_port_used = False
+        try:
+            _aw_net = subprocess.run('netstat -ano | findstr :5004', shell=True, capture_output=True, timeout=10)
+            _aw_out = _aw_net.stdout.decode('utf-8', errors='replace')
+            if 'LISTENING' in _aw_out:
+                _aw_port_used = True
+        except Exception:
+            pass
+        if not _aw_port_used and not _is_running(_py_cmdlines(), 'alert_worker'):
             _start([sys.executable, '-u', 'agent/alert_worker.py'], 'alert_worker')
     # 🚨 2026-08-10：MT5 檢查 — 冇開就自動開（確保 EA 一直行 — 閒置唔會失效）
     try:
