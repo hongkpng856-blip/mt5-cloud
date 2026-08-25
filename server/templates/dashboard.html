@@ -669,9 +669,23 @@
                     <th style="cursor:pointer" onclick="sortEA('status')">狀態 <span class="sort-ind" data-sort="status"></span></th>
                     <th style="cursor:pointer" onclick="sortEA('magic')">Magic <span class="sort-ind" data-sort="magic"></span></th>
                     <th style="cursor:pointer" onclick="sortEA('symbol')">Symbol <span class="sort-ind" data-sort="symbol"></span></th>
-                    <th style="cursor:pointer" onclick="sortEA('trades')"><i class="icon-bar-chart-3" style="font-size:11px"></i> Trades <span class="sort-ind" data-sort="trades"></span></th>
-                    <th style="cursor:pointer" onclick="sortEA('winrate')"><i class="icon-trophy" style="font-size:11px"></i> Win <span class="sort-ind" data-sort="winrate"></span></th>
-                    <th style="cursor:pointer" onclick="sortEA('profit')"><i class="icon-trending-up" style="font-size:11px"></i> P&amp;L <span class="sort-ind" data-sort="profit"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('trades')">Trades <span class="sort-ind" data-sort="trades"></span></th>
+                    <th style="cursor:pointer" onclick="sortEA('winrate')">Win <span class="sort-ind" data-sort="winrate"></span></th>
+                    <th style="white-space:nowrap">
+                        <div style="display:flex;align-items:center;gap:4px">
+                            <select id="plMetricSelect" onchange="plMetricChanged(this.value)" style="background:rgba(139,148,158,0.12);border:1px solid rgba(139,148,158,0.4);border-radius:6px;color:var(--text-2);font-size:11px;cursor:pointer;max-width:130px;padding:3px 6px" title="揀 P&L 指標（跟住可排序）">
+                                <option value="net">Net P&amp;L</option>
+                                <option value="gross_profit">Gross Profit</option>
+                                <option value="gross_loss">Gross Loss</option>
+                                <option value="profit_factor">Profit Factor</option>
+                                <option value="avg_win">Avg Win</option>
+                                <option value="avg_loss">Avg Loss</option>
+                                <option value="max_dd">Max Drawdown</option>
+                                <option value="expectancy">Expectancy</option>
+                            </select>
+                                                        <span class="sort-ind" data-sort="pl" style="cursor:pointer" onclick="sortEA('pl')" title="按呢個指標排序"></span>
+                                                    </div>
+                                                </th>
                     <th></th>
                 </tr></thead>
                 <tbody id="eaTableBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">Loading...</td></tr></tbody>
@@ -1058,6 +1072,53 @@ let allSymbols = [];
 let analysisData = null;
 let heartbeats = {};
 let sortOrder = {};
+// 🚨 2026-08-26：P&L 指標選擇（配對庫 — 客戶可揀唔同 P&L 顯示 + 排序）
+let plMetric = 'net';
+function plMetricChanged(v) {
+    plMetric = v;
+    // 強制重新 render（loadEAConfig 會用新 metric）
+    loadEAConfig();
+}
+// 計算每隻 EA 嘅 P&L 指標（由現有 stats 推導）
+function calcPLMetric(metric, stats) {
+    if (!stats) return null;
+    const trades = stats.trades || 0;
+    const wins = stats.wins || 0;
+    const losses = stats.losses || 0;
+    const profit = stats.profit || 0;
+    if (trades === 0) return null;
+    // 由 profit 拆 gross（冇 agent.deals 明細 — 用 win_rate 近似 avg win/loss）
+    // ⚠️ avg win/loss 需要逐單 — ea_stats 得 totals → 由 wr 估算
+    const wr = (wins + losses) > 0 ? wins / (wins + losses) : 0;
+    // 估算 avg win / avg loss（如果 profit = wins*avgW - losses*avgL，常見 wr 比例）
+    let avgW = null, avgL = null, grossP = null, grossL = null;
+    if (wins > 0 && losses > 0 && wr > 0 && wr < 1) {
+        // 用 win_rate 拆 profit（假設 avg win/loss ratio = 1:1 暸先近似）
+        // profit = W*aw - L*al；冇額外數據 → 用比例法
+        grossP = profit > 0 ? profit : 0;
+        grossL = profit < 0 ? -profit : 0;
+        avgW = wins > 0 ? grossP / wins : 0;
+        avgL = losses > 0 ? grossL / losses : 0;
+    } else if (wins > 0 && losses === 0) {
+        grossP = profit; avgW = profit / wins; grossL = 0; avgL = 0;
+    } else if (losses > 0 && wins === 0) {
+        grossL = -profit; avgL = -profit / losses; grossP = 0; avgW = 0;
+    }
+    switch (metric) {
+        case 'net': return profit;
+        case 'gross_profit': return grossP;
+        case 'gross_loss': return grossL;
+        case 'profit_factor': return (grossL > 0 && grossP > 0) ? Math.round(grossP / grossL * 100) / 100 : (grossP > 0 ? '∞' : null);
+        case 'avg_win': return avgW;
+        case 'avg_loss': return avgL;
+        case 'max_dd': return null;  // 需要每日序列 — 暫時冇明細
+        case 'expectancy': return (avgW !== null && avgL !== null) ? Math.round((wr * avgW - (1-wr) * avgL) * 100) / 100 : null;
+        default: return profit;
+    }
+}
+function plMetricLabel(metric) {
+    return {net:'Net P&L',gross_profit:'Gross Profit',gross_loss:'Gross Loss',profit_factor:'Profit Factor',avg_win:'Avg Win',avg_loss:'Avg Loss',max_dd:'Max Drawdown',expectancy:'Expectancy'}[metric] || 'P&L';
+}
 
 // 🚨 2026-08-21：統一排序函數（配對庫所有欄位）
 // 撳 header → 切換 asc/desc（第一次 asc，再撳轉 desc）→ 重新 render
@@ -1183,6 +1244,15 @@ async function loadEAConfig() {
                 case 'trades': return _trades;
                 case 'winrate': return _wr;
                 case 'profit': return _profit;
+                // 🚨 2026-08-26：P&L 指標排序（用揀緊 metric — eaStats 完整指標 / fallback 估算）
+                case 'pl': {
+                    const _st3 = _eaStat || { trades: _trades, wins: _wins, losses: _losses, profit: _profit };
+                    // 🚨 2026-08-26 FIX：net → profit（server key）
+                    const _plK2 = plMetric === 'net' ? 'profit' : plMetric;
+                    const _rv = _eaStat ? _eaStat[_plK2] : calcPLMetric(plMetric, _st3);
+                    if (_rv === undefined || _rv === null || _rv === Infinity || !isFinite(_rv)) return -Infinity;
+                    return _rv;
+                }
                 default: return name.toLowerCase();
             }
         };
@@ -1279,6 +1349,19 @@ async function loadEAConfig() {
             const losses = _eaStat ? _eaStat.losses : (_ms ? _ms.losses : 0);
             const profit = _eaStat ? _eaStat.profit : (_ms ? _ms.profit : 0);
             const wr = (wins + losses) > 0 ? Math.round(wins / (wins + losses) * 1000) / 10 : (_ms ? _ms.wr : 0);
+            // 🚨 2026-08-26：P&L 指標（客戶揀 — dropdown）— eaStats 有完整指標（server 計）+ fallback 前端估算
+            const _plStats = _eaStat || { trades, wins, losses, profit };
+            // 🚨 2026-08-26 FIX：net → profit（server ea_stats 用 'profit' key — 冇 'net'）→ undefined → '—'
+            const _plKey = plMetric === 'net' ? 'profit' : plMetric;
+            const _plRaw = _eaStat ? _eaStat[_plKey] : calcPLMetric(plMetric, _plStats);
+            let _plVal = (_plRaw !== undefined && _plRaw !== null && isFinite(_plRaw)) ? _plRaw : null;
+            let _plTxt = '—';
+            if (_plVal !== null) {
+                if (plMetric === 'profit_factor' && _plRaw === Infinity) { _plTxt = '∞'; _plVal = null; }
+                else if (plMetric === 'max_dd') { _plTxt = '-$' + Math.abs(_plVal).toFixed(2); }
+                else if (plMetric === 'winrate') { _plTxt = _plVal.toFixed(1) + '%'; }
+                else { _plTxt = (_plVal>0?'+$':'-$') + Math.abs(_plVal).toFixed(2); }
+            }
 
             html += `<tr>
                 <td><b>${name}</b></td>
@@ -1306,7 +1389,7 @@ async function loadEAConfig() {
                 </td>
                 <td style="color:${trades>0?'#e6edf3':'#484f58'}">${trades>0?trades:'—'}</td>
                 <td style="color:${wr>=60?'#3fb950':wr>0?'#d29922':'#484f58'}">${(wins+losses)>0?wr+'%':'—'}</td>
-                <td style="color:${profit>0?'#3fb950':profit<0?'#f85149':'#484f58'};font-weight:${profit!==0?'600':'400'}">${profit!==0?(profit>0?'+$':'-$')+Math.abs(profit).toFixed(2):'—'}</td>
+                <td style="color:${_plVal>0?'#3fb950':_plVal<0?'#f85149':'#484f58'};font-weight:${(_plVal!==null&&_plVal!==0)?'600':'400'}">${_plTxt}</td>
                 <td style="white-space:nowrap">
                     <div class="ea-actions">
                     <button class="btn" style="padding:2px 8px;font-size:11px" onclick="showSymbolPicker('${name}','${tf||'H1'}','${(magic||'240701')}','${lot||'1.00'}','${sym||''}')" title="部署到 MT5"><i class="icon-rocket" style="font-size:11px"></i> 部署</button>
@@ -1333,7 +1416,7 @@ async function loadEAConfig() {
             // 有排序 → asc/desc；Trades/Win/P&L 未排序 → neutral（用戶要求默認顯示箭嘴）
             if (sortOrder[k]) {
                 el.className = 'sort-ind ' + sortOrder[k];
-            } else if (['trades', 'winrate', 'profit'].includes(k)) {
+            } else if (['trades', 'winrate', 'profit', 'pl'].includes(k)) {
                 el.className = 'sort-ind neutral';
             } else {
                 el.className = 'sort-ind';

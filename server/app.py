@@ -636,11 +636,33 @@ def api_ea_config():
                                     continue
                             if _tlist:
                                 _profits = [_t2.get('profit', 0) for _t2 in _tlist]
+                                _grossP = sum(p for p in _profits if p > 0)
+                                _grossL = sum(-p for p in _profits if p < 0)
+                                _wins2 = sum(1 for p in _profits if p > 0)
+                                _losses2 = sum(1 for p in _profits if p < 0)
+                                _avgW = round(_grossP / _wins2, 2) if _wins2 > 0 else 0
+                                _avgL = round(_grossL / _losses2, 2) if _losses2 > 0 else 0
+                                # max drawdown（累積曲線）
+                                _cum2 = 0.0; _peak2 = 0.0; _maxdd2 = 0.0
+                                for _p2 in _profits:
+                                    _cum2 += _p2
+                                    if _cum2 > _peak2: _peak2 = _cum2
+                                    _dd2 = _peak2 - _cum2
+                                    if _dd2 > _maxdd2: _maxdd2 = round(_dd2, 2)
+                                _wr2 = (_wins2 + _losses2) > 0 and _wins2 / (_wins2 + _losses2) or 0
+                                _exp2 = round(_wr2 * _avgW - (1 - _wr2) * _avgL, 2)
                                 _trade_stats = {
                                     "trades": len(_profits),
-                                    "wins": sum(1 for p in _profits if p > 0),
-                                    "losses": sum(1 for p in _profits if p < 0),
+                                    "wins": _wins2,
+                                    "losses": _losses2,
                                     "profit": round(sum(_profits), 2),
+                                    "gross_profit": round(_grossP, 2),
+                                    "gross_loss": round(_grossL, 2),
+                                    "avg_win": _avgW,
+                                    "avg_loss": _avgL,
+                                    "max_dd": _maxdd2,
+                                    "expectancy": _exp2,
+                                    "profit_factor": round(_grossP / _grossL, 2) if _grossL > 0 else (float('inf') if _grossP > 0 else 0),
                                 }
                     except Exception:
                         pass
