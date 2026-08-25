@@ -594,7 +594,7 @@
     <!-- Agent Status + Performance（2026-08-13 融合：Agent 4 格 + Performance 4 格 → 一張卡） -->
     <div class="card">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-            <span><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="statusBadge" class="badge badge-gray">Unknown</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="agentIdBadge" class="badge badge-gray">—</span><span id="statusBadge" class="badge badge-gray">Unknown</span></span>
             <!-- 🚨 2026-08-26：交易歷史報告（帳戶層 — popup + 下載 HTML） -->
             <button class="btn" style="padding:4px 12px;font-size:11px" onclick="openTradeReport()" title="下載 / 檢視 MT5 交易歷史報告"><i class="icon-file-text" style="font-size:11px"></i> 交易報告</button>
         </div>
@@ -1505,14 +1505,16 @@ async function loadDashboard() {
             }
         }
 
+        // 🚨 2026-08-26：Agent 編號 badge（右手邊 — 而家係邊一個 Agent）
+        const _aib = document.getElementById('agentIdBadge');
+        if (_aib) _aib.textContent = d.agent_id || '—';
         const badge = document.getElementById('statusBadge');
         if (badge) {
-            // 🚨 2026-08-26：badge 直接顯示「DEV」（online/offline 用顏色表示）
             if (d.status === 'connected' || d.status === 'running') {
-                badge.textContent = 'DEV'; badge.className = 'badge badge-green';
+                badge.textContent = 'Online'; badge.className = 'badge badge-green';
                 heartbeats = d.ea_heartbeats || {};
             } else {
-                badge.textContent = 'DEV'; badge.className = 'badge badge-red';
+                badge.textContent = 'Offline'; badge.className = 'badge badge-red';
             }
         }
 
