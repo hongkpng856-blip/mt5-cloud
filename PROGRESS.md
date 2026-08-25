@@ -102,7 +102,7 @@
 | **v0.10.67** | 2026-08-22 | 🔧 **配對庫消失 bug（電腦有已配對 EA 但網頁冇顯示）** — 壓力測試輪流剷除 → 每次 DELETE 加 `_removed` → 但 **api_deploy 重新部署時冇由 `_removed` 清走**（只有 install-local 有清 — Bug #64）→ `_removed` 累積 ADX_Trend + EMA_Cross → 前端 `!removed.includes(name)` 過濾走晒 → 配對庫空。修復：①api_deploy 加「重新部署 = 由 _removed 移除」②修正現有 DB 數據 — 實測配對庫顯示返兩隻（心跳運行 + 正確 symbol/magic）|
 | **v0.10.68** | 2026-08-22 | 🔥 **熱鍵改為 Ctrl+1 重用（用戶要求：每次部署都用 Ctrl+1，部署完釋放，下隻 EA 又用返）** — ①`_ensure_hotkey_loaded` 寫入邏輯改：唔再批次分配 Ctrl+1~9 — 清空 hotkeys.ini 舊 mapping + 只寫「新 EA = Ctrl+1」+ 同步 hotkeys.json（只保留當前 EA=^1）②**restart 前記錄所有 chart**（EnumChildWindows — 修 window match bug：MT5 標題含 MetaQuotes 唔含 MetaTrader）→ **restart 後檢查 + 補開遺失 chart**（根治「部署 Grid 搞走 EMA_Cross」— restore 唔齊）③熱鍵 load 實測（send Ctrl+1 → 彈 Properties = load 咗 → 唔 restart）— 實測：Bollinger→USDJPY + Grid→DE40 部署成功，其他 EA 全部保留（chart 冇遺失），hotkeys.ini 每次只有當前 EA=Ctrl+1 |
 | **v0.10.69** | 2026-08-24 | 🔥 **熱鍵先係主力（用戶要求：唔使理 EA 入面有咩 — 開到 chart + 撳熱鍵 = 成功，驗證靠 log）** — ①**跳過 generate_template**（掛 EA 唔需要模板 — 之前一體化模式靠套模板掛 EA，而家直接開 chart（Alt+F）+ send 熱鍵（Ctrl+1）掛 EA）②**修 verify_heartbeat 假成功**：之前讀 MQL5/Logs（MetaEditor 日誌 — 中文「已启动」殘留 → 誤判「已啟動」→ 假成功）→ 改讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）+ 只認「loaded successfully」（唔認「started」— 太濫）+ 最後狀態判斷（removed 後唔算 loaded）③**修「附加成功」假成功**：之前淨係 check 心跳檔存在（os.path.isfile — 舊檔殘留都話「心跳存在」）→ 改 check age（<300s 先算新鮮）— 實測：ADX→XAUUSD 部署成功（心跳 0s + log loaded successfully 13:46:47 — 真成功唔再假） |
-| **v0.10.76** | 2026-08-26 | 🔥 **3 個用戶實測問題一次過根治** — ①**部署第二隻 EA 後第一隻心跳網頁 check 唔到**：熱鍵 Ctrl+1 重用（每次部署清空舊 mapping + 只寫新 EA）→ hotkeys.ini 只反映最後部署嗰隻 → server `_hk_has` 冇舊 EA → 誤判 unpaired → **修**：server 加「心跳新鮮（<300s）= 運行緊」fallback（唔理熱鍵 — 有心跳就顯示）②**剷除→重添→再部署警告視窗冇咗**：多個 alert_worker 暴增（watchdog `_is_running` process check race → 同時 spawn 多個 → 搶 5004 → 混亂/視窗唔彈 — 實測 8 個 instance）→ **修**：watchdog 改用 5004 port LISTEN check（有 instance 就唔起 — 防 race）+ 殺晒殘留重起（驗證視窗彈返）③**TestTrades 未部署但顯示 Trade Wins P&L（殘留 stats — 取代運行緊 EA）**：server 讀 `trades_<EA>.json` 冇 check 部署狀態 → 檔案存在就讀 → 殘留顯示 → **修**：ea_stats 加 filter（只有 running/starting 先顯示 stats）+ 清殘留 trades 檔 — 全部實測驗證 ✅ |
+| **v0.10.77** | 2026-08-26 | 🔑 **同一個 Magic Number 問題根治（每隻 EA 影響其他嘅 Magic/Symbol/Wins/P&L 顯示）** — 用戶實測：全部 EA 用同 magic 240701 → 前端按 magic 聚合 → 所有 EA 顯示同一份 stats（TestTrades 交易取代運行緊 EA）→ **方向 A（根治）**：部署 API 自動分配唯一 magic（240701 被佔用 → 自動 240702、240703… — 用戶自訂 magic 保留）— 實測 ATR_Stop 自動變 240702；**方向 B（顯示修正）**：前端 `_byMagic`/`_magicStats`/排序 `_ms2` 改按 **(magic+symbol)** 精確匹配（每隻 EA 顯示自己 symbol 嘅 trades — 唔會同 magic 其他 EA 混）— 雙重防護 |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -400,7 +400,7 @@
 | 114 | **🔥 熱鍵 load 偶發失敗（Breakout 兩次 restart 後仍冇 load → 部署失敗）** | 熱鍵預載 restart（連第二次）後 MT5 仍然 load 唔到新 hotkeys mapping（Breakout 案例 — 其他 EA 第二次 restart 後 load 到）→ send ^1 冇彈 Properties + 開 chart 偶發失敗 → 部署失敗 | v0.10.74 專項測試（偶發壓力測試 ×5）證明 **MT5 重啟唔會清空 hotkeys.ini**（5/5 PASS — 寫入保留 + send 彈 Properties）→ 即係**唔係 hotkeys.ini 被清空** — 係連環部署時序（MT5 狀態累積/未穩定）— 待處理：部署 restart 後等 MT5 完全穩定先 send | 08-25 |
 | 117 | **🔥 部署第二隻 EA 後第一隻心跳網頁 check 唔到** | 熱鍵 Ctrl+1 重用（每次部署清空舊 mapping + 只寫新 EA）→ hotkeys.ini 只反映最後部署嗰隻 → server `_hk_has` 冇舊 EA → line 549 誤判 unpaired（即使心跳新鮮） | v0.10.76 server 加「心跳新鮮（<300s）= 運行緊」fallback — 有心跳檔 + 新鮮 → 唔理熱鍵照顯示 running | 08-26 |
 | 118 | **🔥 剷除→重添→再部署警告視窗冇咗** | 多個 alert_worker 暴增（watchdog `_is_running` process check race — `_py_cmdlines` snapshot 舊 → 同時 spawn 多個 → 搶 5004 → 混亂/視窗唔彈；實測 8 個 instance） | v0.10.76 watchdog 改用「5004 port LISTEN check」（有 instance 就唔起）+ 殺晒殘留重起 — 驗證「AI 遠端控制」視窗彈返 | 08-26 |
-| 119 | **🔥 TestTrades 未部署但顯示 Trade Wins P&L（殘留 stats 取代運行緊 EA）** | server 讀 `trades_<EA>.json` 冇 check 部署狀態 → 檔案存在就讀 → 未部署/已剷除 EA 嘅殘留 trades 顯示出嚟 + 取代運行緊 EA 嘅顯示 | v0.10.76 ea_stats 加 filter（只有 runtime running/starting 先顯示 stats）+ 清殘留 trades_TestTrades.json | 08-26 |
+| 120 | **🔥 同一個 Magic Number 令每隻 EA 影響其他嘅 Magic/Symbol/Wins/P&L 顯示** | 全部 EA 用同 magic 240701 → 前端 `per_ea_by_magic_symbol`/`_byMagic` 按 magic 聚合 → 所有 EA 顯示同一份 stats（TestTrades 交易取代運行緊 EA）| v0.10.77 ①**方向 A**：部署 API 自動分配唯一 magic（撞 magic → +1 遞增 — 用戶自訂保留）②**方向 B**：前端 `_byMagic`/`_magicStats`/`_ms2` 改按 (magic+symbol) 精確匹配。實測：ATR_Stop 自動 240702 | 08-26 |
 
 ---
 
@@ -671,7 +671,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `615302b`（master）— v0.10.76（3 個用戶實測問題根治：心跳 fallback + alert_worker 單實例 port check + ea_stats filter）；TODO：數據注入選擇功能未實行（見 TODO 段）
+**Git HEAD**: `6391c6e`（master）— v0.10.77（同一個 Magic 根治：部署自動分配唯一 magic + 前端 (magic+symbol) 精確匹配）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）

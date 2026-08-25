@@ -2213,6 +2213,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
                     except Exception:
                         pass
+                    # 🚨 2026-08-25 FIX3（重試造成重複 chart — chart load 慢）：開 chart 後等 4 秒先驗證
+                    # （Alt+F 開 chart 後 EnumChildWindows 即刻 check — chart 未 load 完 → 誤判失敗 → 重試開多個）
+                    time.sleep(4)
                     if _sym in _new_title2 or _chart_found2:
                         _oc_ok2 = True
                         print(f"✅ 新方法開圖成功: active chart = {_sym}")
@@ -2225,12 +2228,55 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 if not _oc_ok2:
                     # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：開 chart 失敗重試 2 次
                     # （Alt+F menu 時序 — MT5 restart 後 UI 未完全穩定 → 第一次開 chart 可能失敗 → 重試成功）
+                    # 🚨 2026-08-25 FIX2（重試造成重複 chart — 刪除失敗案例）：重試前先 re-check chart 有冇出現
+                    # （第一次 Alt+F 可能已開 chart 但驗證太早 → 重試再開 → 2 個 chart → 刪除時剩返掛住 EA → 剷除失敗）
                     _oc_retried = False
                     for _oc_r2 in range(2):
+                        # 先 re-check（可能第一次已開到 — chart 慢出現）— 🚨 2026-08-25 FIX3：re-check 前等 3 秒（chart load 慢）
+                        time.sleep(3)
+                        try:
+                            _chart_found2 = False
+                            _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
+                        except Exception:
+                            pass
+                        if _chart_found2:
+                            _oc_ok2 = True
+                            print(f"✅ 開 chart 重試前 re-check 已出現（{_sym} — 第一次開到）")
+                            break
                         print(f"🔄 開 chart 重試 {_oc_r2+1}/2（{_sym}）...")
                         try:
                             import pyautogui as _pg_r2
                             _pg_r2.FAILSAFE = False
+                            # 🚨 2026-08-25 FIX4（重試開多個 chart — 刪除失敗惡性循環）：重試開新 chart 前
+                            # 先關閉已有嘅 target symbol chart（第一次 Alt+F 可能已開咗但驗證失敗 → 唔關就重複開）
+                            try:
+                                _sym_ct_now = 0
+                                _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cnt_cb, 0) if '_cnt_cb' in dir() else None
+                            except Exception:
+                                pass
+                            # 用 EnumChildWindows 數 target symbol chart — 有就 Ctrl+W 關晒（得返 0 個先重開）
+                            _sym_now = 0
+                            def _cb_symclose(hwnd_s, _):
+                                nonlocal _sym_now
+                                _cls_s = _ct_f2.create_unicode_buffer(128)
+                                _u_f2.GetClassNameW(_ct_f2.c_void_p(hwnd_s), _cls_s, 128)
+                                if 'Afx' in _cls_s.value and 'ControlBar' not in _cls_s.value:
+                                    _len_s = _u_f2.GetWindowTextLengthW(hwnd_s)
+                                    if _len_s > 0:
+                                        _buf_s = _ct_f2.create_unicode_buffer(_len_s + 1)
+                                        _u_f2.GetWindowTextW(hwnd_s, _buf_s, _len_s + 1)
+                                        if ',' in _buf_s.value and _sym.upper() in _buf_s.value.upper():
+                                            _sym_now += 1
+                                return True
+                            try:
+                                _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _ct_f2.WINFUNCTYPE(_ct_f2.c_bool, _ct_f2.c_size_t, _ct_f2.c_size_t)(_cb_symclose), 0)
+                            except Exception:
+                                pass
+                            # 有 target symbol chart（可能係第一次開咗但驗證失敗）→ 關晒再重開（保證得 1 個）
+                            for _cl_i in range(_sym_now):
+                                _pg_r2.hotkey('ctrl', 'w'); time.sleep(1.5)
+                            if _sym_now > 0:
+                                time.sleep(1)
                             _pg_r2.hotkey('alt', 'f'); time.sleep(1.5)
                             _pg_r2.press('enter'); time.sleep(1.5)
                             _pg_r2.press('enter'); time.sleep(2)
@@ -2712,12 +2758,37 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         continue
                 _target_sym = (symbol or 'EURUSD').upper()
                 _ok_sym = False
+                # 🚨 2026-08-26 FIX（電腦壓力測試輪 2-5 假成功 — log 驗證讀舊 loaded）：之前掃成個 log 冇新鮮度 check
+                # → 讀到上一輪測試嘅舊 loaded（23:58）→ 誤判「啟動」→ 假成功（實際 EA 冇掛到 — chart 0 + 心跳舊）
+                # → 加「最後狀態 + 時間」判斷：EA 喺 <SYM> 最後記錄係 loaded（且冇隨後 removed）
+                import datetime as _dt_aa
+                _log_date_aa = _dt_aa.datetime.fromtimestamp(os.path.getmtime(_latest)).strftime('%Y.%m.%d')
+                _last_loaded_ts = 0
+                _last_sym = None
                 for _line in _txt.splitlines():
-                    if ea_name in _line and _target_sym in _line and ('已启动' in _line or '已啟動' in _line or 'loaded successfully' in _line):
-                        _ok_sym = True
-                        break
-                if _ok_sym:
-                    print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（正確圖表）")
+                    if ea_name in _line and ('loaded successfully' in _line or '已启动' in _line or '已啟動' in _line or 'removed' in _line or '已停止' in _line):
+                        _parts_aa = _line.split('\t')
+                        if len(_parts_aa) >= 4 and ':' in _parts_aa[2]:
+                            try:
+                                _ts_aa = _dt_aa.datetime.strptime(f'{_log_date_aa} {_parts_aa[2][:8]}', '%Y.%m.%d %H:%M:%S').timestamp()
+                            except Exception:
+                                continue
+                            _m_aa = None
+                            for _pat_aa in (f'{ea_name} \\(([A-Za-z0-9._]+),[A-Z0-9]+\\)',):
+                                import re as _re_aa
+                                _m_aa = _re_aa.search(_pat_aa, _line)
+                                if _m_aa:
+                                    break
+                            if _ts_aa >= _last_loaded_ts:
+                                _last_loaded_ts = _ts_aa
+                                if 'removed' in _line or '已停止' in _line:
+                                    _last_sym = None
+                                elif 'loaded' in _line or '已启动' in _line or '已啟動' in _line:
+                                    _last_sym = _m_aa.group(1) if _m_aa else None
+                # 最後狀態係 loaded + 喺目標 symbol + 時間新鮮（30 分鐘內 — 部署 restart 可能耐）
+                if _last_sym == _target_sym and _last_loaded_ts > 0 and (time.time() - _last_loaded_ts) < 1800:
+                    _ok_sym = True
+                    print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（最後狀態 fresh — {_dt_aa.datetime.fromtimestamp(_last_loaded_ts).strftime('%H:%M:%S')}）")
                 else:
                     print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 檢查心跳後備）")
                     # 🚨 2026-08-12 FIX：心跳後備 — log 冇「已啟動」字眼唔代表 EA 冇運行（重啟 MT5 後 log 時序/字眼問題）
@@ -3485,13 +3556,29 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     for _target_idx in _candidates:
         # 🚨 2026-08-21 FIX（index 移位 bug）：每次試之前重新對應 symbol → 最新 index
         # （移除 chart 後 ListView 重新排位 — 舊 index 會指錯 chart）
+        # 🚨 2026-08-25 FIX（多個同名 chart 剷除失敗 — MACD AUDUSD×2 案例）：_attempted 用 (index, text) 會誤判
+        # （第二次 ListView 重排後剩返嘅 chart 用返 index 0 + 同名 → (0, AUDUSD) 喺 _attempted → 當「試過」→ 唔試 → 「冇新嘅 chart」）
+        # → 放寬：每次試之前重新搵「未試過嘅同 symbol chart」（text 計數代替 index 計數）
         _cur_idx = _target_idx
         if _target_sym:
             _found_cur = None
-            for _i3, _t3 in enumerate(_items):
-                if _t3.upper().startswith(_target_sym.upper()) and (_i3, _t3) not in _attempted:
-                    _found_cur = _i3
+            _all_sym_now = [(_i3, _t3) for _i3, _t3 in enumerate(_items) if _t3.upper().startswith(_target_sym.upper())]
+            # 未試過嘅（text 層面 — 唔好用 index — 移位問題）
+            _tried_texts = {_t5 for _i5, _t5 in _attempted if _t5.upper().startswith(_target_sym.upper())}
+            for _i6, _t6 in _all_sym_now:
+                if _t6 not in _tried_texts:
+                    _found_cur = _i6
                     break
+            # 同名 chart 全部 text 一樣（同一 ListView item 名）→ 放寬用 index 計數（試過左幾多個同名）
+            if _found_cur is None and _all_sym_now:
+                # 🚨 2026-08-25 FIX2（MACD AUDUSD×2 — 重讀 ListView 得返 1 個同名 chart 但 _attempted 阻住）：
+                # 移除咗一個同名 chart 後 ListView 重排 — 剩返嗰個用返 index 0（text 一樣）
+                # → 只要「同名 chart 數目 >= 嘗試次數+1」就要再試（唔好因為 text 一樣就當試過）
+                _tried_sym_cnt = sum(1 for _i7, _t7 in _attempted if _t7.upper().startswith(_target_sym.upper()))
+                if _tried_sym_cnt < len(_all_sym_now) or _tried_sym_cnt == 0:
+                    _idx_to_try = _tried_sym_cnt if _tried_sym_cnt < len(_all_sym_now) else 0
+                    _found_cur = _all_sym_now[_idx_to_try][0]
+                    print(f"✅ 放寬 _attempted 檢查（同名 chart 重試 #{_idx_to_try+1} — 總共試過 {_tried_sym_cnt} 次 / 有 {len(_all_sym_now)} 個）")
             if _found_cur is not None:
                 _cur_idx = _found_cur
             else:
@@ -3537,7 +3624,8 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         _this_removed = False
         try:
             _start_t = time.time()
-            while time.time() - _start_t < 10:
+            # 🚨 2026-08-25 FIX6（心跳停判斷等唔夠耐 — 移除後心跳檔 mtime 未過 30s → 誤判「仲運行緊」）：等 40 秒
+            while time.time() - _start_t < 40:
                 time.sleep(2)
                 # 心跳停 = 移除
                 _hb_still = False
@@ -3563,10 +3651,35 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                                 continue
                         if _txt_r2:
                             _recent = _txt_r2.splitlines()[-30:]
-                            if any(ea_name in _l2 and 'removed' in _l2 for _l2 in _recent):
-                                _this_removed = True
-                                print(f"✅ MT5 log 確認 {ea_name} removed")
-                                break
+                            # 🚨 2026-08-25 FIX（剷除假成功 — MACD 案例）：any(match removed) 會讀到舊 removed 記錄（上次測試）→ 誤判移除
+                            # → 改 check「最後狀態」：搵 EA 最後一條 loaded/removed — 最後係 removed 先算真移除
+                            _last_state_r = None
+                            for _l3 in reversed(_recent):
+                                if ea_name in _l3 and ('loaded' in _l3 or 'removed' in _l3 or '已启动' in _l3 or '已停止' in _l3):
+                                    if 'removed' in _l3 or '已停止' in _l3:
+                                        _last_state_r = 'removed'
+                                    elif 'loaded' in _l3 or '已启动' in _l3:
+                                        _last_state_r = 'loaded'
+                                    break
+                            if _last_state_r == 'removed':
+                                # 🚨 2026-08-25 FIX5（多 chart 掛同一 EA — Breakout GBPUSD×2 案例）：log removed 但心跳仲寫
+                                # = 另一個 chart 仲掛住 EA → 唔當完成 → 繼續試下一個 chart
+                                _hb_after_log = False
+                                try:
+                                    for _hfn3 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+                                        _hfp3 = os.path.join(_cfd2, _hfn3)
+                                        if os.path.isfile(_hfp3) and time.time() - os.path.getmtime(_hfp3) < 30:
+                                            _hb_after_log = True
+                                            break
+                                except Exception:
+                                    pass
+                                if _hb_after_log:
+                                    print(f"⚠️ log 話 removed 但心跳仲寫緊（{ea_name} 掛喺另一個 chart）— 繼續試下一個")
+                                    time.sleep(2)
+                                else:
+                                    _this_removed = True
+                                    print(f"✅ MT5 log 最後狀態確認 {ea_name} removed（心跳已停）")
+                                    break
                 except Exception:
                     pass
         except Exception:

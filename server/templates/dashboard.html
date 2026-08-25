@@ -938,14 +938,17 @@ async function loadEAConfig() {
             const _magic = eaMappings[name + '_magic'] || '240701';
             const _eaStat = eaStats[name];
             const _ms2 = analysisData && analysisData.per_ea_by_magic_symbol ? (() => {
+                // 🚨 2026-08-26 FIX：同 magic 唔同 symbol 要分開（唔好全部混埋 — TestTrades 影響其他 EA）
                 const _bm = {};
                 Object.values(analysisData.per_ea_by_magic_symbol).forEach(v => {
                     const mm = String(v.magic);
-                    if (!_bm[mm]) _bm[mm] = { trades:0, wins:0, losses:0, profit:0 };
-                    _bm[mm].trades += v.trades; _bm[mm].wins += v.wins;
-                    _bm[mm].losses += v.losses; _bm[mm].profit += v.profit;
+                    const ss = String(v.symbol || '');
+                    const kk = mm + '_' + ss;
+                    if (!_bm[kk]) _bm[kk] = { trades:0, wins:0, losses:0, profit:0 };
+                    _bm[kk].trades += v.trades; _bm[kk].wins += v.wins;
+                    _bm[kk].losses += v.losses; _bm[kk].profit += v.profit;
                 });
-                const d = _bm[String(_magic)];
+                const d = _bm[String(_magic) + '_' + String(_sym || '')] || _bm[String(_magic)];
                 if (!d || d.trades === 0) return null;
                 const t = d.wins + d.losses;
                 return { trades: d.trades, wr: t>0 ? Math.round(d.wins/t*1000)/10 : 0, profit: Math.round(d.profit*100)/100 };
@@ -994,19 +997,28 @@ async function loadEAConfig() {
         let comboIndex = 0;
         // 🚨 2026-08-21：build byMagic map（EA config 冇存 symbol — 淨係 magic → 用 magic 聚合真實 trades）
         // 之前用 msKey=magic+'_'+sym — sym 空 → key 對唔上 → Trades/Win/P&L 全部「—」
+        // 🚨 2026-08-26 FIX（問題：同一個 Magic Number 令所有 EA 顯示同一份 stats — TestTrades 影響其他 EA）：
+        // → 改按 magic+symbol 精確匹配（每隻 EA 顯示自己 symbol 嘅 trades — 唔會混埋）
+        // → 只有「部署咗嗰隻 EA 嘅 magic+symbol」先攞到 stats，其他 fallback 返 ea_stats（按 EA 名）
         const _byMagic = {};
         if (analysisData && analysisData.per_ea_by_magic_symbol) {
             Object.values(analysisData.per_ea_by_magic_symbol).forEach(v => {
                 const m = String(v.magic);
-                if (!_byMagic[m]) _byMagic[m] = { trades:0, wins:0, losses:0, profit:0 };
-                _byMagic[m].trades += v.trades;
-                _byMagic[m].wins += v.wins;
-                _byMagic[m].losses += v.losses;
-                _byMagic[m].profit += v.profit;
+                const s = String(v.symbol || '');
+                const key = m + '_' + s;
+                if (!_byMagic[key]) _byMagic[key] = { trades:0, wins:0, losses:0, profit:0 };
+                _byMagic[key].trades += v.trades;
+                _byMagic[key].wins += v.wins;
+                _byMagic[key].losses += v.losses;
+                _byMagic[key].profit += v.profit;
             });
         }
-        const _magicStats = m => {
-            const d = _byMagic[String(m)];
+        const _magicStats = (m, sym) => {
+            // 精確 (magic, symbol) match — 唔好全部 magic 共享
+            const key = String(m) + '_' + String(sym || '');
+            let d = _byMagic[key];
+            // fallback：冇 symbol 參數時淨用 magic（向後兼容）
+            if (!d) d = _byMagic[String(m)];
             if (!d || d.trades === 0) return null;
             const total = d.wins + d.losses;
             return { trades: d.trades, wr: total>0 ? Math.round(d.wins/total*100*10)/10 : 0, profit: Math.round(d.profit*100)/100 };
@@ -1046,7 +1058,8 @@ async function loadEAConfig() {
             // 🚨 2026-08-21：改用 magic 聚合（EA config 冇存 symbol — 之前 msKey 對唔上 → 全部「—」）
             // 🚨 2026-08-21：EA 自寫統計優先（TestTrades 寫 state json — trades/wins/losses/profit）— fallback analysis magic 聚合
             const _eaStat = eaStats[name];
-            const _ms = _magicStats(magic);
+            // 🚨 2026-08-26 FIX：_magicStats 改傳埋 symbol（精確 (magic,symbol) match — 唔會同 magic 其他 EA 混）
+            const _ms = _magicStats(magic, sym);
             const trades = _eaStat ? _eaStat.trades : (_ms ? _ms.trades : 0);
             const wins = _eaStat ? _eaStat.wins : (_ms ? _ms.wins : 0);
             const losses = _eaStat ? _eaStat.losses : (_ms ? _ms.losses : 0);
