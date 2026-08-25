@@ -102,7 +102,7 @@
 | **v0.10.67** | 2026-08-22 | 🔧 **配對庫消失 bug（電腦有已配對 EA 但網頁冇顯示）** — 壓力測試輪流剷除 → 每次 DELETE 加 `_removed` → 但 **api_deploy 重新部署時冇由 `_removed` 清走**（只有 install-local 有清 — Bug #64）→ `_removed` 累積 ADX_Trend + EMA_Cross → 前端 `!removed.includes(name)` 過濾走晒 → 配對庫空。修復：①api_deploy 加「重新部署 = 由 _removed 移除」②修正現有 DB 數據 — 實測配對庫顯示返兩隻（心跳運行 + 正確 symbol/magic）|
 | **v0.10.68** | 2026-08-22 | 🔥 **熱鍵改為 Ctrl+1 重用（用戶要求：每次部署都用 Ctrl+1，部署完釋放，下隻 EA 又用返）** — ①`_ensure_hotkey_loaded` 寫入邏輯改：唔再批次分配 Ctrl+1~9 — 清空 hotkeys.ini 舊 mapping + 只寫「新 EA = Ctrl+1」+ 同步 hotkeys.json（只保留當前 EA=^1）②**restart 前記錄所有 chart**（EnumChildWindows — 修 window match bug：MT5 標題含 MetaQuotes 唔含 MetaTrader）→ **restart 後檢查 + 補開遺失 chart**（根治「部署 Grid 搞走 EMA_Cross」— restore 唔齊）③熱鍵 load 實測（send Ctrl+1 → 彈 Properties = load 咗 → 唔 restart）— 實測：Bollinger→USDJPY + Grid→DE40 部署成功，其他 EA 全部保留（chart 冇遺失），hotkeys.ini 每次只有當前 EA=Ctrl+1 |
 | **v0.10.69** | 2026-08-24 | 🔥 **熱鍵先係主力（用戶要求：唔使理 EA 入面有咩 — 開到 chart + 撳熱鍵 = 成功，驗證靠 log）** — ①**跳過 generate_template**（掛 EA 唔需要模板 — 之前一體化模式靠套模板掛 EA，而家直接開 chart（Alt+F）+ send 熱鍵（Ctrl+1）掛 EA）②**修 verify_heartbeat 假成功**：之前讀 MQL5/Logs（MetaEditor 日誌 — 中文「已启动」殘留 → 誤判「已啟動」→ 假成功）→ 改讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）+ 只認「loaded successfully」（唔認「started」— 太濫）+ 最後狀態判斷（removed 後唔算 loaded）③**修「附加成功」假成功**：之前淨係 check 心跳檔存在（os.path.isfile — 舊檔殘留都話「心跳存在」）→ 改 check age（<300s 先算新鮮）— 實測：ADX→XAUUSD 部署成功（心跳 0s + log loaded successfully 13:46:47 — 真成功唔再假） |
-| **v0.10.81** | 2026-08-26 | 📊 **診斷報告 UI 修復（用戶：「未部署提示置中 + Equity Curve 唔應該喺未部署出現 + 清晰啲」）** — ①**未部署提示置中**：text-align:center + margin auto + icon/標題/指引（部署後先有交易數據）②**未部署唔顯示 Equity Curve**：之前清 chart 用錯 id（reportEquity vs 實際 equityChart）→ 殘留 → 而家正確隱藏成個 card（equity/dist/monthly 一齊隱藏）③**Equity Curve 清晰化**：Chart.js 線圖取代簡陋柱狀條 — 數值軸（$顯示）+ tooltip（每點 P&L）+ 填充漸變 + 零線突出（金黃色）+ 平滑曲線 — renderReport 開頭自動顯示返 cards（未部署隱藏後下次有數據要顯示返） |
+| **v0.10.82** | 2026-08-26 | 🏷️ **品牌改名（用戶：「我哋呢個品牌叫做 Tradotcom 取代 MT5 Cloud + EA 管理改為 Alpha 管理」）** — ①全部 UI 字眼：**MT5 Cloud → Tradotcom**（dashboard header / index / login / register title+h1）②**EA 管理 → Alpha 管理**（配對庫 card title）③EA library .mq5 header comment/copyright（9 個檔）④server/app.py + agent/*.py comments + startup print — 實測：`<title>Tradotcom</title>` + 登入頁 Tradotcom（冇 MT5 Cloud 殘留） |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -671,7 +671,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `7095d65`（master）— v0.10.81（報告 UI：未部署提示置中 + 隱藏 chart cards + Equity Curve Chart.js 清晰線圖）；TODO：數據注入選擇功能未實行（見 TODO 段）
+**Git HEAD**: `b5e1c68`（master）— v0.10.82（品牌改名 Tradotcom + Alpha 管理）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）

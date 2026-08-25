@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//| OpenChart.mq5 — 開圖表 Script（MT5 Cloud）                       |
+//| OpenChart.mq5 — 開圖表 Script（Tradotcom）                       |
 //| 用法：Navigator → 腳本 → MT5Cloud_EA → OpenChart 雙擊            |
 //|   彈出對話框，填：                                               |
 //|     InpSymbol = 交易品種 (例 EURUSD / GBPUSD / XAUUSD)           |
@@ -9,9 +9,9 @@
 //| 自動模式（留空 InpSymbol）：讀 Common/Files/open_chart_cmd.json  |
 //|   {"symbol":"EURUSD","tf":"H1"}  ← 自動化部署用                  |
 //|                                                                  |
-//| 所有 MT5 Cloud 檔案統一放 MQL5/Scripts/MT5Cloud_EA/              |
+//| 所有 Tradotcom 檔案統一放 MQL5/Scripts/MT5Cloud_EA/              |
 //+------------------------------------------------------------------+
-#property copyright "MT5 Cloud"
+#property copyright "Tradotcom"
 #property version   "1.30"
 #property strict
 #property script_show_inputs

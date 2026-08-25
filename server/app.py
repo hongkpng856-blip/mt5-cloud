@@ -1,4 +1,4 @@
-# MT5 Cloud — Full Platform Server
+# Tradotcom — Full Platform Server
 # 公開網站，每人有自己的 EA 配對 + 分析 + Correlation
 
 import os
@@ -2406,7 +2406,7 @@ def api_ea_install_local(filename):
                     _c_hb = open(target, encoding='utf-8', errors='ignore').read()
                     if '__mt5c_process' not in _c_hb and 'EventSetTimer' not in _c_hb:
                         _hb_mod = '''
-// ---- MT5 Cloud 心跳（自動注入 2026-08-14 — 每秒寫心跳 + 暫停指令檢查）----
+// ---- Tradotcom 心跳（自動注入 2026-08-14 — 每秒寫心跳 + 暫停指令檢查）----
 // 🚨 2026-08-15：交易品種參數（部署時自動寫入揀好嘅 symbol — EA 用呢個 symbol 交易/開圖表 — 唔理圖表本身）
 input string InpSymbol = "";
 string __mt5c_ctrl_file = "";
@@ -3679,5 +3679,5 @@ if __name__ == '__main__':
         print(f"⚠️  :{port} 被佔用，呢個 instance 退出")
         sys.exit(0)
 
-    print(f"☁️  MT5 Cloud Server :{port}")
+    print(f"☁️  Tradotcom Server :{port}")
     socketio.run(app, host='0.0.0.0', port=port, debug=True, use_reloader=False)

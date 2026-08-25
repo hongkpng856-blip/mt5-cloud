@@ -3,7 +3,7 @@
 //| 2026-08-14 測試用（每秒心跳 — 更即時偵測）                      |
 //+------------------------------------------------------------------+
 #property strict
-#property copyright "MT5 Cloud Test"
+#property copyright "Tradotcom Test"
 input string EA_Tag = "TestHB_Run";
 
 int OnInit() {

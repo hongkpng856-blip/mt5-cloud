@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MT5 Cloud Deploy Watcher — 自動 detect deploy 指令，用 terminal desktop access 進行 GUI attach
+Tradotcom Deploy Watcher — 自動 detect deploy 指令，用 terminal desktop access 進行 GUI attach
 
 Background: agent.py 嘅 auto_attach_ea() spawn subprocess 冇 desktop access → pyautogui 唔 work ❌
 Solution: deploy_watcher.py 長行喺 terminal(background=true) — 有 desktop access ✅
@@ -1247,7 +1247,7 @@ def main():
             pass
     print()
     print("=" * 56)
-    print("  👀 MT5 Cloud Deploy Watcher")
+    print("  👀 Tradotcom Deploy Watcher")
     print("=" * 56)
     print(f"  Server:      {SERVER_URL}")
     print(f"  Agent ID:    {AGENT_ID}")

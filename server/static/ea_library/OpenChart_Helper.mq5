@@ -4,7 +4,7 @@
 //| → ChartOpen(symbol, tf) 開目標圖表 → 自己移除（ExpertRemove）    |
 //| 檔格式: {"symbol":"XAUUSD","tf":"H1"}                            |
 //+------------------------------------------------------------------+
-#property copyright "MT5 Cloud"
+#property copyright "Tradotcom"
 #property version   "1.00"
 #property strict
 

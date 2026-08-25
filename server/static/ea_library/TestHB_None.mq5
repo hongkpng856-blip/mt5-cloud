@@ -3,7 +3,7 @@
 //| 2026-08-13 測試用（未部署 → 灰色未配對）                         |
 //+------------------------------------------------------------------+
 #property strict
-#property copyright "MT5 Cloud Test"
+#property copyright "Tradotcom Test"
 input string EA_Tag = "TestHB_None";
 
 int OnInit() { return INIT_SUCCEEDED; }

@@ -6,7 +6,7 @@
 //|        持倉 InpHoldSec 秒後自動平倉 → 產生真實 profit/loss        |
 //|        Trades/Win/P&L 會喺網頁配對庫即時更新                     |
 //+------------------------------------------------------------------+
-#property copyright "MT5 Cloud"
+#property copyright "Tradotcom"
 #property version   "1.00"
 #property strict
 #property description "測試 EA：持續開單→平倉，產生真實 Trades/Win/P&L 數據。每15秒一單，持倉10秒平倉，無限循環。"

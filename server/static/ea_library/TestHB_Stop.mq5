@@ -3,7 +3,7 @@
 //| 2026-08-13 測試用（模擬 EA 停咗 — 紅色沒有心跳）                |
 //+------------------------------------------------------------------+
 #property strict
-#property copyright "MT5 Cloud Test"
+#property copyright "Tradotcom Test"
 input string EA_Tag = "TestHB_Stop";
 
 int OnInit() { WriteHB("stopped"); return INIT_SUCCEEDED; }

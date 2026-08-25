@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MT5 Cloud Agent — 可靠嘅 EA 部署 + Auto-Attach
+Tradotcom Agent — 可靠嘅 EA 部署 + Auto-Attach
 
 核心改進：
 - auto_attach_ea(): 開 chart + Navigator double-click + AutoTrading check
@@ -1117,7 +1117,7 @@ def get_mt5_status():
 
 print()
 print("=" * 56)
-print("  ☁️  MT5 Cloud Agent")
+print("  ☁️  Tradotcom Agent")
 print("=" * 56)
 print(f"  Server:   {SERVER_URL}")
 print(f"  Agent ID: {AGENT_ID}")

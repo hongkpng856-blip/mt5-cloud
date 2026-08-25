@@ -4,7 +4,7 @@
 //|  用法：附加到任何圖表 → 即刻開 0.01 測試單 + Comment 顯示狀態     |
 //|        （運行時間/Tick 數每秒跳動 = EA 正常運行中）               |
 //+------------------------------------------------------------------+
-#property copyright "MT5 Cloud"
+#property copyright "Tradotcom"
 #property version   "1.00"
 #property strict
 #property description "測試 EA 運行狀態：附加圖表後即刻開測試單，圖表顯示運行時間/Tick數/單據"

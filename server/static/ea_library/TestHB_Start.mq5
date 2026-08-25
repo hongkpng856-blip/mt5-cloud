@@ -3,7 +3,7 @@
 //| 2026-08-13 測試用（部署後有熱鍵但唔寫心跳 → 黃色等待心跳）       |
 //+------------------------------------------------------------------+
 #property strict
-#property copyright "MT5 Cloud Test"
+#property copyright "Tradotcom Test"
 input string EA_Tag = "TestHB_Start";
 
 int OnInit() { return INIT_SUCCEEDED; }

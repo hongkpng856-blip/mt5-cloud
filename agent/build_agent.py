@@ -16,14 +16,14 @@ except ImportError:
 output_dir = os.path.join(os.path.dirname(__file__), "dist")
 
 print("=" * 56)
-print("  📦 Building MT5 Cloud Agent.exe")
+print("  📦 Building Tradotcom Agent.exe")
 print("=" * 56)
 print()
 
-os.system(f'pyinstaller --onefile --windowed --name "MT5 Cloud Agent" '
+os.system(f'pyinstaller --onefile --windowed --name "Tradotcom Agent" '
           f'--add-data "agent.py;." '
           f'--distpath "{output_dir}" agent.py')
 
 print()
-print(f"✅ 完成！檔案位置：{output_dir}/MT5 Cloud Agent.exe")
+print(f"✅ 完成！檔案位置：{output_dir}/Tradotcom Agent.exe")
 print()
