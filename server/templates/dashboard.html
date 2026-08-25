@@ -654,7 +654,21 @@
     <!-- Correlation -->
     <div class="card">
         <div class="card-title"><i class="icon-network" style="color:var(--accent)"></i> Correlation Matrix</div>
+        <!-- 🚨 2026-08-26：色階 legend（heatmap 漸變） -->
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-muted);margin:6px 0">
+            <span>相關度:</span>
+            <span style="width:140px;height:12px;border-radius:4px;background:linear-gradient(to right,#f85149,#6a2d2d,#484f58,#2d6a3a,#3fb950);display:inline-block"></span>
+            <span>-1</span><span style="flex:1"></span><span>0</span><span style="flex:1"></span><span>+1</span>
+        </div>
         <div style="overflow-x:auto"><table class="ea-table corr-table" id="corrTable"></table></div>
+        <!-- 🚨 2026-08-26：散點圖（揀兩隻 EA 睇每日 P&L 相關） -->
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text-muted)">散點圖（每日 P&L）:</span>
+            <select id="scatA" class="btn" style="width:auto;padding:4px 8px;font-size:12px"></select>
+            <span style="color:var(--text-muted)">vs</span>
+            <select id="scatB" class="btn" style="width:auto;padding:4px 8px;font-size:12px"></select>
+        </div>
+        <div style="height:260px;margin-top:10px"><canvas id="scatChart"></canvas></div>
     </div>
 
     <!-- 活動記錄（2026-08-12：main 內最底 — 跟返上邊 card 距離） -->
@@ -1284,17 +1298,87 @@ async function loadAnalysis() {
             keys.forEach(k => { cm += `<th>${k.length>12?k.substring(0,10)+'..':k}</th>`; });
             cm += '</tr></thead><tbody>';
             analysisData.correlation_matrix.forEach(row => {
-                cm += `<tr><td style="font-size:10px">${row.ea.length>12?row.ea.substring(0,10)+'..':row.ea}</td>`;
+                cm += `<tr><td style="font-size:10px;white-space:nowrap">${row.ea.length>14?row.ea.substring(0,12)+'..':row.ea}</td>`;
                 keys.forEach(k => {
                     let v = row[k]||0;
-                    let c = v>0.5?'#3fb950':v>0?'#2d6a3a':v<-0.5?'#f85149':v<0?'#6a2d2d':'#484f58';
-                    cm += `<td style="color:${c};font-weight:${Math.abs(v)>0.5?'600':'400'}">${v.toFixed(2)}</td>`;
+                    // 🚨 2026-08-26：heatmap 漸變色（-1 深紅 → 0 灰 → +1 深綠）— 唔再淨係 4 檔
+                    const _t = Math.max(-1, Math.min(1, v));
+                    let c;
+                    if (_t >= 0) c = `hsl(${140 - 140*_t}, 65%, ${30 + 15*(1-_t)}%)`;
+                    else c = `hsl(0, 65%, ${30 + 15*(1+_t)}%)`;
+                    cm += `<td style="color:${c};font-weight:${Math.abs(v)>0.5?'600':'400'};background:${_t>=0?'rgba(63,185,80,'+(Math.abs(_t)*0.15)+')':'rgba(248,81,73,'+(Math.abs(_t)*0.15)+')'}">${v.toFixed(2)}</td>`;
                 });
                 cm += '</tr>';
             });
             document.getElementById('corrTable').innerHTML = cm;
+            // 🚨 2026-08-26：populate 散點圖 drop down + render
+            _setupScatter(keys);
         }
     } catch(e) {}
+}
+
+let _scatChart = null;
+let _corrDaily = null;  // 每日 P&L（散點圖數據源 — 由 correlation 或 analysis 補)
+function _setupScatter(keys) {
+    // populate dropdowns（用 correlation keys — 已含 EA 名 + magic）
+    const sa = document.getElementById('scatA');
+    const sb = document.getElementById('scatB');
+    if (!sa || !sb) return;
+    const _curA = sa.value, _curB = sb.value;
+    // 保留舊選項（如果 keys 少過 — rebuild）
+    const opts = keys.map(k => `<option value="${k.replace(/"/g,'&quot;')}">${k}</option>`).join('');
+    sa.innerHTML = opts; sb.innerHTML = opts;
+    if (sa.options.length > 0) {
+        sa.value = _curA && sa.querySelector(`option[value="${CSS.escape(_curA)}"]`) ? _curA : keys[0];
+        sb.value = _curB && sb.querySelector(`option[value="${CSS.escape(_curB)}"]`) ? _curB : (keys[1] || keys[0]);
+    }
+    // 每日 P&L（由 per_ea_by_magic_symbol 唔夠 — 要日期序列 → 用 correlation daily_pnl 唔傳嚟 → fallback: analysis 再 fetch）
+    _loadScatterDaily();
+    sa.onchange = _renderScatter;
+    sb.onchange = _renderScatter;
+}
+async function _loadScatterDaily() {
+    // 攞每日 P&L：/api/analysis 冇回傳 daily —— 加 fetch 一次攞 correlation 原數據（用 per_ea_by_magic_symbol 唔夠）
+    // ⚠️ 簡化：用 summary + per_ea 做唔到每日 —— 直接由 server 攞（新 endpoint 唔加 — 用 correlation_matrix 冇日期）
+    // → fallback：用兩隻 EA 嘅 correlation 值做一個「偽散點」（一列 x = 該 EA vs 其他、y = 該 EA）— 太抽象
+    // 正路：server 加 daily_pnl 回傳（一行改動）
+    try {
+        const res = await fetch('/api/analysis?t=' + Date.now());
+        const d = await res.json();
+        _corrDaily = d.daily_pnl || null;   // 🚨 server 要先加 daily_pnl 回傳
+        _renderScatter();
+    } catch(e) {}
+}
+function _renderScatter() {
+    const sa = document.getElementById('scatA');
+    const sb = document.getElementById('scatB');
+    const cv = document.getElementById('scatChart');
+    if (!sa || !sb || !cv || !_corrDaily) return;
+    const A = sa.value, B = sb.value;
+    const dates = Object.keys(_corrDaily[A] || {}).concat(Object.keys(_corrDaily[B] || {}));
+    const _all = [...new Set(dates)].sort();
+    const pts = _all.map(dt => ({
+        x: (_corrDaily[A] && _corrDaily[A][dt]) || 0,
+        y: (_corrDaily[B] && _corrDaily[B][dt]) || 0
+    }));
+    if (_scatChart) _scatChart.destroy();
+    _scatChart = new Chart(cv, {
+        type: 'scatter',
+        data: { datasets: [{
+            label: `${A} vs ${B}`,
+            data: pts,
+            backgroundColor: '#f0b90b',
+            pointRadius: 5
+        }]},
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: A, color: '#9ca3af' }, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } },
+                y: { title: { display: true, text: B, color: '#9ca3af' }, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } }
+            },
+            plugins: { legend: { labels: { color: '#9ca3af' } } }
+        }
+    });
 }
 
 function _updateEAData() {
@@ -2166,5 +2250,6 @@ function confirmOk() {
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </body>
 </html>

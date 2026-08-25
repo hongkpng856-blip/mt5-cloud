@@ -1213,7 +1213,11 @@ def api_analysis():
     all_magics = sorted(set(str(d['magic']) for d in deals_data if d['magic'] != 0))
 
     # 🚨 2026-08-21：EA 名對應（correlation matrix 顯示 EA 名 — 用戶易睇）
+    # 🚨 2026-08-26 FIX v3（用戶：「點解仲顯示 Magic#240701 而唔係 EA 名」）：
+    # v0.10.78 行內人做法 magic=EA 身份 → (magic,symbol) match 唔到（舊 symbol 記錄）都應該顯示 EA 名
+    # → 雙層對應：①精確 (magic,symbol) ②fallback 淨 magic（搵 config 第一隻用呢個 magic 嘅 EA）
     ea_name_by_key = {}
+    _magic_to_ea = {}
     try:
         import sqlite3 as _sq_c
         _db_c = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
@@ -1224,10 +1228,23 @@ def api_analysis():
             _cfg_c = json.loads(_r_c[0] or '{}')
             for _k_c, _v_c in _cfg_c.items():
                 if not _k_c.startswith('_') and not _k_c.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v_c, str):
-                    _mk_c = f"{_cfg_c.get(_k_c + '_magic', '')}_{_v_c}"
+                    _mag_c = str(_cfg_c.get(_k_c + '_magic', ''))
+                    _mk_c = f"{_mag_c}_{_v_c}"
                     ea_name_by_key[_mk_c] = _k_c
+                    # fallback 表：magic → EA 名（第一次遇到嗰隻 — config 順序）
+                    if _mag_c and _mag_c not in _magic_to_ea:
+                        _magic_to_ea[_mag_c] = _k_c
+        # 對 matrix keys 補 fallback（淨 magic match）
+        for _ek_n in list(ea_name_by_key.keys()):
+            pass
     except Exception:
         pass
+    # 處理：所有 possible key（magic_symbol）都試 exact，唔得就用 magic fallback → 喺 matrix build 前 resolve
+    def _resolve_ea_name(_ek_raw):
+        if _ek_raw in ea_name_by_key:
+            return ea_name_by_key[_ek_raw]
+        _m_part = _ek_raw.split('_')[0]
+        return _magic_to_ea.get(_m_part, '')
 
     # Correlation
     daily_pnl = defaultdict(lambda: defaultdict(float))
@@ -1257,15 +1274,26 @@ def api_analysis():
         d=math.sqrt((n*sxx-sx*sx)*(n*syy-sy*sy))
         return (n*sxy-sx*sy)/d if d!=0 else 0
 
-    corr_matrix = []
-    for ek1 in ea_keys:
-        row = {"ea": ea_name_by_key.get(ek1, ek1)}
-        for ek2 in ea_keys:
-            row[ea_name_by_key.get(ek2, ek2)] = round(pearson(matrix[ek1], matrix[ek2]), 2)
-        corr_matrix.append(row)
-
     # 🚨 2026-08-21：correlation keys 用 EA 名（前端顯示）
-    corr_keys_display = [ea_name_by_key.get(k, k) for k in ea_keys]
+    # 🚨 2026-08-26 FIX v2（用戶要求：「名 + Magic Number」— 方便 cross-check MT5）：EA 名 + (magic) 括號
+    corr_keys_display = []
+    for _ek in ea_keys:
+        _ea_nm = _resolve_ea_name(_ek)
+        if _ea_nm:
+            _mag_part = _ek.split('_')[0]
+            corr_keys_display.append(f"{_ea_nm} ({_mag_part})")
+        else:
+            # 🚨 2026-08-26：冇 EA 名（歷史 trades 同 config 唔 match）→ 顯示 Magic#<magic> (<symbol>)
+            _mk_part = _ek.split('_')[0] if '_' in _ek else _ek
+            _sym_part = _ek.split('_', 1)[1] if '_' in _ek else ''
+            corr_keys_display.append(f"Magic#{_mk_part} ({_sym_part})" if _sym_part else f"Magic#{_mk_part}")
+
+    corr_matrix = []
+    for i1, ek1 in enumerate(ea_keys):
+        row = {"ea": corr_keys_display[i1]}
+        for i2, ek2 in enumerate(ea_keys):
+            row[corr_keys_display[i2]] = round(pearson(matrix[ek1], matrix[ek2]), 2)
+        corr_matrix.append(row)
 
     # Filter magic 0 for summary too (platform trades, not EA)
     ea_deals = [d for d in deals_data if d.get('magic') and d.get('magic') != 0]
@@ -1275,15 +1303,16 @@ def api_analysis():
     wr = round(wins/(wins+losses)*100,2) if (wins+losses)>0 else 0
 
     return jsonify({
-        "summary":{"total_trades":len(ea_deals),"wins":wins,"losses":losses,
-                   "win_rate":wr,"total_profit":round(total_profit,2)},
-        "per_ea": per_ea_list,
-        "per_ea_by_symbol": per_ea_by_symbol,
-        "per_ea_by_magic_symbol": per_ea_by_magic_symbol,
-        "all_magics": all_magics,
-        "correlation_matrix": corr_matrix,
-        "correlation_keys": corr_keys_display
-    })
+            "summary":{"total_trades":len(ea_deals),"wins":wins,"losses":losses,
+                       "win_rate":wr,"total_profit":round(total_profit,2)},
+            "per_ea": per_ea_list,
+            "per_ea_by_symbol": per_ea_by_symbol,
+            "per_ea_by_magic_symbol": per_ea_by_magic_symbol,
+            "all_magics": all_magics,
+            "correlation_matrix": corr_matrix,
+            "correlation_keys": corr_keys_display,
+            "daily_pnl": {disp: dict(daily_pnl[k]) for k, disp in zip(ea_keys, corr_keys_display)}
+        })
 
 
 @app.route('/api/ea-report')
