@@ -3319,23 +3319,47 @@ def api_deploy():
         print(f"[deploy] symbol 驗證失敗（唔阻部署）: {_e_sym}")
     # 🚨 2026-08-20 FIX：magic 空 string（前端未 alive EA 傳 ''）→ fallback default（否則 auto_attach --magic 空 → argparse 失敗 → 假成功）
     magic = data.get('magic') or '240701'
-    # 🚨 2026-08-26 FIX（問題：同一個 Magic Number 令前端 stats 混埋 — TestTrades 影響其他 EA 嘅 Wins/P&L）
-    # → 部署時自動分配唯一 magic：如果魔法係 default（240701）或者同其他 EA 撞 → 自動搵未用嘅 magic
-    # （240701、240702、240703... — 每隻 EA 獨立 magic → 前端按 magic 準確分開）
+    # 🚨 2026-08-26 FIX v2（行內人做法 — 用戶要求）：Magic = EA 固定身份 — 一生唔變
+    # ① 每個 EA 首次部署分配固定 magic（存 config['_magic_assignments'] — _開頭 DELETE 唔會清）
+    # ② 剷除後再部署 → 沿用返舊 magic（歷史連貫 — Correlation/統計完整）
+    # ③ 用戶指定特別 magic（777/888 等）→ 尊重用戶（唔覆寫）
+    # ④ 只有「首次部署 + 有用戶冇指定」先自動分配
     try:
         _cfg_m = json.loads(current_user.ea_config or '{}')
-        _used_magics = set()
-        for _k_m, _v_m in _cfg_m.items():
-            if _k_m.endswith('_magic') and str(_v_m).isdigit():
-                _used_magics.add(str(_v_m))
-        _req_magic = str(magic)
-        # 只有「撞 magic」先分配新（用戶指定咗特別 magic 就保留 — 例如 777、888）
-        if _req_magic in _used_magics:
-            _new_m = int(_req_magic)
-            while str(_new_m) in _used_magics:
+        _assign_tbl = _cfg_m.get('_magic_assignments') or {}
+        if not isinstance(_assign_tbl, dict):
+            _assign_tbl = {}
+        _req_magic = str(data.get('magic') or '').strip()
+        # ① EA 已有分配 → 沿用（行內人：歷史連貫 — 就算剷除再部署都用返同一個）
+        if ea_name in _assign_tbl:
+            magic = _assign_tbl[ea_name]
+            print(f"[deploy] 🔑 {ea_name} 沿用固定 Magic {magic}（歷史連貫）")
+        # ② 用戶明確指定（唔係 240701 default）→ 尊重 + 記錄
+        elif _req_magic and _req_magic != '240701':
+            magic = _req_magic
+            _assign_tbl[ea_name] = magic
+            print(f"[deploy] 🔑 {ea_name} 用戶指定 Magic {magic}")
+        # ③ 首次部署 + 用 default → 自動分配未用嘅固定 magic
+        else:
+            _used_all = set()
+            for _k_m2, _v_m2 in _cfg_m.items():
+                if _k_m2.endswith('_magic') and str(_v_m2).isdigit():
+                    _used_all.add(str(_v_m2))
+            for _v_m3 in _assign_tbl.values():
+                _used_all.add(str(_v_m3))
+            _new_m = 240701
+            while str(_new_m) in _used_all:
                 _new_m += 1
             magic = str(_new_m)
-            print(f"[deploy] 🔑 Magic {_req_magic} 已被佔用 → 自動分配唯一 Magic {magic}")
+            _assign_tbl[ea_name] = magic
+            print(f"[deploy] 🔑 {ea_name} 首次分配固定 Magic {magic}")
+        # 同步分配表返 config（_開頭 — DELETE 唔會清 — 持久保留）
+        try:
+            _cfg_m['_magic_assignments'] = _assign_tbl
+            current_user.ea_config = json.dumps(_cfg_m)
+            db.session.commit()
+        except Exception:
+            pass
     except Exception:
         pass
     lot = data.get('lot', '1.00')
