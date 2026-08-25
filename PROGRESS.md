@@ -102,7 +102,7 @@
 | **v0.10.67** | 2026-08-22 | 🔧 **配對庫消失 bug（電腦有已配對 EA 但網頁冇顯示）** — 壓力測試輪流剷除 → 每次 DELETE 加 `_removed` → 但 **api_deploy 重新部署時冇由 `_removed` 清走**（只有 install-local 有清 — Bug #64）→ `_removed` 累積 ADX_Trend + EMA_Cross → 前端 `!removed.includes(name)` 過濾走晒 → 配對庫空。修復：①api_deploy 加「重新部署 = 由 _removed 移除」②修正現有 DB 數據 — 實測配對庫顯示返兩隻（心跳運行 + 正確 symbol/magic）|
 | **v0.10.68** | 2026-08-22 | 🔥 **熱鍵改為 Ctrl+1 重用（用戶要求：每次部署都用 Ctrl+1，部署完釋放，下隻 EA 又用返）** — ①`_ensure_hotkey_loaded` 寫入邏輯改：唔再批次分配 Ctrl+1~9 — 清空 hotkeys.ini 舊 mapping + 只寫「新 EA = Ctrl+1」+ 同步 hotkeys.json（只保留當前 EA=^1）②**restart 前記錄所有 chart**（EnumChildWindows — 修 window match bug：MT5 標題含 MetaQuotes 唔含 MetaTrader）→ **restart 後檢查 + 補開遺失 chart**（根治「部署 Grid 搞走 EMA_Cross」— restore 唔齊）③熱鍵 load 實測（send Ctrl+1 → 彈 Properties = load 咗 → 唔 restart）— 實測：Bollinger→USDJPY + Grid→DE40 部署成功，其他 EA 全部保留（chart 冇遺失），hotkeys.ini 每次只有當前 EA=Ctrl+1 |
 | **v0.10.69** | 2026-08-24 | 🔥 **熱鍵先係主力（用戶要求：唔使理 EA 入面有咩 — 開到 chart + 撳熱鍵 = 成功，驗證靠 log）** — ①**跳過 generate_template**（掛 EA 唔需要模板 — 之前一體化模式靠套模板掛 EA，而家直接開 chart（Alt+F）+ send 熱鍵（Ctrl+1）掛 EA）②**修 verify_heartbeat 假成功**：之前讀 MQL5/Logs（MetaEditor 日誌 — 中文「已启动」殘留 → 誤判「已啟動」→ 假成功）→ 改讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）+ 只認「loaded successfully」（唔認「started」— 太濫）+ 最後狀態判斷（removed 後唔算 loaded）③**修「附加成功」假成功**：之前淨係 check 心跳檔存在（os.path.isfile — 舊檔殘留都話「心跳存在」）→ 改 check age（<300s 先算新鮮）— 實測：ADX→XAUUSD 部署成功（心跳 0s + log loaded successfully 13:46:47 — 真成功唔再假） |
-| **v0.10.73** | 2026-08-25 | 🔥 **人手模擬測試（網頁撳）×5 達 4/5 PASS（255 修復確認 + 連 Bollinger 都過）** — v0.10.72 修復後重跑：輪 1 ATR PASS / 輪 2 Bollinger PASS（上次 FAIL 今次過咗）/ 輪 3 Breakout FAIL（第二次 restart 後熱鍵仍然冇 load + 開 chart 偶發失敗 — 時序問題）/ 輪 4 MACD PASS / 輪 5 Heikin PASS = **4/5 PASS** — 確認 255 crash 根治（全部部署 spawn 成功）+ 部署邏輯穩定（熱鍵附加 + 心跳後備 + 剷除全work）— 剩返係熱鍵 load 偶發失敗（Breakout 兩次 restart 都 load 唔到） |
+| **v0.10.74** | 2026-08-25 | 🧪 **新增偶發壓力測試（關 MT5 → 寫 hotkeys.ini → 開 MT5 → 檢查清空/內容）5/5 PASS** — 針對「hotkeys.ini 有時變空」疑問做嘅專項測試 — 每輪：①強制 kill MT5 ②寫 `<experts>ATR_Stop=Ctrl+1</experts>`（UTF-16）③開 MT5 ④檢查：有冇被清空？內容啱唔啱？⑤send Ctrl+1 驗證熱鍵真 load 到 — **5/5 PASS：被清空 0/5、內容全正確、send 次次彈 Properties** — 證明 MT5 重啟**唔會清空 hotkeys.ini**（之前見到嘅空 hotkeys 係 DELETE 流程/其他 code 寫入空 mapping，唔係 MT5 行為）— 即係人手模擬測試嘅 Breakout 偶發失敗**唔係 hotkeys.ini 被清空**，係**連環部署時序**（MT5 狀態累積） |
 | **v0.10.45** | 2026-08-21 | 🔧 **①警告視窗有機率網頁冇彈** — showControlModal 強制顯示（唔靠 !aiControlVisible — aiControlVisible 卡住 true 時新操作唔彈）**②我的配對庫唔顯示 script** — detector 標記 is_script（Scripts 目錄）+ 前端過濾（activeEAs/localEA 排除 script）|
 | **v0.10.43** | 2026-08-21 | 🔥 **剷除假成功根治（Breakout AMD 案例）** — ①未確認移除（_removed_ok False）→ return False（之前無條件話成功 → 網頁假成功）②窗口 dialog 未關（再試 Enter 都冇效）→ fail ③揀 chart 改方向鍵（唔靠座標 click — ListView scroll/行高唔同會揀錯）|
 | **v0.10.42** | 2026-08-21 | 🔧 **symbol 驗證機制** — ①server 部署前驗證 symbol 喺帳戶 symbols（唔喺 → 返回 error『symbol 唔存在』400）②前端 deploy error → 彈警告 modal — 用戶要求：揀咗冇嘅 symbol 要偵測到 + 警告 + 唔可以部署 |
@@ -397,7 +397,8 @@
 | 109 | **🔥 熱鍵 load 測試假成功（部署掛錯 EA）** | 熱鍵 load 測試 `'1.00' in 標題 or '2.00' in 標題` 就當成功 — **唔 check EA 名** → 彈錯 EA（Heikin_Ashi 殘留 mapping）都 pass → 之後 send 熱鍵彈舊 EA → 掛錯/失敗 | v0.10.71 改 `ea_name in 標題`（一定要彈返目標 EA 先算 load 成功） | 08-24 |
 | 110 | **🔥 MT5 restart 後熱鍵唔 load（部署附加失敗 — 人手模擬測試多輪 FAIL）** | MT5 開機 cache 舊 hotkeys.ini（Heikin_Ashi 殘留）→ 熱鍵預載 restart 寫入新 mapping（ATR_Stop=Ctrl+1）但 MT5 load 咗舊值 → send Ctrl+1 彈錯 EA/冇彈 → 附加失敗 | v0.10.71 熱鍵 load 測試失敗（3 次冇彈返目標 EA）→ **第二次 restart**（再開機 load 到新 mapping — 實測 Breakout/MACD/Heikin 第二次 restart 後 send ^1 try 1 彈 Properties）+ send 熱鍵重試 5 次 | 08-24 |
 | 112 | **🔥 watcher spawn auto_attach exit 255（部署全部失敗 — 人手模擬測試 0/5）** | watcher `subprocess.run(shell=True + tee + encoding='utf-8')` → auto_attach output 有 **GBK 中文字節（0xb8）** → subprocess **reader thread decode crash**（Windows subprocess bug — errors='replace' 都 crash）→ exit 255 → 全部部署失敗 | v0.10.72 改 **bytes mode**（`capture_output=True` 無 encoding — 無 reader crash）+ 手動寫 output 去 aa_debug.log。實測：ATR_Stop 部署成功 | 08-25 |
-| 114 | **🔥 熱鍵 load 偶發失敗（Breakout 兩次 restart 後仍冇 load → 部署失敗）** | 熱鍵預載 restart（連第二次）後 MT5 仍然 load 唔到新 hotkeys mapping（Breakout 案例 — 其他 EA 第二次 restart 後 load 到）→ send ^1 冇彈 Properties + 開 chart 偶發失敗 → 部署失敗 | v0.10.73 偶發（時序 — MT5 restart 後熱鍵 load 唔穩定）— 4/5 PASS 其他輪次成功；待處理：開 chart 加多次重試 / 熱鍵 load 更穩 | 08-25 |
+| 114 | **🔥 熱鍵 load 偶發失敗（Breakout 兩次 restart 後仍冇 load → 部署失敗）** | 熱鍵預載 restart（連第二次）後 MT5 仍然 load 唔到新 hotkeys mapping（Breakout 案例 — 其他 EA 第二次 restart 後 load 到）→ send ^1 冇彈 Properties + 開 chart 偶發失敗 → 部署失敗 | v0.10.74 專項測試（偶發壓力測試 ×5）證明 **MT5 重啟唔會清空 hotkeys.ini**（5/5 PASS — 寫入保留 + send 彈 Properties）→ 即係**唔係 hotkeys.ini 被清空** — 係連環部署時序（MT5 狀態累積/未穩定）— 待處理：部署 restart 後等 MT5 完全穩定先 send | 08-25 |
+| 115 | **🧪 偶發壓力測試新增（關 MT5 → 寫 hotkeys.ini → 開 → 檢查清空/內容）** | 之前假設「MT5 重啟會清空 hotkeys.ini」（_fix_ensure_hotkey.py 記錄）但冇專項測試證明 — 用戶要求新增測試驗證 | v0.10.74 `_stress_hotkeys_clear.py` 新增 + **5/5 PASS**（被清空 0/5、內容全正確、send 彈 Properties）— 證明 MT5 唔清空 hotkeys.ini | 08-25 |
 
 ---
 
@@ -668,7 +669,7 @@ with open('C:/Users/hongk/AppData/Roaming/MetaQuotes/Terminal/D0E8209F77C8CF37AD
 
 ### 🎯 目前狀態（2026-08-20 — 新 session 必讀）
 
-**Git HEAD**: `8d003cc`（master）— v0.10.73（人手模擬測試 4/5 PASS 確認：255 修復生效 + Bollinger 過咗 — 部署穩定；剩熱鍵 load 偶發）；TODO：數據注入選擇功能未實行（見 TODO 段）
+**Git HEAD**: `e2ccf55`（master）— v0.10.74（新增偶發壓力測試：關 MT5 → 寫 hotkeys.ini → 開 → 檢查清空/內容 — 5/5 PASS 證明 MT5 唔清空 hotkeys.ini；Breakout 失敗係連環時序唔係 hotkeys）；TODO：數據注入選擇功能未實行（見 TODO 段）
 
 **✅ 部署流程檢測系統已落地（2026-08-20 v0.10.5）**
 - 設計 document：`docs/deployment-checkpoint-system.md`（每步驗證標準 + 程式化成功標準 — 檔案/視窗/log 檢查，唔靠 AI）
