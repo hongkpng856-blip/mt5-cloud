@@ -279,10 +279,27 @@ class InstallWizard:
         self.start_agent_auto(url, sid, tok)
 
     def create_desktop_shortcut(self):
-        """建立桌面捷徑（double-click 開 Tradotcom Agent）— 用 powershell WScript.Shell"""
+        """建立桌面捷徑（double-click 開 Tradotcom Agent — 指向 launcher 完整流程）"""
         try:
             desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-            target = os.path.join(BASE_DIR, "tradotcom_agent.pyw")
+            # 🚨 2026-08-26 FIX：指向 launcher.bat（唔係 pyw）— launcher 會更新 pyw + agent.py + 啟動
+            _lnk_bat = os.path.join(BASE_DIR, "tradotcom_launcher.bat")
+            # 🚨 FIX：launcher 可能唔喺固定 folder（用戶喺 Downloads 下載）→ 自動下載去固定位置
+            if not os.path.isfile(_lnk_bat):
+                try:
+                    _log("Downloading launcher.bat...")
+                    import urllib.request as _ur3
+                    _req3 = _ur3.Request("https://mt5cloud.esgov.org/api/agent-download", headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
+                    with _ur3.urlopen(_req3, timeout=20) as _r3:
+                        with open(_lnk_bat, "wb") as _f3:
+                            _f3.write(_r3.read())
+                    _log("launcher.bat downloaded")
+                except Exception as _e3:
+                    _log(f"launcher download failed: {_e3}")
+            if not os.path.isfile(_lnk_bat):
+                _lnk_bat = os.path.join(BASE_DIR, "tradotcom_agent.pyw")  # fallback
+            target = _lnk_bat
             lnk = os.path.join(desktop, "Tradotcom Agent.lnk")
             icon = os.path.join(BASE_DIR, "tradotcom.ico") if os.path.exists(os.path.join(BASE_DIR, "tradotcom.ico")) else ""
             ps = (
