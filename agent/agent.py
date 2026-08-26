@@ -50,17 +50,48 @@ sio = socketio.Client(logger=False, engineio_logger=False)
 ea_config_cache = {}
 ea_heartbeats = {}
 
+def _show_status_popup(title, msg, ok):
+    """🚨 2026-08-26（安裝驗證）：tkinter 彈窗 — Agent 啟動連線成功/失敗顯示
+    成功 → 綠色「✅ Agent 已連接」；失敗 → 紅色「❌ 連線失敗」
+    background thread 唔可以整 tkinter — 要喺 main thread（用 threading queue 或者直接喺 main call）
+    """
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        root.update()
+        if ok:
+            messagebox.showinfo("✅ Agent 已連接", msg)
+        else:
+            messagebox.showerror("❌ Agent 連線失敗", msg)
+        root.destroy()
+    except Exception:
+        pass
+
+
 def connect():
     print(f"✅ Connected to {SERVER_URL}")
     # Register with server → join agent room for deploy commands
     sio.emit('agent_register', {'agent_id': AGENT_ID, 'token': AGENT_TOKEN})
     print(f"   Registering as {AGENT_ID}...")
+    # 🚨 2026-08-26（安裝驗證）：啟動成功 → 綠色彈窗（等 registered 確認先彈 — 用 thread 延遲）
+    import threading as _th_p
+    def _pop_ok():
+        time.sleep(1.5)
+        if sio.connected:
+            _show_status_popup("✅ Agent 已連接", f"Tradotcom Agent 已成功連接伺服器\n\nAgent ID: {AGENT_ID}\n伺服器: {SERVER_URL}", True)
+    _th_p.Thread(target=_pop_ok, daemon=True).start()
 
 def disconnect():
     print("❌ Disconnected")
 
 def on_registered(data):
     print(f"🆔 Registered: {data}")
+    # 🚨 2026-08-26（安裝驗證）：註冊失敗（token 錯等）→ 紅色彈窗
+    if isinstance(data, dict) and data.get('status') == 'error':
+        _show_status_popup("❌ Agent 連線失敗", f"伺服器拒絕註冊：{data.get('msg', 'token 可能唔啱')}\n\n請檢查 Agent ID 同 Token 是否正確", False)
     # Server auto-pushes install_ea_command on register
 
 sio.on('connect', connect)

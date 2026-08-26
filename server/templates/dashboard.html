@@ -1082,7 +1082,12 @@ const socket = io();
 
 // 聽 Agent 嘅安裝結果 (dedup)
 let _lastLog = '';
-socket.on('install_result', (data) => {
+socket.on('agent_connected', (data) => {
+            if (data && data.msg) showToast(data.msg, 'success');
+            loadDashboard();
+            loadEAConfig();
+        });
+        socket.on('install_result', (data) => {
     const msg = data.msg || ('已安裝: ' + data.ea);
     if (msg === _lastLog) return; // skip duplicate
     _lastLog = msg;

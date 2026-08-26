@@ -3510,6 +3510,11 @@ def handle_register(data):
         agent.last_seen = datetime.utcnow()
         db.session.commit()
         emit('registered', {"status":"ok"})
+        # 🚨 2026-08-26（安裝驗證）：Agent 連上 → 通知前端（toast「✅ Agent 已連線」）
+        try:
+            socketio.emit('agent_connected', {"agent_id": agent.agent_id, "msg": f"✅ Agent {agent.agent_id} 已連線"}, room=agent.agent_id)
+        except Exception:
+            pass
         # 自動推送 EA 配置俾 Agent（debounce: 每 60 秒最多一次）
         user = agent.user
         if user and user.ea_config and user.ea_config != '{}':
