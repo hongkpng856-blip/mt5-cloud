@@ -20,6 +20,15 @@ except Exception as _e_tk:
         pass
     sys.exit(3)
 
+
+def _log(msg):
+    """寫 debug log（pythonw 靜默 — 所有階段都記低）"""
+    try:
+        with open(os.path.join(_log_dir, "agent_launcher.log"), "a", encoding="utf-8") as _lf:
+            _lf.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+    except Exception:
+        pass
+
 """
 Tradotcom Agent — 桌面版（double-click 安裝 + 啟動二合一）
 ===============================================================
@@ -355,14 +364,30 @@ def main():
         pass
 
     cfg = load_config()
+    _log(f"config: {json.dumps(cfg, ensure_ascii=False)[:100]}")
     if cfg.get("agent_id"):
         # 已安裝 → 直接啟動（快閃一下即隱藏 — Agent 自己彈窗）
+        _log("發現 agent_id → 直接啟動模式")
         proc = direct_launch(cfg)
-        root.destroy()
-        return
+        _log(f"direct_launch 返回: {proc}")
+        # 🚨 FIX（2026-08-26）：agent.py 唔存在（安裝未完成）→ 唔好靜默關視窗 — 提示重裝
+        if proc is None:
+            _log("agent.py 唔存在 → 顯示問題提示")
+            root.withdraw()
+            messagebox.showwarning("Agent 未安裝完成",
+                "偵測到舊嘅 Agent 設定，但 agent.py 未安裝。\n\n"
+                "按確定重新啟動安裝精靈。")
+            root.deiconify()
+            cfg = {}
+        else:
+            root.destroy()
+            return
 
+    _log("冇 config → 開安裝精靈")
     wizard = InstallWizard(root)
+    _log("InstallWizard built — mainloop 開始")
     root.mainloop()
+    _log("mainloop 返回（視窗關閉）")
 
 
 if __name__ == "__main__":

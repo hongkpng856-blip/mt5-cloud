@@ -123,8 +123,13 @@ if not "%PYTHONW%"=="" (
 timeout /t 4 /nobreak >nul
 if exist "%~dp0agent_launcher.log" (
     findstr /c:"START pyw" "%~dp0agent_launcher.log" >nul 2>nul && (
-        echo ✅ 安裝程式已啟動 — 視窗應該出現咗
-        timeout /t 3 /nobreak >nul
+        echo ✅ 安裝程式已啟動
+        echo.
+        echo ── 啟動記錄 ──
+        type "%~dp0agent_launcher.log"
+        echo ──────────────
+        echo.
+        timeout /t 6 /nobreak >nul
         exit /b 0
     )
 )
