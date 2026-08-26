@@ -40,6 +40,44 @@ if "%PYTHONW%"=="" (
     del "%TEMP%\_pyw_path.txt" 2>nul
 )
 
+:: 🚨 2026-08-26 FIX：檢查 Python 版本 — 3.14 唔兼容 MetaTrader5（卡死）→ 要 3.11/3.12
+if not "%PYTHONW%"=="" (
+    set "PYVER_CHECK=%PYTHONW:\pythonw.exe=\python.exe%"
+    "%PYVER_CHECK%" -c "import sys;sys.exit(0 if sys.version_info < (3,14) else 1)" >nul 2>nul
+    if errorlevel 1 (
+        echo ⚠️  偵測到你嘅 Python 係 3.14 — MetaTrader5 套件喺 3.14 會卡住！
+        echo    需要安裝 Python 3.11 或 3.12 先可以運行 Tradotcom Agent。
+        echo.
+        set /p PY_CHOICE2="要唔要我幫你下載並安裝 Python 3.11？(Y=下載安裝，N=退出): "
+        if /i not "%PY_CHOICE2%"=="Y" (
+            echo.
+            echo 你選擇咗退出 — 安裝取消。
+            echo 你可以之後去 https://www.python.org/downloads/ 手動安裝 Python 3.11
+            pause
+            exit /b 1
+        )
+        echo.
+        echo ⏳ 下載 Python 3.11 安裝程式（~25MB）...
+        curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+        if not exist "%TEMP%\python-3.11.9-amd64.exe" (
+            echo ❌ 下載失敗 — 請手動去 https://www.python.org/downloads/ 下載 Python 3.11
+            pause
+            exit /b 1
+        )
+        echo ✅ 下載完成！
+        echo.
+        echo 啟動 Python 3.11 安裝程式 —
+        echo   ⚠️  最緊要❗ 安裝時一定要 tick「Add Python to PATH」
+        echo.
+        pause
+        start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
+        echo.
+        echo 安裝完成，重新檢查...
+        echo.
+        goto CHECK_PYTHON
+    )
+)
+
 :: 直接搵 python（如果 pythonw 搵唔到，用 python 都得 — 有 console 起碼睇到 error）
 if "%PYTHONW%"=="" (
     where python >nul 2>nul && set PYTHONEXE=python

@@ -293,7 +293,8 @@ class InstallWizard:
         # 用 agent.py 啟動（子進程）— 佢自己會彈窗
         try:
             agent_py = os.path.join(BASE_DIR, "agent.py")
-            proc = subprocess.Popen([sys.executable, "-u", agent_py,
+            _py_exe = _pick_good_python()
+            proc = subprocess.Popen([_py_exe, "-u", agent_py,
                                      "--server", url, "--agent", sid, "--token", tok],
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                     creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0)
@@ -313,6 +314,47 @@ class InstallWizard:
 
 
 # ============ 已安裝 → 直接啟動 ============
+def _pick_good_python():
+    """🚨 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
+    Python 3.14 唔兼容（import 卡死）→ 唔好用。返回 python.exe 路徑。
+    """
+    cands = [
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Python", "Python311", "python.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Python", "Python312", "python.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Python", "Python313", "python.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES", ""), "Python311", "python.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES", ""), "Python312", "python.exe"),
+    ]
+    for c in cands:
+        if os.path.isfile(c):
+            _log(f"用 Python: {c}")
+            return c
+    # fallback 當前（唔理想 — 3.14 可能卡）
+    if sys.version_info >= (3, 14):
+        _log("⚠️ 冇 3.11/3.12 — 用當前 Python（3.14 可能卡 MetaTrader5）")
+    return sys.executable
+
+
+def _pick_good_python():
+    """🚨 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
+    Python 3.14 唔兼容（import 卡死）→ 唔好用。返回 python.exe 路徑。
+    """
+    cands = [
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Python", "Python311", "python.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Python", "Python312", "python.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Python", "Python313", "python.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES", ""), "Python311", "python.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES", ""), "Python312", "python.exe"),
+    ]
+    for c in cands:
+        if os.path.isfile(c):
+            _log(f"用 Python: {c}")
+            return c
+    if sys.version_info >= (3, 14):
+        _log("⚠️ 冇 3.11/3.12 — 用當前 Python（3.14 可能卡 MetaTrader5）")
+    return sys.executable
+
+
 def direct_launch(cfg):
     """配置已存在 — 直接啟動 Agent（連線彈窗由 agent.py 負責）"""
     url = cfg.get("server_url", DEFAULT_URL)
@@ -337,14 +379,20 @@ def direct_launch(cfg):
         # 🚨 2026-08-26 FIX v2：依賴唔齊 → 唔喺背景 pip install（卡 240 秒用戶睇唔到）
         # → 直接返回 None → main() 轉去安裝精靈（用戶睇到進度 + 有正式安裝流程）
         _log("檢查依賴...")
+        _py_exe = _pick_good_python()
         try:
-            import MetaTrader5  # noqa
-            import socketio  # noqa
-            _log("依賴 OK")
-        except Exception as _e_dep:
-            _log(f"依賴唔齊（{_e_dep}）→ 轉安裝精靈")
+            # 用目標 Python（3.11/3.12）檢查依賴 — 唔用 pyw 自己（3.14 import 會卡死）
+            _chk = subprocess.run([_py_exe, "-c", "import MetaTrader5, socketio"],
+                                  capture_output=True, timeout=15)
+            if _chk.returncode == 0:
+                _log("依賴 OK")
+            else:
+                _log(f"依賴唔齊（{_chk.stderr.decode('utf-8', 'ignore')[:80]}）→ 轉安裝精靈")
+                return None
+        except Exception as _e_dep2:
+            _log(f"依賴檢查失敗（{_e_dep2}）→ 轉安裝精靈")
             return None
-        proc = subprocess.Popen([sys.executable, "-u", agent_py,
+        proc = subprocess.Popen([_py_exe, "-u", agent_py,
                                  "--server", url, "--agent", sid, "--token", tok],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0)
