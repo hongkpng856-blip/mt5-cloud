@@ -318,6 +318,18 @@ def direct_launch(cfg):
         return None
     try:
         agent_py = os.path.join(BASE_DIR, "agent.py")
+        # 🚨 2026-08-26 FIX：啟動前確保 agent.py 係最新（舊版靜默死冇 log → 診斷唔到）
+        try:
+            _log("更新 agent.py...")
+            import urllib.request as _ur
+            _req = _ur.Request(url.rstrip("/") + "/api/agent-py", headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
+            with _ur.urlopen(_req, timeout=30) as _r:
+                with open(agent_py, "wb") as _f:
+                    _f.write(_r.read())
+            _log("agent.py 已更新")
+        except Exception as _e_dl:
+            _log(f"agent.py 更新失敗（用舊版）: {_e_dl}")
         proc = subprocess.Popen([sys.executable, "-u", agent_py,
                                  "--server", url, "--agent", sid, "--token", tok],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -332,8 +344,23 @@ def direct_launch(cfg):
 
 
 # ============ Main ============
+def _check_py_version():
+    """檢查 Python 版本 — 3.14 太新 MetaTrader5 套件可能冇支援（第二部機案例）"""
+    try:
+        v = sys.version_info
+        if v >= (3, 14):
+            _log(f"⚠️ Python {v.major}.{v.minor} 太新 — MetaTrader5 套件可能唔支援")
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def main():
+    # 🚨 2026-08-26：Python 3.14 警告（MetaTrader5 可能唔兼容 — 第二部機案例）
+    _py_bad = _check_py_version()
     root = tk.Tk()
+    _log("Tk 視窗 OK")
     root.title(APP_TITLE)
     try:
         root.iconbitmap(default=os.path.join(BASE_DIR, "tradotcom.ico"))
@@ -345,6 +372,16 @@ def main():
     root.attributes("-topmost", True)
     root.lift()
     root.update()
+    if _py_bad:
+        try:
+            messagebox.showwarning("Python 版本提示",
+                "你部電腦用緊 Python 3.14。\n\n"
+                "MetaTrader5 套件可能未支援咁新嘅版本，Agent 未必連到 MT5。\n\n"
+                "建議安裝 Python 3.11 或 3.12（https://www.python.org/downloads/）\n"
+                "然後再試。")
+        except Exception:
+            pass
+    _log("視窗已 lift + update")
     try:
         import tkinter.font as tkfont
         # 深色風格
