@@ -17,6 +17,25 @@ import threading
 import json
 
 # === Config ===
+import sys as _sys0, os as _os0, traceback as _tb0
+# 🚨 2026-08-26（安裝診斷）：agent.py 啟動即寫 log — pythonw 靜默任何 error 都記低
+try:
+    _alog = os.path.join(os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd(), "agent_launcher.log")
+    with open(_alog, "a", encoding="utf-8") as _lf:
+        _lf.write(f"[{time.strftime('%H:%M:%S')}] AGENT START python={_sys0.executable}\n")
+except Exception:
+    pass
+
+try:
+    import MetaTrader5 as mt5
+except Exception as _e_mt5:
+    try:
+        with open(_alog, "a", encoding="utf-8") as _lf:
+            _lf.write(f"[{time.strftime('%H:%M:%S')}] ❌ MetaTrader5 import 失敗: {_e_mt5}\n{_tb0.format_exc()}\n")
+    except Exception:
+        pass
+    _sys0.exit(2)
+
 SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://mt5cloud.esgov.org')
 AGENT_ID = os.environ.get('MT5_CLOUD_AGENT', 'DEV00001')
 AGENT_TOKEN = os.environ.get('MT5_CLOUD_TOKEN', '')
