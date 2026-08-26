@@ -311,6 +311,10 @@ def main():
         pass
     root.geometry("520x520")
     root.configure(bg="#0b0e11")
+    # 🚨 2026-08-26：確保視窗彈到最前（用戶話 double-click 冇反應 — 可能開咗喺背景）
+    root.attributes("-topmost", True)
+    root.lift()
+    root.update()
     try:
         import tkinter.font as tkfont
         # 深色風格
@@ -341,4 +345,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # 🚨 2026-08-26：加 debug log（pythonw 靜默 — error 唔顯示 → 寫 log 檔）
+    try:
+        main()
+    except Exception as _e_main:
+        try:
+            with open(os.path.join(BASE_DIR, 'agent_launcher.log'), 'a', encoding='utf-8') as _lf:
+                import traceback as _tb
+                _lf.write(f"[{time.strftime('%H:%M:%S')}] ERROR: {_e_main}\n{_tb.format_exc()}\n")
+        except Exception:
+            pass
