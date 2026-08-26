@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+import sys, os, time, traceback as _tb0
+
+# 🚨 2026-08-26：啟動即寫 log（證明 pyw 有被執行 — pythonw 靜默任何 error 都捕捉）
+try:
+    _log_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd()
+    with open(os.path.join(_log_dir, "agent_launcher.log"), "a", encoding="utf-8") as _lf:
+        _lf.write(f"[{time.strftime('%H:%M:%S')}] START pyw (pid={os.getpid()}) python={sys.executable}\n")
+except Exception:
+    pass
+
+try:
+    import tkinter as tk
+    from tkinter import messagebox, ttk
+except Exception as _e_tk:
+    try:
+        with open(os.path.join(_log_dir, "agent_launcher.log"), "a", encoding="utf-8") as _lf:
+            _lf.write(f"[{time.strftime('%H:%M:%S')}] ❌ tkinter import 失敗: {_e_tk}\n{_tb0.format_exc()}\n")
+    except Exception:
+        pass
+    sys.exit(3)
+
 """
 Tradotcom Agent — 桌面版（double-click 安裝 + 啟動二合一）
 ===============================================================
