@@ -243,7 +243,9 @@ class InstallWizard:
         self._status.config(text="Installing Python packages...")
         self.root.update()
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "-q", "MetaTrader5", "python-socketio[client]", "requests"],
+            # 🚨 2026-08-26 FIX：用「執行 agent 嗰個 Python」（3.11/3.12）裝套件 — 唔用 pyw 自己（可能 3.14/uv — 唔一致）
+            _pip_py = _pick_good_python()
+            subprocess.run([_pip_py, "-m", "pip", "install", "-q", "MetaTrader5", "python-socketio[client]", "requests"],
                            timeout=180)
         except Exception as e:
             self._status.config(text=f"[WARNING] Package install warning: {e}")
