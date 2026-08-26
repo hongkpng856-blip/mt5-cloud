@@ -416,11 +416,10 @@ def main():
         # 🚨 FIX（2026-08-26）：agent.py 唔存在（安裝未完成）→ 唔好靜默關視窗 — 提示重裝
         if proc is None:
             _log("agent.py 唔存在 → 顯示問題提示")
-            root.withdraw()
-            messagebox.showwarning("Agent 未安裝完成",
+            # 🚨 FIX：唔好喺 mainloop 前 messagebox（死鎖）— 用 after() 等 mainloop 開始先彈
+            root.after(300, lambda: messagebox.showwarning("Agent 未安裝完成",
                 "偵測到舊嘅 Agent 設定，但 agent.py 未安裝。\n\n"
-                "按確定重新啟動安裝精靈。")
-            root.deiconify()
+                "按確定重新啟動安裝精靈。"))
             cfg = {}
         else:
             root.destroy()
