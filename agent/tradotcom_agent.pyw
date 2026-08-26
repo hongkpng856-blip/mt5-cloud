@@ -118,22 +118,22 @@ class InstallWizard:
 
     def build_welcome(self):
         self.clear()
-        tk.Label(self.root, text="☁️ Tradotcom Agent 安裝精靈", font=("Segoe UI", 16, "bold")).pack(pady=20)
+        tk.Label(self.root, text="Tradotcom Agent Setup Wizard", font=("Segoe UI", 16, "bold")).pack(pady=20)
         # 🚨 2026-08-26：Python 3.14 警告（純文字 — 唔會卡死）
         if _check_py_version():
-            tk.Label(self.root, text="⚠️ 你嘅 Python 3.14 比較新，若果 Agent 連唔到 MT5，\n建議安裝 Python 3.11/3.12（python.org）",
+            tk.Label(self.root, text="Your Python 3.14 is very new - if Agent can't connect to MT5,\ninstall Python 3.11/3.12 (python.org)",
                      fg="#f0b90b", bg="#3d2f00", padx=10, pady=8, justify="left").pack(pady=6, padx=30)
-        tk.Label(self.root, text="呢個程式會安裝 Tradotcom Agent 到你部電腦\n\n" +
+        tk.Label(self.root, text="This program installs Tradotcom Agent on this computer\n\n" +
                  "用途：\n"
                  "• 連接你嘅 Tradotcom 帳戶\n"
                  "• 控制你部電腦嘅 MetaTrader 5（開圖表 / 掛 EA / 刪除 EA）\n"
                  "• 上傳交易資料俾你喺網頁睇", justify="left").pack(pady=10, padx=30)
-        tk.Button(self.root, text="下一步 →", command=self.build_terms, width=20,
+        tk.Button(self.root, text="Next ->", command=self.build_terms, width=20,
                   bg="#f0b90b", fg="#0b0e11", font=("Segoe UI", 11, "bold")).pack(pady=15)
 
     def build_terms(self):
         self.clear()
-        tk.Label(self.root, text="使用條款", font=("Segoe UI", 14, "bold")).pack(pady=12)
+        tk.Label(self.root, text="Terms of Use", font=("Segoe UI", 14, "bold")).pack(pady=12)
         terms = (
             "1. 本 Agent 會讀取你部電腦嘅 MT5 交易資料\n"
             "   （帳戶餘額 / 持倉 / 交易記錄），\n"
@@ -146,36 +146,36 @@ class InstallWizard:
             "4. 你同意只喺自己擁有嘅 MT5 帳戶使用。"
         )
         tk.Label(self.root, text=terms, justify="left", font=("Segoe UI", 10)).pack(padx=30, pady=8)
-        tk.Checkbutton(self.root, text="✅ 我同意以上條款並繼續安裝", variable=self.vars["tick"],
+        tk.Checkbutton(self.root, text="I agree to the terms above and continue", variable=self.vars["tick"],
                        font=("Segoe UI", 11)).pack(pady=10)
         btns = tk.Frame(self.root)
         btns.pack(pady=12)
-        tk.Button(btns, text="← 上一步", command=self.build_welcome, width=12).pack(side="left", padx=6)
-        tk.Button(btns, text="下一步 →", command=self._terms_next, width=12,
+        tk.Button(btns, text="<- Back", command=self.build_welcome, width=12).pack(side="left", padx=6)
+        tk.Button(btns, text="Next ->", command=self._terms_next, width=12,
                   bg="#f0b90b", fg="#0b0e11", font=("Segoe UI", 10, "bold")).pack(side="left", padx=6)
 
     def _terms_next(self):
         if not self.vars["tick"].get():
-            messagebox.showwarning("需要同意", "請先勾選「同意條款」先可以繼續安裝")
+            messagebox.showwarning("Agreement Required", "Please tick 'I agree to the terms' first to continue")
             return
         self.build_env_check()
 
     def build_env_check(self):
         self.clear()
-        tk.Label(self.root, text="檢查必要軟件", font=("Segoe UI", 14, "bold")).pack(pady=12)
+        tk.Label(self.root, text="Checking Required Software", font=("Segoe UI", 14, "bold")).pack(pady=12)
         mt5_ok = check_mt5()
         py_ok = check_python()
-        tk.Label(self.root, text="🔍 MetaTrader 5: " + ("✅ 已安裝" if mt5_ok else "❌ 未安裝"),
+        tk.Label(self.root, text="🔍 MetaTrader 5: " + ("Installed" if mt5_ok else "Not installed"),
                  font=("Segoe UI", 11)).pack(pady=6)
-        tk.Label(self.root, text="🔍 Python:       " + ("✅ 已安裝" if py_ok else "❌ 未安裝"),
+        tk.Label(self.root, text="🔍 Python:       " + ("Installed" if py_ok else "Not installed"),
                  font=("Segoe UI", 11)).pack(pady=6)
         if not mt5_ok:
-            tk.Label(self.root, text="\n⚠️ 需要先安裝 MetaTrader 5（去你嘅 Broker 官網下載）",
+            tk.Label(self.root, text="\n[WARNING] Install MetaTrader 5 first (download from your broker's website)",
                      fg="#f85149").pack(pady=6)
         btns = tk.Frame(self.root)
         btns.pack(pady=15)
-        tk.Button(btns, text="← 上一步", command=self.build_terms, width=12).pack(side="left", padx=6)
-        nxt = tk.Button(btns, text="下一步 →", width=12, bg="#f0b90b", fg="#0b0e11", font=("Segoe UI", 10, "bold"))
+        tk.Button(btns, text="<- Back", command=self.build_terms, width=12).pack(side="left", padx=6)
+        nxt = tk.Button(btns, text="Next ->", width=12, bg="#f0b90b", fg="#0b0e11", font=("Segoe UI", 10, "bold"))
         nxt.pack(side="left", padx=6)
         if mt5_ok:
             nxt.config(command=self.build_config)
@@ -184,13 +184,13 @@ class InstallWizard:
 
     def build_config(self):
         self.clear()
-        tk.Label(self.root, text="設定伺服器與 Agent", font=("Segoe UI", 14, "bold")).pack(pady=12)
-        tk.Label(self.root, text="請登入 Tradotcom 網站 → Agent 卡撳「Agent 安裝」拎 Agent ID 同 Token",
+        tk.Label(self.root, text="Server and Agent Settings", font=("Segoe UI", 14, "bold")).pack(pady=12)
+        tk.Label(self.root, text="Log in to Tradotcom website -> Agent card -> 'Agent Install' to get Agent ID and Token",
                  fg="#8b949e", font=("Segoe UI", 9)).pack(pady=4)
 
         frm = tk.Frame(self.root)
         frm.pack(pady=10, padx=30)
-        tk.Label(frm, text="平台網址:", font=("Segoe UI", 10)).grid(row=0, column=0, sticky="e", pady=5)
+        tk.Label(frm, text="Server URL:", font=("Segoe UI", 10)).grid(row=0, column=0, sticky="e", pady=5)
         tk.Entry(frm, textvariable=self.vars["server_url"], width=35, font=("Segoe UI", 10)).grid(row=0, column=1, pady=5)
         tk.Label(frm, text="Agent ID:", font=("Segoe UI", 10)).grid(row=1, column=0, sticky="e", pady=5)
         tk.Entry(frm, textvariable=self.vars["agent_id"], width=35, font=("Segoe UI", 10)).grid(row=1, column=1, pady=5)
@@ -199,8 +199,8 @@ class InstallWizard:
 
         btns = tk.Frame(self.root)
         btns.pack(pady=15)
-        tk.Button(btns, text="← 上一步", command=self.build_env_check, width=12).pack(side="left", padx=6)
-        tk.Button(btns, text="安裝 →", command=self.do_install, width=12,
+        tk.Button(btns, text="<- Back", command=self.build_env_check, width=12).pack(side="left", padx=6)
+        tk.Button(btns, text="Install ->", command=self.do_install, width=12,
                   bg="#f0b90b", fg="#0b0e11", font=("Segoe UI", 10, "bold")).pack(side="left", padx=6)
 
     def do_install(self):
@@ -208,14 +208,14 @@ class InstallWizard:
         tok = self.vars["agent_token"].get().strip()
         url = self.vars["server_url"].get().strip() or DEFAULT_URL
         if not sid or not tok:
-            messagebox.showwarning("資料不完整", "請填 Agent ID 同 Token（喺網站 Agent 卡「Agent 安裝」度有）")
+            messagebox.showwarning("Incomplete Data", "Please fill in Agent ID and Token (available in the website Agent card -> 'Agent Install')")
             return
         # 儲存配置
         save_config({"server_url": url, "agent_id": sid, "agent_token": tok})
         # 下載 agent.py
         self.clear()
-        tk.Label(self.root, text="安裝中…", font=("Segoe UI", 14, "bold")).pack(pady=20)
-        self._status = tk.Label(self.root, text="下載 agent.py…", font=("Segoe UI", 10))
+        tk.Label(self.root, text="Installing...", font=("Segoe UI", 14, "bold")).pack(pady=20)
+        self._status = tk.Label(self.root, text="Downloading agent.py...", font=("Segoe UI", 10))
         self._status.pack(pady=8)
         self.root.update()
 
@@ -231,25 +231,25 @@ class InstallWizard:
             with urllib.request.urlopen(_dl_req, timeout=30) as _dl_r:
                 with open(agent_py, "wb") as _dl_f:
                     _dl_f.write(_dl_r.read())
-            self._status.config(text="✅ agent.py 已下載")
+            self._status.config(text="agent.py downloaded")
             self.root.update()
         except Exception as e:
-            self._status.config(text=f"❌ 下載失敗: {e}")
+            self._status.config(text=f"Download failed: {e}")
             self.root.update()
-            messagebox.showerror("下載失敗", f"無法下載 agent.py:\n{e}\n\n請檢查平台網址同網絡")
+            messagebox.showerror("Download Failed", f"Cannot download agent.py:\n{e}\n\nCheck the server URL and network")
             return
 
         # 安裝依賴
-        self._status.config(text="安裝 Python 套件…")
+        self._status.config(text="Installing Python packages...")
         self.root.update()
         try:
             subprocess.run([sys.executable, "-m", "pip", "install", "-q", "MetaTrader5", "python-socketio[client]", "requests"],
                            timeout=180)
         except Exception as e:
-            self._status.config(text=f"⚠️ 套件安裝警告: {e}")
+            self._status.config(text=f"[WARNING] Package install warning: {e}")
             self.root.update()
 
-        self._status.config(text="✅ 安裝完成！")
+        self._status.config(text="Installation complete!")
         self.root.update()
         # 🚨 建立桌面捷徑（double-click 開）
         try:
@@ -258,7 +258,7 @@ class InstallWizard:
             pass
         time.sleep(0.5)
         # 自動啟動（唔使手動開 run_agent.bat）
-        messagebox.showinfo("安裝完成", "✅ 安裝完成！\nAgent 而家會自動啟動…")
+        messagebox.showinfo("Installation Complete", "Installation complete!\nAgent will start automatically...")
         self.start_agent_auto(url, sid, tok)
 
     def create_desktop_shortcut(self):
@@ -277,7 +277,7 @@ class InstallWizard:
                 + "$lnk.Save()"
             )
             subprocess.run(["powershell", "-NoProfile", "-Command", ps], timeout=20, capture_output=True)
-            self._status.config(text="✅ 安裝完成 + 桌面捷徑已建立！")
+            self._status.config(text="Installation Complete + Desktop Shortcut Created!")
             self.root.update()
         except Exception as e:
             print(f"[shortcut] {e}")
@@ -285,8 +285,8 @@ class InstallWizard:
     # ============ 自動啟動 Agent ============
     def start_agent_auto(self, url, sid, tok):
         self.clear()
-        tk.Label(self.root, text="啟動 Tradotcom Agent…", font=("Segoe UI", 14, "bold")).pack(pady=20)
-        self._status = tk.Label(self.root, text="連接伺服器…（成功會彈綠色視窗）", font=("Segoe UI", 10))
+        tk.Label(self.root, text="Starting Tradotcom Agent...", font=("Segoe UI", 14, "bold")).pack(pady=20)
+        self._status = tk.Label(self.root, text="Connecting to server... (green popup = success)", font=("Segoe UI", 10))
         self._status.pack(pady=8)
         self.root.update()
 
@@ -298,7 +298,7 @@ class InstallWizard:
                                      "--server", url, "--agent", sid, "--token", tok],
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                     creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0)
-            self._status.config(text=f"✅ Agent 已啟動（PID {proc.pid}）\n\n呢個視窗可以關閉 — Agent 會喺背景運行\n（綠色/紅色彈窗會話你知連接狀態）")
+            self._status.config(text=f"Agent started (PID {proc.pid})\n\nYou can close this window - Agent runs in background\n(green/red popup shows connection status)")
             self.root.update()
             # 5 秒後指引關閉
             self.root.after(3000, lambda: messagebox.showinfo(
@@ -308,12 +308,12 @@ class InstallWizard:
                 "• 失敗 → 紅色彈窗話你知原因\n\n"
                 "（下次想開 Agent — double-click 呢個程式 / 桌面捷徑即可）"))
         except Exception as e:
-            self._status.config(text=f"❌ 啟動失敗: {e}")
+            self._status.config(text=f"Start failed: {e}")
             self.root.update()
-            messagebox.showerror("啟動失敗", str(e))
+            messagebox.showerror("Start Failed", str(e))
 
 
-# ============ 已安裝 → 直接啟動 ============
+# ============ 已Install -> 直接啟動 ============
 def _pick_good_python():
     """🚨 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
     Python 3.14 唔兼容（import 卡死）→ 唔好用。返回 python.exe 路徑。
@@ -399,7 +399,7 @@ def direct_launch(cfg):
         return proc
     except Exception as e:
         try:
-            messagebox.showerror("啟動失敗", f"無法啟動 Agent:\n{e}")
+            messagebox.showerror("Start Failed", f"Cannot start Agent:\n{e}")
         except Exception:
             pass
         return None
@@ -419,7 +419,7 @@ def _check_py_version():
 
 
 def main():
-    # 🚨 2026-08-26：Python 3.14 警告（唔用 messagebox — mainloop 前彈會卡死；改喺精靈 welcome 頁顯示）
+    # Python 3.14 warning shown in wizard welcome page (not messagebox - avoids deadlock)
     root = tk.Tk()
     _log("Tk 視窗 OK")
     root.title(APP_TITLE)
@@ -455,17 +455,17 @@ def main():
     cfg = load_config()
     _log(f"config: {json.dumps(cfg, ensure_ascii=False)[:100]}")
     if cfg.get("agent_id"):
-        # 已安裝 → 直接啟動（快閃一下即隱藏 — Agent 自己彈窗）
+        # 已Install -> 直接啟動（快閃一下即隱藏 — Agent 自己彈窗）
         _log("發現 agent_id → 直接啟動模式")
         proc = direct_launch(cfg)
         _log(f"direct_launch 返回: {proc}")
         # 🚨 FIX（2026-08-26）：agent.py 唔存在（安裝未完成）→ 唔好靜默關視窗 — 提示重裝
         if proc is None:
             _log("agent.py 唔存在 → 顯示問題提示")
-            # 🚨 FIX：唔好喺 mainloop 前 messagebox（死鎖）— 用 after() 等 mainloop 開始先彈
-            root.after(300, lambda: messagebox.showwarning("Agent 未安裝完成",
-                "偵測到舊嘅 Agent 設定，但 agent.py 未安裝。\n\n"
-                "按確定重新啟動安裝精靈。"))
+            # FIX: don't call messagebox before mainloop (deadlock) - use after()
+            root.after(300, lambda: messagebox.showwarning("Agent Not Installed",
+                "Old Agent config detected but agent.py not installed.\n\n"
+                "Press OK to restart the setup wizard."))
             cfg = {}
         else:
             root.destroy()

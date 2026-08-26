@@ -1,25 +1,25 @@
 @echo off
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
-title Tradotcom Agent 啟動器
+title Tradotcom Agent Setup
 
 :: ============================================================
-::  Tradotcom Agent — double-click 啟動器
-::  有自動檢測：Python 冇 → 幫你下載安裝 → 再繼續
+::  Tradotcom Agent - double-click launcher
+::  Auto-detects: Python 3.14 blocked (MT5 incompatible) -> installs 3.11
 :: ============================================================
 
 echo.
-echo ══════════════════════════════════════════════
-echo   ☁️  Tradotcom Agent 安裝程式
-echo ══════════════════════════════════════════════
+echo ==============================================
+echo   Tradotcom Agent Installer
+echo ==============================================
 echo.
 
-:: ========== 1. 檢查 Python ==========
+:: ========== 1. Check Python ==========
 :CHECK_PYTHON
 set PYTHONW=
 set PYTHONEXE=
 
-:: 搵 pythonw / python（多個位置 + py launcher）
+:: Find pythonw / python (multiple locations + py launcher)
 for %%p in (
     "%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe"
     "%LOCALAPPDATA%\Programs\Python\Python312\pythonw.exe"
@@ -33,7 +33,7 @@ for %%p in (
     if exist %%p set PYTHONW=%%~p
 )
 
-:: 用 py launcher 搵（如果上面搵唔到）
+:: Fallback to py launcher
 if "%PYTHONW%"=="" (
     py -3 -c "import sys,os;print(os.path.join(os.path.dirname(sys.executable),'pythonw.exe'),end='')" > "%TEMP%\_pyw_path.txt" 2>nul
     set /p PYTHONW=<"%TEMP%\_pyw_path.txt"
@@ -41,130 +41,113 @@ if "%PYTHONW%"=="" (
     del "%TEMP%\_pyw_path.txt" 2>nul
 )
 
-:: 🚨 2026-08-26 FIX：檢查 Python 版本 — 3.14 唔兼容 MetaTrader5（卡死）→ 要 3.11/3.12
+:: Check Python version - 3.14 incompatible with MetaTrader5 -> need 3.11/3.12
 if not "%PYTHONW%"=="" (
     set "PYVER_CHECK=%PYTHONW:\pythonw.exe=\python.exe%"
     "%PYVER_CHECK%" -c "import sys;sys.exit(0 if sys.version_info < (3,14) else 1)" >nul 2>nul
     if errorlevel 1 (
-        echo [警告] 偵測到你嘅 Python 係 3.14 - MetaTrader5 喺 3.14 會卡住！
-        echo    需要安裝 Python 3.11 或 3.12 先可以運行 Tradotcom Agent。
+        echo [WARNING] Your Python is 3.14 - MetaTrader5 hangs on 3.14!
+        echo    Tradotcom Agent requires Python 3.11 or 3.12.
         echo.
-        set /p PY_CHOICE2="要唔要我幫你下載並安裝 Python 3.11？(Y=下載安裝，N=退出): "
+        set /p PY_CHOICE2="Download and install Python 3.11? (Y=Download, N=Exit): "
         if /i not "!PY_CHOICE2!"=="Y" (
             echo.
-            echo 你選擇咗退出 — 安裝取消。
-            echo 你可以之後去 https://www.python.org/downloads/ 手動安裝 Python 3.11
+            echo You chose to exit - installation cancelled.
+            echo You can install Python 3.11 manually later: https://www.python.org/downloads/
             pause
             exit /b 1
         )
         echo.
-        echo ⏳ 下載 Python 3.11 安裝程式（~25MB）...
+        echo Downloading Python 3.11 installer (~25MB)...
         curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
         if not exist "%TEMP%\python-3.11.9-amd64.exe" (
-            echo ❌ 下載失敗 — 請手動去 https://www.python.org/downloads/ 下載 Python 3.11
+            echo [ERROR] Download failed - please install Python 3.11 manually: https://www.python.org/downloads/
             pause
             exit /b 1
         )
-        echo ✅ 下載完成！
+        echo Download complete!
         echo.
-        echo 啟動 Python 3.11 安裝程式 —
-        echo   [重要] 安裝時一定要 tick  Add Python to PATH
+        echo Launching Python 3.11 installer...
+        echo   [IMPORTANT] Tick "Add Python to PATH" during installation!
         echo.
         pause
         start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
         echo.
-        echo 安裝程式執行完畢，檢查 Python 3.11...
-        :: 🚨 FIX：直接指去 3.11 標準路徑（唔靠 for loop — 避免 py -3 又揀返 3.14 無限循環）
+        echo Installer finished. Verifying Python 3.11...
+        :: Directly point to standard 3.11 paths (avoid py -3 picking 3.14 again -> infinite loop)
         if exist "%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe" (
             set "PYTHONW=%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe"
-            echo ✅ Python 3.11 已安裝
+            echo Python 3.11 installed OK.
         ) else if exist "%PROGRAMFILES%\Python311\pythonw.exe" (
             set "PYTHONW=%PROGRAMFILES%\Python311\pythonw.exe"
-            echo ✅ Python 3.11 已安裝
+            echo Python 3.11 installed OK.
         ) else (
-            echo ❌ 搵唔到 Python 3.11 — 可能安裝路徑唔同或者冇完成安裝。
-            echo   請去 Start Menu 搵「Python 3.11」手動開啟確認，或者
-            echo   去 https://www.python.org/downloads/ 重新安裝 3.11
-            echo   （記得 tick  Add Python to PATH）
+            echo [ERROR] Python 3.11 not found - installation may not have completed.
+            echo   Please re-run the installer and tick "Add Python to PATH",
+            echo   or get Python 3.11 from https://www.python.org/downloads/
             pause
             exit /b 1
         )
         echo.
-        echo ✅ 繼續安裝 Tradotcom Agent...
+        echo Continuing Tradotcom Agent setup...
     )
 )
 
-:: 直接搵 python（如果 pythonw 搵唔到，用 python 都得 — 有 console 起碼睇到 error）
-if "%PYTHONW%"=="" (
-    where python >nul 2>nul && set PYTHONEXE=python
-)
+if "%PYTHONW%"=="" goto NO_PYTHON
+goto PYTHON_OK
 
-if not "%PYTHONW%"=="" goto PYTHON_OK
-if not "%PYTHONEXE%"=="" (
-    for /f "delims=" %%i in ('where python') do set PYTHONEXE=%%i
-    goto PYTHON_OK
-)
-
-:: ========== 沒有 Python → 幫你安裝 ==========
-echo [警告] 未偵測到 Python！
+:NO_PYTHON
+echo [WARNING] Python not detected!
 echo.
-echo Tradotcom Agent 需要 Python 3.11 先可以執行。
+echo Tradotcom Agent requires Python 3.11 to run.
 echo.
-set /p PY_CHOICE="要唔要我幫你下載並安裝 Python 3.11 (Y=下載安裝，N=退出): "
+set /p PY_CHOICE="Download and install Python 3.11? (Y=Download, N=Exit): "
 if /i not "!PY_CHOICE!"=="Y" (
     echo.
-    echo 你選擇咗退出 — 安裝取消。
-    echo 你可以之後去 https://www.python.org/downloads/ 手動安裝
+    echo Exiting - installation cancelled.
+    echo You can install Python manually: https://www.python.org/downloads/
     pause
     exit /b 1
 )
 
 echo.
-echo ⏳ 下載 Python 3.11 安裝程式（~25MB）...
-echo.
+echo Downloading Python 3.11 installer (~25MB)...
 curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
 if not exist "%TEMP%\python-3.11.9-amd64.exe" (
-    echo ❌ 下載失敗 — 請手動去 https://www.python.org/downloads/ 下載安裝
+    echo [ERROR] Download failed - please install Python 3.11 manually: https://www.python.org/downloads/
     pause
     exit /b 1
 )
-
-echo ✅ 下載完成！
+echo Download complete!
 echo.
-echo 而家會啟動 Python 安裝程式 —
-echo   [重要] 安裝時一定要 tick:
-echo       ┌─────────────────────────────────┐
-echo       │  ☑ Add Python to PATH          │
-echo       │  ✓  Install Now（直接安裝）     │
-echo       └─────────────────────────────────┘
+echo Launching Python 3.11 installer...
+echo   [IMPORTANT] Tick "Add Python to PATH" during installation!
 echo.
 pause
-echo 啟動 Python 安裝程式...
 start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
 
-:: 裝完再檢查一次
+:: Verify again after install
 goto CHECK_PYTHON
 
-:: ========== Python 已裝 ==========
 :PYTHON_OK
-echo ✅ Python 已安裝
+echo Python found.
 echo.
 
-:: ========== 2. 確保有最新安裝程式 ==========
-:: 🚨 2026-08-26 FIX：每次重新下載 pyw（保證最新版 — 舊版冇 START log / 有 bug 會「冇反應」）
-echo ⏳ 更新安裝程式...
+:: ========== 2. Ensure latest installer ==========
+:: Re-download pyw each time (latest version - old versions have bugs)
+echo Updating installer...
 del "%~dp0agent_launcher.log" 2>nul
 curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%~dp0tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
 if not exist "%~dp0tradotcom_agent.pyw" (
-    echo ❌ 下載失敗 — 請檢查網絡
+    echo [ERROR] Download failed - please check your network.
     pause
     exit /b 1
 )
-echo ✅ 已更新
+echo Updated.
 echo.
 
-:: ========== 3. 執行安裝程式 ==========
-echo 🚀 啟動安裝精靈...
+:: ========== 3. Launch installer ==========
+echo Starting installer wizard...
 echo.
 
 if not "%PYTHONW%"=="" (
@@ -173,33 +156,33 @@ if not "%PYTHONW%"=="" (
     start "" "%PYTHONEXE%" "%~dp0tradotcom_agent.pyw"
 )
 
-:: 檢查 pyw 有冇真係啟動（log 有 START = 執行緊）
+:: Check pyw actually started (log has START = running)
 timeout /t 4 /nobreak >nul
 if exist "%~dp0agent_launcher.log" (
     findstr /c:"START pyw" "%~dp0agent_launcher.log" >nul 2>nul && (
-        echo ✅ 安裝程式已啟動
+        echo Installer started.
         echo.
-        echo ── 啟動記錄 ──
+        echo -- Startup log --
         type "%~dp0agent_launcher.log"
-        echo ──────────────
+        echo -----------------
         echo.
         timeout /t 6 /nobreak >nul
         exit /b 0
     )
 )
 
-echo [警告] 安裝程式似乎未成功啟動，檢查緊原因...
+echo [WARNING] Installer may not have started properly, checking...
 timeout /t 2 /nobreak >nul
 if exist "%~dp0agent_launcher.log" (
     echo.
-    echo ── 錯誤記錄（agent_launcher.log）──
+    echo -- Error log (agent_launcher.log) --
     type "%~dp0agent_launcher.log"
-    echo ────────────────────────────────────
+    echo -----------------------------------
     echo.
 ) else (
-    echo ❌ 安裝程式冇任何輸出。可能原因：
-    echo   - 1. Python 安裝唔完整（重新安裝 Python 3.11 並 tick Add to PATH）
-    echo   - 2. 防毒軟件阻擋
+    echo [ERROR] Installer produced no output. Possible causes:
+    echo   - 1. Python installation incomplete (reinstall Python 3.11, tick Add to PATH)
+    echo   - 2. Antivirus blocking
     echo.
 )
 pause
