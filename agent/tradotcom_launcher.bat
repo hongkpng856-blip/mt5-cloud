@@ -6,7 +6,13 @@ title Tradotcom Agent Setup
 :: ============================================================
 ::  Tradotcom Agent - double-click launcher
 ::  Auto-detects: Python 3.14 blocked (MT5 incompatible) -> installs 3.11
+::  All files installed to fixed folder: %LOCALAPPDATA%\TradotcomAgent
 :: ============================================================
+
+:: ========== 0. Fixed install folder ==========
+set "TARGET_DIR=%LOCALAPPDATA%\TradotcomAgent"
+if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"
+cd /d "%TARGET_DIR%" 2>nul
 
 echo.
 echo ==============================================
@@ -33,7 +39,7 @@ for %%p in (
     if exist %%p set PYTHONW=%%~p
 )
 
-:: Fallback to py launcher (NOTE: moved out of if-block - the nested ')' in python code breaks batch parsing)
+:: Fallback to py launcher (moved out of if-block - nested ')' breaks batch)
 if not "%PYTHONW%"=="" goto PY_VERSION_CHECK
 py -3 -c "import sys,os;print(os.path.join(os.path.dirname(sys.executable),'pythonw.exe'),end='')" > "%TEMP%\_pyw_path.txt" 2>nul
 set /p PYTHONW=<"%TEMP%\_pyw_path.txt"
@@ -41,13 +47,12 @@ set /p PYTHONEXE=<"%TEMP%\_pyw_path.txt"
 del "%TEMP%\_pyw_path.txt" 2>nul
 :PY_VERSION_CHECK
 
-:: Check Python version - 3.14 incompatible with MetaTrader5 -> need 3.11/3.12
+:: Check Python version - 3.14 incompatible with MetaTrader5
 if not "%PYTHONW%"=="" (
     set "PYVER_CHECK=%PYTHONW:\pythonw.exe=\python.exe%"
     "%PYVER_CHECK%" --version 2> "%TEMP%\_pyver.txt"
     set /p PYVER=<"%TEMP%\_pyver.txt"
     del "%TEMP%\_pyver.txt" 2>nul
-    echo PYVER=!PYVER!>nul
     echo !PYVER! | findstr /c:"3.14" >nul 2>nul
     if not errorlevel 1 (
         echo [WARNING] Your Python is 3.14 - MetaTrader5 hangs on 3.14
@@ -78,7 +83,7 @@ if not "%PYTHONW%"=="" (
         start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
         echo.
         echo Installer finished. Verifying Python 3.11...
-        :: Directly point to standard 3.11 paths (avoid py -3 picking 3.14 again -> infinite loop)
+        :: Directly point to standard 3.11 paths (avoid py -3 picking 3.14 -> loop)
         if exist "%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe" (
             set "PYTHONW=%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe"
             echo Python 3.11 installed OK.
@@ -138,19 +143,23 @@ echo Python found.
 echo.
 
 :: ========== 2. Ensure latest installer ==========
-:: Re-download pyw each time (latest version - old versions have bugs)
-echo Updating installer...
+:: Reuse existing pyw if valid (>10KB) - avoids download problems
 del "%TARGET_DIR%\agent_launcher.log" 2>nul
-:: Download retry x3 (tunnel may briefly drop)
-:: NOTE: no goto inside for/if blocks (batch parsing breaks) - use flag
+if exist "%TARGET_DIR%\tradotcom_agent.pyw" (
+    for %%A in ("%TARGET_DIR%\tradotcom_agent.pyw") do if %%~zA GTR 10000 set DL_HAVE=1
+)
+if "!DL_HAVE!"=="1" goto HAVE_PYW
+
+echo Updating installer...
+:: PowerShell download (same network stack as browser - curl may fail on some machines)
 set DL_OK_FLAG=0
 for /l %%t in (1,1,3) do (
     if !DL_OK_FLAG!==0 (
-        curl -sSL -A "Mozilla/5.0 TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
+        powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $wc = New-Object Net.WebClient; $wc.Headers.Add('User-Agent','Mozilla/5.0'); $wc.DownloadFile('https://mt5cloud.esgov.org/api/agent-pyw', '%TARGET_DIR%\tradotcom_agent.pyw')" >nul 2>nul
         if exist "%TARGET_DIR%\tradotcom_agent.pyw" (
-            set DL_OK_FLAG=1
+            for %%A in ("%TARGET_DIR%\tradotcom_agent.pyw") do if %%~zA GTR 10000 set DL_OK_FLAG=1
         ) else (
-            echo [WARNING] Download failed - attempt %%t/3 - retrying...
+            echo [WARNING] Download attempt %%t/3 failed - retrying...
             ping -n 4 127.0.0.1 >nul
         )
     )
@@ -160,6 +169,7 @@ if not "!DL_OK_FLAG!"=="1" (
     pause
     exit /b 1
 )
+:HAVE_PYW
 echo Updated.
 echo.
 
@@ -174,7 +184,7 @@ if not "%PYTHONW%"=="" (
 )
 
 :: Check pyw actually started (log has START = running)
-timeout /t 4 /nobreak >nul
+ping -n 5 127.0.0.1 >nul
 if exist "%TARGET_DIR%\agent_launcher.log" (
     findstr /c:"START pyw" "%TARGET_DIR%\agent_launcher.log" >nul 2>nul && (
         echo Installer started.
@@ -183,13 +193,13 @@ if exist "%TARGET_DIR%\agent_launcher.log" (
         type "%TARGET_DIR%\agent_launcher.log"
         echo -----------------
         echo.
-        timeout /t 6 /nobreak >nul
+        ping -n 7 127.0.0.1 >nul
         exit /b 0
     )
 )
 
 echo [WARNING] Installer may not have started properly, checking...
-timeout /t 2 /nobreak >nul
+ping -n 3 127.0.0.1 >nul
 if exist "%TARGET_DIR%\agent_launcher.log" (
     echo.
     echo -- Error log agent_launcher.log --
