@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+setlocal EnableDelayedExpansion
 title Tradotcom Agent 啟動器
 
 :: ============================================================
@@ -49,7 +50,7 @@ if not "%PYTHONW%"=="" (
         echo    需要安裝 Python 3.11 或 3.12 先可以運行 Tradotcom Agent。
         echo.
         set /p PY_CHOICE2="要唔要我幫你下載並安裝 Python 3.11？(Y=下載安裝，N=退出): "
-        if /i not "%PY_CHOICE2%"=="Y" (
+        if /i not "!PY_CHOICE2!"=="Y" (
             echo.
             echo 你選擇咗退出 — 安裝取消。
             echo 你可以之後去 https://www.python.org/downloads/ 手動安裝 Python 3.11
@@ -95,7 +96,7 @@ echo.
 echo Tradotcom Agent 需要 Python 3.11 先可以執行。
 echo.
 set /p PY_CHOICE="要唔要我幫你下載並安裝 Python 3.11 (Y=下載安裝，N=退出): "
-if /i not "%PY_CHOICE%"=="Y" (
+if /i not "!PY_CHOICE!"=="Y" (
     echo.
     echo 你選擇咗退出 — 安裝取消。
     echo 你可以之後去 https://www.python.org/downloads/ 手動安裝
