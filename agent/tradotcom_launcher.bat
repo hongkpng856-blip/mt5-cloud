@@ -50,7 +50,7 @@ if not "%PYTHONW%"=="" (
     echo PYVER=!PYVER!>nul
     echo !PYVER! | findstr /c:"3.14" >nul 2>nul
     if not errorlevel 1 (
-        echo [WARNING] Your Python is 3.14 - MetaTrader5 hangs on 3.14!
+        echo [WARNING] Your Python is 3.14 - MetaTrader5 hangs on 3.14
         echo    Tradotcom Agent requires Python 3.11 or 3.12.
         echo.
         set /p PY_CHOICE2="Download and install Python 3.11? (Y=Download, N=Exit): "
@@ -69,10 +69,10 @@ if not "%PYTHONW%"=="" (
             pause
             exit /b 1
         )
-        echo Download complete!
+        echo Download complete.
         echo.
         echo Launching Python 3.11 installer...
-        echo   [IMPORTANT] Tick "Add Python to PATH" during installation!
+        echo   [IMPORTANT] Tick "Add Python to PATH" during installation
         echo.
         pause
         start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
@@ -101,7 +101,7 @@ if "%PYTHONW%"=="" goto NO_PYTHON
 goto PYTHON_OK
 
 :NO_PYTHON
-echo [WARNING] Python not detected!
+echo [WARNING] Python not detected
 echo.
 echo Tradotcom Agent requires Python 3.11 to run.
 echo.
@@ -122,10 +122,10 @@ if not exist "%TEMP%\python-3.11.9-amd64.exe" (
     pause
     exit /b 1
 )
-echo Download complete!
+echo Download complete.
 echo.
 echo Launching Python 3.11 installer...
-echo   [IMPORTANT] Tick "Add Python to PATH" during installation!
+echo   [IMPORTANT] Tick "Add Python to PATH" during installation
 echo.
 pause
 start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
