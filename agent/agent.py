@@ -26,6 +26,15 @@ try:
 except Exception:
     pass
 
+def _alog_write(msg):
+    """Write to agent_launcher.log (same as pyw - visible to user/diagnosis)"""
+    try:
+        with open(_alog, "a", encoding="utf-8") as _lf:
+            _lf.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+    except Exception:
+        pass
+
+
 try:
     import MetaTrader5 as mt5
 except Exception as _e_mt5:
@@ -98,9 +107,11 @@ def _show_status_popup(title, msg, ok):
 
 def connect():
     print(f"✅ Connected to {SERVER_URL}")
+    _alog_write(f"Connected to {SERVER_URL}")
     # Register with server → join agent room for deploy commands
     sio.emit('agent_register', {'agent_id': AGENT_ID, 'token': AGENT_TOKEN})
     print(f"   Registering as {AGENT_ID}...")
+    _alog_write(f"Registering as {AGENT_ID}...")
     # 🚨 2026-08-26（安裝驗證）：啟動成功 → 綠色彈窗（等 registered 確認先彈 — 用 thread 延遲）
     import threading as _th_p
     def _pop_ok():
@@ -114,6 +125,7 @@ def disconnect():
 
 def on_registered(data):
     print(f"🆔 Registered: {data}")
+    _alog_write(f"Registered: {str(data)[:100]}")
     # 🚨 2026-08-26（安裝驗證）：註冊失敗（token 錯等）→ 紅色彈窗
     if isinstance(data, dict) and data.get('status') == 'error':
         _show_status_popup("❌ Agent 連線失敗", f"伺服器拒絕註冊：{data.get('msg', 'token 可能唔啱')}\n\n請檢查 Agent ID 同 Token 是否正確", False)
@@ -1432,10 +1444,12 @@ except Exception as e:
     # 「One or more namespaces failed to connect」— 但背景 namespace 已連接（polling ack 時序）
     # → 唔好 exit — 繼續跑（sync_loop 會 check sio.connected + 自動重連）
     print(f"⚠️ connect() 警告（可能已連 — 背景再接）: {e}")
+    _alog_write(f"⚠️ connect() 警告: {str(e)[:120]}")
     try:
         sio.connect(f"{SERVER_URL}", transports=['polling'], retry=True)
     except Exception as e2:
         print(f"⚠️ retry connect 都警告: {e2}")
+        _alog_write(f"⚠️ retry connect 都警告: {str(e2)[:120]}")
 
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()
