@@ -3690,6 +3690,39 @@ def api_deploy():
     except Exception:
         pass
 
+    # 🚨 2026-08-26（multi-user Phase 2）：部署指令路由 — 優先經「用戶嘅 agent」（SocketIO room）
+    # → agent 收到 deploy_ea → 喺自己部機寫 deploy_cmd → watcher 執行（每機獨立）
+    # → 冇 agent 連線（offline）→ fallback 直接寫本機（單機向後兼容）
+    _agent_dp = Agent.query.filter_by(user_id=current_user.id).first()
+    _agent_online = bool(_agent_dp and _agent_dp.status in ('connected', 'online'))
+    if _agent_online:
+        try:
+            _dp_payload = {
+                'agent_id': _agent_dp.agent_id,
+                'ea_name': ea_name,
+                'symbol': symbol,
+                'tf': tf,
+                'magic': str(magic),
+                'lot': str(lot),
+                'inject_trades': inject_trades,
+                'source': 'api_deploy'
+            }
+            socketio.emit('deploy_ea', _dp_payload, room=_agent_dp.agent_id)
+            print(f"[API] 📡 Deploy 指令已路由俾 Agent {_agent_dp.agent_id}: {ea_name} -> {symbol} {tf}")
+            # 亦寫入 deploy_queue（fallback — agent 可能 reconnect 後 poll）
+            _agent_dp.deploy_queue = json.dumps(_dp_payload)
+            db.session.commit()
+        except Exception as _e_dp:
+            print(f"[API] ⚠️ Agent 路由失敗（fallback 本機）: {_e_dp}")
+            _agent_online = False
+
+    # 🚨 2026-08-26（multi-user Phase 2）：已路由俾 agent → 唔寫本機（避免雙重執行）
+    if _agent_online:
+        db.session.commit()
+        print(f"[API] Deploy routed via Agent: {ea_name} -> {symbol} {tf}")
+        log_activity('deploy', f'{ea_name} 部署 → {symbol} {tf}（經 Agent）', ea=ea_name)
+        return jsonify({"success": True, "message": f"🚀 Deploying {ea_name} -> {symbol} {tf}"})
+
     # Write deploy command file (watcher will pick it up)
     import time as _wt
     common_files = os.path.join(os.environ.get('APPDATA', ''),
