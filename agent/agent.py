@@ -1207,6 +1207,8 @@ def sync_loop():
                 data = get_mt5_status()
                 data['agent_id'] = AGENT_ID
                 data['token'] = AGENT_TOKEN
+                # 🚨 2026-08-26 FIX：server handle_sync 讀 data['account']（login/balance 等）— 唔係 status 散 key
+                data['account'] = {k: data.get(k) for k in ('login','balance','equity','margin','server','currency','leverage','name') if k in data}
                 data['heartbeats'] = dict(ea_heartbeats)
                 try:
                     hb_files = check_ea_heartbeat_files()

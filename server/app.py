@@ -1055,14 +1055,9 @@ def _refresh_auto_trade_cache(user):
             if status_account:
                 with _auto_trade_lock:
                     _auto_trade_cache["account_info"] = status_data.get("account_info", {'login': status_account})
-                # 🚨 2026-08-12：save to DB agent.account_info（dashboard HTML template needs it）
-                try:
-                    agent = Agent.query.filter_by(user_id=user.id).first()
-                    if agent and not agent.account_info or agent.account_info == '{}':
-                        agent.account_info = json.dumps(status_data.get("account_info", {'login': status_account}))
-                        db.session.commit()
-                except Exception:
-                    pass
+                # 🚨 2026-08-26 FIX（多機污染）：唔好再寫 agent.account_info！
+                # 之前 save server 本機 account 落「觸發 refresh 嗰個 user」嘅 agent → 新帳戶被寫入 5053721681 → 顯示返舊機
+                # → agent.account_info 只可以由「自己部機嘅 agent 上報」（SocketIO agent_sync）寫 — 每機獨立
     except Exception as e:
         print(f"[DEBUG] auto_trade_status read failed: {e}")
         pass
@@ -1096,11 +1091,10 @@ def api_dashboard():
         cache_result = _auto_trade_cache["result"]
         _global_acc = _auto_trade_cache.get("account_info", {})
     
-    # 🚨 2026-08-26 FIX（用戶實測：另一部電腦 create account 但顯示返 5053721681 舊電腦 account）：
-    # → 之前用 _auto_trade_cache（全局 — 永遠係 server 本機 MT5）→ 所有用戶顯示同一個 account
-    # → 改用「自己 agent 上報嘅 account_info」優先（每機獨立 — 自己部機嘅 MT5）
-    # → 自己 agent 未上報（未裝/離線）→ fallback 全局 cache（單機向後兼容）
-    _acc_dis = account if account.get('login') else _global_acc
+    # 🚨 2026-08-26 FIX v2（用戶實測：新 account 依然見到 5053721681）：
+    # → 唔可以 fallback 全局 cache（_global_acc = server 本機 MT5 — 永遠係舊機帳號）
+    # → 只顯示「自己 agent 上報嘅 account_info」（每機獨立）— 未上報 → 空（前端顯示「未連接」）
+    _acc_dis = account if account.get('login') else {}
     return jsonify({
         "status": agent.status,
         "last_seen": agent.last_seen.isoformat() if agent.last_seen else None,
