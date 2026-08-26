@@ -1234,6 +1234,57 @@ def build_files_snapshot():
     return snap
 
 
+def _start_tray_icon():
+    """🚨 2026-08-26（用戶要求：成功明顯啲）：Windows 系統匣圖示
+    綠色 = Agent 連住 server；紅色 = 斷線。hover 顯示狀態。
+    """
+    try:
+        import pystray
+        from PIL import Image, ImageDraw
+
+        def _make_icon(color):
+            img = Image.new("RGB", (64, 64), color)
+            d = ImageDraw.Draw(img)
+            d.ellipse([8, 8, 56, 56], fill=color)
+            d.text((20, 22), "T", fill="white")
+            return img
+
+        _tray_icons = {"green": _make_icon((0, 180, 60)), "red": _make_icon((220, 50, 50))}
+        _tray_state = {"color": "green"}
+
+        def _on_click(icon, item):
+            if str(item) == "Exit":
+                icon.stop()
+                os._exit(0)
+
+        def _tray_update_loop():
+            while True:
+                try:
+                    if sio.connected:
+                        if _tray_state["color"] != "green":
+                            _tray_state["color"] = "green"
+                            _tray.icon = _tray_icons["green"]
+                            _tray.title = "Tradotcom Agent - Online"
+                    else:
+                        if _tray_state["color"] != "red":
+                            _tray_state["color"] = "red"
+                            _tray.icon = _tray_icons["red"]
+                            _tray.title = "Tradotcom Agent - Offline"
+                except Exception:
+                    pass
+                time.sleep(3)
+
+        _tray = pystray.Icon("TradotcomAgent", _tray_icons["green"], "Tradotcom Agent",
+                             menu=pystray.Menu(pystray.MenuItem("Exit", _on_click)))
+        threading.Thread(target=_tray_update_loop, daemon=True).start()
+        _tray.run_detached()
+        print("🟢 Tray icon started (green = online)")
+        return True
+    except Exception as e:
+        print(f"⚠️ Tray icon unavailable (no pystray?): {e}")
+        return False
+
+
 def _ensure_connected():
     """🚨 2026-08-26（multi-user Phase 1）：確保 SocketIO 連線（connect() 失敗但背景未連 → 重試）"""
     if sio.connected:
@@ -1388,6 +1439,12 @@ except Exception as e:
 
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()
+
+# 🚨 2026-08-26（用戶要求：成功明顯啲）：系統匣圖示（綠色=online 紅色=offline）
+try:
+    _start_tray_icon()
+except Exception:
+    pass
 
 try:
     while True:
