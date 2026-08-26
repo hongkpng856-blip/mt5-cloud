@@ -116,12 +116,25 @@ _activity_lock = threading.Lock()
 def log_activity(action, message, ea='', source='server'):
     """append 一行 JSONL 去 activity_log.jsonl（thread-safe）"""
     try:
+        # 🚨 2026-08-26（multi-user）：加 user 欄（每帳戶獨立活動記錄 — 唔好全局共享）
+        _u_n = ''
+        try:
+            if 'current_user' in globals() and current_user and not current_user.is_anonymous:
+                _u_n = current_user.username
+        except Exception:
+            try:
+                from flask_login import current_user as _cu2
+                if _cu2 and not _cu2.is_anonymous:
+                    _u_n = _cu2.username
+            except Exception:
+                pass
         entry = {
             'time': time.time(),
             'action': action,
             'ea': ea,
             'message': message,
             'source': source,
+            'user': _u_n,
         }
         line = json.dumps(entry, ensure_ascii=False) + '\n'
         with _activity_lock:
@@ -218,6 +231,13 @@ def api_activity():
     entries.reverse()  # 最新喺最前
     if not include_db:
         entries = [e for e in entries if e.get('action') != 'db_update']
+    # 🚨 2026-08-26（multi-user）：只顯示「自己帳戶」嘅活動（per-user 獨立）
+    # 舊條目（冇 user 欄）→ 只喺單機（dev）時顯示返（向後兼容）；新條目按 user 過濾
+    try:
+        _cur_u = current_user.username
+        entries = [e for e in entries if not e.get('user') or e.get('user') == _cur_u]
+    except Exception:
+        pass
     return jsonify({'activities': entries})  # 全部顯示 — log 唔會刪除
 import os
 _async_mode = 'eventlet' if os.environ.get('RENDER', '') else 'threading'

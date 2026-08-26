@@ -1099,7 +1099,8 @@ socket.on('install_result', (data) => {
 
 // === EA Config ===
 let eaMappings = {};
-let eaStats = {};   // 🚨 2026-08-21：EA 自寫統計（trades/wins/losses/profit — TestTrades）
+let eaStats = {};
+let agentEasCache = [];  // 🚨 2026-08-26（multi-user）：自己 agent 上報 EA   // 🚨 2026-08-21：EA 自寫統計（trades/wins/losses/profit — TestTrades）
 let marketClosed = {};  // 🚨 2026-08-21：非交易時間偵測（休市）
 let runtimeStatus = {}; // 控制層心跳狀態（running/stopped/unknown）
 let allSymbols = [];
@@ -1210,6 +1211,7 @@ async function loadEAConfig() {
     runtimeStatus = data.runtime_status || {}; // 控制層心跳狀態（running/stopped/unknown）
         allSymbols = data.all_symbols || ['EURUSD','GBPUSD','USDJPY','XAUUSD'];
         eaStats = data.ea_stats || {};  // 🚨 2026-08-21：EA 自寫統計（TestTrades 測試 EA — trades/wins/losses/profit）
+        agentEasCache = data.agent_eas || [];  // 🚨 2026-08-26（multi-user）：自己 agent 上報嘅 EA（已加入判斷用）
         marketClosed = data.market_closed || {};  // 🚨 2026-08-21：非交易時間偵測（休市）
 
         // 搵出已配對嘅 EA（config 入邊有 symbol 嘅就係）
@@ -2080,8 +2082,10 @@ async function loadEALibrary() {
             // 🚨 2026-08-19 FIX：本機有冇用 server 直接返回嘅 local_has（check filesystem 即時準確）
             //   之前靠 localSet（detector ea_inventory.json 延遲）→ 配對後「本機冇檔案」殘留要 refresh
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
-            const localHas = !!(f.local_has === true);  // server 直接 check 本機有 .ex5
-            const added = localHas;
+            // 🚨 2026-08-26 FIX（multi-user：所有帳戶睇到 dev 已加入 EA）：唔再用全局 localHas（server 本機 check .ex5）
+            // → 已加入 = 自己配對（webHas）或者 自己 agent 上報（agentEas）
+            const _agentEasSet = (typeof agentEasCache !== 'undefined' ? agentEasCache : []);
+            const added = !!(webHas || _agentEasSet.includes(baseName));
             oHtml += `<tr>
                 <td><b>${f.name}</b> <span class="badge ${isTest?'badge-orange':'badge-green'}" style="font-size:10px">${isTest?'測試':'平台提供'}</span></td>
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
@@ -2103,7 +2107,8 @@ async function loadEALibrary() {
             // 加返落 official table 下面（用分隔線）
             communityFiles.forEach(f => {
                 const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string' && !!eaDeployStatus[baseName];
+                // 🚨 2026-08-26 FIX（multi-user）：added 用 per-user（自己配對 / 自己 agent 上報）— 唔用全局 eaDeployStatus
+                const added = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string') || (typeof agentEasCache !== 'undefined' && agentEasCache.includes(baseName));
                 oHtml += `<tr style="border-top:${communityFiles.indexOf(f)===0?'2px dashed #bb8009':'none'}">
                     <td><b>${f.name}</b> <span class="badge badge-blue" style="font-size:10px">社群提供</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
@@ -2118,7 +2123,8 @@ async function loadEALibrary() {
         if (userFiles.length > 0) {
             userFiles.forEach(f => {
                 const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
-                const added = eaMappings[baseName] && typeof eaMappings[baseName] === 'string' && !!eaDeployStatus[baseName];
+                // 🚨 2026-08-26 FIX（multi-user）：added 用 per-user（自己配對 / 自己 agent 上報）— 唔用全局 eaDeployStatus
+                const added = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string') || (typeof agentEasCache !== 'undefined' && agentEasCache.includes(baseName));
                 oHtml += `<tr style="border-top:2px dashed #3fb950">
                     <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">用戶上傳</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
