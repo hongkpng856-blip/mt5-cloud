@@ -1230,7 +1230,10 @@ async function loadEAConfig() {
         const activeEAs = pairedEAs.filter(name => !removed.includes(name) && eaDeployStatus[name] && !(eaDeployStatus[name].is_script));
 
     // 2026-08-11：配對庫顯示「本機 EA」（未配對都顯示 — 用戶想要）+ 每行有狀態標記（已配對/未配對 — 唔會誤會）
-        const localEA = Object.keys(eaDeployStatus).filter(n => !removed.includes(n) && !(eaDeployStatus[n] && eaDeployStatus[n].is_script));
+    // 🚨 2026-08-26 FIX（multi-user：其他帳戶睇到 dev 部機 EA）：唔再用全局 eaDeployStatus（server 本機 detector）
+    // → 用「自己 agent 上報嘅 EA」（data.agent_eas — 每機獨立）+ config EA
+        const _agentEas = data.agent_eas || (eaDeployStatus ? Object.keys(eaDeployStatus) : []);
+        const localEA = _agentEas.filter(n => !removed.includes(n));
         let allEAs = [...new Set([...activeEAs, ...localEA])];
 
     // 排序： 運行中喺上面， 停止中喺下面；已配對優先

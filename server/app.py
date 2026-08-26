@@ -771,7 +771,21 @@ def api_ea_config():
                     market_closed[_ea] = _mc
         except Exception:
             pass
-        return jsonify({"mappings": config, "all_symbols": get_account_symbols(), "timeframes": TIMEFRAMES, "runtime_status": runtime, "ea_stats": ea_stats, "market_closed": market_closed})
+        # 🚨 2026-08-26（multi-user）：agent_eas — 各自 agent 上報嘅 EA（每機獨立 — 前端 localEA 用呢個唔再用全局 detector inventory）
+        _agent_eas = []
+        try:
+            _snap_e = _current_agent_snapshot()
+            if _snap_e:
+                _hb_e = set((_snap_e.get('heartbeats') or {}).keys())
+                _log_e = set((_snap_e.get('log_last') or {}).keys())
+                _hk_e = set(_snap_e.get('hotkeys') or [])
+                _agent_eas = sorted(set(list(_hb_e) + list(_log_e) + list(_hk_e)))
+            else:
+                # fallback：config EA（冇 agent 上報 — 單機向後兼容）
+                _agent_eas = [k for k in config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status')) and isinstance(config[k], str)]
+        except Exception:
+            pass
+        return jsonify({"mappings": config, "all_symbols": get_account_symbols(), "timeframes": TIMEFRAMES, "runtime_status": runtime, "ea_stats": ea_stats, "market_closed": market_closed, "agent_eas": _agent_eas})
     else:
         data = request.json
         current_user.ea_config = json.dumps(data.get('mappings', {}))
