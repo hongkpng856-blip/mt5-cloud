@@ -63,7 +63,7 @@ if not "%PYTHONW%"=="" (
         )
         echo.
         echo Downloading Python 3.11 installer - 25MB...
-        curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+        curl -sL -A "Mozilla/5.0 TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
         if not exist "%TEMP%\python-3.11.9-amd64.exe" (
             echo [ERROR] Download failed - please install Python 3.11 manually: https://www.python.org/downloads/
             pause
@@ -116,7 +116,7 @@ if /i not "!PY_CHOICE!"=="Y" (
 
 echo.
 echo Downloading Python 3.11 installer - 25MB...
-curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+curl -sL -A "Mozilla/5.0 TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
 if not exist "%TEMP%\python-3.11.9-amd64.exe" (
     echo [ERROR] Download failed - please install Python 3.11 manually: https://www.python.org/downloads/
     pause
@@ -141,16 +141,16 @@ echo.
 :: Re-download pyw each time (latest version - old versions have bugs)
 echo Updating installer...
 del "%TARGET_DIR%\agent_launcher.log" 2>nul
-:: 🚨 2026-08-26：下載重試 3 次（tunnel 短暫斷線會 fail — 自動再試）
-:: NOTE: goto 唔可以喺 for/if block 內（batch 解析亂）→ 用 flag 變數
+:: Download retry x3 (tunnel may briefly drop)
+:: NOTE: no goto inside for/if blocks (batch parsing breaks) - use flag
 set DL_OK_FLAG=0
 for /l %%t in (1,1,3) do (
     if !DL_OK_FLAG!==0 (
-        curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
+        curl -sL -A "Mozilla/5.0 TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
         if exist "%TARGET_DIR%\tradotcom_agent.pyw" (
             set DL_OK_FLAG=1
         ) else (
-            echo [WARNING] Download failed (attempt %%t/3) - retrying...
+            echo [WARNING] Download failed - attempt %%t/3 - retrying...
             ping -n 4 127.0.0.1 >nul
         )
     )
