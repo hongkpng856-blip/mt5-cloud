@@ -56,8 +56,8 @@ echo ⚠️  未偵測到 Python！
 echo.
 echo Tradotcom Agent 需要 Python 3.11 先可以執行。
 echo.
-choice /c YN /m "要唔要我幫你下載並安裝 Python 3.11？（Y=下載安裝 / N=退出）"
-if errorlevel 2 (
+set /p PY_CHOICE="要唔要我幫你下載並安裝 Python 3.11 (Y=下載安裝，N=退出): "
+if /i not "%PY_CHOICE%"=="Y" (
     echo.
     echo 你選擇咗退出 — 安裝取消。
     echo 你可以之後去 https://www.python.org/downloads/ 手動安裝
@@ -96,17 +96,17 @@ goto CHECK_PYTHON
 echo ✅ Python 已安裝
 echo.
 
-:: ========== 2. 確保有安裝程式 ==========
+:: ========== 2. 確保有最新安裝程式 ==========
+:: 🚨 2026-08-26 FIX：每次重新下載 pyw（保證最新版 — 舊版冇 START log / 有 bug 會「冇反應」）
+echo ⏳ 更新安裝程式...
+del "%~dp0agent_launcher.log" 2>nul
+curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%~dp0tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
 if not exist "%~dp0tradotcom_agent.pyw" (
-    echo ⏳ 下載 Tradotcom 安裝程式...
-    curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%~dp0tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
-    if not exist "%~dp0tradotcom_agent.pyw" (
-        echo ❌ 下載失敗 — 請檢查網絡
-        pause
-        exit /b 1
-    )
-    echo ✅ 已下載
+    echo ❌ 下載失敗 — 請檢查網絡
+    pause
+    exit /b 1
 )
+echo ✅ 已更新
 echo.
 
 :: ========== 3. 執行安裝程式 ==========
@@ -139,8 +139,8 @@ if exist "%~dp0agent_launcher.log" (
     echo.
 ) else (
     echo ❌ 安裝程式冇任何輸出。可能原因：
-    echo    1. Python 安裝唔完整（重新安裝 Python 3.11 並 tick Add to PATH）
-    echo    2. 防毒軟件阻擋
+    echo   - 1. Python 安裝唔完整（重新安裝 Python 3.11 並 tick Add to PATH）
+    echo   - 2. 防毒軟件阻擋
     echo.
 )
 pause
