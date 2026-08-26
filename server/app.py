@@ -1094,14 +1094,19 @@ def api_dashboard():
     
     with _auto_trade_lock:
         cache_result = _auto_trade_cache["result"]
-        account_info = _auto_trade_cache.get("account_info", {})
+        _global_acc = _auto_trade_cache.get("account_info", {})
     
+    # 🚨 2026-08-26 FIX（用戶實測：另一部電腦 create account 但顯示返 5053721681 舊電腦 account）：
+    # → 之前用 _auto_trade_cache（全局 — 永遠係 server 本機 MT5）→ 所有用戶顯示同一個 account
+    # → 改用「自己 agent 上報嘅 account_info」優先（每機獨立 — 自己部機嘅 MT5）
+    # → 自己 agent 未上報（未裝/離線）→ fallback 全局 cache（單機向後兼容）
+    _acc_dis = account if account.get('login') else _global_acc
     return jsonify({
         "status": agent.status,
         "last_seen": agent.last_seen.isoformat() if agent.last_seen else None,
-        "account": account_info,
+        "account": _acc_dis,
         "bound_account": current_user.bound_account or '',
-        "account_matched": bool(current_user.bound_account and account_info.get('login') == current_user.bound_account),
+        "account_matched": bool(current_user.bound_account and _acc_dis.get('login') == current_user.bound_account),
         "positions": positions,
         "agent_id": agent.agent_id,
         "agent_token": agent.agent_token or '',
