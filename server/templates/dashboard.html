@@ -595,6 +595,7 @@
     <div class="card">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
             <span style="display:inline-flex;align-items:center;gap:6px"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="agentIdBadge" class="badge badge-gray">—</span><span id="statusBadge" class="badge badge-gray">Unknown</span></span>
+            <button class="btn" style="padding:4px 12px;font-size:11px;margin-left:auto" onclick="toggleAgentSetup()" title="Agent 安裝資料（ID + Token）"><i class="icon-download" style="font-size:11px"></i> Agent 安裝</button>
             <!-- 🚨 2026-08-26：交易歷史報告（帳戶層 — popup + 下載 HTML） -->
             <button class="btn" style="padding:4px 12px;font-size:11px" onclick="openTradeReport()" title="下載 / 檢視 MT5 交易歷史報告"><i class="icon-file-text" style="font-size:11px"></i> 交易報告</button>
         </div>
@@ -603,7 +604,40 @@
             <div class="stat-box"><div class="label">Balance</div><div class="value" id="balance">—</div></div>
             <div class="stat-box"><div class="label">Equity</div><div class="value" id="equity">—</div></div>
         </div>
+        <!-- 🚨 2026-08-26（Phase 4）：Agent 安裝資料（ID + Token + 下載）— 第二部機安裝用 -->
+        <div id="agentSetupPanel" style="display:none;margin-top:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-size:12px">
+            <div style="margin-bottom:8px;color:var(--text-muted)">用呢啲資料喺另一部電腦安裝 Agent（控制嗰部機嘅 MT5）：</div>
+            <div style="display:grid;grid-template-columns:60px 1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+                <span style="color:var(--text-muted)">Agent ID</span>
+                <code id="agentSetupId" style="background:#0d1117;padding:4px 8px;border-radius:4px;font-size:11px">—</code>
+                <button class="btn" style="padding:2px 8px;font-size:10px" onclick="copyAgentVal('agentSetupId')">複製</button>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+                <span style="color:var(--text-muted)">Token</span>
+                <code id="agentSetupTok" style="background:#0d1117;padding:4px 8px;border-radius:4px;font-size:11px">—</code>
+                <button class="btn" style="padding:2px 8px;font-size:10px" onclick="copyAgentVal('agentSetupTok')">複製</button>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+                <a class="btn" style="padding:4px 10px;font-size:11px" href="/api/agent-download" download><i class="icon-download" style="font-size:11px"></i> 下載安裝檔 (install_agent.bat)</a>
+                <a class="btn" style="padding:4px 10px;font-size:11px" href="/api/agent-py" download><i class="icon-file-text" style="font-size:11px"></i> 下載 agent.py</a>
+            </div>
+        </div>
     </div>
+
+    <script>
+    function toggleAgentSetup() {
+        const p = document.getElementById('agentSetupPanel');
+        if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
+    function copyAgentVal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+            const b = el.nextElementSibling;
+            if (b) { const o = b.textContent; b.textContent = '✅'; setTimeout(() => b.textContent = o, 1200); }
+        });
+    }
+    </script>
 
 <!-- 🚨 2026-08-26：交易歷史報告 modal（popup — 表格 + 統計 + 下載 HTML） -->
 <div id="tradeReportModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto" onclick="if(event.target===this)closeTradeReport()">
@@ -1508,6 +1542,11 @@ async function loadDashboard() {
         // 🚨 2026-08-26：Agent 編號 badge（右手邊 — 而家係邊一個 Agent）
         const _aib = document.getElementById('agentIdBadge');
         if (_aib) _aib.textContent = d.agent_id || '—';
+        // 🚨 2026-08-26（Phase 4）：Agent 安裝 panel（ID + Token — 第二部機安裝用）
+        const _asi = document.getElementById('agentSetupId');
+        if (_asi) _asi.textContent = d.agent_id || '—';
+        const _ast = document.getElementById('agentSetupTok');
+        if (_ast) _ast.textContent = d.agent_token || '（未設定）';
         const badge = document.getElementById('statusBadge');
         if (badge) {
             if (d.status === 'connected' || d.status === 'running') {

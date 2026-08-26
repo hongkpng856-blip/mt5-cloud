@@ -248,6 +248,8 @@ class Agent(db.Model):
     # 🚨 2026-08-26（multi-user Phase 1）：Agent 上報「本機 MT5 檔案快照」（heartbeats/trades_stats/log_last/hotkeys）
     # → server 優先讀呢個（每機獨立）— 唔再直接讀本機檔案（支持第二部機接入）
     files_snapshot = db.Column(db.Text, default='{}')
+    # 🚨 2026-08-26（multi-user Phase 4）：Agent token — 註冊時生成，上報/連線時驗證（防冒認）
+    agent_token = db.Column(db.String(64), default='')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -265,6 +267,10 @@ with app.app_context():
             _cm.execute("ALTER TABLE agent ADD COLUMN files_snapshot TEXT DEFAULT '{}'")
             _cm.commit()
             print("✅ migration: agent.files_snapshot 欄加咗")
+        if 'agent_token' not in _agent_cols:
+            _cm.execute("ALTER TABLE agent ADD COLUMN agent_token TEXT DEFAULT ''")
+            _cm.commit()
+            print("✅ migration: agent.agent_token 欄加咗")
         _cm.close()
     except Exception as _e_mig:
         print(f"⚠️ migration files_snapshot 失敗（唔阻啟動）: {_e_mig}")
@@ -273,7 +279,8 @@ with app.app_context():
         dev_user = User(username='dev', email='dev@mt5cloud.com',
                         password=generate_password_hash('dev1234'))
         db.session.add(dev_user)
-        dev_agent = Agent(agent_id='DEV00001', user=dev_user)
+        import secrets as _sec_d
+        dev_agent = Agent(agent_id='DEV00001', user=dev_user, agent_token=_sec_d.token_hex(16))
         db.session.add(dev_agent)
         db.session.commit()
         print("✅ Dev account created: dev / dev1234")
@@ -363,11 +370,14 @@ def register():
         user = User(username=data['username'], email=data.get('email',''),
                     password=generate_password_hash(data['password']))
         db.session.add(user)
-        agent = Agent(agent_id=str(uuid.uuid4())[:8], user=user)
+        # 🚨 2026-08-26（Phase 4）：Agent token — 註冊時生成（防冒認）
+        import secrets as _sec_r
+        _tok_r = _sec_r.token_hex(16)
+        agent = Agent(agent_id=str(uuid.uuid4())[:8], user=user, agent_token=_tok_r)
         db.session.add(agent)
         db.session.commit()
         login_user(user)
-        return jsonify({"success":True,"agent_id":agent.agent_id})
+        return jsonify({"success":True,"agent_id":agent.agent_id,"agent_token":_tok_r})
     return render_template('register.html')
 
 @app.route('/login', methods=['GET','POST'])
@@ -1094,6 +1104,7 @@ def api_dashboard():
         "account_matched": bool(current_user.bound_account and account_info.get('login') == current_user.bound_account),
         "positions": positions,
         "agent_id": agent.agent_id,
+        "agent_token": agent.agent_token or '',
         "auto_trade_ea_count": auto_count,
         "auto_trade_status": cache_result,
         "ea_heartbeats": json.loads(agent.ea_heartbeats or '{}') if agent else {}
@@ -3454,6 +3465,13 @@ _last_config_send = {}
 def handle_register(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
+        # 🚨 2026-08-26（Phase 4）：Token 驗證 — 防冒認（agent 有 token 先驗證；DEV00001 舊版冇 token → 放行向後兼容）
+        _tk_in = str(data.get('token') or '')
+        _tk_real = str(agent.agent_token or '')
+        if _tk_real and _tk_in != _tk_real:
+            print(f"[WS] ⚠️ Agent {agent.agent_id} token 唔啱（拒絕連線）")
+            emit('registered', {"status": "error", "msg": "invalid token"})
+            return
         join_room(agent.agent_id)
         agent.status = 'connected'
         agent.last_seen = datetime.utcnow()
@@ -3488,6 +3506,15 @@ def handle_register(data):
 def handle_sync(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
+        # 🚨 2026-08-26（Phase 4）：sync 都驗證 token（防冒名上報）
+        try:
+            _tk_s = str(data.get('token') or '')
+            _tk_sr = str(agent.agent_token or '')
+            if _tk_sr and _tk_s != _tk_sr:
+                print(f"[WS] ⚠️ Agent {agent.agent_id} sync token 唔啱（忽略）")
+                return
+        except Exception:
+            pass
         agent.account_info = json.dumps(data.get('account',{}))
         agent.positions = json.dumps(data.get('positions',[]))
         agent.deals = json.dumps(data.get('deals',[]))

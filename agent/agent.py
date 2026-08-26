@@ -17,8 +17,9 @@ import threading
 import json
 
 # === Config ===
-SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://having-bent-bunch-theater.trycloudflare.com')
+SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://mt5cloud.esgov.org')
 AGENT_ID = os.environ.get('MT5_CLOUD_AGENT', 'DEV00001')
+AGENT_TOKEN = os.environ.get('MT5_CLOUD_TOKEN', '')
 MT5_DATA = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                          'D0E8209F77C8CF37AD8BF550E51FF075')
 MT5_EXPERTS = os.path.join(MT5_DATA, 'MQL5', 'Experts')
@@ -37,9 +38,11 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--server', default=SERVER_URL, help='Server URL')
 parser.add_argument('--agent', default=AGENT_ID, help='Agent ID')
+parser.add_argument('--token', default=AGENT_TOKEN, help='Agent token')
 args, _ = parser.parse_known_args()
 SERVER_URL = args.server
 AGENT_ID = args.agent
+AGENT_TOKEN = args.token
 
 # === SocketIO client ===
 import socketio
@@ -50,7 +53,7 @@ ea_heartbeats = {}
 def connect():
     print(f"✅ Connected to {SERVER_URL}")
     # Register with server → join agent room for deploy commands
-    sio.emit('agent_register', {'agent_id': AGENT_ID})
+    sio.emit('agent_register', {'agent_id': AGENT_ID, 'token': AGENT_TOKEN})
     print(f"   Registering as {AGENT_ID}...")
 
 def disconnect():
@@ -1203,6 +1206,7 @@ def sync_loop():
             if sio.connected and now - last_sync >= 10:
                 data = get_mt5_status()
                 data['agent_id'] = AGENT_ID
+                data['token'] = AGENT_TOKEN
                 data['heartbeats'] = dict(ea_heartbeats)
                 try:
                     hb_files = check_ea_heartbeat_files()

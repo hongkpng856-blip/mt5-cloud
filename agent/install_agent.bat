@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title MT5 Cloud Agent Installer
+title Tradotcom Agent Installer
 
 echo ============================================
-echo   ☁️ MT5 Cloud Agent 一鍵安裝
+echo   ☁️ Tradotcom Agent 一鍵安裝
 echo ============================================
 echo.
 
@@ -14,7 +14,6 @@ if exist "%PROGRAMFILES(X86)%\MetaTrader 5\terminal64.exe" goto mt5_ok
 if exist "%LOCALAPPDATA%\MetaTrader 5\terminal64.exe" goto mt5_ok
 if exist "%APPDATA%\MetaTrader 5\terminal64.exe" goto mt5_ok
 
-:: Check common broker paths
 for %%b in (ICMarkets-Demo,ICMarkets-Live,FPMarkets-Demo,FPMarkets-Live,Exness-Demo,Exness-Trial) do (
     if exist "%APPDATA%\MetaQuotes\Terminal\*\MQL5\Experts\*.ex5" goto mt5_ok
 )
@@ -49,36 +48,39 @@ echo ✅ Python 已安裝
 
 :: Install dependencies
 echo.
-echo [1/3] 安裝必要套件...
+echo [1/4] 安裝必要套件...
 pip install MetaTrader5 python-socketio[client] requests -q
 echo ✅ 套件已安裝
 
-:: Get Agent ID
-echo.
-echo [2/3] 設定 Agent...
-echo.
-echo 請登入你個網站，喺 Dashboard 睇到你嘅 Agent ID
-set /p AGENT_ID="請輸入你的 Agent ID (例如: DEV00001): "
-
 :: Get Server URL
 echo.
-set /p SERVER_URL="請輸入你的網站網址 (Enter=預設): "
-if "%SERVER_URL%"=="" set SERVER_URL=https://french-bright-grueling.ngrok-free.dev
+echo [2/4] 設定平台網址...
+set /p SERVER_URL="請輸入平台網址 (Enter=預設 https://mt5cloud.esgov.org): "
+if "%SERVER_URL%"=="" set SERVER_URL=https://mt5cloud.esgov.org
+
+:: Get Agent ID
+echo.
+echo [3/4] 設定 Agent...
+echo.
+echo 請登入你個網站，撳「新增 Agent」或者喺 Dashboard 睇你嘅 Agent ID + Token
+set /p AGENT_ID="請輸入你的 Agent ID (例如: A1B2C3D4): "
+echo.
+set /p AGENT_TOKEN="請輸入你的 Agent Token: "
 
 :: Create run script
 echo.
-echo [3/3] 建立啟動檔...
+echo [4/4] 建立啟動檔...
 (
 echo @echo off
 echo chcp 65001 >nul
-echo title MT5 Cloud Agent - %AGENT_ID%
-echo python agent.py --server %SERVER_URL% --agent-id %AGENT_ID%
+echo title Tradotcom Agent - %AGENT_ID%
+echo python agent.py --server %SERVER_URL% --agent %AGENT_ID% --token %AGENT_TOKEN%
 echo pause
 ) > run_agent.bat
 
-:: Download agent.py
+:: Download agent.py (正確 endpoint — /api/agent-py)
 echo 正在下載 Agent...
-curl -sL -o agent.py %SERVER_URL%/api/agent-download >nul
+curl -sL -o agent.py %SERVER_URL%/api/agent-py
 if not exist agent.py (
     echo ❌ 下載失敗，請手動下載 agent.py
 ) else (
@@ -88,8 +90,6 @@ if not exist agent.py (
 echo.
 echo ============================================
 echo   🎉 安裝完成！
+echo   下一步：執行 run_agent.bat 啟動 Agent
 echo ============================================
-echo.
-echo 雙撳「run_agent.bat」就開得！
-echo.
 pause
