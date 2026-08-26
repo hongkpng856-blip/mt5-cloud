@@ -3476,13 +3476,23 @@ def api_ea_upload():
 
 @app.route('/api/agent-download')
 def api_agent_download():
-    """下載 Windows Agent 安裝檔（桌面版 .pyw — 安裝精靈 + 自動啟動 + 桌面捷徑）"""
+    """下載 Windows Agent 啟動器（.bat — double-click 一定開到）— 自動下載 + 執行桌面版安裝程式"""
     agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
-    # 🚨 2026-08-26：桌面版優先（double-click 用）；install_agent.bat 保留做後備
-    _pyw = os.path.join(agent_dir, 'tradotcom_agent.pyw')
-    if os.path.isfile(_pyw):
-        return send_from_directory(agent_dir, 'tradotcom_agent.pyw', as_attachment=True, download_name='Tradotcom-Agent-Setup.pyw')
+    # 🚨 2026-08-26 v2：.bat 啟動器（.pyw double-click 冇關聯唔開）→ bat 自動搵 pythonw + 下載 pyw + 執行
+    _bat = os.path.join(agent_dir, 'tradotcom_launcher.bat')
+    if os.path.isfile(_bat):
+        return send_from_directory(agent_dir, 'tradotcom_launcher.bat', as_attachment=True, download_name='Tradotcom-Agent-Setup.bat')
     return send_from_directory(agent_dir, 'install_agent.bat')
+
+@app.route('/api/agent-pyw')
+def api_agent_pyw():
+    """下載桌面版安裝程式（tradotcom_agent.pyw）"""
+    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    _f = os.path.join(agent_dir, 'tradotcom_agent.pyw')
+    if os.path.isfile(_f):
+        return send_from_directory(agent_dir, 'tradotcom_agent.pyw', as_attachment=True, download_name='Tradotcom-Agent-Setup.pyw')
+    return jsonify({"error": "not found"}), 404
+
 
 @app.route('/api/agent-py')
 def api_agent_py():
