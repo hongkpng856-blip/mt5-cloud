@@ -140,9 +140,9 @@ echo.
 :: ========== 2. Ensure latest installer ==========
 :: Re-download pyw each time (latest version - old versions have bugs)
 echo Updating installer...
-del "%~dp0agent_launcher.log" 2>nul
-curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%~dp0tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
-if not exist "%~dp0tradotcom_agent.pyw" (
+del "%TARGET_DIR%\agent_launcher.log" 2>nul
+curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
+if not exist "%TARGET_DIR%\tradotcom_agent.pyw" (
     echo [ERROR] Download failed - please check your network.
     pause
     exit /b 1
@@ -155,19 +155,19 @@ echo Starting installer wizard...
 echo.
 
 if not "%PYTHONW%"=="" (
-    start "" "%PYTHONW%" "%~dp0tradotcom_agent.pyw"
+    start "" "%PYTHONW%" "%TARGET_DIR%\tradotcom_agent.pyw"
 ) else (
-    start "" "%PYTHONEXE%" "%~dp0tradotcom_agent.pyw"
+    start "" "%PYTHONEXE%" "%TARGET_DIR%\tradotcom_agent.pyw"
 )
 
 :: Check pyw actually started (log has START = running)
 timeout /t 4 /nobreak >nul
-if exist "%~dp0agent_launcher.log" (
-    findstr /c:"START pyw" "%~dp0agent_launcher.log" >nul 2>nul && (
+if exist "%TARGET_DIR%\agent_launcher.log" (
+    findstr /c:"START pyw" "%TARGET_DIR%\agent_launcher.log" >nul 2>nul && (
         echo Installer started.
         echo.
         echo -- Startup log --
-        type "%~dp0agent_launcher.log"
+        type "%TARGET_DIR%\agent_launcher.log"
         echo -----------------
         echo.
         timeout /t 6 /nobreak >nul
@@ -177,10 +177,10 @@ if exist "%~dp0agent_launcher.log" (
 
 echo [WARNING] Installer may not have started properly, checking...
 timeout /t 2 /nobreak >nul
-if exist "%~dp0agent_launcher.log" (
+if exist "%TARGET_DIR%\agent_launcher.log" (
     echo.
     echo -- Error log agent_launcher.log --
-    type "%~dp0agent_launcher.log"
+    type "%TARGET_DIR%\agent_launcher.log"
     echo -----------------------------------
     echo.
 ) else (

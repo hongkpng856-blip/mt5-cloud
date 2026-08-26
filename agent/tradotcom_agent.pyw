@@ -48,7 +48,22 @@ from tkinter import messagebox, ttk
 
 APP_TITLE = "Tradotcom Agent"
 DEFAULT_URL = "https://mt5cloud.esgov.org"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# 🚨 2026-08-26：固定安裝位置（唔使估喺邊 — launcher 會放呢度）
+_FIXED_DIR = os.path.join(os.environ.get("LOCALAPPDATA", ""), "TradotcomAgent")
+_my_dir = os.path.dirname(os.path.abspath(__file__))
+if os.path.normpath(_my_dir) != os.path.normpath(_FIXED_DIR):
+    try:
+        os.makedirs(_FIXED_DIR, exist_ok=True)
+        import shutil as _sh
+        for _f in os.listdir(_my_dir):
+            if _f.endswith((".pyw", ".py", ".json", ".log", ".bat", ".ico")):
+                _src = os.path.join(_my_dir, _f)
+                _dst = os.path.join(_FIXED_DIR, _f)
+                if os.path.isfile(_src) and not os.path.exists(_dst):
+                    _sh.copy2(_src, _dst)
+    except Exception:
+        pass
+BASE_DIR = _FIXED_DIR
 CONFIG_FILE = os.path.join(BASE_DIR, "agent_config.json")
 
 
