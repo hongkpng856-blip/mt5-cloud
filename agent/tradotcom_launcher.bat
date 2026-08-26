@@ -46,7 +46,7 @@ if not "%PYTHONW%"=="" (
     set "PYVER_CHECK=%PYTHONW:\pythonw.exe=\python.exe%"
     "%PYVER_CHECK%" -c "import sys;sys.exit(0 if sys.version_info < (3,14) else 1)" >nul 2>nul
     if errorlevel 1 (
-        echo ⚠️  偵測到你嘅 Python 係 3.14 — MetaTrader5 套件喺 3.14 會卡住！
+        echo [警告] 偵測到你嘅 Python 係 3.14 - MetaTrader5 喺 3.14 會卡住！
         echo    需要安裝 Python 3.11 或 3.12 先可以運行 Tradotcom Agent。
         echo.
         set /p PY_CHOICE2="要唔要我幫你下載並安裝 Python 3.11？(Y=下載安裝，N=退出): "
@@ -68,14 +68,29 @@ if not "%PYTHONW%"=="" (
         echo ✅ 下載完成！
         echo.
         echo 啟動 Python 3.11 安裝程式 —
-        echo   ⚠️  最緊要❗ 安裝時一定要 tick「Add Python to PATH」
+        echo   [重要] 安裝時一定要 tick  Add Python to PATH
         echo.
         pause
         start "" /wait "%TEMP%\python-3.11.9-amd64.exe"
         echo.
-        echo 安裝完成，重新檢查...
+        echo 安裝程式執行完畢，檢查 Python 3.11...
+        :: 🚨 FIX：直接指去 3.11 標準路徑（唔靠 for loop — 避免 py -3 又揀返 3.14 無限循環）
+        if exist "%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe" (
+            set "PYTHONW=%LOCALAPPDATA%\Programs\Python\Python311\pythonw.exe"
+            echo ✅ Python 3.11 已安裝
+        ) else if exist "%PROGRAMFILES%\Python311\pythonw.exe" (
+            set "PYTHONW=%PROGRAMFILES%\Python311\pythonw.exe"
+            echo ✅ Python 3.11 已安裝
+        ) else (
+            echo ❌ 搵唔到 Python 3.11 — 可能安裝路徑唔同或者冇完成安裝。
+            echo   請去 Start Menu 搵「Python 3.11」手動開啟確認，或者
+            echo   去 https://www.python.org/downloads/ 重新安裝 3.11
+            echo   （記得 tick  Add Python to PATH）
+            pause
+            exit /b 1
+        )
         echo.
-        goto CHECK_PYTHON
+        echo ✅ 繼續安裝 Tradotcom Agent...
     )
 )
 
@@ -91,7 +106,7 @@ if not "%PYTHONEXE%"=="" (
 )
 
 :: ========== 沒有 Python → 幫你安裝 ==========
-echo ⚠️  未偵測到 Python！
+echo [警告] 未偵測到 Python！
 echo.
 echo Tradotcom Agent 需要 Python 3.11 先可以執行。
 echo.
@@ -117,7 +132,7 @@ if not exist "%TEMP%\python-3.11.9-amd64.exe" (
 echo ✅ 下載完成！
 echo.
 echo 而家會啟動 Python 安裝程式 —
-echo   ⚠️  最緊要❗ 安裝時一定要 tick:
+echo   [重要] 安裝時一定要 tick:
 echo       ┌─────────────────────────────────┐
 echo       │  ☑ Add Python to PATH          │
 echo       │  ✓  Install Now（直接安裝）     │
@@ -173,7 +188,7 @@ if exist "%~dp0agent_launcher.log" (
     )
 )
 
-echo ⚠️  安裝程式似乎未成功啟動，檢查緊原因...
+echo [警告] 安裝程式似乎未成功啟動，檢查緊原因...
 timeout /t 2 /nobreak >nul
 if exist "%~dp0agent_launcher.log" (
     echo.
