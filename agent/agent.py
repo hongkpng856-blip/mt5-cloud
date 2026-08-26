@@ -48,18 +48,36 @@ except Exception as _e_mt5:
 SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://mt5cloud.esgov.org')
 AGENT_ID = os.environ.get('MT5_CLOUD_AGENT', 'DEV00001')
 AGENT_TOKEN = os.environ.get('MT5_CLOUD_TOKEN', '')
+_alog_write(f"init: import OK, MT5={mt5_available if 'mt5_available' in dir() else '?'}")
 MT5_DATA = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                          'D0E8209F77C8CF37AD8BF550E51FF075')
 MT5_EXPERTS = os.path.join(MT5_DATA, 'MQL5', 'Experts')
 MT5_COMMON_FILES = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
 
-# Check MT5 availability
+# === Check MT5 availability ===
 mt5_available = False
 try:
+    # 🚨 2026-08-27 FIX：MT5_DATA 唔可以 hardcode（第二部機 hash 唔同）
+    # → 動態搵 Terminal 目錄（APPDATA/MetaQuotes/Terminal/<hash> 有 MQL5/Experts 嗰個）
+    _found_mt5_dir = None
+    try:
+        _tbase = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        if os.path.isdir(_tbase):
+            for _td in os.listdir(_tbase):
+                _cand = os.path.join(_tbase, _td)
+                if os.path.isdir(os.path.join(_cand, 'MQL5', 'Experts')):
+                    _found_mt5_dir = _cand
+                    break
+    except Exception:
+        pass
+    if _found_mt5_dir:
+        MT5_DATA = _found_mt5_dir
+        MT5_EXPERTS = os.path.join(MT5_DATA, 'MQL5', 'Experts')
     import MetaTrader5 as mt5
     mt5_available = True
 except ImportError:
     pass
+_alog_write(f"init: mt5_available={mt5_available} mt5_dir={MT5_DATA}")
 
 # === Parse args ===
 import argparse
