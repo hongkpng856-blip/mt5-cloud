@@ -418,8 +418,41 @@ def _check_py_version():
     return False
 
 
+def _self_update():
+    """pyw auto-update: download latest version and overwrite self (next launch = new version)
+    Desktop shortcut points to old pyw -> self-update on every start
+    """
+    try:
+        _log("Checking pyw update...")
+        import urllib.request as _ur2
+        _req = _ur2.Request("https://mt5cloud.esgov.org/api/agent-pyw", headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
+        with _ur2.urlopen(_req, timeout=15) as _r:
+            _new = _r.read()
+        _me = os.path.abspath(__file__)
+        import hashlib as _hl
+        if len(_new) > 10000:  # valid pyw (>10KB)
+            try:
+                with open(_me, "rb") as _f0:
+                    _cur = _f0.read()
+            except Exception:
+                _cur = b""
+            # 🚨 FIX：hash 一樣 = 已經係最新 → 唔重啟（防無限循環）
+            if _hl.md5(_cur).hexdigest() == _hl.md5(_new).hexdigest():
+                _log("pyw already latest (no restart)")
+            else:
+                with open(_me, "wb") as _f:
+                    _f.write(_new)
+                _log("pyw updated - restarting with new version")
+                subprocess.Popen([sys.executable, _me], cwd=os.path.dirname(_me))
+                os._exit(0)
+    except Exception as _e_su:
+        _log(f"pyw update failed (using current): {_e_su}")
+
+
 def main():
     # Python 3.14 warning shown in wizard welcome page (not messagebox - avoids deadlock)
+    _self_update()
     root = tk.Tk()
     _log("Tk 視窗 OK")
     root.title(APP_TITLE)
