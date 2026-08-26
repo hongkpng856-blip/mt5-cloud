@@ -146,7 +146,7 @@ del "%TARGET_DIR%\agent_launcher.log" 2>nul
 set DL_OK_FLAG=0
 for /l %%t in (1,1,3) do (
     if !DL_OK_FLAG!==0 (
-        curl -sL -A "Mozilla/5.0 TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
+        curl -sSL -A "Mozilla/5.0 TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
         if exist "%TARGET_DIR%\tradotcom_agent.pyw" (
             set DL_OK_FLAG=1
         ) else (
