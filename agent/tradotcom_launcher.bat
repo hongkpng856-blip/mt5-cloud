@@ -33,19 +33,23 @@ for %%p in (
     if exist %%p set PYTHONW=%%~p
 )
 
-:: Fallback to py launcher
-if "%PYTHONW%"=="" (
-    py -3 -c "import sys,os;print(os.path.join(os.path.dirname(sys.executable),'pythonw.exe'),end='')" > "%TEMP%\_pyw_path.txt" 2>nul
-    set /p PYTHONW=<"%TEMP%\_pyw_path.txt"
-    set /p PYTHONEXE=<"%TEMP%\_pyw_path.txt"
-    del "%TEMP%\_pyw_path.txt" 2>nul
-)
+:: Fallback to py launcher (NOTE: moved out of if-block - the nested ')' in python code breaks batch parsing)
+if not "%PYTHONW%"=="" goto PY_VERSION_CHECK
+py -3 -c "import sys,os;print(os.path.join(os.path.dirname(sys.executable),'pythonw.exe'),end='')" > "%TEMP%\_pyw_path.txt" 2>nul
+set /p PYTHONW=<"%TEMP%\_pyw_path.txt"
+set /p PYTHONEXE=<"%TEMP%\_pyw_path.txt"
+del "%TEMP%\_pyw_path.txt" 2>nul
+:PY_VERSION_CHECK
 
 :: Check Python version - 3.14 incompatible with MetaTrader5 -> need 3.11/3.12
 if not "%PYTHONW%"=="" (
     set "PYVER_CHECK=%PYTHONW:\pythonw.exe=\python.exe%"
-    "%PYVER_CHECK%" -c "import sys;sys.exit(0 if sys.version_info < (3,14) else 1)" >nul 2>nul
-    if errorlevel 1 (
+    "%PYVER_CHECK%" --version 2> "%TEMP%\_pyver.txt"
+    set /p PYVER=<"%TEMP%\_pyver.txt"
+    del "%TEMP%\_pyver.txt" 2>nul
+    echo PYVER=!PYVER!>nul
+    echo !PYVER! | findstr /c:"3.14" >nul 2>nul
+    if not errorlevel 1 (
         echo [WARNING] Your Python is 3.14 - MetaTrader5 hangs on 3.14!
         echo    Tradotcom Agent requires Python 3.11 or 3.12.
         echo.
@@ -58,7 +62,7 @@ if not "%PYTHONW%"=="" (
             exit /b 1
         )
         echo.
-        echo Downloading Python 3.11 installer (~25MB)...
+        echo Downloading Python 3.11 installer - 25MB...
         curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
         if not exist "%TEMP%\python-3.11.9-amd64.exe" (
             echo [ERROR] Download failed - please install Python 3.11 manually: https://www.python.org/downloads/
@@ -111,7 +115,7 @@ if /i not "!PY_CHOICE!"=="Y" (
 )
 
 echo.
-echo Downloading Python 3.11 installer (~25MB)...
+echo Downloading Python 3.11 installer - 25MB...
 curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
 if not exist "%TEMP%\python-3.11.9-amd64.exe" (
     echo [ERROR] Download failed - please install Python 3.11 manually: https://www.python.org/downloads/
@@ -175,13 +179,13 @@ echo [WARNING] Installer may not have started properly, checking...
 timeout /t 2 /nobreak >nul
 if exist "%~dp0agent_launcher.log" (
     echo.
-    echo -- Error log (agent_launcher.log) --
+    echo -- Error log agent_launcher.log --
     type "%~dp0agent_launcher.log"
     echo -----------------------------------
     echo.
 ) else (
     echo [ERROR] Installer produced no output. Possible causes:
-    echo   - 1. Python installation incomplete (reinstall Python 3.11, tick Add to PATH)
+    echo   - 1. Python installation incomplete - reinstall Python 3.11, tick Add to PATH
     echo   - 2. Antivirus blocking
     echo.
 )
