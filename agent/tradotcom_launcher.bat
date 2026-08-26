@@ -142,17 +142,24 @@ echo.
 echo Updating installer...
 del "%TARGET_DIR%\agent_launcher.log" 2>nul
 :: 🚨 2026-08-26：下載重試 3 次（tunnel 短暫斷線會 fail — 自動再試）
-:: NOTE: goto 唔可以喺 if block 內（batch 解析亂）→ 用 for /l 計數重試
+:: NOTE: goto 唔可以喺 for/if block 內（batch 解析亂）→ 用 flag 變數
+set DL_OK_FLAG=0
 for /l %%t in (1,1,3) do (
-    curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
-    if exist "%TARGET_DIR%\tradotcom_agent.pyw" goto DL_OK
-    echo [WARNING] Download failed (attempt %%t/3) - retrying...
-    ping -n 4 127.0.0.1 >nul
+    if !DL_OK_FLAG!==0 (
+        curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
+        if exist "%TARGET_DIR%\tradotcom_agent.pyw" (
+            set DL_OK_FLAG=1
+        ) else (
+            echo [WARNING] Download failed (attempt %%t/3) - retrying...
+            ping -n 4 127.0.0.1 >nul
+        )
+    )
 )
-echo [ERROR] Download failed after 3 attempts - please check your network.
-pause
-exit /b 1
-:DL_OK
+if not "!DL_OK_FLAG!"=="1" (
+    echo [ERROR] Download failed after 3 attempts - please check your network.
+    pause
+    exit /b 1
+)
 echo Updated.
 echo.
 
