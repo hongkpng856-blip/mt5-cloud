@@ -141,9 +141,18 @@ echo.
 :: Re-download pyw each time (latest version - old versions have bugs)
 echo Updating installer...
 del "%TARGET_DIR%\agent_launcher.log" 2>nul
+:: 🚨 2026-08-26：下載重試 3 次（tunnel 短暫斷線會 fail — 自動再試）
+set DL_TRY=0
+:DL_RETRY
+set /a DL_TRY+=1
 curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o "%TARGET_DIR%\tradotcom_agent.pyw" https://mt5cloud.esgov.org/api/agent-pyw
 if not exist "%TARGET_DIR%\tradotcom_agent.pyw" (
-    echo [ERROR] Download failed - please check your network.
+    if %DL_TRY% LSS 3 (
+        echo [WARNING] Download failed (attempt %DL_TRY%/3) - retrying...
+        ping -n 4 127.0.0.1 >nul
+        goto DL_RETRY
+    )
+    echo [ERROR] Download failed after 3 attempts - please check your network.
     pause
     exit /b 1
 )
