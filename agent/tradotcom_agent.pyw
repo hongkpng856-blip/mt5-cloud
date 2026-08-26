@@ -330,6 +330,18 @@ def direct_launch(cfg):
             _log("agent.py 已更新")
         except Exception as _e_dl:
             _log(f"agent.py 更新失敗（用舊版）: {_e_dl}")
+        # 🚨 2026-08-26 FIX：確保依賴已裝（direct_launch 繞過精靈 → 可能冇 pip install）
+        _log("檢查依賴...")
+        try:
+            import MetaTrader5  # noqa
+            import socketio  # noqa
+            _log("依賴 OK")
+        except Exception as _e_dep:
+            _log(f"依賴未裝 → pip install（{_e_dep}）")
+            subprocess.run([sys.executable, "-m", "pip", "install", "-q",
+                            "MetaTrader5", "python-socketio[client]", "requests"],
+                           timeout=240)
+            _log("依賴安裝完成")
         proc = subprocess.Popen([sys.executable, "-u", agent_py,
                                  "--server", url, "--agent", sid, "--token", tok],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
