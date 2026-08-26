@@ -65,7 +65,13 @@ AGENT_TOKEN = args.token
 
 # === SocketIO client ===
 import socketio
-sio = socketio.Client(logger=False, engineio_logger=False)
+# 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）
+# → SocketIO client 帶瀏覽器 UA（tunnel WAF 唔俾冇 UA 嘅 polling）
+# 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）→ requests.Session 帶 UA
+import requests as _req_ua
+_sess_ua = _req_ua.Session()
+_sess_ua.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
+sio = socketio.Client(logger=False, engineio_logger=False, http_session=_sess_ua)
 ea_config_cache = {}
 ea_heartbeats = {}
 
