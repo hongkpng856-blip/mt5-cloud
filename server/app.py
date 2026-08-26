@@ -3476,8 +3476,12 @@ def api_ea_upload():
 
 @app.route('/api/agent-download')
 def api_agent_download():
-    """下載 Windows Agent 安裝檔"""
+    """下載 Windows Agent 安裝檔（桌面版 .pyw — 安裝精靈 + 自動啟動 + 桌面捷徑）"""
     agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    # 🚨 2026-08-26：桌面版優先（double-click 用）；install_agent.bat 保留做後備
+    _pyw = os.path.join(agent_dir, 'tradotcom_agent.pyw')
+    if os.path.isfile(_pyw):
+        return send_from_directory(agent_dir, 'tradotcom_agent.pyw', as_attachment=True, download_name='Tradotcom-Agent-Setup.pyw')
     return send_from_directory(agent_dir, 'install_agent.bat')
 
 @app.route('/api/agent-py')
