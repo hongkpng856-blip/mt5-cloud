@@ -119,6 +119,10 @@ class InstallWizard:
     def build_welcome(self):
         self.clear()
         tk.Label(self.root, text="☁️ Tradotcom Agent 安裝精靈", font=("Segoe UI", 16, "bold")).pack(pady=20)
+        # 🚨 2026-08-26：Python 3.14 警告（純文字 — 唔會卡死）
+        if _check_py_version():
+            tk.Label(self.root, text="⚠️ 你嘅 Python 3.14 比較新，若果 Agent 連唔到 MT5，\n建議安裝 Python 3.11/3.12（python.org）",
+                     fg="#f0b90b", bg="#3d2f00", padx=10, pady=8, justify="left").pack(pady=6, padx=30)
         tk.Label(self.root, text="呢個程式會安裝 Tradotcom Agent 到你部電腦\n\n" +
                  "用途：\n"
                  "• 連接你嘅 Tradotcom 帳戶\n"
@@ -369,8 +373,7 @@ def _check_py_version():
 
 
 def main():
-    # 🚨 2026-08-26：Python 3.14 警告（MetaTrader5 可能唔兼容 — 第二部機案例）
-    _py_bad = _check_py_version()
+    # 🚨 2026-08-26：Python 3.14 警告（唔用 messagebox — mainloop 前彈會卡死；改喺精靈 welcome 頁顯示）
     root = tk.Tk()
     _log("Tk 視窗 OK")
     root.title(APP_TITLE)
@@ -380,19 +383,10 @@ def main():
         pass
     root.geometry("520x520")
     root.configure(bg="#0b0e11")
-    # 🚨 2026-08-26：確保視窗彈到最前（用戶話 double-click 冇反應 — 可能開咗喺背景）
+    # 🚨 2026-08-26：確保視窗彈到最前
     root.attributes("-topmost", True)
     root.lift()
     root.update()
-    if _py_bad:
-        try:
-            messagebox.showwarning("Python 版本提示",
-                "你部電腦用緊 Python 3.14。\n\n"
-                "MetaTrader5 套件可能未支援咁新嘅版本，Agent 未必連到 MT5。\n\n"
-                "建議安裝 Python 3.11 或 3.12（https://www.python.org/downloads/）\n"
-                "然後再試。")
-        except Exception:
-            pass
     _log("視窗已 lift + update")
     try:
         import tkinter.font as tkfont
