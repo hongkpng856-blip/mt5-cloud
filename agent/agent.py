@@ -1436,9 +1436,12 @@ print(f"  Agent ID: {AGENT_ID}")
 print(f"  MT5:      {'✅ Available' if mt5_available else '❌ Not installed'}")
 print("=" * 56)
 print("  Connecting...\n")
+_alog_write(f"Connecting to {SERVER_URL}...")
 
 try:
-    sio.connect(f"{SERVER_URL}", transports=['polling'])  # 強制 polling，Flask dev server 唔支援 WebSocket
+    # 🚨 2026-08-27 FIX：wait=False（非阻塞 — 唔會掛死）+ 短 timeout
+    # 之前 blocking connect 連唔到 → 永遠卡住 → 冇 log → 用戶「冇綠燈」
+    sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False, retry=False)
 except Exception as e:
     # 🚨 2026-08-26 FIX（multi-user Phase 1）：python-socketio 5.x connect() 有時 raise
     # 「One or more namespaces failed to connect」— 但背景 namespace 已連接（polling ack 時序）
