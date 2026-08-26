@@ -188,7 +188,15 @@ class InstallWizard:
         try:
             import urllib.request
             agent_py = os.path.join(BASE_DIR, "agent.py")
-            urllib.request.urlretrieve(url.rstrip("/") + "/api/agent-py", agent_py)
+            # 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（407/403）→ 帶正常瀏覽器 UA
+            _dl_url = url.rstrip("/") + "/api/agent-py"
+            _dl_req = urllib.request.Request(_dl_url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0",
+                "Accept": "*/*",
+            })
+            with urllib.request.urlopen(_dl_req, timeout=30) as _dl_r:
+                with open(agent_py, "wb") as _dl_f:
+                    _dl_f.write(_dl_r.read())
             self._status.config(text="✅ agent.py 已下載")
             self.root.update()
         except Exception as e:

@@ -158,7 +158,7 @@ echo.
 echo [步驟 6/6] 下載 Agent 正本
 echo.
 echo 正在下載 agent.py...
-curl -sL -o agent.py %SERVER_URL%/api/agent-py
+curl -sL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0" -o agent.py %SERVER_URL%/api/agent-py
 if not exist agent.py (
     echo ❌ 下載失敗 — 請檢查平台網址係咪正確
     pause
