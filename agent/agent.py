@@ -1017,7 +1017,7 @@ def build_files_snapshot():
     格式: {"heartbeats": {ea: {last_check, age_sec, status}}, "trades_stats": {ea: {trades,wins,losses,profit,...}},
            "log_last": {ea: "loaded successfully"/"removed"}, "hotkeys": [ea, ...], "ts": epoch}
     """
-    snap = {"ts": time.time(), "heartbeats": {}, "trades_stats": {}, "log_last": {}, "hotkeys": []}
+    snap = {"ts": time.time(), "heartbeats": {}, "trades_stats": {}, "trades_raw": {}, "log_last": {}, "hotkeys": []}
     appdata = os.environ.get('APPDATA', '')
     terminal_dir = os.path.join(appdata, 'MetaQuotes', 'Terminal')
     common_files = os.path.join(terminal_dir, 'Common', 'Files')
@@ -1085,6 +1085,47 @@ def build_files_snapshot():
                         "max_dd": _dd2, "expectancy": round(_wr2 * _aw - (1 - _wr2) * _al, 2),
                         "profit_factor": round(_gp / _gl_v, 2) if _gl_v > 0 else (99.99 if _gp > 0 else 0)
                     }
+            except Exception:
+                continue
+    except Exception:
+        pass
+    # 2b. trades_raw（逐單明細 — 分析/報告/equity curve 用 — 每 EA 最多 500 筆）
+    try:
+        import glob as _gl_r
+        for _f_r in _gl_r.glob(os.path.join(common_files, 'trades_*.json')):
+            _ea_r = os.path.basename(_f_r)[7:-5]
+            try:
+                with open(_f_r, 'rb') as _fh_r:
+                    _raw_r = _fh_r.read()
+                _txt_r = None
+                for _enc_r in ('utf-8', 'utf-16'):
+                    try:
+                        _txt_r = _raw_r.decode(_enc_r); break
+                    except Exception:
+                        continue
+                if not _txt_r:
+                    continue
+                _recs_r = []
+                for _ln_r in _txt_r.splitlines():
+                    _ln_r = _ln_r.strip()
+                    if not _ln_r:
+                        continue
+                    try:
+                        _td_r = json.loads(_ln_r)
+                        if 'profit' in _td_r:
+                            _recs_r.append({
+                                "time": _td_r.get('time', 0),
+                                "symbol": _td_r.get('symbol', ''),
+                                "profit": _td_r.get('profit', 0),
+                                "type": _td_r.get('type', ''),
+                                "volume": _td_r.get('volume', 0),
+                                "price": _td_r.get('price', 0),
+                                "magic": _td_r.get('magic', ''),
+                            })
+                    except Exception:
+                        continue
+                # 最多 500 筆（最尾 500 — 最新）
+                snap['trades_raw'][_ea_r] = _recs_r[-500:]
             except Exception:
                 continue
     except Exception:

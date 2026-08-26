@@ -1177,68 +1177,106 @@ def compute_auto_trade_status(user):
     return results
 
 # === API: Analysis ===
+def _agent_trades_raw():
+    """🚨 2026-08-26（multi-user Phase 3）：攞當前用戶 agent 上報嘅逐單交易（每機獨立）
+    有 snapshot → 用 trades_raw; 冇 → None（server fallback 讀本機）
+    """
+    try:
+        agent = Agent.query.filter_by(user_id=current_user.id).first()
+        if agent and agent.files_snapshot:
+            _snap = json.loads(agent.files_snapshot or '{}')
+            _tr = _snap.get('trades_raw') if isinstance(_snap, dict) else None
+            if _tr:
+                return _tr
+    except Exception:
+        pass
+    return None
+
+
 @app.route('/api/analysis')
 @login_required
 def api_analysis():
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     deals_data = json.loads(agent.deals or '[]')
 
+    # 🚨 2026-08-26（multi-user Phase 3）：agent 上報 trades_raw 優先（每機獨立 — 支持多機）
+    # → 有 snapshot trades_raw → 直接用（唔讀本機 Common/Files）
+    _snap_trades = _agent_trades_raw()
+    _use_snap_tr = _snap_trades is not None
+    if _use_snap_tr:
+        try:
+            _cfg_tr = json.loads(current_user.ea_config or '{}')
+            for _ea_tr, _recs_tr in _snap_trades.items():
+                _m_tr = str(_cfg_tr.get(_ea_tr + '_magic', ''))
+                for _r_tr in _recs_tr:
+                    if 'profit' in _r_tr:
+                        deals_data.append({
+                            "magic": int(_m_tr) if str(_m_tr).isdigit() else (_r_tr.get('magic') or 0),
+                            "symbol": _r_tr.get('symbol', ''),
+                            "profit": _r_tr.get('profit', 0),
+                            "time": _r_tr.get('time', 0),
+                        })
+        except Exception:
+            pass
+
     # 🚨 2026-08-21：合併 EA 自寫逐單明細（trades_<EA>.json — 完整歷史）
     # MT5 Python history API 讀唔到新 deals（build 6120 caching）→ agent.deals 得舊嘢
     # → 讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫）合併做分析數據源
-    try:
-        import glob as _gl_a
-        _cf_a = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-        # 搵返 EA 名 → magic 對應
-        _ea_magic_map = {}
+    # 🚨 2026-08-26（Phase 3）：agent 已上報 trades_raw → 唔再讀本機（避免雙重）
+    if not _use_snap_tr:
         try:
-            import sqlite3 as _sq_a
-            _db_a = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
-            _c_a = _sq_a.connect(_db_a)
-            _r_a = _c_a.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
-            _c_a.close()
-            if _r_a:
-                _cfg_a = json.loads(_r_a[0] or '{}')
-                for _k_a, _v_a in _cfg_a.items():
-                    if not _k_a.startswith('_') and not _k_a.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v_a, str):
-                        _ea_magic_map[_k_a] = str(_cfg_a.get(_k_a + '_magic', ''))
-        except Exception:
-            pass
-        for _f_a in _gl_a.glob(os.path.join(_cf_a, 'trades_*.json')):
-            _ea_a = os.path.basename(_f_a)[7:-5]  # trades_<EA>.json → <EA>
-            _magic_a = _ea_magic_map.get(_ea_a, '')
-            if not _magic_a:
-                continue
+            import glob as _gl_a
+            _cf_a = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            # 搵返 EA 名 → magic 對應
+            _ea_magic_map = {}
             try:
-                with open(_f_a, 'rb') as _fh_a:
-                    _raw_a = _fh_a.read()
-                _txt_a = None
-                for _enc_a in ('utf-8', 'utf-16'):
-                    try:
-                        _txt_a = _raw_a.decode(_enc_a)
-                        break
-                    except Exception:
-                        continue
-                if _txt_a:
-                    for _line_a in _txt_a.splitlines():
-                        _line_a = _line_a.strip()
-                        if not _line_a:
-                            continue
-                        try:
-                            _td_a = json.loads(_line_a)
-                            if 'profit' in _td_a:
-                                deals_data.append({
-                                    "magic": int(_magic_a),
-                                    "symbol": _cfg_a.get(_ea_a, ''),
-                                    "profit": _td_a.get('profit', 0),
-                                    "time": _td_a.get('time', 0),
-                                })
-                        except Exception:
-                            continue
+                import sqlite3 as _sq_a
+                _db_a = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
+                _c_a = _sq_a.connect(_db_a)
+                _r_a = _c_a.execute('SELECT ea_config FROM user WHERE id=?', (current_user.id,)).fetchone()
+                _c_a.close()
+                if _r_a:
+                    _cfg_a = json.loads(_r_a[0] or '{}')
+                    for _k_a, _v_a in _cfg_a.items():
+                        if not _k_a.startswith('_') and not _k_a.endswith(('_tf', '_lot', '_magic', '_status')) and isinstance(_v_a, str):
+                            _ea_magic_map[_k_a] = str(_cfg_a.get(_k_a + '_magic', ''))
             except Exception:
                 pass
-    except Exception:
-        pass
+            for _f_a in _gl_a.glob(os.path.join(_cf_a, 'trades_*.json')):
+                _ea_a = os.path.basename(_f_a)[7:-5]  # trades_<EA>.json → <EA>
+                _magic_a = _ea_magic_map.get(_ea_a, '')
+                if not _magic_a:
+                    continue
+                try:
+                    with open(_f_a, 'rb') as _fh_a:
+                        _raw_a = _fh_a.read()
+                    _txt_a = None
+                    for _enc_a in ('utf-8', 'utf-16'):
+                        try:
+                            _txt_a = _raw_a.decode(_enc_a)
+                            break
+                        except Exception:
+                            continue
+                    if _txt_a:
+                        for _line_a in _txt_a.splitlines():
+                            _line_a = _line_a.strip()
+                            if not _line_a:
+                                continue
+                            try:
+                                _td_a = json.loads(_line_a)
+                                if 'profit' in _td_a:
+                                    deals_data.append({
+                                        "magic": int(_magic_a),
+                                        "symbol": _cfg_a.get(_ea_a, ''),
+                                        "profit": _td_a.get('profit', 0),
+                                        "time": _td_a.get('time', 0),
+                                    })
+                            except Exception:
+                                continue
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     if not deals_data:
         return jsonify({"error":"No data yet"})
@@ -1404,6 +1442,30 @@ def api_trade_report():
     """
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     deals_data = json.loads(agent.deals or '[]')
+
+    # 🚨 2026-08-26（multi-user Phase 3）：agent 上報 trades_raw 優先（每機獨立）
+    try:
+        _snap_tr2 = _agent_trades_raw()
+        if _snap_tr2:
+            _cfg_tr2 = json.loads(current_user.ea_config or '{}')
+            for _ea2, _recs2 in _snap_tr2.items():
+                _m2 = str(_cfg_tr2.get(_ea2 + '_magic', ''))
+                for _r2 in _recs2:
+                    if 'profit' in _r2:
+                        deals_data.append({
+                            "time": _r2.get('time', 0),
+                            "symbol": _r2.get('symbol', ''),
+                            "profit": _r2.get('profit', 0),
+                            "magic": _r2.get('magic') or _m2,
+                            "type": _r2.get('type', ''),
+                            "volume": _r2.get('volume', 0),
+                            "price": _r2.get('price', 0),
+                            "ticket": f"{_ea2}_{len(deals_data)}",
+                            "comment": f"(EA {_ea2})",
+                            "ea_name": _ea2
+                        })
+    except Exception:
+        pass
 
     # EA 名對應（magic → EA 名）
     ea_name_map = {}
