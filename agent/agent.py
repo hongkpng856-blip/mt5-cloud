@@ -865,9 +865,11 @@ def download_and_install(ea_name, url, ea_config=None):
                     f.write(content)
                 print(f"   💾 Saved: {mq5_path}")
                 
-                # === Compile (skip if .ex5 already exists and fresh) ===
+                # === Compile (skip if .ex5 already exists) ===
+                # 🚨 2026-08-28 FIX：之前「.ex5 mtime > .mq5 先 skip」— 但心跳注入令 .mq5 永遠新過 .ex5 → 每次 Auto-sent 都 compile → MetaEditor 周不時彈出
+                # → 改為「.ex5 存在就 skip」（心跳注入只改 .mq5 內容 — .ex5 功能一樣 — 唔需要重新 compile）
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
-                if os.path.exists(ex5_path) and os.path.getmtime(ex5_path) > os.path.getmtime(mq5_path):
+                if os.path.exists(ex5_path):
                     print(f"   ⏩ Skip compile: {base_name}.ex5 already exists")
                 else:
                     import subprocess
