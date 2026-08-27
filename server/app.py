@@ -1125,6 +1125,13 @@ def _agent_live_status(agent):
 @login_required
 def api_dashboard():
     agent = Agent.query.filter_by(user_id=current_user.id).first()
+    # 🚨 2026-08-28 FIX：user 可能冇 agent（網站剷除咗）→ 唔 crash — 返回空資料（前端顯示「未安裝」）
+    if agent is None:
+        return jsonify({
+            "agent_id": None, "agent_token": None, "status": "offline",
+            "account": {}, "positions": [], "ea_heartbeats": {},
+            "auto_trade_ea_count": 0, "auto_trade_status": [], "last_seen": None
+        })
     account = json.loads(agent.account_info or '{}')
     positions = json.loads(agent.positions or '[]')
     # Count auto-traded EAs
