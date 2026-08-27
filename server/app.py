@@ -801,6 +801,11 @@ def api_ea_config():
                 _hb_e = set((_snap_e.get('heartbeats') or {}).keys())
                 _log_e = set((_snap_e.get('log_last') or {}).keys())
                 _hk_e = set(_snap_e.get('hotkeys') or [])
+                # 🚨 2026-08-28 FIX：log_last 包含殘留（MT5 log 舊「loaded successfully」記錄 — 新 account 安裝後顯示唔屬於佢嘅 EA）
+                # → log_last 只計「心跳 alive」嘅 EA（有新鮮心跳 = 真運行）；冇心跳 = 舊記錄殘留 — 唔上報
+                _hb_alive = set(k for k, v in (_snap_e.get('heartbeats') or {}).items()
+                                if isinstance(v, dict) and v.get('status') == 'alive')
+                _log_e = _log_e & _hb_alive
                 _agent_eas = sorted(set(list(_hb_e) + list(_log_e) + list(_hk_e)))
             else:
                 # fallback：config EA（冇 agent 上報 — 單機向後兼容）
