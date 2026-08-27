@@ -24,6 +24,60 @@ try:
     _sys0.stderr.reconfigure(encoding='utf-8', errors='replace')
 except Exception:
     pass
+
+# 🚨 2026-08-27（方案 A 防雙開）：一部機一個 agent
+# lock 檔（%LOCALAPPDATA%\TradotcomAgent\agent.lock）記錄本機 agent_id + PID
+# 啟動時：如果有其他 agent 行緊 → 阻止（唔啟動）→ 彈窗話用戶
+def _check_machine_lock(_my_agent_id):
+    """本機防雙開：檢查有冇其他 agent 行緊（lock 檔 + PID 驗證）"""
+    try:
+        _lock_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+        _lock_f = os.path.join(_lock_dir, 'agent.lock')
+        if os.path.isfile(_lock_f):
+            try:
+                with open(_lock_f, 'r', encoding='utf-8') as _lf:
+                    _lock_data = json.loads(_lf.read() or '{}')
+            except Exception:
+                _lock_data = {}
+            _other_id = _lock_data.get('agent_id')
+            _other_pid = _lock_data.get('pid')
+            # 如果 lock 係自己 → 允許（重啟場景）
+            if _other_id == _my_agent_id:
+                return True
+            # 檢查其他 agent 仲行緊（PID 存在）
+            if _other_pid:
+                try:
+                    import psutil
+                    if psutil.pid_exists(_other_pid):
+                        print(f"🚫 本機已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止啟動")
+                        print(f"   （一部機一個 Agent — 如需更換請先停現有 Agent）")
+                        # 寫 log + 彈窗
+                        try:
+                            with open(_lock_f, 'a', encoding='utf-8') as _lf:
+                                pass  # 唔改 lock
+                        except Exception:
+                            pass
+                        return False
+                except ImportError:
+                    # 冇 psutil → 用 tasklist 檢查
+                    try:
+                        _out = subprocess.check_output(['tasklist', '/FI', f'PID eq {_other_pid}'], creationflags=0x08000000 if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0).decode('utf-8', 'ignore')
+                        if str(_other_pid) in _out and 'python' in _out.lower():
+                            print(f"🚫 本機已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止啟動")
+                            return False
+                    except Exception:
+                        pass
+        # 冇 lock / 其他 agent 死咗 → 寫自己 lock
+        try:
+            if not os.path.isdir(_lock_dir):
+                os.makedirs(_lock_dir, exist_ok=True)
+            with open(_lock_f, 'w', encoding='utf-8') as _lf:
+                _lf.write(json.dumps({"agent_id": _my_agent_id, "pid": os.getpid(), "ts": time.time()}))
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return True  # 檢查失敗 → 放行（保守）
 # 🚨 2026-08-26（安裝診斷）：agent.py 啟動即寫 log — pythonw 靜默任何 error 都記低
 try:
     _alog = os.path.join(os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd(), "agent_launcher.log")
@@ -98,6 +152,17 @@ AGENT_ID = args.agent
 AGENT_TOKEN = args.token
 _alog_write(f"args: server={SERVER_URL} agent={AGENT_ID}")
 
+# 🚨 2026-08-27（方案 A 防雙開）：本機已有其他 agent → 阻止啟動
+if not _check_machine_lock(AGENT_ID):
+    print(f"🚫 本機已有其他 Agent 行緊 — 拒絕啟動（一部機一個 Agent）")
+    _alog_write(f"🚫 防雙開阻止：本機已有其他 Agent 行緊")
+    # 彈窗話用戶
+    try:
+        _show_status_popup("🚫 Agent 已存在", f"本機已有另一個 Agent 行緊！\n\n一部機只可以一個 Agent。\n請先停止現有 Agent 再試。", False)
+    except Exception:
+        pass
+    _sys0.exit(3)
+
 # === SocketIO client ===
 import socketio
 # 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）
@@ -114,6 +179,7 @@ except Exception as _e_sio:
     sio = socketio.Client(logger=False, engineio_logger=False)
 ea_config_cache = {}
 ea_heartbeats = {}
+_popup_shown = False  # 🚨 2026-08-27：成功彈窗只彈一次
 
 def _show_status_popup(title, msg, ok):
     """🚨 2026-08-26（安裝驗證）：tkinter 彈窗 — Agent 啟動連線成功/失敗顯示
@@ -144,6 +210,11 @@ def connect():
     print(f"   Registering as {AGENT_ID}...")
     _alog_write(f"Registering as {AGENT_ID}...")
     # 🚨 2026-08-26（安裝驗證）：啟動成功 → 綠色彈窗（等 registered 確認先彈 — 用 thread 延遲）
+    # 🚨 2026-08-27 FIX：只彈一次（斷線重連唔再彈 — 每次 connect 都彈 = 「成日彈」）
+    global _popup_shown
+    if _popup_shown:
+        return
+    _popup_shown = True
     import threading as _th_p
     def _pop_ok():
         time.sleep(1.5)
