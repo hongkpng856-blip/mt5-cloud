@@ -1143,6 +1143,11 @@ def _deploy_worker_loop():
                             _log_p = os.path.join(os.path.dirname(_mq5_p), f'_cli_compile_{_ea}.log')
                             subprocess.run([_me_dir, f'/compile:{_mq5_p}', f'/log:{_log_p}'], timeout=60)
                             time.sleep(2)
+                            # 🚨 2026-08-27 FIX：compile 完即刻關 MetaEditor（唔關 → 佢監察 Experts 目錄 → 見 .mq5 變化 → 彈一堆「外部修改」dialog）
+                            try:
+                                subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
+                            except Exception:
+                                pass
                             for _d2 in os.listdir(_exp_dir):
                                 if os.path.isfile(os.path.join(_exp_dir, _d2, 'MQL5', 'Experts', _ea + '.ex5')):
                                     _compiled = True

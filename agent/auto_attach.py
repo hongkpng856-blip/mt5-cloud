@@ -1365,6 +1365,11 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                         _log_p = os.path.join(os.path.dirname(_mq5_path), f'_cli_compile_{ea_name}.log')
                         _sp_cp.run([_me_dir, f'/compile:{_mq5_path}', f'/log:{_log_p}'], timeout=60)
                         time.sleep(2)
+                        # 🚨 2026-08-27 FIX：compile 完即刻關 MetaEditor（唔關 → 監察 Experts → 彈「外部修改」dialog）
+                        try:
+                            _sp_cp.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
+                        except Exception:
+                            pass
                         # 再 check .ex5
                         for _d_root in os.listdir(_data_root):
                             _exp_dir = os.path.join(_data_root, _d_root, 'MQL5', 'Experts')
