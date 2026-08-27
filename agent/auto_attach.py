@@ -1489,21 +1489,10 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 print(f"⚠️ {ea_name} 熱鍵（{_combo_exist}）測試冇彈 Properties — 可能要 restart 重寫")
                 _combo_n = _combo_exist  # 保留原本 combo（重寫用返）
                 break  # 唔 return — 繼續落去 restart（關→寫→開）
-        # 3. 分配未用 Ctrl+N（如果 break 落嚟已有 _combo_n — skip）
-        _used = set()
-        for _k, _v in experts.items():
-            if _v and _v.startswith('Ctrl+'):
-                try: _used.add(int(_v.replace('Ctrl+', '')))
-                except: pass
-        if _combo_n is None:
-            _combo_n = None
-            for _i_n in range(1, 10):
-                if _i_n not in _used:
-                    _combo_n = f'Ctrl+{_i_n}'
-                    break
-        if not _combo_n:
-            print(f"⚠️ 冇可用熱鍵 — 唔做預載")
-            return mt5_pid
+        # 3. 分配熱鍵 — 🚨 2026-08-28 FIX：刪除舊「分配未用 Ctrl+N」邏輯（幾多年前產物 — 會分配 Ctrl+2/3...）
+        # → 統一 Ctrl+1 重用（v0.10.68 用戶要求：每次部署都用 Ctrl+1 — 寫入段 line 1585 只寫 Ctrl+1）
+        # → 呢度直接設定 _combo_n = Ctrl+1（唔好再掃「未用」— 每次部署都係 Ctrl+1）
+        _combo_n = 'Ctrl+1' if _combo_n is None else _combo_n
         print(f"🔄 熱鍵預載：{ea_name}（關 MT5 → 批次寫入熱鍵 → 開）")
         # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross — restore 唔齊）：restart 前記錄所有 chart
         # → restart 後檢查 restore 咗幾多 → 唔齊就補開（開返同 symbol 嘅 chart — EA 會自動 restore？唔會 — 但至少 chart 喺度）
@@ -3304,12 +3293,16 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # Step 3: Attach EA（快捷鍵優先 — 2026-08：6093 double-click 唔 work）
         # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
         # 🚨 2026-08-19 FIX：OpenChart 係 Script（讀 open_chart_cmd.json 開 target chart）— 唔行 attach_ea_navigator（Navigator double-click 對 Script 唔 work — 卡死 not found）
+        # 🚨 2026-08-28 FIX（用戶實錘：Seasonal 冇喺 hotkeys.json → 落去舊 Navigator double-click 方法（Ctrl+N 開 chart — 幾多年前產物）→ 失敗）：
+        # → 全部 EA 一律用熱鍵（attach_ea_hotkey — _ensure_hotkey_loaded 已確保 hotkeys.ini 寫入當前 EA=Ctrl+1）
+        # → 唔再 fallback Navigator double-click（舊方法 — Ctrl+N 開 chart — 唔可靠 + 已經冇需要）
         hotkeys = load_hotkey_map()
         _is_script_ea = ea_name.startswith('OpenChart') or ea_name == 'OpenChart_Helper'
-        if ea_name in hotkeys or _is_script_ea:
+        if _is_script_ea:
             success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         else:
-            success = attach_ea_navigator(ea_name, mt5_pid)
+            # 全部 EA 用熱鍵（Ctrl+1 重用 — _ensure_hotkey_loaded 已寫入）— 唔 check hotkeys.json（可能唔完整）
+            success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         if not success:
             # 🚨 2026-08-20（用戶要求：唔需要備用方案）：失敗直接 fail — 唔重試快捷鍵
             # （之前重試 ×2 唔開新 chart → 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡：Heikin_Ashi 掛錯 EURUSD 案例）
