@@ -81,6 +81,7 @@ _alog_write(f"init: mt5_available={mt5_available} mt5_dir={MT5_DATA}")
 
 # === Parse args ===
 import argparse
+_alog_write("parsing args...")
 parser = argparse.ArgumentParser()
 parser.add_argument('--server', default=SERVER_URL, help='Server URL')
 parser.add_argument('--agent', default=AGENT_ID, help='Agent ID')
@@ -89,16 +90,22 @@ args, _ = parser.parse_known_args()
 SERVER_URL = args.server
 AGENT_ID = args.agent
 AGENT_TOKEN = args.token
+_alog_write(f"args: server={SERVER_URL} agent={AGENT_ID}")
 
 # === SocketIO client ===
 import socketio
 # 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）
 # → SocketIO client 帶瀏覽器 UA（tunnel WAF 唔俾冇 UA 嘅 polling）
-# 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）→ requests.Session 帶 UA
+# 🚨 2026-08-27 FIX：http_session 唔係所有 socketio 版本支援 → try/except fallback
 import requests as _req_ua
 _sess_ua = _req_ua.Session()
-_sess_ua.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
-sio = socketio.Client(logger=False, engineio_logger=False, http_session=_sess_ua)
+_sess_ua.headers.update({"User-Agent": "Mozilla/5.0 TradotcomAgent/1.0"})
+try:
+    sio = socketio.Client(logger=False, engineio_logger=False, http_session=_sess_ua)
+    _alog_write("socketio.Client OK (with http_session)")
+except Exception as _e_sio:
+    _alog_write(f"socketio.Client http_session 失敗: {_e_sio} → fallback 無 session")
+    sio = socketio.Client(logger=False, engineio_logger=False)
 ea_config_cache = {}
 ea_heartbeats = {}
 
