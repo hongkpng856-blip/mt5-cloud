@@ -1096,6 +1096,21 @@ def _refresh_auto_trade_cache(user):
         print(f"[DEBUG] auto_trade_status read failed: {e}")
         pass
 
+def _agent_live_status(agent):
+    """🚨 2026-08-27：Agent 真實狀態（last_seen 新鮮 = online — 唔淨係睇 status 欄）
+    agent 被 kill → socket 斷 → 冇 sync → last_seen 舊 → offline（防假綠燈）
+    """
+    try:
+        if agent and agent.status in ('connected', 'online'):
+            import time as _t_ls
+            if agent.last_seen and (_t_ls.time() - agent.last_seen.timestamp()) < 60:
+                return 'connected'
+            return 'offline'
+    except Exception:
+        pass
+    return agent.status if agent else 'offline'
+
+
 @app.route('/api/dashboard')
 @login_required
 def api_dashboard():
@@ -1130,7 +1145,7 @@ def api_dashboard():
     # → 只顯示「自己 agent 上報嘅 account_info」（每機獨立）— 未上報 → 空（前端顯示「未連接」）
     _acc_dis = account if account.get('login') else {}
     return jsonify({
-        "status": agent.status,
+        "status": _agent_live_status(agent),
         "last_seen": agent.last_seen.isoformat() if agent.last_seen else None,
         "account": _acc_dis,
         "bound_account": current_user.bound_account or '',
