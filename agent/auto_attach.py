@@ -1647,14 +1647,25 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     if _bc_sym not in _after_symbols:
                         print(f"🔄 熱鍵預載 restart 後補開遺失 chart: {_bc_sym}")
                         try:
-                            import pyautogui as _pg_af
-                            _pg_af.FAILSAFE = False
-                            _pg_af.hotkey('alt', 'f'); time.sleep(1)
-                            _pg_af.press('enter'); time.sleep(1)
-                            _pg_af.press('enter'); time.sleep(2)
-                            _pg_af.press('space'); time.sleep(1)
-                            _pg_af.typewrite(_bc_sym, interval=0.2); time.sleep(1)
-                            _pg_af.press('enter'); time.sleep(3)
+                            # 🚨 2026-08-28 FIX（用返 stable-v0.10.76 做法）：用 send_keys（pywinauto）— pyautogui hotkey('alt','f') 會「Unknown code: ALT」
+                            from pywinauto.keyboard import send_keys as _sk_rc
+                            from pywinauto import Application as _AppRC
+                            _a_rc = _AppRC(backend='win32').connect(process=find_mt5_pid(), timeout=8)
+                            _w_rc = _a_rc.window(class_name_re='MetaQuotes::MetaTrader')
+                            _w_rc.set_focus()
+                            time.sleep(0.5)
+                            _sk_rc('{ALT down}{F down}{F up}{ALT up}')  # Alt+F menu
+                            time.sleep(1.5)
+                            _sk_rc('{ENTER}')  # 文件
+                            time.sleep(1)
+                            _sk_rc('{ENTER}')  # 新圖表
+                            time.sleep(1)
+                            _sk_rc('{SPACE}')  # symbol picker
+                            time.sleep(1.5)
+                            _sk_rc(_bc_sym)
+                            time.sleep(1)
+                            _sk_rc('{ENTER}')
+                            time.sleep(2)
                             print(f"   ✅ 補開 {_bc_sym}")
                         except Exception as _e_af:
                             print(f"   ⚠️ 補開 {_bc_sym} 失敗: {_e_af}")
@@ -1672,18 +1683,10 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             # 熱鍵 load 驗證：send Ctrl+N 測試 — 彈出 <EA> Properties = 熱鍵 load 成功（失敗關閉 dialog 再重試）
                         # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：主視窗 ready 唔等於熱鍵 load 完
             # → 等 MT5 完全穩定（10 秒）先 send 測試 — MT5 初始化順序：UI → 數據 → 設定 → 熱鍵
+            # 🚨 2026-08-28 FIX（用返 stable-v0.10.76 做法 — 用戶要求參考穩定版本）：
+            # 唔開新 chart（之前 Alt+F 開新 chart — 失敗「Unknown code: ALT」+ 掛去舊 chart）
+            # → 靠 MT5 restart restore chart（正常關閉 save profile）→ click 中央（active chart）→ send Ctrl+1
             time.sleep(10)
-            # 🚨 2026-08-28 FIX（用戶實錘：每次測試開新 chart → 5-6 個空 chart 累積）：
-            # 開 chart 只做一次（loop 外）— 3 次測試用返同一個 chart（唔再開新）
-            try:
-                import pyautogui as _pg_hk2
-                _pg_hk2.FAILSAFE = False
-                # Alt+F → Enter（文件 menu）→ Enter（新圖表 = 開 chart — 默認 symbol）
-                _pg_hk2.hotkey('alt', 'f'); time.sleep(1.2)
-                _pg_hk2.press('enter'); time.sleep(1.2)
-                _pg_hk2.press('enter'); time.sleep(2.5)
-            except Exception:
-                pass
             _hk_loaded_ok = False
             for _hk_try in range(3):
                 try:
