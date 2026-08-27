@@ -1419,17 +1419,36 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         # 🚨 2026-08-28 FIX（用戶實錘：手動 Ctrl+1 完美 work = 熱鍵已 load，但自動化實測偵測唔到 → 無謂 restart ×2）：
         # MT5 開住 + hotkeys.ini 已寫入「當前 EA = Ctrl+1」→ 熱鍵一定 load 咗 → skip 一切預載驗證
         # ⚠️ 但 hotkeys.ini 寫入「其他 EA」（唔係當前）→ 唔可以 skip（Ctrl+1 指向錯 EA — 部署會掛錯）→ 要 restart 重寫
-        # （實測 send Ctrl+1 依賴 Properties dialog 彈出 + 偵測 — 唔可靠 — 用戶手動 work 已證明熱鍵 OK）
+        # 🚨 2026-08-28 FIX2（用戶實錘：hotkeys.ini 被 MT5 清空 → 部署時 skip 錯 → Ctrl+1 失效 → 掛 EA 失敗）：
+        # → skip 前驗證 hotkeys.ini 真係有「當前 EA=Ctrl+1」且非空（空/被清 → 唔 skip → restart 重寫 — 同 stable 行為一致）
         try:
             _mt5_alive_now = _mt5_alive() if callable(_mt5_alive) else False
         except Exception:
             _mt5_alive_now = False
         _current_hk_ok = any(ea_name in _k and _v == 'Ctrl+1' for _k, _v in experts.items())
-        if _mt5_alive_now and _current_hk_ok:
-            print(f"✅ 熱鍵預載 skip：MT5 開住 + hotkeys.ini 已有 {ea_name}=Ctrl+1（用戶手動 Ctrl+1 實測 work = 已 load）— 唔 restart")
+        # 檢查 hotkeys.ini 非空（MT5 可能清空 — 空 = 冇熱鍵 → 唔可以 skip）
+        _hk_ini_nonempty = False
+        try:
+            _hkf_path = _mt5_hotkeys_ini() if callable(_mt5_hotkeys_ini) else None
+            if not _hkf_path:
+                import os as _os_hk
+                _hkf_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                import glob as _glob_hk
+                _found_hk = _glob_hk.glob(os.path.join(_hkf_path, '*', 'config', 'hotkeys.ini'))
+                if _found_hk:
+                    _hkf_path = _found_hk[0]
+            if _hkf_path and os.path.isfile(_hkf_path):
+                _raw_hk = open(_hkf_path, 'rb').read()
+                _txt_hk = _raw_hk.decode('utf-16-le', errors='ignore')
+                # 非空 = 有 experts 內容（唔係只有 BOM/<experts></experts>）
+                _hk_ini_nonempty = ('=Ctrl' in _txt_hk or '=ctrl' in _txt_hk.lower())
+        except Exception:
+            pass
+        if _mt5_alive_now and _current_hk_ok and _hk_ini_nonempty:
+            print(f"✅ 熱鍵預載 skip：MT5 開住 + hotkeys.ini 已有 {ea_name}=Ctrl+1（非空 — 用戶手動 Ctrl+1 實測 work = 已 load）— 唔 restart")
             return mt5_pid
-        if _mt5_alive_now and experts:
-            print(f"⚠️ 熱鍵預載：hotkeys.ini 有 {list(experts.items())}（唔係當前 {ea_name}=Ctrl+1）→ 要 restart 重寫（Ctrl+1 重用）")
+        if _mt5_alive_now and (experts or not _hk_ini_nonempty):
+            print(f"⚠️ 熱鍵預載：hotkeys.ini 有 {list(experts.items())}（唔係當前 {ea_name}=Ctrl+1 或 hotkeys.ini 空 — 被 MT5 清）→ 要 restart 重寫（Ctrl+1 重用）")
         # 2. 已有熱鍵 → 檢查係咪真係 load 到（唔可以淨係見 hotkeys.ini 有就 return）
         # 🚨 2026-08-20（v0.10.10）：MT5 開住時寫入嘅熱鍵唔 load（用戶實測：關 MT5 → 寫 → 開先 work）
         # → 比較 hotkeys.ini mtime vs MT5 啟動時間：hotkeys.ini 喺 MT5 開機後先寫 = MT5 未 load → 要 restart 重寫
