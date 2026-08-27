@@ -330,8 +330,9 @@ class InstallWizard:
             _py_exe = _pick_good_python()
             proc = subprocess.Popen([_py_exe, "-u", agent_py,
                                      "--server", url, "--agent", sid, "--token", tok],
-                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            # 🚨 2026-08-27 FIX：移除 CREATE_NO_WINDOW — 令 tkinter 彈窗/tray icon 起得到（無窗口 session 會卡）
+                                    stdout=open(os.path.join(BASE_DIR, "agent_run.log"), "a", encoding="utf-8", errors="replace"),
+                                    stderr=subprocess.STDOUT)
+            # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
             self._status.config(text=f"Agent started (PID {proc.pid})\n\nYou can close this window - Agent runs in background\n(green/red popup shows connection status)")
             self.root.update()
             # 5 秒後指引關閉
@@ -428,8 +429,9 @@ def direct_launch(cfg):
             return None
         proc = subprocess.Popen([_py_exe, "-u", agent_py,
                                  "--server", url, "--agent", sid, "--token", tok],
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # 🚨 2026-08-27 FIX：移除 CREATE_NO_WINDOW — 令 tkinter 彈窗/tray icon 起得到（無窗口 session 會卡）
+                                stdout=open(os.path.join(BASE_DIR, "agent_run.log"), "a", encoding="utf-8", errors="replace"),
+                                stderr=subprocess.STDOUT)
+        # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
         return proc
     except Exception as e:
         try:
