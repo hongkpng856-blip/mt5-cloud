@@ -1127,12 +1127,37 @@ def _deploy_worker_loop():
                         _found = True
                         break
                 if not _found:
-                    print(f"   ⚠️ {_ea}.ex5 唔存在（skip — 防止失敗循環）")
+                    # 🚨 2026-08-27 FIX：.ex5 唔存在（可能剷除時刪咗）→ 自動 compile（metaeditor CLI）
+                    # 之前直接 skip — 用戶剷除後再部署同一 EA 就永遠部署唔到
+                    print(f"   ⚠️ {_ea}.ex5 唔存在 — 嘗試自動 compile...")
+                    _compiled = False
                     try:
-                        os.remove(fp)
-                    except Exception:
-                        pass
-                    continue
+                        _me_dir = r'C:\Program Files\MetaTrader 5\metaeditor64.exe'
+                        _mq5_p = None
+                        for _d2 in os.listdir(_exp_dir):
+                            _mq5p = os.path.join(_exp_dir, _d2, 'MQL5', 'Experts', _ea + '.mq5')
+                            if os.path.isfile(_mq5p):
+                                _mq5_p = _mq5p
+                                break
+                        if _mq5_p and os.path.isfile(_me_dir):
+                            _log_p = os.path.join(os.path.dirname(_mq5_p), f'_cli_compile_{_ea}.log')
+                            subprocess.run([_me_dir, f'/compile:{_mq5_p}', f'/log:{_log_p}'], timeout=60)
+                            time.sleep(2)
+                            for _d2 in os.listdir(_exp_dir):
+                                if os.path.isfile(os.path.join(_exp_dir, _d2, 'MQL5', 'Experts', _ea + '.ex5')):
+                                    _compiled = True
+                                    break
+                    except Exception as _e_cmp:
+                        print(f"   ⚠️ 自動 compile 失敗: {_e_cmp}")
+                    if not _compiled:
+                        print(f"   ⚠️ {_ea}.ex5 自動 compile 後仍然唔存在（skip — 防止失敗循環）")
+                        try:
+                            os.remove(fp)
+                        except Exception:
+                            pass
+                        continue
+                    else:
+                        print(f"   ✅ 自動 compile 成功: {_ea}.ex5")
             except Exception:
                 pass
             process_deploy(fp)
