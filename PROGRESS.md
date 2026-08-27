@@ -447,6 +447,15 @@
 - server 上雲後第一部機熄咗 → 其他 account 唔受影響
 - 方案 A（1 User → N Agent）已確認 — 防雙開已實作（v0.10.87）
 
+### 🧪 Server→Agent 人手壓力測試（2026-08-27 確認流程 — 見 skill `mt5-stress-test/references/stress-test-server-to-agent.md`）
+**流程**：登入 web → 安裝 agent（pyw）→ 網頁添加/部署/剷除隨機反覆 ×5 — 驗證「server 經 SocketIO 控制 agent → agent 控制 MT5」新架構
+
+**用戶要求（實測教訓）**：
+- **完全乾淨先開始**：MT5 chart 全部關閉（Ctrl+W 關到 0）+ Experts folder 清走所有 EA（.mq5/.ex5）+ 心跳清 + hotkeys 空 + 配對庫空 — 開始前用戶確認
+- **每一步驗證規範**：添加/部署/剷除 — 網頁狀態 同 MT5 狀態必須一致先 PASS（網頁配對庫有 EA ↔ MT5 Experts 有 .mq5/.ex5；部署後網頁心跳 fresh ↔ MT5 chart 掛 EA；剷除後網頁冇 ↔ MT5 心跳停 + 檔刪）
+- **部署要確認經 agent**：server log「Deploy 指令已路由俾 Agent」= 經 agent（fallback 本機 = FAIL）
+- 唔可以直接跑（要經 pyw 安裝流程）
+
 ### 🔄 數據注入選擇功能（2026-08-21 用戶要求，未實行）
 **目標**：所有 EA 部署時可選「注入逐單數據記錄」（trades json），或者唔注入照部署但註明冇呢個功能。
 
