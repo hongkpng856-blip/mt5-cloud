@@ -1434,14 +1434,14 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _w_hkt.set_focus()
                     time.sleep(1)
                     from pywinauto.keyboard import send_keys as _sk_hkt
-                    # 🚨 2026-08-22 FIX：熱鍵測試前先 click MT5 中央（確保有 active chart — 熱鍵要先有 chart 先彈 Properties）
-                    # （冇 active chart → Ctrl+N 唔彈 → 誤判「未 load」→ 無謂 restart → 搞走其他 EA — Grid 案例）
+                    # 🚨 2026-08-28 FIX（用戶實錘：熱鍵測試掛去第一個 chart — 前兩次「直接喺第一個圖表輸入」）：
+                    # 測試 send Ctrl+1 前先開一個新 chart（Alt+F → Enter → Enter — 用戶確認可靠）→ 掛去新 chart（唔影響第一個）
                     try:
-                        import pyautogui as _pg_hkt
-                        _pg_hkt.FAILSAFE = False
-                        _r_hkt = _w_hkt.rectangle()
-                        _pg_hkt.click(_r_hkt.left + _r_hkt.width() // 2, _r_hkt.top + _r_hkt.height() // 2)
-                        time.sleep(0.8)
+                        import pyautogui as _pg_hkt2
+                        _pg_hkt2.FAILSAFE = False
+                        _pg_hkt2.hotkey('alt', 'f'); time.sleep(1.2)
+                        _pg_hkt2.press('enter'); time.sleep(1.2)
+                        _pg_hkt2.press('enter'); time.sleep(2.5)
                     except Exception:
                         pass
                     _sk_hkt(_combo_exist)
@@ -1647,14 +1647,39 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     # 🚨 2026-08-27 FIX：restart 後 MT5 可能冇 chart（profile 空）→ click 中央冇 chart 區域
                     # → Ctrl+1 冇目標 → 誤判「熱鍵未 load」→ 錯誤 restart 第二次（浪費 110 秒）
                     # → 測試前開一個 chart（Ctrl+N + Enter）確保有 active chart 目標
+                    # 🚨 2026-08-28 FIX（用戶實錘：Ctrl+N 開 chart 唔可靠 — 前兩次測試掛去第一個 chart）：
+                    # → 改用 Alt+F 開新 chart（用戶確認：Alt+F → Enter → Enter 先係開 chart）+ 開完驗證（未開到 → 唔 send Ctrl+1 — 避免掛去第一個 chart）
                     from pywinauto.keyboard import send_keys as _sk_hk
                     try:
-                        _sk_hk('^n')
-                        time.sleep(1)
-                        _sk_hk('{ENTER}')
-                        time.sleep(2.5)
+                        import pyautogui as _pg_hk2
+                        _pg_hk2.FAILSAFE = False
+                        # Alt+F → Enter（文件 menu）→ Enter（新圖表 = 開 chart — 默認 symbol）
+                        _pg_hk2.hotkey('alt', 'f'); time.sleep(1.2)
+                        _pg_hk2.press('enter'); time.sleep(1.2)
+                        _pg_hk2.press('enter'); time.sleep(2.5)
                     except Exception:
                         pass
+                    # 驗證新 chart 開咗（數 MDI chart — 開咗先 send Ctrl+1 — 未開到 → 判未 load → restart）
+                    _hk_chart_count = 0
+                    try:
+                        import ctypes as _ct_hk3
+                        _u_hk3 = _ct_hk3.windll.user32
+                        def _cb_hk3(_h3, _):
+                            nonlocal _hk_chart_count
+                            _cls3 = _ct_hk3.create_unicode_buffer(128)
+                            _u_hk3.GetClassNameW(_h3, _cls3, 128)
+                            if 'Afx' in _cls3.value and 'ControlBar' not in _cls3.value:
+                                _l3 = _u_hk3.GetWindowTextLengthW(_h3)
+                                if _l3 > 0:
+                                    _hk_chart_count += 1
+                            return True
+                        _u_hk3.EnumChildWindows(_ct_hk3.c_void_p(int(_w_hk.element_info.handle)), _ct_hk3.WINFUNCTYPE(_ct_hk3.c_bool, _ct_hk3.c_size_t, _ct_hk3.c_size_t)(_cb_hk3), 0)
+                    except Exception:
+                        pass
+                    if _hk_chart_count < 1:
+                        print(f"⚠️ 熱鍵 load 測試前開 chart 失敗（chart 數={_hk_chart_count}）— 唔 send Ctrl+1（避免掛去第一個 chart）— 判未 load")
+                        _hk_loaded_ok = False
+                        break
                     _sk_hk(_combo_actual)
                     time.sleep(3)
                     # EnumWindows 搵 Properties dialog（標題含 EA 名 / 版本號）

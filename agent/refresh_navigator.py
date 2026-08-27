@@ -246,10 +246,12 @@ def _do_refresh(mt5_pid, attempt):
             pass
 
         if not popup_hwnd[0]:
-            print("⚠️ 搵唔到 popup menu")
+            print("⚠️ 搵唔到 popup menu — 改用「關閉再開 Navigator」fallback")
             _pg.press('esc')
             time.sleep(2)
-            return False
+            # 🚨 2026-08-28（用戶要求：right-click refresh 唔可靠 → 用更可靠動作）：
+            # fallback = 關閉 Navigator 再重新開啟（menu toggle）→ Navigator 重新載入 → 新 EA 顯示
+            return _toggle_navigator_refresh(mt5_pid)
         check_abort()
 
         # Step 3: 攞 menu rect → click 最底 item（「刷新」）
@@ -264,6 +266,41 @@ def _do_refresh(mt5_pid, attempt):
         return True
     finally:
         pass  # 警告視窗全程顯示 — 由 acquire/release 控制（Bug #72）
+
+
+def _toggle_navigator_refresh(mt5_pid):
+    """🚨 2026-08-28（用戶要求：right-click refresh 唔可靠）：
+    用「關閉再開 Navigator」代替 right-click refresh — menu toggle（查看 → 導航）兩次
+    → Navigator 重新載入 → 新 EA 顯示（比 right-click 刷新可靠 — 唔依賴 popup menu 位置/內容）
+    """
+    import time as _t
+    from pywinauto import Application as _App
+    try:
+        _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
+        _win = _app.window(class_name='MetaQuotes::MetaTrader::5.00')
+        # 第一次：如果 Navigator 開住 → 關閉（toggle）
+        # 第二次：重新開啟 → 重新載入
+        for _i in range(2):
+            try:
+                _win.menu_select("查看(&V)->導航(&N)")
+            except Exception:
+                try:
+                    _win.menu_select("View->Navigator")
+                except Exception:
+                    # fallback: WM_COMMAND 32845（導航 menu command — toggle）
+                    _u = ctypes.windll.user32
+                    _u.SendMessageW(ctypes.c_void_p(int(_win.element_info.handle)), 0x0111, 32845, 0)
+            _t.sleep(2)
+        # 驗證 Navigator 開返
+        _trees = _find_tree_views()
+        if _trees:
+            print(f"🔄 Navigator 已重開（menu toggle — 重新載入，{len(_trees)} 個 tree）")
+            return True
+        print("⚠️ Navigator 重開後搵唔到 tree — 可能關閉咗（用戶手動閂咗？）")
+        return False
+    except Exception as _e_tg:
+        print(f"⚠️ 關閉再開 Navigator 失敗: {_e_tg}")
+        return False
 
 
 def _open_navigator(user32):
