@@ -1629,6 +1629,17 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                         # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：主視窗 ready 唔等於熱鍵 load 完
             # → 等 MT5 完全穩定（10 秒）先 send 測試 — MT5 初始化順序：UI → 數據 → 設定 → 熱鍵
             time.sleep(10)
+            # 🚨 2026-08-28 FIX（用戶實錘：每次測試開新 chart → 5-6 個空 chart 累積）：
+            # 開 chart 只做一次（loop 外）— 3 次測試用返同一個 chart（唔再開新）
+            try:
+                import pyautogui as _pg_hk2
+                _pg_hk2.FAILSAFE = False
+                # Alt+F → Enter（文件 menu）→ Enter（新圖表 = 開 chart — 默認 symbol）
+                _pg_hk2.hotkey('alt', 'f'); time.sleep(1.2)
+                _pg_hk2.press('enter'); time.sleep(1.2)
+                _pg_hk2.press('enter'); time.sleep(2.5)
+            except Exception:
+                pass
             _hk_loaded_ok = False
             for _hk_try in range(3):
                 try:
@@ -1647,18 +1658,8 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     # 🚨 2026-08-27 FIX：restart 後 MT5 可能冇 chart（profile 空）→ click 中央冇 chart 區域
                     # → Ctrl+1 冇目標 → 誤判「熱鍵未 load」→ 錯誤 restart 第二次（浪費 110 秒）
                     # → 測試前開一個 chart（Ctrl+N + Enter）確保有 active chart 目標
-                    # 🚨 2026-08-28 FIX（用戶實錘：Ctrl+N 開 chart 唔可靠 — 前兩次測試掛去第一個 chart）：
-                    # → 改用 Alt+F 開新 chart（用戶確認：Alt+F → Enter → Enter 先係開 chart）+ 開完驗證（未開到 → 唔 send Ctrl+1 — 避免掛去第一個 chart）
+                    # 🚨 2026-08-28 FIX：開 chart 已移去 loop 外（開一次 — 3 次測試用返）— 呢度唔再開
                     from pywinauto.keyboard import send_keys as _sk_hk
-                    try:
-                        import pyautogui as _pg_hk2
-                        _pg_hk2.FAILSAFE = False
-                        # Alt+F → Enter（文件 menu）→ Enter（新圖表 = 開 chart — 默認 symbol）
-                        _pg_hk2.hotkey('alt', 'f'); time.sleep(1.2)
-                        _pg_hk2.press('enter'); time.sleep(1.2)
-                        _pg_hk2.press('enter'); time.sleep(2.5)
-                    except Exception:
-                        pass
                     # 驗證新 chart 開咗（數 MDI chart — 開咗先 send Ctrl+1 — 未開到 → 判未 load → restart）
                     _hk_chart_count = 0
                     try:
@@ -1717,6 +1718,13 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                     pass
                         except Exception:
                             _sk_hk('{ESC}')
+                        # 🚨 2026-08-28 FIX（用戶實錘：熱鍵測試開嘅 chart 留低 → 空 chart 累積）：
+                        # 測試完關閉測試 chart（Ctrl+W — active = 測試 chart）→ 部署先開 target chart（唔會累積）
+                        try:
+                            _sk_hk('^w')
+                            time.sleep(1)
+                        except Exception:
+                            pass
                         break
                     else:
                         print(f"⚠️ 熱鍵 load 測試 {_hk_try+1}/3：{_combo_actual} 冇彈 Properties（可能未 load 完 — 重試）")
