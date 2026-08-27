@@ -982,6 +982,55 @@ def on_deploy_ea(data):
         traceback.print_exc()
 
 
+# 🚨 2026-08-28（用戶要求：網站可以剷除本機 agent）：收 server 'shutdown' 指令 → 清理 + 退出
+@sio.on('shutdown')
+def on_shutdown(data):
+    """Server 要求剷除本機 agent：清 lock/config/捷徑 → 通知 server → 退出"""
+    print("🚫 [WS] 收到 shutdown 指令 — 剷除本機 agent...")
+    sys.stdout.flush()
+    try:
+        _alog_write("[WS] 收到 shutdown（網站剷除 agent）")
+    except Exception:
+        pass
+    try:
+        _agent_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+        # 刪 lock
+        _lock_f = os.path.join(_agent_dir, 'agent.lock')
+        if os.path.isfile(_lock_f):
+            os.remove(_lock_f)
+            print("   ✅ agent.lock 已刪")
+        # 刪 config
+        _cfg_f = os.path.join(_agent_dir, 'agent_config.json')
+        if os.path.isfile(_cfg_f):
+            os.remove(_cfg_f)
+            print("   ✅ agent_config.json 已刪")
+        # 刪桌面捷徑
+        try:
+            import glob as _gl_sh
+            for _lnk in _gl_sh.glob(os.path.join(os.path.expanduser('~'), 'Desktop', '*Tradotcom*Agent*.lnk')):
+                os.remove(_lnk)
+                print(f"   ✅ 捷徑已刪: {os.path.basename(_lnk)}")
+        except Exception:
+            pass
+        # 通知 server 完成（清理完先話成功）
+        try:
+            import urllib.request as _ur_sh
+            _url_sh = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+            _req_sh = _ur_sh.Request(f"{_url_sh}/api/agent/remove-complete?agent_id={AGENT_ID}", method='POST')
+            _ur_sh.urlopen(_req_sh, timeout=5)
+            print("   ✅ 已通知 server 剷除完成")
+        except Exception as _e_sh2:
+            print(f"   ⚠️ 通知 server 失敗: {_e_sh2}")
+    except Exception as _e_sh:
+        print(f"   ⚠️ 清理失敗: {_e_sh}")
+    # 退出 agent
+    try:
+        import threading as _th_sh
+        _th_sh.Timer(1.0, os._exit, args=(0,)).start()
+    except Exception:
+        os._exit(0)
+
+
 # ================================================================
 #  EA 自動交易策略
 # ================================================================

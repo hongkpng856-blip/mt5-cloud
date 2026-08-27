@@ -3685,6 +3685,42 @@ def _detect_uac_server():
     except Exception:
         return []
 
+@app.route('/api/agent/remove', methods=['POST'])
+@login_required
+def api_agent_remove():
+    """🚨 2026-08-28（用戶要求：網站可以剷除本機 agent）：
+    發 shutdown 指令俾 agent → agent 自己清理（lock/config/捷徑）+ 退出
+    """
+    agent = Agent.query.filter_by(user_id=current_user.id).first()
+    if not agent:
+        return jsonify({"success": False, "error": "no agent"}), 404
+    try:
+        print(f"[API] 🚫 剷除 Agent {agent.agent_id}（網站操作）")
+        # 發 shutdown 指令俾 agent（SocketIO room=agent_id）
+        socketio.emit('shutdown', {'reason': 'web_remove'}, room=agent.agent_id)
+        # 標記 agent 已剷除（status=offline — 等 agent 回報 remove-complete 再刪）
+        agent.status = 'offline'
+        db.session.commit()
+        return jsonify({"success": True, "message": f"剷除指令已發俾 Agent {agent.agent_id}"})
+    except Exception as e:
+        print(f"[API] ⚠️ 剷除 Agent 失敗: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/agent/remove-complete', methods=['POST'])
+def api_agent_remove_complete():
+    """Agent 剷除完成回報（agent 自己清理完 call）— 刪除 DB agent 記錄"""
+    agent_id = request.args.get('agent_id') or (request.get_json(silent=True) or {}).get('agent_id')
+    if not agent_id:
+        return jsonify({"success": False, "error": "no agent_id"}), 400
+    agent = Agent.query.filter_by(agent_id=agent_id).first()
+    if agent:
+        print(f"[API] ✅ Agent {agent_id} 已剷除（agent 回報）— 刪除 DB 記錄")
+        db.session.delete(agent)
+        db.session.commit()
+    return jsonify({"success": True})
+
+
 @app.route('/api/deploy', methods=['POST'])
 @login_required
 def api_deploy():

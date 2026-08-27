@@ -596,6 +596,8 @@
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
             <span style="display:inline-flex;align-items:center;gap:6px"><i class="icon-satellite" style="color:var(--accent)"></i> Agent <span id="agentIdBadge" class="badge badge-gray">—</span><span id="statusBadge" class="badge badge-gray">Unknown</span></span>
             <button class="btn" style="padding:4px 12px;font-size:11px;margin-left:auto" onclick="toggleAgentSetup()" title="Agent 安裝資料（ID + Token）"><i class="icon-download" style="font-size:11px"></i> Agent 安裝</button>
+            <!-- 🚨 2026-08-28（用戶要求：網站可以剷除本機 agent） -->
+            <button class="btn" style="padding:4px 12px;font-size:11px;color:#f85149;border-color:#f85149" onclick="removeAgent()" title="剷除本機 Agent（停止 + 刪除安裝）"><i class="icon-trash-2" style="font-size:11px"></i> 剷除 Agent</button>
             <!-- 🚨 2026-08-26：交易歷史報告（帳戶層 — popup + 下載 HTML） -->
             <button class="btn" style="padding:4px 12px;font-size:11px" onclick="openTradeReport()" title="下載 / 檢視 MT5 交易歷史報告"><i class="icon-file-text" style="font-size:11px"></i> 交易報告</button>
         </div>
@@ -637,7 +639,28 @@
             if (b) { const o = b.textContent; b.textContent = '✅'; setTimeout(() => b.textContent = o, 1200); }
         });
     }
-    </script>
+    // 🚨 2026-08-28（用戶要求：網站可以剷除本機 agent）
+    function removeAgent() {
+        if (!confirm('確定剷除本機 Agent？\n\n將停止 Agent 程式 + 刪除：\n• Agent 安裝（%LOCALAPPDATA%\\TradotcomAgent）\n• 桌面捷徑\n• 伺服器 Agent 記錄\n\n此操作不可恢復 — 需重新安裝先可以控制部機。')) return;
+        const btn = event.target.closest('button');
+        if (btn) { btn.disabled = true; btn.textContent = '剷除中...'; }
+        fetch('/api/agent/remove', { method: 'POST' })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    alert('✅ 剷除指令已發送 — Agent 將喺幾秒內停止並清理');
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    alert('❌ 剷除失敗: ' + (d.error || d.message || '未知錯誤'));
+                    if (btn) { btn.disabled = false; btn.textContent = '剷除 Agent'; }
+                }
+            })
+            .catch(e => {
+                alert('❌ 剷除失敗: ' + e.message);
+                if (btn) { btn.disabled = false; btn.textContent = '剷除 Agent'; }
+            });
+    }
+
 
 <!-- 🚨 2026-08-26：交易歷史報告 modal（popup — 表格 + 統計 + 下載 HTML） -->
 <div id="tradeReportModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto" onclick="if(event.target===this)closeTradeReport()">
