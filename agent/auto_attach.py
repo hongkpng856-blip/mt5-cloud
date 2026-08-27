@@ -1930,11 +1930,10 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     from pywinauto.keyboard import send_keys as _sk_rc
                     for _msym in _missing:
                         try:
-                            _w_rc = _App_hkt.window(class_name_re='MetaQuotes::MetaTrader') if '_App_hkt' in dir() else None
-                            if _w_rc is None:
-                                from pywinauto import Application as _AppRC
-                                _a_rc = _AppRC(backend='win32').connect(process=find_mt5_pid(), timeout=8)
-                                _w_rc = _a_rc.window(class_name_re='MetaQuotes::MetaTrader')
+                            # 🚨 2026-08-28 FIX：刪走 '_App_hkt' in dir() 檢查（函數入面 dir() 唔包含全局 — 誤判有 → 用錯 object → Application.window() missing self）
+                            from pywinauto import Application as _AppRC
+                            _a_rc = _AppRC(backend='win32').connect(process=find_mt5_pid(), timeout=8)
+                            _w_rc = _a_rc.window(class_name_re='MetaQuotes::MetaTrader')
                             _w_rc.set_focus()
                             time.sleep(0.5)
                             _sk_rc('%f')  # Alt+F menu（%f shorthand — pywinauto 0.6.9 唔支援 {ALT}）
