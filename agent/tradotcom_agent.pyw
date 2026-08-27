@@ -330,8 +330,9 @@ class InstallWizard:
             _py_exe = _pick_good_python()
             proc = subprocess.Popen([_py_exe, "-u", agent_py,
                                      "--server", url, "--agent", sid, "--token", tok],
-                                    stdout=open(os.path.join(BASE_DIR, "agent_run.log"), "a", encoding="utf-8", errors="replace"),
-                                    stderr=subprocess.STDOUT)
+                                    stdout=None, stderr=None,
+                                    creationflags=subprocess.CREATE_NEW_CONSOLE if hasattr(subprocess, "CREATE_NEW_CONSOLE") else 0)
+            # 🚨 2026-08-27 FIX：CREATE_NEW_CONSOLE（agent 有自己 console 視窗 — 顯示 Tradotcom banner — 唔好全黑/冇視窗）
             # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
             self._status.config(text=f"Agent started (PID {proc.pid})\n\nAgent runs in background\n(green popup = connected)")
             self.root.update()
@@ -430,8 +431,9 @@ def direct_launch(cfg):
             return None
         proc = subprocess.Popen([_py_exe, "-u", agent_py,
                                  "--server", url, "--agent", sid, "--token", tok],
-                                stdout=open(os.path.join(BASE_DIR, "agent_run.log"), "a", encoding="utf-8", errors="replace"),
-                                stderr=subprocess.STDOUT)
+                                stdout=None, stderr=None,
+                                creationflags=subprocess.CREATE_NEW_CONSOLE if hasattr(subprocess, "CREATE_NEW_CONSOLE") else 0)
+        # 🚨 2026-08-27 FIX：CREATE_NEW_CONSOLE（agent 有自己 console 視窗 — 顯示 Tradotcom banner — 唔好全黑/冇視窗）
         # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
         return proc
     except Exception as e:

@@ -1561,10 +1561,16 @@ def get_mt5_status():
 #  Startup
 # ================================================================
 
+# 🚨 2026-08-27 FIX：console 視窗標題改做「Tradotcom Agent」（唔好顯示 python.exe 路徑 — 全黑冇品牌）
+try:
+    os.system("title Tradotcom Agent")
+except Exception:
+    pass
+
 print()
 print("=" * 56)
 print("  ☁️  Tradotcom Agent")
-print("=" * 56)
+print("  ══════════════════")
 print(f"  Server:   {SERVER_URL}")
 print(f"  Agent ID: {AGENT_ID}")
 print(f"  MT5:      {'✅ Available' if mt5_available else '❌ Not installed'}")
