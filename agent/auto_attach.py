@@ -1735,6 +1735,13 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             _sk_hk('{ESC}')
                         except Exception:
                             pass
+                        # 🚨 2026-08-28 FIX（用戶實錘：測試失敗都留低空 chart — 3 次測試 + restart = 3 個空白）：
+                        # 失敗分支都關測試 chart（Ctrl+W — 唔好留低）
+                        try:
+                            _sk_hk('^w')
+                            time.sleep(0.8)
+                        except Exception:
+                            pass
                         time.sleep(3)
                 except Exception as _ehk_t:
                     print(f"⚠️ 熱鍵 load 測試異常: {_ehk_t}")
