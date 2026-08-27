@@ -1647,14 +1647,14 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     if _bc_sym not in _after_symbols:
                         print(f"🔄 熱鍵預載 restart 後補開遺失 chart: {_bc_sym}")
                         try:
-                            # 🚨 2026-08-28 FIX（用返 stable-v0.10.76 做法）：用 send_keys（pywinauto）— pyautogui hotkey('alt','f') 會「Unknown code: ALT」
+                            # 🚨 2026-08-28 FIX（pywinauto 0.6.9 唔支援 {ALT} — 用 %f shorthand = Alt+F）
                             from pywinauto.keyboard import send_keys as _sk_rc
                             from pywinauto import Application as _AppRC
                             _a_rc = _AppRC(backend='win32').connect(process=find_mt5_pid(), timeout=8)
                             _w_rc = _a_rc.window(class_name_re='MetaQuotes::MetaTrader')
                             _w_rc.set_focus()
                             time.sleep(0.5)
-                            _sk_rc('{ALT down}{F down}{F up}{ALT up}')  # Alt+F menu
+                            _sk_rc('%f')  # Alt+F menu（%f = Alt+F shorthand）
                             time.sleep(1.5)
                             _sk_rc('{ENTER}')  # 文件
                             time.sleep(1)
