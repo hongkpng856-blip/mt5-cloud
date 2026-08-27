@@ -1605,7 +1605,17 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                         time.sleep(0.8)
                     except Exception:
                         pass
+                    # 🚨 2026-08-27 FIX：restart 後 MT5 可能冇 chart（profile 空）→ click 中央冇 chart 區域
+                    # → Ctrl+1 冇目標 → 誤判「熱鍵未 load」→ 錯誤 restart 第二次（浪費 110 秒）
+                    # → 測試前開一個 chart（Ctrl+N + Enter）確保有 active chart 目標
                     from pywinauto.keyboard import send_keys as _sk_hk
+                    try:
+                        _sk_hk('^n')
+                        time.sleep(1)
+                        _sk_hk('{ENTER}')
+                        time.sleep(2.5)
+                    except Exception:
+                        pass
                     _sk_hk(_combo_actual)
                     time.sleep(3)
                     # EnumWindows 搵 Properties dialog（標題含 EA 名 / 版本號）
