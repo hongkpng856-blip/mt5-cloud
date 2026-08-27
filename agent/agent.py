@@ -1444,8 +1444,15 @@ def sync_loop():
                 last_poll_dq = time.time()
                 try:
                     import urllib.request as _ur_dq
-                    _req_dq = _ur_dq.Request(f"{SERVER_URL}/api/agent-poll-deploy?agent_id={AGENT_ID}")
-                    with _ur_dq.urlopen(_req_dq, timeout=8) as _r_dq:
+                    # 🚨 2026-08-27 FIX：poll 用 localhost（agent 喺本機 — 直接連 server 快 — 唔經 tunnel 慢/超時）
+                    _poll_url = SERVER_URL
+                    if 'mt5cloud.esgov.org' in _poll_url or 'http' in _poll_url and 'localhost' not in _poll_url:
+                        try:
+                            _poll_url = 'http://localhost:5001'
+                        except Exception:
+                            pass
+                    _req_dq = _ur_dq.Request(f"{_poll_url}/api/agent-poll-deploy?agent_id={AGENT_ID}")
+                    with _ur_dq.urlopen(_req_dq, timeout=10) as _r_dq:
                         _dq = json.loads(_r_dq.read().decode('utf-8'))
                     if _dq.get('ea_name'):
                         _ddq = _dq
