@@ -345,6 +345,29 @@ def process_deploy(filepath):
         pass
     
     try:
+        # 🚨 2026-08-27 FIX（用戶要求方案二）：部署前收返已掛嘅 EA（防止「愈部署愈多 chart」）
+        # 檢查 EA 心跳（state_<EA>.json 新鮮 = 已經掛緊 chart）→ 有就 auto_attach --remove 收返
+        _ea_ck = cmd_data.get('ea_name', '')
+        _hb_ck = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'state_{_ea_ck}.json')
+        _already_running = False
+        try:
+            if os.path.isfile(_hb_ck):
+                _hb_age = time.time() - os.path.getmtime(_hb_ck)
+                if _hb_age < 120:  # 2 分鐘內更新 = 運行緊
+                    _already_running = True
+        except Exception:
+            pass
+        if _already_running:
+            print(f"🔁 [WATCHER] {_ea_ck} 已經掛緊（心跳新鮮）→ 先收返舊 chart 再部署（防累積）")
+            sys.stdout.flush()
+            try:
+                _rm_cmd = [_PY_EXE, '-u', AUTO_ATTACH_SCRIPT, '--remove', '--ea', _ea_ck]
+                _rm_res = subprocess.run(_rm_cmd, capture_output=True, text=True, timeout=180, encoding='utf-8', errors='replace')
+                print(f"   ✅ 收返 {_ea_ck} 完成（returncode={_rm_res.returncode}）")
+                sys.stdout.flush()
+            except Exception as _e_rm:
+                print(f"   ⚠️ 收返 {_ea_ck} 失敗（繼續部署）: {_e_rm}")
+                sys.stdout.flush()
         # Run auto_attach
         success = run_auto_attach(cmd_data)
     finally:
