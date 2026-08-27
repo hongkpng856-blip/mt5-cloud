@@ -18,6 +18,12 @@ import json
 
 # === Config ===
 import sys as _sys0, os as _os0, traceback as _tb0
+# 🚨 2026-08-27 FIX：強制 stdout/stderr UTF-8（pyw 啟動時 cp950 唔支持 emoji → UnicodeEncodeError crash）
+try:
+    _sys0.stdout.reconfigure(encoding='utf-8', errors='replace')
+    _sys0.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
 # 🚨 2026-08-26（安裝診斷）：agent.py 啟動即寫 log — pythonw 靜默任何 error 都記低
 try:
     _alog = os.path.join(os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd(), "agent_launcher.log")
