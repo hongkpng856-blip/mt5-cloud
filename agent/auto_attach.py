@@ -1910,17 +1910,21 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                         return True
                     _u_rc.EnumChildWindows(_ct_rc.c_void_p(_mt5_win_rc), _ct_rc.WINFUNCTYPE(_ct_rc.c_bool, _ct_rc.c_size_t, _ct_rc.c_size_t)(_cb_child2), 0)
                 print(f"📋 restart 後 chart: {_charts_after}")
-                # 搵遺失 chart（restart 前有但 restart 後冇）
+                # 搵遺失 chart（restart 前有但 restart 後冇）— 🚨 2026-08-28 FIX：要計數量（之前只比較 symbol — 4 個 EURUSD vs 1 個 → 誤判齊全）
                 _missing = []
+                _after_count = {}
+                for _c2 in _charts_after:
+                    _s2 = _c2.split(',')[0]
+                    _after_count[_s2] = _after_count.get(_s2, 0) + 1
+                _before_count = {}
                 for _c1 in _charts_before_hk:
-                    _sym1 = _c1.split(',')[0]
-                    _found_m = False
-                    for _c2 in _charts_after:
-                        if _c2.split(',')[0] == _sym1:
-                            _found_m = True
-                            break
-                    if not _found_m:
-                        _missing.append(_sym1)
+                    _s1 = _c1.split(',')[0]
+                    _before_count[_s1] = _before_count.get(_s1, 0) + 1
+                for _sym1, _cnt1 in _before_count.items():
+                    _cnt2 = _after_count.get(_sym1, 0)
+                    if _cnt2 < _cnt1:
+                        # 遺失 (cnt1 - cnt2) 個 — 補開（最多補 1 個 per loop — 循環補齊）
+                        _missing.extend([_sym1] * (_cnt1 - _cnt2))
                 if _missing:
                     print(f"🚨 restart 後遺失 {len(_missing)} 個 chart: {_missing} — 補開")
                     from pywinauto.keyboard import send_keys as _sk_rc
