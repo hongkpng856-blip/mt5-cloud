@@ -1759,6 +1759,7 @@ def _ensure_platform_services():
             if not os.path.isfile(_script):
                 try:
                     import urllib.request as _ur_svc
+                    # 🚨 用 localhost（本機 agent 直接連 server 快 — tunnel 可能 407/慢）
                     _dl_url_svc = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
                     _dl_url_svc = f"{_dl_url_svc}/api/agent-service/{os.path.basename(_script)}"
                     _req_svc = _ur_svc.Request(_dl_url_svc, headers={'User-Agent': 'TradotcomAgent/1.0'})
