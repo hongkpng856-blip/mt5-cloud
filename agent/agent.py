@@ -954,6 +954,15 @@ def on_deploy_ea(data):
         _alog_write(f"[WS] 收到 deploy_ea: {data.get('ea_name')} -> {data.get('symbol')}")
     except Exception:
         pass
+    # 🚨 2026-08-27 FIX：emit 收到 = 已經執行 — 即刻清 server deploy_queue（唔好俾 poll 又讀到 → 重複執行）
+    try:
+        import urllib.request as _ur_clr
+        _poll_url_clr = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+        _req_clr = _ur_clr.Request(f"{_poll_url_clr}/api/agent-poll-deploy?agent_id={AGENT_ID}")
+        with _ur_clr.urlopen(_req_clr, timeout=5) as _r_clr:
+            _r_clr.read()
+    except Exception:
+        pass
     try:
         execute_deploy(data)
         _alog_write(f"[WS] execute_deploy 完成（冇 crash）")
