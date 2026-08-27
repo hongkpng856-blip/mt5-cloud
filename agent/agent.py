@@ -1044,8 +1044,21 @@ def on_shutdown(data):
         try:
             import shutil as _sh_sh
             if os.path.isdir(_agent_dir):
-                _sh_sh.rmtree(_agent_dir, ignore_errors=True)
-                print(f"   ✅ 安裝資料夾已刪: {_agent_dir}")
+                # ⚠️ rmtree 刪唔到自己（agent.py 仲 load 緊 — 佔用）→ 逐個刪（跳過自己）+ 最後再 rmtree
+                try:
+                    for _f_del in os.listdir(_agent_dir):
+                        _p_del = os.path.join(_agent_dir, _f_del)
+                        try:
+                            if os.path.basename(_p_del) != os.path.basename(__file__):
+                                if os.path.isdir(_p_del):
+                                    _sh_sh.rmtree(_p_del, ignore_errors=True)
+                                else:
+                                    os.remove(_p_del)
+                        except Exception:
+                            pass
+                    print(f"   ✅ 安裝資料夾內容已刪（除咗自己 agent.py）: {_agent_dir}")
+                except Exception as _e_del2:
+                    print(f"   ⚠️ 逐個刪失敗: {_e_del2}")
         except Exception as _e_dir:
             print(f"   ⚠️ 刪安裝資料夾失敗: {_e_dir}")
         # 通知 server 完成（清理完先話成功）
