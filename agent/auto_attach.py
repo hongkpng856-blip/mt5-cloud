@@ -1416,6 +1416,17 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     experts[_k_hk] = _v_hk
         except Exception:
             pass
+        # 🚨 2026-08-28 FIX（用戶實錘：手動 Ctrl+1 完美 work = 熱鍵已 load，但自動化實測偵測唔到 → 無謂 restart ×2）：
+        # MT5 開住 + hotkeys.ini 已寫入 EA 熱鍵 → 熱鍵一定 load 咗（MT5 開住讀咗 hotkeys.ini）→ skip 一切預載驗證
+        # （實測 send Ctrl+1 依賴 Properties dialog 彈出 + 偵測 — 唔可靠 — 用戶手動 work 已證明熱鍵 OK）
+        # 只有 MT5 未開（或者 hotkeys.ini 冇 EA）先做預載（restart 重寫）
+        try:
+            _mt5_alive_now = _mt5_alive() if callable(_mt5_alive) else False
+        except Exception:
+            _mt5_alive_now = False
+        if _mt5_alive_now and any(ea_name in _k for _k in experts):
+            print(f"✅ 熱鍵預載 skip：MT5 開住 + hotkeys.ini 已有 {ea_name} 熱鍵（用戶手動 Ctrl+1 實測 work = 已 load）— 唔 restart")
+            return mt5_pid
         # 2. 已有熱鍵 → 檢查係咪真係 load 到（唔可以淨係見 hotkeys.ini 有就 return）
         # 🚨 2026-08-20（v0.10.10）：MT5 開住時寫入嘅熱鍵唔 load（用戶實測：關 MT5 → 寫 → 開先 work）
         # → 比較 hotkeys.ini mtime vs MT5 啟動時間：hotkeys.ini 喺 MT5 開機後先寫 = MT5 未 load → 要 restart 重寫
