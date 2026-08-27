@@ -1781,7 +1781,7 @@ def _ensure_platform_services():
         _svc_dir = _base
         _py_exe = sys.executable
         _svcs = {
-            'deploy_watcher': [os.path.join(_svc_dir, 'deploy_watcher.py')],
+            'deploy_watcher': [os.path.join(_svc_dir, 'deploy_watcher.py'), os.path.join(_svc_dir, 'deploy_notify.py')],
             'alert_worker': [os.path.join(_svc_dir, 'alert_worker.py')],
             'auto_trade_detector': [os.path.join(_svc_dir, 'auto_trade_detector.py')],
         }
@@ -1789,22 +1789,23 @@ def _ensure_platform_services():
         for _name, _args in _svcs.items():
             _script = _args[0]
             # 🚨 2026-08-28：缺檔案 → 從 server 下載（安裝 = 全部裝返 — 剷除刪咗 → 重新安裝自動下載返）
-            if not os.path.isfile(_script):
-                try:
-                    import urllib.request as _ur_svc
-                    # 🚨 用 localhost（本機 agent 直接連 server 快 — tunnel 可能 407/慢）
-                    _dl_url_svc = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
-                    _dl_url_svc = f"{_dl_url_svc}/api/agent-service/{os.path.basename(_script)}"
-                    _req_svc = _ur_svc.Request(_dl_url_svc, headers={'User-Agent': 'TradotcomAgent/1.0'})
-                    with _ur_svc.urlopen(_req_svc, timeout=20) as _r_svc:
-                        _data_svc = _r_svc.read()
-                    os.makedirs(os.path.dirname(_script), exist_ok=True)
-                    with open(_script, 'wb') as _f_svc:
-                        _f_svc.write(_data_svc)
-                    print(f"   ✅ [SVC] {_name} 已下載")
-                except Exception as _e_dl:
-                    print(f"   ⚠️ [SVC] {_name} 下載失敗: {_e_dl}")
-                    continue
+            # 🚨 2026-08-28 FIX：下載全部依賴（_args 可能有多個 — 如 deploy_watcher + deploy_notify）— 但只 Popen 第一個（script）
+            for _dl_script in _args:
+                if not os.path.isfile(_dl_script):
+                    try:
+                        import urllib.request as _ur_svc
+                        # 🚨 用 localhost（本機 agent 直接連 server 快 — tunnel 可能 407/慢）
+                        _dl_url_svc = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+                        _dl_url_svc = f"{_dl_url_svc}/api/agent-service/{os.path.basename(_dl_script)}"
+                        _req_svc = _ur_svc.Request(_dl_url_svc, headers={'User-Agent': 'TradotcomAgent/1.0'})
+                        with _ur_svc.urlopen(_req_svc, timeout=20) as _r_svc:
+                            _data_svc = _r_svc.read()
+                        os.makedirs(os.path.dirname(_dl_script), exist_ok=True)
+                        with open(_dl_script, 'wb') as _f_svc:
+                            _f_svc.write(_data_svc)
+                        print(f"   ✅ [SVC] {_name} 已下載（{os.path.basename(_dl_script)}）")
+                    except Exception as _e_dl:
+                        print(f"   ⚠️ [SVC] {_name} 下載失敗（{os.path.basename(_dl_script)}）: {_e_dl}")
             if not os.path.isfile(_script):
                 print(f"   ⚠️ [SVC] {_name} 腳本唔存在: {_script}（skip）")
                 continue
