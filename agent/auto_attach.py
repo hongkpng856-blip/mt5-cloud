@@ -2178,53 +2178,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         if open_chart:
             try:
                 _sym = (symbol or '').upper()
-                # ① 寫 json（OpenChart script 讀呢個 — 一體化：symbol + ea + 模板名）
-                try:
-                    import json as _joc
-                    _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
-                    _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → Experts 根）
-                    # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
-                    try:
-                        _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
-                        _tpl_full_t = None
-                        for _d_t2 in os.listdir(_mt5_data_t) if os.path.isdir(_mt5_data_t) else []:
-                            _pp = os.path.join(_mt5_data_t, _d_t2, 'MQL5', 'Profiles', 'Templates')
-                            if os.path.isdir(_pp):
-                                _tpl_full_t = os.path.join(_pp, _tpl_name)
-                                break
-                        if _tpl_full_t and not os.path.isfile(_tpl_full_t):
-                            _CR = chr(13) + chr(10)
-                            _tpl_t = '<chart>' + _CR + f'symbol={_sym or "EURUSD"}' + _CR + 'period=16385' + _CR + 'left=100' + _CR + 'top=50' + _CR + 'right=900' + _CR + 'bottom=500' + _CR + _CR
-                            _tpl_t += '<expert>' + _CR + f'name={ea_name}' + _CR + f'path=Experts\\{ea_name}.ex5' + _CR + 'flags=7' + _CR + 'enabled=1' + _CR + _CR
-                            _tpl_t += '<inputs>' + _CR + 'LotSize=1.00' + _CR + 'MagicNumber=240701' + _CR + '</inputs>' + _CR + _CR
-                            _tpl_t += '</expert>' + _CR + _CR
-                            _tpl_t += '<window>' + _CR + 'height=100' + _CR + _CR
-                            _tpl_t += '<indicator>' + _CR + 'name=Main' + _CR + 'path=' + _CR + 'apply=1' + _CR + 'show_data=1' + _CR + 'scale_inherit=0' + _CR + 'scale_line=0' + _CR + 'scale_line_percent=50' + _CR + 'scale_line_value=0.000000' + _CR + 'scale_fix_min=0' + _CR + 'scale_fix_min_val=0.000000' + _CR + 'scale_fix_max=0' + _CR + 'scale_fix_max_val=0.000000' + _CR + '</indicator>' + _CR + _CR
-                            _tpl_t += '</window>' + _CR + _CR + '</chart>'
-                            with open(_tpl_full_t, 'wb') as _f_t:
-                                _f_t.write(b'\xff\xfe')
-                                _f_t.write(_tpl_t.encode('utf-16-le'))
-                            print(f"📋 模板已生成: {_tpl_name}（path → Experts 根）")
-                    except Exception as _ete:
-                        print(f"⚠️ 生成模板失敗: {_ete}")
-                    with open(_cmd_file, 'w', encoding='utf-8') as _f:
-                        _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
-                                   'ea': ea_name, 'tpl': _tpl_name}, _f)
-                    # 🚨 2026-08-15 FIX：寫入後驗證（讀返確認 — json 舊值問題：部署 USDJPY 但 script 讀到舊 GBPUSD）
-                    try:
-                        _chk = _joc.load(open(_cmd_file, encoding='utf-8'))
-                        if _chk.get('symbol') != _sym:
-                            with open(_cmd_file, 'w', encoding='utf-8') as _f2:
-                                _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
-                                           'ea': ea_name, 'tpl': _tpl_name}, _f2)
-                            print(f"📋 json 重寫（驗證唔啱 → {_sym}）")
-                        else:
-                            print(f"📋 json 寫入驗證 OK: {_sym}")
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
+                # 🚨 2026-08-28 FIX：刪除舊「寫 open_chart_cmd.json + 生成 tpl」段（一體化/OpenChart script 概念 — stable 前 — 開 chart 已用 Alt+F → json/tpl 寫咗冇用 → 多餘）
                 # ② 確保有圖表（新方法 Alt+F→Enter→Enter 會自己開 chart — 呢度只偵測）
                 _has_chart_oc = False
                 try:
@@ -3262,11 +3216,8 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         pass
 
     try:
-        # Step 1: Generate template
-        tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
-        check_abort()  # 每步檢查緊急停止
-
-        # 🚨 2026-08-20（用戶實測成功流程）：熱鍵預載 — 確保 EA 熱鍵寫入 hotkeys.ini（MT5 關閉狀態下）→ MT5 load
+        # 🚨 2026-08-28 FIX：刪除舊「generate_template」步驟（一體化模板 — stable 前概念 — 掛 EA 已用熱鍵 Ctrl+1 — 模板冇用 → 多餘）
+        # Step 1: 熱鍵預載 — 確保 EA 熱鍵寫入 hotkeys.ini（MT5 關閉狀態下）→ MT5 load
         # 破綻：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
         try:
             _cur_pid = find_mt5_pid()

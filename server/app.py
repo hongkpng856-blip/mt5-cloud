@@ -3977,73 +3977,22 @@ def api_deploy():
                                  'MetaQuotes', 'Terminal', 'Common', 'Files')
     os.makedirs(common_files, exist_ok=True)
 
-    # ⚠️ 控制層方案（CONTROL_LAYER_DESIGN.md）：如果 Controller EA 心跳 running →
-    # 直接寫 ctrl_controller.json（Controller 用 ChartApplyTemplate 附加 — 唔使 GUI / auto_attach）
-    # 需要 template 存在（generate_template 寫 .tpl）
-    controller_alive = False
-    try:
-        sf = os.path.join(common_files, 'state_controller.json')
-        if os.path.isfile(sf):
-            with open(sf, 'r', encoding='utf-8') as _f:
-                _sd = json.load(_f)
-            if _sd.get('status') == 'running' and int(time.time()) - int(_sd.get('ts', 0)) < 30:
-                controller_alive = True
-    except Exception:
-        pass
-
-    if controller_alive:
-        try:
-            # 1. 生成 template（<EA>_<SYMBOL>_<TF>.tpl — Controller ChartApplyTemplate 需要）
-            try:
-                import sys as _sys
-                _sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'agent'))
-                from auto_attach import generate_template
-                tpl_path = generate_template(ea_name, symbol, tf, {'Magic': str(magic), 'Lot': str(lot)})
-                print(f"[API] Controller 模式 template: {tpl_path}")
-            except Exception as _te:
-                print(f"[API] ⚠️ generate_template 失敗: {_te}")
-            # 2. 寫 ctrl_controller.json（Controller 執行 attach）
-            cmd_path = os.path.join(common_files, 'ctrl_controller.json')
-            with open(cmd_path, 'w', encoding='utf-8') as f:
-                json.dump({'cmd': 'attach', 'ea': ea_name, 'symbol': symbol, 'tf': tf}, f, ensure_ascii=False)
-            print(f"[API] Deploy(Controller): {ea_name} -> {symbol} {tf} (ctrl_controller.json written)")
-        except Exception as _ce:
-            print(f"[API] ⚠️ Controller deploy 失敗，fallback deploy_cmd: {_ce}")
-            cmd_path = os.path.join(common_files, f'deploy_cmd_{ea_name}_{int(_wt.time())}.json')
-            with open(cmd_path, 'w') as f:
-                json.dump({
-                    'ea_name': ea_name,
-                    'symbol': symbol,
-                    'tf': tf,
-                    'magic': str(magic),
-                    'lot': str(lot),
-                    'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
-                    'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
-                    'source': 'api_deploy'
-                }, f)
-    else:
-        # 照舊：deploy_cmd → watcher → auto_attach（Controller 未運行 / 未部署）
-        cmd_path = os.path.join(common_files, f'deploy_cmd_{ea_name}_{int(_wt.time())}.json')
-        with open(cmd_path, 'w') as f:
-            json.dump({
-                'ea_name': ea_name,
-                'symbol': symbol,
-                'tf': tf,
-                'magic': str(magic),
-                'lot': str(lot),
-                'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
-                'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
-                'source': 'api_deploy'
-            }, f)
-    
-    # 🚨 2026-08-15：網頁揀嘅 symbol 直接寫 open_chart_cmd.json（auto_attach 開圖表 — Ctrl+O 讀呢個 — 確保唔會開錯 symbol / json 被清問題）
-    try:
-        _ocp = os.path.join(common_files, 'open_chart_cmd.json')
-        with open(_ocp, 'w', encoding='utf-8') as _f:
-            json.dump({'symbol': symbol or 'EURUSD', 'tf': (tf or 'H1').upper()}, _f)
-        print(f"[API] open_chart_cmd.json 已寫: {symbol or 'EURUSD'} {tf or 'H1'}")
-    except Exception as _eocp:
-        print(f"[API] ⚠️ 寫 open_chart_cmd.json 失敗: {_eocp}")
+    # 🚨 2026-08-28 FIX：刪除舊 Controller fallback（generate_template + ctrl_controller.json — stable 前概念 — Controller EA 已冇行 → 死 code）
+    # 部署統一經：Agent 路由（online）→ watcher deploy_cmd（fallback 本機）— Controller 模式已淘汰
+    # 寫 deploy command file（watcher will pick it up）
+    import time as _wt
+    cmd_path = os.path.join(common_files, f'deploy_cmd_{ea_name}_{int(_wt.time())}.json')
+    with open(cmd_path, 'w') as f:
+        json.dump({
+            'ea_name': ea_name,
+            'symbol': symbol,
+            'tf': tf,
+            'magic': str(magic),
+            'lot': str(lot),
+            'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
+            'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
+            'source': 'api_deploy'
+        }, f)
 
     db.session.commit()
     print(f"[API] Deploy: {ea_name} -> {symbol} {tf} (command file written)")
