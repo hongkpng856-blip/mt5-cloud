@@ -983,9 +983,17 @@ def on_deploy_ea(data):
 
 
 # 🚨 2026-08-28（用戶要求：網站可以剷除本機 agent）：收 server 'shutdown' 指令 → 清理 + 退出
+_shutdown_done = False  # 🚨 防重複執行（emit + poll 雙重觸發 → 第二次 crash → 通知 server 冇行）
+
+
 @sio.on('shutdown')
 def on_shutdown(data):
     """Server 要求剷除本機 agent：清 lock/config/捷徑 → 通知 server → 退出"""
+    global _shutdown_done
+    if _shutdown_done:
+        print("⏭️ [WS] shutdown 已執行過 — skip（防重複）")
+        return
+    _shutdown_done = True
     print("🚫 [WS] 收到 shutdown 指令 — 剷除本機 agent...")
     sys.stdout.flush()
     try:
