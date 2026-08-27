@@ -24,6 +24,9 @@ TPL_DIR = os.path.join(MT5_DATA, 'Profiles', 'Templates')
 COMMON_FILES = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                             'Common', 'Files')
 
+# 🚨 2026-08-28：部署開始時間（log 驗證只認部署開始之後嘅 loaded — 修假成功）
+_last_deploy_start_ts = 0
+
 # MT5 timeframe codes for .tpl period_size
 TF_CODES = {
     'M1': 16385, 'M2': 16386, 'M3': 16387, 'M4': 16388, 'M5': 16389,
@@ -2840,10 +2843,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                     _last_sym = None
                                 elif 'loaded' in _line or '已启动' in _line or '已啟動' in _line:
                                     _last_sym = _m_aa.group(1) if _m_aa else None
-                # 最後狀態係 loaded + 喺目標 symbol + 時間新鮮（30 分鐘內 — 部署 restart 可能耐）
-                if _last_sym == _target_sym and _last_loaded_ts > 0 and (time.time() - _last_loaded_ts) < 1800:
+                # 最後狀態係 loaded + 喺目標 symbol + 時間喺「部署開始之後」（唔好用 30 分鐘窗口 — 讀到舊 loaded 假成功）
+                # 🚨 2026-08-28 FIX：用 _last_deploy_start_ts（部署開始時間）— 只認部署開始之後嘅 loaded
+                _use_start_ts = _last_deploy_start_ts if _last_deploy_start_ts > 0 else (time.time() - 1800)
+                if _last_sym == _target_sym and _last_loaded_ts >= _use_start_ts:
                     _ok_sym = True
-                    print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（最後狀態 fresh — {_dt_aa.datetime.fromtimestamp(_last_loaded_ts).strftime('%H:%M:%S')}）")
+                    print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（部署開始後 fresh — {_dt_aa.datetime.fromtimestamp(_last_loaded_ts).strftime('%H:%M:%S')}）")
                 else:
                     print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 檢查心跳後備）")
                     # 🚨 2026-08-12 FIX：心跳後備 — log 冇「已啟動」字眼唔代表 EA 冇運行（重啟 MT5 後 log 時序/字眼問題）
@@ -2861,14 +2866,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                     break
                                 except Exception:
                                     continue
-                            if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(os.path.getmtime(_hb_f)) < 300:
+                            if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and os.path.getmtime(_hb_f) >= _use_start_ts:
                                 _hb_ok = True
-                        # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt 格式（舊版 EA）— state_*.json 揾唔到 → 檢查 hb_*.txt（mtime 新鮮 <300s = 運行中）
+                        # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt 格式（舊版 EA）— state_*.json 揾唔到 → 檢查 hb_*.txt（mtime 新鮮 = 運行中）
+                        # 🚨 2026-08-28 FIX：mtime 要喺部署開始之後（唔好用 300s 窗口 — 舊心跳檔誤判）
                         if not _hb_ok:
                             _hb_txt = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
-                            if os.path.isfile(_hb_txt) and int(time.time()) - os.path.getmtime(_hb_txt) < 300:
+                            if os.path.isfile(_hb_txt) and os.path.getmtime(_hb_txt) >= _use_start_ts:
                                 _hb_ok = True
-                                print(f"✅ hb_*.txt 心跳: {ea_name} 運行中（{os.path.basename(_hb_txt)} 新鮮）")
+                                print(f"✅ hb_*.txt 心跳: {ea_name} 運行中（{os.path.basename(_hb_txt)} 部署後新鮮）")
                     except Exception:
                         pass
                     if _hb_ok:
@@ -3140,6 +3146,11 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
     print(f"\n{'='*50}")
     print(f"  🚀 Auto-Attach: {ea_name} → {symbol} {timeframe}")
     print(f"{'='*50}")
+    # 🚨 2026-08-28 FIX：記錄部署開始時間（log 驗證只認「部署開始之後」嘅 loaded — 唔好用 30 分鐘窗口）
+    # （舊：30 分鐘內任何 loaded 都當 fresh → 讀到上一輪部署嘅舊 loaded → 假成功）
+    _deploy_start_ts = time.time()
+    global _last_deploy_start_ts
+    _last_deploy_start_ts = _deploy_start_ts
 
     # Step 0: AI 控制守衛 — 彈警告視窗 + 支援緊急停止
     try:
