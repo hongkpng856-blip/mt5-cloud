@@ -896,6 +896,11 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                 _cli_ok = True
             if _cli_ok:
                 print(f"   ✅ CLI Compiled: {os.path.basename(ex5_path)} ({os.path.getsize(ex5_path)} bytes)")
+                # 🚨 2026-08-28 FIX：CLI compile 完都即刻關 MetaEditor（CLI /compile 都用 metaeditor64.exe — 會留低 process → 監察 Experts → 彈「外部修改」dialog）
+                try:
+                    _sp.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
+                except Exception:
+                    pass
                 return True
             else:
                 print("   ⚠️ CLI compile 未確認，fallback 去 GUI...")
