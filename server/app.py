@@ -1099,12 +1099,20 @@ def _refresh_auto_trade_cache(user):
 def _agent_live_status(agent):
     """🚨 2026-08-27：Agent 真實狀態（last_seen 新鮮 = online — 唔淨係睇 status 欄）
     agent 被 kill → socket 斷 → 冇 sync → last_seen 舊 → offline（防假綠燈）
+    🚨 FIX：last_seen 係 datetime.utcnow()（naive UTC）— timestamp() 會當本地時區 → 錯 8 小時
+    → 用 datetime.utcnow() 直接比較（都係 naive UTC — 無歧義）
     """
     try:
         if agent and agent.status in ('connected', 'online'):
-            import time as _t_ls
-            if agent.last_seen and (_t_ls.time() - agent.last_seen.timestamp()) < 60:
-                return 'connected'
+            if agent.last_seen:
+                from datetime import datetime as _dt_ls, timezone as _tz_ls
+                _now_utc = _dt_ls.utcnow()
+                _ls = agent.last_seen
+                # 兼容：如果 last_seen 係 aware（有 tzinfo）→ 轉 UTC；naive → 直接當 UTC
+                if _ls.tzinfo is not None:
+                    _ls = _ls.astimezone(_tz_ls.utc).replace(tzinfo=None)
+                if (_now_utc - _ls).total_seconds() < 60:
+                    return 'connected'
             return 'offline'
     except Exception:
         pass
