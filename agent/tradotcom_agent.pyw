@@ -333,15 +333,16 @@ class InstallWizard:
                                     stdout=open(os.path.join(BASE_DIR, "agent_run.log"), "a", encoding="utf-8", errors="replace"),
                                     stderr=subprocess.STDOUT)
             # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
-            self._status.config(text=f"Agent started (PID {proc.pid})\n\nYou can close this window - Agent runs in background\n(green/red popup shows connection status)")
+            self._status.config(text=f"Agent started (PID {proc.pid})\n\nAgent runs in background\n(green popup = connected)")
             self.root.update()
-            # 5 秒後指引關閉
-            self.root.after(3000, lambda: messagebox.showinfo(
-                "Agent 已啟動",
-                "✅ Tradotcom Agent 已喺背景啟動\n\n"
-                "• 成功連接 → 綠色彈窗「✅ Agent 已連接」\n"
-                "• 失敗 → 紅色彈窗話你知原因\n\n"
-                "（下次想開 Agent — double-click 呢個程式 / 桌面捷徑即可）"))
+            # 🚨 2026-08-27 FIX：安裝完成後自動關閉精靈窗口（唔好留低「Starting...」視窗 — 用戶抱怨）
+            # 用 after 延遲（等 info 彈窗顯示先關 — 或者直接關）
+            def _close_wizard():
+                try:
+                    self.root.destroy()
+                except Exception:
+                    pass
+            self.root.after(1500, _close_wizard)
         except Exception as e:
             self._status.config(text=f"Start failed: {e}")
             self.root.update()
