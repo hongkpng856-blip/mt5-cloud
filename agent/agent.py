@@ -1809,9 +1809,10 @@ def _ensure_platform_services():
                 print(f"   ⚠️ [SVC] {_name} 腳本唔存在: {_script}（skip）")
                 continue
             # 檢查係咪已經行緊（command line 含 script 名）
+            # 🚨 2026-08-28 FIX：加 $_.Name -eq 'python.exe' 過濾（之前淨 CommandLine -match 會 match 到自己 session 嘅 bash/powershell → count>0 → 誤判「已行緊」→ 永遠唔開真服務）
             _chk = _sp_svc.run(
                 ['powershell', '-NoProfile', '-Command',
-                 f"Get-CimInstance Win32_Process | Where-Object {{$_.CommandLine -match '{_name}'}} | Measure-Object | Select-Object -ExpandProperty Count"],
+                 f"Get-CimInstance Win32_Process | Where-Object {{$_.Name -eq 'python.exe' -and $_.CommandLine -match '{_name}'}} | Measure-Object | Select-Object -ExpandProperty Count"],
                 capture_output=True, timeout=10)
             _count = 0
             try:
