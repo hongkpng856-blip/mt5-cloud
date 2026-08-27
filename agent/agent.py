@@ -1012,6 +1012,25 @@ def on_shutdown(data):
                 print(f"   ✅ 捷徑已刪: {os.path.basename(_lnk)}")
         except Exception:
             pass
+        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾
+        try:
+            import shutil as _sh_sh
+            if os.path.isdir(_agent_dir):
+                _sh_sh.rmtree(_agent_dir, ignore_errors=True)
+                print(f"   ✅ 安裝資料夾已刪: {_agent_dir}")
+        except Exception as _e_dir:
+            print(f"   ⚠️ 刪安裝資料夾失敗: {_e_dir}")
+        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：停平台服務（watcher/alert_worker/auto_trade_detector）
+        try:
+            import subprocess as _sp_sh
+            for _pat_sh in ('deploy_watcher', 'alert_worker', 'auto_trade_detector'):
+                # 用 PowerShell 揾 command line 含 pattern 嘅 python process 再 kill（taskkill WINDOWTITLE 唔 work — 冇窗口）
+                _kill_sh = (f"Get-CimInstance Win32_Process | Where-Object {{$_.Name -match 'python' -and "
+                            f"$_.CommandLine -match '{_pat_sh}'}} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }}")
+                _sp_sh.run(['powershell', '-NoProfile', '-Command', _kill_sh], capture_output=True, timeout=15)
+            print("   ✅ 平台服務已停（watcher/alert_worker/auto_trade_detector）")
+        except Exception as _e_sp:
+            print(f"   ⚠️ 停平台服務失敗: {_e_sp}")
         # 通知 server 完成（清理完先話成功）
         try:
             import urllib.request as _ur_sh
@@ -1716,6 +1735,73 @@ except Exception as e:
 
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()
+
+
+# 🚨 2026-08-28（用戶要求：安裝 = 全部裝返）：agent 啟動時自動開平台服務（watcher/alert_worker/auto_trade_detector）
+# 剷除 agent 時會停晒呢啲 → 重新安裝 agent 啟動 → 自動開返（完整 cycle）
+def _ensure_platform_services():
+    """檢查 + 啟動平台服務（如果未行）— 用 agent 同目錄嘅 deploy_watcher.py 等"""
+    try:
+        _base = os.path.dirname(os.path.abspath(__file__))
+        # 平台服務目錄（agent 安裝位置 — 同 agent.py 一齊）
+        _svc_dir = _base
+        _py_exe = sys.executable
+        _svcs = {
+            'deploy_watcher': [os.path.join(_svc_dir, 'deploy_watcher.py')],
+            'alert_worker': [os.path.join(_svc_dir, 'alert_worker.py')],
+            'auto_trade_detector': [os.path.join(_svc_dir, 'auto_trade_detector.py')],
+        }
+        import subprocess as _sp_svc
+        for _name, _args in _svcs.items():
+            _script = _args[0]
+            # 🚨 2026-08-28：缺檔案 → 從 server 下載（安裝 = 全部裝返 — 剷除刪咗 → 重新安裝自動下載返）
+            if not os.path.isfile(_script):
+                try:
+                    import urllib.request as _ur_svc
+                    _dl_url_svc = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+                    _dl_url_svc = f"{_dl_url_svc}/api/agent-service/{os.path.basename(_script)}"
+                    _req_svc = _ur_svc.Request(_dl_url_svc, headers={'User-Agent': 'TradotcomAgent/1.0'})
+                    with _ur_svc.urlopen(_req_svc, timeout=20) as _r_svc:
+                        _data_svc = _r_svc.read()
+                    os.makedirs(os.path.dirname(_script), exist_ok=True)
+                    with open(_script, 'wb') as _f_svc:
+                        _f_svc.write(_data_svc)
+                    print(f"   ✅ [SVC] {_name} 已下載")
+                except Exception as _e_dl:
+                    print(f"   ⚠️ [SVC] {_name} 下載失敗: {_e_dl}")
+                    continue
+            if not os.path.isfile(_script):
+                print(f"   ⚠️ [SVC] {_name} 腳本唔存在: {_script}（skip）")
+                continue
+            # 檢查係咪已經行緊（command line 含 script 名）
+            _chk = _sp_svc.run(
+                ['powershell', '-NoProfile', '-Command',
+                 f"Get-CimInstance Win32_Process | Where-Object {{$_.CommandLine -match '{_name}'}} | Measure-Object | Select-Object -ExpandProperty Count"],
+                capture_output=True, timeout=10)
+            _count = 0
+            try:
+                _count = int(_chk.stdout.decode(errors='ignore').strip() or '0')
+            except Exception:
+                pass
+            if _count > 0:
+                print(f"   ✅ [SVC] {_name} 已行緊（skip）")
+                continue
+            # 開（python.exe + redirect log — 唔好 pythonw 冇 console）
+            try:
+                _log_f = open(os.path.join(_svc_dir, f'{_name}.log'), 'a', encoding='utf-8')
+                _sp_svc.Popen([_py_exe, '-u', _script], stdout=_log_f, stderr=_log_f,
+                              creationflags=0x00000008 if hasattr(_sp_svc, 'CREATE_NO_WINDOW') else 0)
+                print(f"   ✅ [SVC] {_name} 已啟動")
+            except Exception as _e_svc:
+                print(f"   ⚠️ [SVC] {_name} 啟動失敗: {_e_svc}")
+    except Exception as _e_all:
+        print(f"   ⚠️ [SVC] 平台服務檢查失敗: {_e_all}")
+
+
+try:
+    _ensure_platform_services()
+except Exception:
+    pass
 
 # 🚨 2026-08-26（用戶要求：成功明顯啲）：系統匣圖示（綠色=online 紅色=offline）
 try:

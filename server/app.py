@@ -3532,6 +3532,22 @@ def api_agent_py():
     agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
     return send_from_directory(agent_dir, 'agent.py')
 
+
+@app.route('/api/agent-service/<name>')
+def api_agent_service(name):
+    """🚨 2026-08-28（用戶要求：安裝 = 全部裝返）：下載平台服務腳本（deploy_watcher/alert_worker/auto_trade_detector）
+    agent 啟動時缺檔案 → 從 server 下載 → 開返
+    """
+    _allowed = {'deploy_watcher.py', 'alert_worker.py', 'auto_trade_detector.py'}
+    if name not in _allowed:
+        return jsonify({"error": "not allowed"}), 403
+    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    _f = os.path.join(agent_dir, name)
+    if os.path.isfile(_f):
+        return send_from_directory(agent_dir, name)
+    return jsonify({"error": "not found"}), 404
+
+
 # === WebSocket: Agent ===
 @socketio.on('connect')
 def handle_connect():
