@@ -1785,6 +1785,27 @@ def _ensure_platform_services():
             'alert_worker': [os.path.join(_svc_dir, 'alert_worker.py')],
             'auto_trade_detector': [os.path.join(_svc_dir, 'auto_trade_detector.py')],
         }
+        # 🚨 2026-08-28 FIX：額外依賴（auto_attach/refresh_navigator/control_guard — watcher 部署/refresh 要 — 全新環境實測漏咗）
+        _extra_deps = [
+            os.path.join(_svc_dir, 'auto_attach.py'),
+            os.path.join(_svc_dir, 'refresh_navigator.py'),
+            os.path.join(_svc_dir, 'control_guard.py'),
+        ]
+        for _dep in _extra_deps:
+            if not os.path.isfile(_dep):
+                try:
+                    import urllib.request as _ur_dep
+                    _dl_url_dep = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+                    _dl_url_dep = f"{_dl_url_dep}/api/agent-service/{os.path.basename(_dep)}"
+                    _req_dep = _ur_dep.Request(_dl_url_dep, headers={'User-Agent': 'TradotcomAgent/1.0'})
+                    with _ur_dep.urlopen(_req_dep, timeout=20) as _r_dep:
+                        _data_dep = _r_dep.read()
+                    os.makedirs(os.path.dirname(_dep), exist_ok=True)
+                    with open(_dep, 'wb') as _f_dep:
+                        _f_dep.write(_data_dep)
+                    print(f"   ✅ [SVC] 額外依賴已下載: {os.path.basename(_dep)}")
+                except Exception as _e_dep:
+                    print(f"   ⚠️ [SVC] 額外依賴下載失敗（{os.path.basename(_dep)}）: {_e_dep}")
         import subprocess as _sp_svc
         for _name, _args in _svcs.items():
             _script = _args[0]
