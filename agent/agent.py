@@ -1563,9 +1563,13 @@ def get_mt5_status():
 
 # 🚨 2026-08-27 FIX：console 視窗標題改做「Tradotcom Agent」（唔好顯示 python.exe 路徑 — 全黑冇品牌）
 try:
-    os.system("title Tradotcom Agent")
+    import ctypes as _ct
+    _ct.windll.kernel32.SetConsoleTitleW("Tradotcom Agent")
 except Exception:
-    pass
+    try:
+        os.system("title Tradotcom Agent")
+    except Exception:
+        pass
 
 print()
 print("=" * 56)
