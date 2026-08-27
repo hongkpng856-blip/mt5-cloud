@@ -1012,15 +1012,8 @@ def on_shutdown(data):
                 print(f"   ✅ 捷徑已刪: {os.path.basename(_lnk)}")
         except Exception:
             pass
-        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾
-        try:
-            import shutil as _sh_sh
-            if os.path.isdir(_agent_dir):
-                _sh_sh.rmtree(_agent_dir, ignore_errors=True)
-                print(f"   ✅ 安裝資料夾已刪: {_agent_dir}")
-        except Exception as _e_dir:
-            print(f"   ⚠️ 刪安裝資料夾失敗: {_e_dir}")
         # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：停平台服務（watcher/alert_worker/auto_trade_detector）
+        # ⚠️ 順序重要：先停服務（唔需要 agent.py）→ 最後先刪資料夾（rmtree 刪自己 — 之後 code 唔可以再行）
         try:
             import subprocess as _sp_sh
             for _pat_sh in ('deploy_watcher', 'alert_worker', 'auto_trade_detector'):
@@ -1031,6 +1024,14 @@ def on_shutdown(data):
             print("   ✅ 平台服務已停（watcher/alert_worker/auto_trade_detector）")
         except Exception as _e_sp:
             print(f"   ⚠️ 停平台服務失敗: {_e_sp}")
+        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾（最後先做 — 刪自己）
+        try:
+            import shutil as _sh_sh
+            if os.path.isdir(_agent_dir):
+                _sh_sh.rmtree(_agent_dir, ignore_errors=True)
+                print(f"   ✅ 安裝資料夾已刪: {_agent_dir}")
+        except Exception as _e_dir:
+            print(f"   ⚠️ 刪安裝資料夾失敗: {_e_dir}")
         # 通知 server 完成（清理完先話成功）
         try:
             import urllib.request as _ur_sh
