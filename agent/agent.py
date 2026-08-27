@@ -950,7 +950,17 @@ def download_and_install(ea_name, url, ea_config=None):
 def on_deploy_ea(data):
     print(f"🚀 [WS] Deploy: {data}")
     sys.stdout.flush()
-    execute_deploy(data)
+    try:
+        _alog_write(f"[WS] 收到 deploy_ea: {data.get('ea_name')} -> {data.get('symbol')}")
+    except Exception:
+        pass
+    try:
+        execute_deploy(data)
+        _alog_write(f"[WS] execute_deploy 完成（冇 crash）")
+    except Exception as _e_dep:
+        _alog_write(f"[WS] execute_deploy crash: {str(_e_dep)[:150]}")
+        import traceback
+        traceback.print_exc()
 
 
 # ================================================================
@@ -1425,8 +1435,26 @@ def sync_loop():
     last_sync = 0
     last_trade = 0
     last_reconn = 0
+    last_poll_dq = 0
     while True:
         try:
+            # 🚨 2026-08-27 FIX（部署收唔到 — tunnel 斷線窗口）：poll server deploy_queue（fallback）
+            # server emit deploy_ea 收唔到（tunnel 每分鐘斷）→ deploy_queue 有記錄 → 呢度讀返執行
+            if sio.connected and time.time() - last_poll_dq >= 5:
+                last_poll_dq = time.time()
+                try:
+                    import urllib.request as _ur_dq
+                    _req_dq = _ur_dq.Request(f"{SERVER_URL}/api/agent-poll-deploy?agent_id={AGENT_ID}")
+                    with _ur_dq.urlopen(_req_dq, timeout=8) as _r_dq:
+                        _dq = json.loads(_r_dq.read().decode('utf-8'))
+                    if _dq.get('ea_name'):
+                        _ddq = _dq
+                        print(f"📥 [POLL] 讀到 deploy_queue: {_ddq.get('ea_name')} -> {_ddq.get('symbol')}（emit 收唔到 fallback）")
+                        sys.stdout.flush()
+                        _alog_write(f"[POLL] deploy_queue fallback: {_ddq.get('ea_name')}")
+                        execute_deploy(_ddq)
+                except Exception as _e_dq:
+                    pass
             # 🚨 2026-08-26：未連線 → 每 5 秒嘗試重連（唔好永遠斷）
             if not sio.connected:
                 if time.time() - last_reconn >= 5:

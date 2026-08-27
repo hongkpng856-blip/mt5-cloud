@@ -587,7 +587,11 @@ def _refresh_worker_loop():
         except Exception:
             break
         # 處理所有 pending：refresh 一次 → 再檢查 queue 有冇新訊號 → 有就再 refresh
-        while True:
+        # 🚨 2026-08-27 FIX：加最大次數（3 次）— 防止無限 refresh 循環（卡死主 loop → deploy poll 餓死）
+        _refresh_max = 3
+        _refresh_done = 0
+        while _refresh_done < _refresh_max:
+            _refresh_done += 1
             # 直接喺 watcher process 入面 call（唔 spawn subprocess — subprocess 環境
             # 冇 desktop access 會令 pyautogui 卡死 timeout）
             try:
@@ -602,12 +606,17 @@ def _refresh_worker_loop():
             except Exception as e:
                 print(f"   ⚠️ Navigator refresh failed: {e}")
             sys.stdout.flush()
-            # 有 pending 訊號 → 再 refresh 一次（coalesce 期間嘅所有變化）
+            # 有 pending 訊號 → 再 refresh 一次（coalesce 期間嘅所有變化）— 但最多 3 次
             try:
                 _refresh_queue.get_nowait()
-                print("   🔄 有 pending 變化，繼續 refresh...")
-                sys.stdout.flush()
-                continue
+                if _refresh_done < _refresh_max:
+                    print("   🔄 有 pending 變化，繼續 refresh...")
+                    sys.stdout.flush()
+                    continue
+                else:
+                    print("   ⚠️ refresh 循環超過上限（3 次）— 停止（防卡死）")
+                    sys.stdout.flush()
+                    break
             except Exception:
                 break  # queue 空 — 完成
         time.sleep(2)  # 防連環觸發
