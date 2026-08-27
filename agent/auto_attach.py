@@ -1345,8 +1345,39 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         except Exception:
             pass
         if not _ex5_found:
-            print(f"❌ {ea_name}.ex5 唔存在（本機未配對/未 compile）— 熱鍵無法預載，請先配對 EA")
-            return mt5_pid
+            # 🚨 2026-08-27 FIX：.ex5 唔存在（可能剷除時刪咗）→ 自動 compile .mq5（metaeditor CLI）
+            # 之前直接 fail — 用戶剷除後再部署同一 EA 就失敗 — 應該自動重裝
+            print(f"⚠️ {ea_name}.ex5 唔存在 — 自動 compile（metaeditor CLI）...")
+            try:
+                import subprocess as _sp_cp
+                _mq5_path = None
+                for _d_root in os.listdir(_data_root):
+                    _exp_dir = os.path.join(_data_root, _d_root, 'MQL5', 'Experts')
+                    _mq5_p = os.path.join(_exp_dir, f'{ea_name}.mq5')
+                    if os.path.isfile(_mq5_p):
+                        _mq5_path = _mq5_p
+                        break
+                if _mq5_path:
+                    _me_dir = os.path.dirname(os.environ.get('PROGRAMFILES', 'C:/Program Files')) + '/MetaTrader 5/metaeditor64.exe'
+                    if not os.path.isfile(_me_dir):
+                        _me_dir = r'C:\Program Files\MetaTrader 5\metaeditor64.exe'
+                    if os.path.isfile(_me_dir):
+                        _log_p = os.path.join(os.path.dirname(_mq5_path), f'_cli_compile_{ea_name}.log')
+                        _sp_cp.run([_me_dir, f'/compile:{_mq5_path}', f'/log:{_log_p}'], timeout=60)
+                        time.sleep(2)
+                        # 再 check .ex5
+                        for _d_root in os.listdir(_data_root):
+                            _exp_dir = os.path.join(_data_root, _d_root, 'MQL5', 'Experts')
+                            if os.path.isfile(os.path.join(_exp_dir, f'{ea_name}.ex5')):
+                                _ex5_found = True
+                                print(f"✅ 自動 compile 成功: {ea_name}.ex5")
+                                break
+                if not _ex5_found:
+                    print(f"❌ {ea_name}.ex5 自動 compile 失敗（.mq5 唔存在或者編譯錯）— 請先配對 EA")
+                    return mt5_pid
+            except Exception as _e_cp:
+                print(f"❌ {ea_name}.ex5 唔存在 + 自動 compile 失敗: {_e_cp}")
+                return mt5_pid
         # 1. 讀 hotkeys.ini 有冇 ea_name
         experts = {}
         _hk_path = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -2720,11 +2751,20 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             return False
 
         # 心跳驗證
+        # 🚨 2026-08-27 FIX：淨 check 檔案存在唔夠（舊心跳檔殘留 → 誤判「心跳存在」→ 假成功）
+        # → check mtime age（<60s = 新鮮 = EA 真掛住寫緊；>60s = 舊檔 = 未掛）
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
+        _hb_fresh = False
         if os.path.isfile(hb):
-            print(f"✅ {ea_name} 附加成功（心跳存在）")
+            try:
+                _hb_age = time.time() - os.path.getmtime(hb)
+                _hb_fresh = _hb_age < 60
+            except Exception:
+                _hb_fresh = False
+        if _hb_fresh:
+            print(f"✅ {ea_name} 附加成功（心跳存在 + 新鮮 {_hb_age:.0f}s）")
         else:
-            print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
+            print(f"⚠️ {ea_name} 心跳未更新（{'冇心跳檔' if not os.path.isfile(hb) else f'age {_hb_age:.0f}s > 60s'}）— 可能未掛實（等 tick 或驗證 log）")
         # 🚨 2026-08-12 FIX：steps done 搬去函數最尾（所有操作完成後先寫 — 否則用戶見 steps done 撳確定 → active 仲 true → 即刻彈多一次）
         # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
         try:
