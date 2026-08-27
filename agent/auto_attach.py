@@ -1933,7 +1933,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                 _w_rc = _a_rc.window(class_name_re='MetaQuotes::MetaTrader')
                             _w_rc.set_focus()
                             time.sleep(0.5)
-                            _sk_rc('{ALT down}{F down}{F up}{ALT up}')  # Alt+F menu
+                            _sk_rc('%f')  # Alt+F menu（%f shorthand — pywinauto 0.6.9 唔支援 {ALT}）
                             time.sleep(1.5)
                             _sk_rc('{ENTER}')  # 文件
                             time.sleep(1)
