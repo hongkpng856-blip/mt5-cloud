@@ -1024,6 +1024,22 @@ def on_shutdown(data):
             print("   ✅ 平台服務已停（watcher/alert_worker/auto_trade_detector）")
         except Exception as _e_sp:
             print(f"   ⚠️ 停平台服務失敗: {_e_sp}")
+        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：清測試殘留（pystray/Test tray + 其他 Tradotcom 相關 python）
+        try:
+            import subprocess as _sp_tr
+            # 1. pystray tray（Tradotcom agent 用嘅 tray + 舊測試「Test」tray — 綠色 icon）
+            _kill_tr1 = ("Get-CimInstance Win32_Process | Where-Object {$_.Name -match 'python' -and "
+                         "($_.CommandLine -match 'pystray' -or $_.CommandLine -match \"Icon\\('test'\")} | "
+                         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }")
+            _sp_tr.run(['powershell', '-NoProfile', '-Command', _kill_tr1], capture_output=True, timeout=15)
+            # 2. 其他 Tradotcom 相關（tradotcom_agent / launcher / TradotcomAgent 路徑）
+            _kill_tr2 = ("Get-CimInstance Win32_Process | Where-Object {$_.Name -match 'python' -and "
+                         "($_.CommandLine -match 'tradotcom_agent' -or $_.CommandLine -match 'TradotcomAgent')} | "
+                         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }")
+            _sp_tr.run(['powershell', '-NoProfile', '-Command', _kill_tr2], capture_output=True, timeout=15)
+            print("   ✅ 測試殘留已清（pystray tray / Tradotcom 相關 python）")
+        except Exception as _e_tr:
+            print(f"   ⚠️ 清測試殘留失敗: {_e_tr}")
         # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾（最後先做 — 刪自己）
         try:
             import shutil as _sh_sh
