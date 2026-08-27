@@ -180,6 +180,9 @@ except Exception as _e_sio:
 ea_config_cache = {}
 ea_heartbeats = {}
 _popup_shown = False  # 🚨 2026-08-27：成功彈窗只彈一次
+_deals_cache = None  # 🚨 2026-08-27：deals 攞取 cache（60 秒）— 唔好每次 sync 攞全部（卡 → 斷線）
+_deals_cache_ts = 0
+_last_deals_sent = 0  # 🚨 2026-08-27：deals 傳送間隔（60 秒）— 減輕 sync payload
 
 def _show_status_popup(title, msg, ok):
     """🚨 2026-08-26（安裝驗證）：tkinter 彈窗 — Agent 啟動連線成功/失敗顯示
@@ -1404,7 +1407,8 @@ def _ensure_connected():
     if sio.connected:
         return True
     try:
-        sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False)
+        # 🚨 2026-08-27 FIX：改 websocket（polling 喺 threading async_mode 下唔穩定 — 成日斷線/BadNamespace）
+        sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
         return True
     except Exception:
         return False
@@ -1452,8 +1456,30 @@ def sync_loop():
                     data['files_snapshot'] = build_files_snapshot()
                 except Exception as _e_snap:
                     print(f'   [SNAP] Error: {_e_snap}')
-                sio.emit('agent_sync', data)
-                last_sync = now
+                # 🚨 2026-08-27 FIX：payload 太大（1.2MB deals）→ socket 斷線
+                # → deals 只每 60 秒傳一次（減輕 sync payload — 避免斷線）
+                global _last_deals_sent
+                if _deals_cache is not None and time.time() - _last_deals_sent > 60:
+                    data['deals'] = _deals_cache
+                    _last_deals_sent = time.time()
+                else:
+                    data.pop('deals', None)  # 輕量 sync（唔帶 deals）
+                try:
+                    sio.emit('agent_sync', data)
+                    last_sync = now
+                except Exception as _e_sync_emit:
+                    print(f"   [SYNC-EMIT] {_e_sync_emit} → force reconnect")
+                    sys.stdout.flush()
+                    try:
+                        sio.disconnect()
+                    except Exception:
+                        pass
+                    time.sleep(1)
+                    try:
+                        sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
+                    except Exception:
+                        pass
+                    last_reconn = time.time()
 
             # Auto-trade every 30 seconds
             if now - last_trade >= 30:
@@ -1492,31 +1518,37 @@ def get_mt5_status():
     # 🚨 2026-08-21：收集 history deals（Trades/Win/P&L 真實數據）
     # 之前冇收集 → agent.deals 永遠空 → /api/analysis「No data yet」→ 前端 Trades/Win/P&L 全部「—」
     # 🚨 2026-08-21 FIX：history_deals_get(since, now) 有 caching 問題 — 用 (0, now) 攞全部（實測攞到全部 deals）
+    # 🚨 2026-08-27 FIX：deals 攞取好重（每次 sync 攞全部 → 卡 >25s → socketio timeout 斷線）
+    # → 加 cache（60 秒內唔重攞 — 輕量 sync 唔卡）
+    global _deals_cache, _deals_cache_ts
     try:
         from datetime import datetime, timedelta
-        since = datetime.now() - timedelta(days=30)
-        deals = mt5.history_deals_get(0, datetime.now())
-        deal_list = []
-        if deals:
-            for d in deals:
-                # 只收集有 profit 嘅 closed deals（成交記錄 — 開倉冇 profit）
-                if d.profit != 0 or d.entry == mt5.DEAL_ENTRY_OUT:
-                    deal_list.append({
-                        "ticket": d.ticket,
-                        "magic": d.magic,
-                        "symbol": d.symbol,
-                        "profit": d.profit,
-                        "time": d.time,
-                        "entry": d.entry,
-                        "type": d.type,
-                        "volume": d.volume,
-                        "price": d.price,
-                        "comment": d.comment or '',
-                    })
-        status["deals"] = deal_list
-        status["deals_count"] = len(deal_list)
-        if deal_list:
-            print(f"📊 Synced {len(deal_list)} deals to server")
+        _now_c = time.time()
+        if _deals_cache is None or (_now_c - _deals_cache_ts) > 60:
+            deals = mt5.history_deals_get(0, datetime.now())
+            deal_list = []
+            if deals:
+                for d in deals:
+                    # 只收集有 profit 嘅 closed deals（成交記錄 — 開倉冇 profit）
+                    if d.profit != 0 or d.entry == mt5.DEAL_ENTRY_OUT:
+                        deal_list.append({
+                            "ticket": d.ticket,
+                            "magic": d.magic,
+                            "symbol": d.symbol,
+                            "profit": d.profit,
+                            "time": d.time,
+                            "entry": d.entry,
+                            "type": d.type,
+                            "volume": d.volume,
+                            "price": d.price,
+                            "comment": d.comment or '',
+                        })
+            _deals_cache = deal_list
+            _deals_cache_ts = _now_c
+        status["deals"] = _deals_cache if _deals_cache is not None else []
+        status["deals_count"] = len(status["deals"])
+        if status["deals"]:
+            print(f"📊 Synced {len(status['deals'])} deals to server")
             sys.stdout.flush()
     except Exception as e:
         print(f"   [DEALS] Error: {e}")
@@ -1543,7 +1575,7 @@ _alog_write(f"Connecting to {SERVER_URL}...")
 try:
     # 🚨 2026-08-27 FIX：wait=False（非阻塞 — 唔會掛死）+ 短 timeout
     # 之前 blocking connect 連唔到 → 永遠卡住 → 冇 log → 用戶「冇綠燈」
-    sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False, retry=False)
+    sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False, retry=False)
 except Exception as e:
     # 🚨 2026-08-26 FIX（multi-user Phase 1）：python-socketio 5.x connect() 有時 raise
     # 「One or more namespaces failed to connect」— 但背景 namespace 已連接（polling ack 時序）
@@ -1551,7 +1583,7 @@ except Exception as e:
     print(f"⚠️ connect() 警告（可能已連 — 背景再接）: {e}")
     _alog_write(f"⚠️ connect() 警告: {str(e)[:120]}")
     try:
-        sio.connect(f"{SERVER_URL}", transports=['polling'], retry=True)
+        sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], retry=True)
     except Exception as e2:
         print(f"⚠️ retry connect 都警告: {e2}")
         _alog_write(f"⚠️ retry connect 都警告: {str(e2)[:120]}")
