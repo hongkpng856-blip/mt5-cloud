@@ -432,6 +432,21 @@
 
 ## 📋 TODO（未實行 — 用戶指示暫時唔做，只記錄）
 
+### 🚀 平台化 Roadmap（2026-08-27 用戶確認方向 — 未實行）
+**目標**：推出市面 — server 上雲 + Admin 管理後台 + 商業化準備
+
+| Phase | 內容 | 狀態 |
+|-------|------|------|
+| **Phase 1 — Server 上雲** | server 搬去 VPS（Linux + Flask + SQLite — 1vCPU/1GB 夠）— 第一部機只係普通 agent 機（熄咗唔影響其他 account）— Cloudflare Tunnel 或 VPS 直連 | ⏳ 未做 |
+| **Phase 2 — Admin 後台** | user 表加 role 欄（'admin'/'user'）+ Admin 登入 + 頁面：用戶列表（幾多人/active/註冊日期）+ Agent 列表（邊部機 online/幾多秒前上報）+ 統計（總用戶/在線 agent/今日部署）+ 用戶操作（封鎖/解鎖/重置密碼） | ⏳ 未做 |
+| **Phase 3 — 監控** | server 資源（CPU/RAM）+ 錯誤 log 顯示 + 部署歷史 | ⏳ 未做 |
+| **Phase 4 — 商業化** | 訂閱/收費（到期日）+ 用量限制（免費 N 部機 / 付費無限）+ 註冊流程（email 驗證等） | ⏳ 未做 |
+
+**用戶要求（2026-08-27 對話）**：
+- 市面成熟系統都有 Admin 後台（睇幾多人上線/account/用緊）— 我哋都要有
+- server 上雲後第一部機熄咗 → 其他 account 唔受影響
+- 方案 A（1 User → N Agent）已確認 — 防雙開已實作（v0.10.87）
+
 ### 🔄 數據注入選擇功能（2026-08-21 用戶要求，未實行）
 **目標**：所有 EA 部署時可選「注入逐單數據記錄」（trades json），或者唔注入照部署但註明冇呢個功能。
 
