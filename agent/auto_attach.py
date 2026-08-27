@@ -1621,6 +1621,47 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             print("⚠️ 熱鍵預載：MT5 主視窗 90s 未 ready（繼續 — 部署時會再驗證）")
         else:
             print("✅ 熱鍵預載：MT5 主視窗 ready")
+            # 🚨 2026-08-28 FIX（用戶實錘：熱鍵預載 restart 後 ATR_Stop chart 冇 restore → 心跳停 → 網頁「圖表移除」）：
+            # restart 後檢查 + 補開遺失 chart（_charts_before_hk 記錄咗但之前冇用 — v0.10.68 fix 未完整實作）
+            try:
+                _after_charts = []
+                def _cb_after(h2, _):
+                    _l2 = _u_cb.GetWindowTextLengthW(h2)
+                    if _l2 > 0:
+                        _b2 = _ct_cb.create_unicode_buffer(_l2 + 1)
+                        _u_cb.GetWindowTextW(h2, _b2, _l2 + 1)
+                        if ',' in _b2.value:
+                            _after_charts.append(_b2.value)
+                    return True
+                # 用 pywinauto 攞 main window（EnumChildWindows 數 chart）
+                try:
+                    from pywinauto import Application as _AppAF
+                    _a_af = _AppAF(backend='win32').connect(process=_cur_pid_hk, timeout=8)
+                    _w_af = _a_af.window(class_name='MetaQuotes::MetaTrader::5.00')
+                    _u_cb.EnumChildWindows(_ct_cb.c_void_p(int(_w_af.element_info.handle)), _ct_cb.WINFUNCTYPE(_ct_cb.c_bool, _ct_cb.c_size_t, _ct_cb.c_size_t)(_cb_after), 0)
+                except Exception:
+                    pass
+                _after_symbols = [c.split(',')[0] for c in _after_charts]
+                for _bc in _charts_before_hk:
+                    _bc_sym = _bc.split(',')[0]
+                    if _bc_sym not in _after_symbols:
+                        print(f"🔄 熱鍵預載 restart 後補開遺失 chart: {_bc_sym}")
+                        try:
+                            import pyautogui as _pg_af
+                            _pg_af.FAILSAFE = False
+                            _pg_af.hotkey('alt', 'f'); time.sleep(1)
+                            _pg_af.press('enter'); time.sleep(1)
+                            _pg_af.press('enter'); time.sleep(2)
+                            _pg_af.press('space'); time.sleep(1)
+                            _pg_af.typewrite(_bc_sym, interval=0.2); time.sleep(1)
+                            _pg_af.press('enter'); time.sleep(3)
+                            print(f"   ✅ 補開 {_bc_sym}")
+                        except Exception as _e_af:
+                            print(f"   ⚠️ 補開 {_bc_sym} 失敗: {_e_af}")
+                if _charts_before_hk:
+                    print(f"📋 restart 後 chart: {_after_charts}（補開完成）")
+            except Exception as _e_af2:
+                print(f"⚠️ 補開遺失 chart 失敗: {_e_af2}")
             # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：熱鍵預載開完 MT5 檢查 UAC/授權窗口
             # （MT5 更新/異常 → 彈「Client Terminal AVX2 授權」→ 唔處理會擋熱鍵 load 測試）
             try:
