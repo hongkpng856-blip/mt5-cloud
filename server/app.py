@@ -3698,6 +3698,15 @@ def api_agent_remove():
         print(f"[API] 🚫 剷除 Agent {agent.agent_id}（網站操作）")
         # 發 shutdown 指令俾 agent（SocketIO room=agent_id）
         socketio.emit('shutdown', {'reason': 'web_remove'}, room=agent.agent_id)
+        # 🚨 2026-08-28 FIX：寫剷除標記落 DB（agent 斷線收唔到 emit → poll /api/agent-poll-deploy 時檢查）
+        # （同 deploy_queue 一樣機制 — tunnel 斷線窗口 fallback）
+        try:
+            _rm_flag = json.loads(agent.deploy_queue) if agent.deploy_queue else {}
+        except Exception:
+            _rm_flag = {}
+        _rm_flag['_remove_agent'] = True
+        _rm_flag['_remove_ts'] = time.time()
+        agent.deploy_queue = json.dumps(_rm_flag)
         # 標記 agent 已剷除（status=offline — 等 agent 回報 remove-complete 再刪）
         agent.status = 'offline'
         db.session.commit()

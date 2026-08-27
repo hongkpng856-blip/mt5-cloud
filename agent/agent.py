@@ -1522,6 +1522,13 @@ def sync_loop():
                     _req_dq = _ur_dq.Request(f"{_poll_url}/api/agent-poll-deploy?agent_id={AGENT_ID}")
                     with _ur_dq.urlopen(_req_dq, timeout=10) as _r_dq:
                         _dq = json.loads(_r_dq.read().decode('utf-8'))
+                    # 🚨 2026-08-28 FIX：poll 讀到「剷除 agent」標記（server 寫 — emit 收唔到時 fallback）
+                    if _dq.get('_remove_agent'):
+                        print(f"🚫 [POLL] 讀到剷除標記 — 執行剷除（emit 收唔到 fallback）")
+                        sys.stdout.flush()
+                        _alog_write("[POLL] 剷除 agent（server 標記 fallback）")
+                        on_shutdown({'reason': 'web_remove_poll'})
+                        break
                     if _dq.get('ea_name'):
                         _ddq = _dq
                         print(f"📥 [POLL] 讀到 deploy_queue: {_ddq.get('ea_name')} -> {_ddq.get('symbol')}（emit 收唔到 fallback）")
