@@ -879,10 +879,20 @@ def download_and_install(ea_name, url, ea_config=None):
                             metaeditor, '/compile', mq5_path,
                             f'/log:{log_file}'
                         ], capture_output=True, timeout=120)
+                        # 🚨 2026-08-28 FIX：compile 完即刻關 MetaEditor（CLI /compile 都用 metaeditor64.exe — 留低會監察 Experts → 彈「外部修改」dialog）
+                        try:
+                            subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
+                        except Exception:
+                            pass
                     except subprocess.TimeoutExpired:
                         print(f"   ⚠️ Compile timeout (120s), but .ex5 may exist")
                         if os.path.exists(ex5_path):
                             print(f"   ✅ .ex5 found despite timeout: {os.path.getsize(ex5_path)} bytes")
+                        # timeout 都關 MetaEditor
+                        try:
+                            subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
+                        except Exception:
+                            pass
                 
                 # Check .ex5
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
