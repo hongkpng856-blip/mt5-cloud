@@ -1167,6 +1167,12 @@ def execute_deploy(data):
         common_files = os.path.join(os.environ.get('APPDATA', ''),
                                      'MetaQuotes', 'Terminal', 'Common', 'Files')
         os.makedirs(common_files, exist_ok=True)
+        # 🚨 2026-08-27 FIX：寫 web_add flag（等 watcher 知道係網頁操作 — 唔會誤判「電腦刪除」→ 移除配對）
+        try:
+            with open(os.path.join(common_files, f'web_add_{ea_name}.flag'), 'w') as _f_flg:
+                _f_flg.write('agent_deploy')
+        except Exception:
+            pass
         cmd_path = os.path.join(common_files, cmd_filename)
         
         with open(cmd_path, 'w') as f:

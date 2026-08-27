@@ -478,8 +478,25 @@ def _notify_ea_change(change_type, ea_name):
         elif change_type == 'deleted':
             msg = f'{ea_name} 已於{source}刪除'
             # 電腦刪除 → 自動移除配對 config（配對庫即刻消失）
-            if source == '電腦':
+            # 🚨 2026-08-27 FIX：部署/編譯流程會短暫刪 .ex5（metaeditor 重編譯 — 先刪舊再寫新）
+            # → flag 可能已消費（added 時）→ deleted 冇 flag → 誤判電腦刪除 → purge 錯配對
+            # → 三重檢查先 purge：①冇 web_add flag ②config 冇 EA（真係刪除 — 有 EA = 部署中）
+            _flag_purge_check = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'web_add_{ea_name}.flag')
+            _deploying = os.path.isfile(_flag_purge_check)
+            # check config 有冇 EA（server 端 — 有 EA = 唔係真刪除）
+            _cfg_has_ea = False
+            try:
+                import urllib.request as _ur2
+                _url2 = f"{SERVER_URL}/api/ea-config?t={int(time.time()*1000)}"
+                with _ur2.urlopen(_url2, timeout=8) as _r2:
+                    _d2 = json.loads(_r2.read().decode('utf-8'))
+                _cfg_has_ea = ea_name in _d2.get('mappings', {})
+            except Exception:
+                pass
+            if source == '電腦' and not _deploying and not _cfg_has_ea:
                 _purge_config(ea_name)
+            elif source == '電腦' and (_deploying or _cfg_has_ea):
+                print(f"🔔 [WATCHER] {ea_name} deleted 但部署中/有 config（flag={_deploying} cfg={_cfg_has_ea}）→ 唔 purge（防誤判）")
         else:
             msg = f'{ea_name} 已更新'
         notif = {
@@ -873,10 +890,17 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                         pid = int(parts[1])
                         break
                 if not pid:
-                    _sp.Popen([metaeditor])
-                    _t.sleep(6)
+                    # 🚨 2026-08-27 FIX：唔好開 metaeditor GUI（佢監察 Experts 目錄 → 自動重編譯 → 刪舊 .ex5 但寫唔返 → 部署失敗）
+                    # → CLI /compile 已經可靠（line 849）— 唔需要 GUI fallback
+                    print("   ⚠️ MetaEditor 未開 — 用 CLI compile（唔開 GUI — 避免佢搞亂 .ex5）")
+                    _t.sleep(1)
 
                 app = Application(backend='win32').connect(process=pid) if pid else None
+
+                # 🚨 2026-08-27 FIX：metaeditor 未開（CLI compile 已處理）→ 跳過 GUI 段（唔 crash）
+                if app is None:
+                    print("   ℹ️ MetaEditor 未開 — 跳過 GUI 編譯段（CLI 已處理）")
+                    return True
 
                 # 關閉可能嘅舊 dialog（「外部修改」提示 → click 是；其他 dialog → close）
                 # ⚠️ 唔可以用 w.close() 對「外部修改」dialog — 會卡死（timed out）→ 一定要 click 是

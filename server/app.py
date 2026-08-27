@@ -39,18 +39,20 @@ def _bounce_back_watchdog():
                         _ea_dirs2.append(_ps2)
                 if not _ea_dirs2:
                     continue
-                # 讀 config（EA 名集合）
+                # 讀 config（EA 名集合）— 🚨 2026-08-27 FIX：全部 user 嘅 config（multi-user — agent 模式部署唔係 dev）
                 _cfg2 = set()
                 try:
                     _db2 = _o2.path.join(_o2.path.dirname(_o2.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
                     _db2 = _o2.path.abspath(_db2)
                     _conn2 = _sq2.connect(_db2)
-                    _row2 = _conn2.execute("SELECT ea_config FROM user WHERE username='dev'").fetchone()
-                    if _row2:
-                        _c2 = _j2.loads(_row2[0] or '{}')
-                        for _k2 in _c2:
-                            if not _k2.startswith('_') and not _k2.endswith(('_tf', '_lot', '_magic', '_status')):
-                                _cfg2.add(_k2)
+                    for _row2 in _conn2.execute("SELECT ea_config FROM user").fetchall():
+                        try:
+                            _c2 = _j2.loads(_row2[0] or '{}')
+                            for _k2 in _c2:
+                                if not _k2.startswith('_') and not _k2.endswith(('_tf', '_lot', '_magic', '_status')):
+                                    _cfg2.add(_k2)
+                        except Exception:
+                            pass
                     _conn2.close()
                 except Exception:
                     pass
@@ -3597,6 +3599,14 @@ def handle_sync(data):
         # 🚨 2026-08-26（multi-user Phase 1）：儲存 agent 上報嘅檔案快照（每機獨立 — server 唔再直接讀本機）
         if data.get('files_snapshot'):
             agent.files_snapshot = json.dumps(data.get('files_snapshot'))
+            # 🚨 2026-08-27 FIX：agent 心跳實際喺 files_snapshot.heartbeats（build_files_snapshot 收集）
+            # → 合併入 ea_heartbeats（網頁心跳顯示用）— 唔好得 files_snapshot 有
+            _snap_hb = data.get('files_snapshot', {}).get('heartbeats') or {}
+            if _snap_hb:
+                _merged_hb = dict(data.get('heartbeats', {}))
+                for _k_hb, _v_hb in _snap_hb.items():
+                    _merged_hb[_k_hb] = _v_hb
+                agent.ea_heartbeats = json.dumps(_merged_hb)
         agent.last_seen = datetime.utcnow()
         agent.status = data.get('status','connected')
         db.session.commit()
@@ -3858,7 +3868,8 @@ def api_deploy():
     # → agent 收到 deploy_ea → 喺自己部機寫 deploy_cmd → watcher 執行（每機獨立）
     # → 冇 agent 連線（offline）→ fallback 直接寫本機（單機向後兼容）
     _agent_dp = Agent.query.filter_by(user_id=current_user.id).first()
-    _agent_online = bool(_agent_dp and _agent_dp.status in ('connected', 'online'))
+    # 🚨 2026-08-27 FIX：agent online 判斷用「真係上報緊」（last_seen 新鮮）— 唔係 status 欄（舊 status 會誤判 → emit 去冇人接嘅 room → 部署卡死）
+    _agent_online = bool(_agent_dp and _agent_live_status(_agent_dp) == 'connected')
     if _agent_online:
         try:
             _dp_payload = {
