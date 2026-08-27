@@ -1203,6 +1203,19 @@ def process_pause_cmd(fp):
             _remove_ok = False
         # 🚨 2026-08-12：逐步（auto_attach 完成 → 移除 done → 刪檔 doing → …）
         _prog_steps(['移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
+        # 🚨 2026-08-27 FIX：action=delete → 實際刪除本機 .mq5/.ex5（用戶要求「剷除 = 完整移除」— 之前只刪 config + 移除 chart — 檔案留低！）
+        if action == 'delete' and _remove_ok:
+            try:
+                _exp_dir_del = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                for _d_del in os.listdir(_exp_dir_del):
+                    for _ext_del in ('.mq5', '.ex5'):
+                        _fp_del = os.path.join(_exp_dir_del, _d_del, 'MQL5', 'Experts', ea_name + _ext_del)
+                        if os.path.isfile(_fp_del):
+                            os.remove(_fp_del)
+                            print(f"   ✅ 已刪除本機檔案: {os.path.basename(_fp_del)}")
+            except Exception as _e_del:
+                print(f"   ⚠️ 刪除本機檔案失敗: {_e_del}")
+            sys.stdout.flush()
         _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
         _prog_steps(['清理設定並釋放快捷鍵'], '完成刪除')
         _prog_steps(['完成刪除'])
