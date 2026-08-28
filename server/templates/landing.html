@@ -563,16 +563,20 @@ try {
   let audioCtx = null;
   function playClick() {
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // 🚨 2026-08-28：確保 AudioContext 運行（第一次 click 前係 suspended — resume 先有聲）
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'square';
-      osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.06);
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.07);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
       osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(); osc.stop(audioCtx.currentTime + 0.13);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.16);
     } catch(e) {}
   }
   logo.addEventListener('click', function(e) {
@@ -596,16 +600,20 @@ try {
   let audioCtx2 = null;
   function playHeroClick() {
     try {
-      if (!audioCtx2) audioCtx2 = new (window.AudioContext || window.webkitAudioContext)();
+      if (!audioCtx2) {
+        audioCtx2 = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // 🚨 2026-08-28：確保 AudioContext 運行（第一次 click 前係 suspended — resume 先有聲）
+      if (audioCtx2.state === 'suspended') audioCtx2.resume();
       const osc = audioCtx2.createOscillator();
       const gain = audioCtx2.createGain();
       osc.type = 'square';
-      osc.frequency.setValueAtTime(1800, audioCtx2.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(600, audioCtx2.currentTime + 0.06);
-      gain.gain.setValueAtTime(0.25, audioCtx2.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx2.currentTime + 0.12);
+      osc.frequency.setValueAtTime(2000, audioCtx2.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(500, audioCtx2.currentTime + 0.07);
+      gain.gain.setValueAtTime(0.35, audioCtx2.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx2.currentTime + 0.15);
       osc.connect(gain); gain.connect(audioCtx2.destination);
-      osc.start(); osc.stop(audioCtx2.currentTime + 0.13);
+      osc.start(); osc.stop(audioCtx2.currentTime + 0.16);
     } catch(e) {}
   }
   heroIcon.addEventListener('click', function(e) {
