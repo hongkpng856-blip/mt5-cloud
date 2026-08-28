@@ -328,8 +328,10 @@ class DetectorHandler(BaseHTTPRequestHandler):
 STATIC_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server', 'static', 'detector'))
 # 🚨 2026-08-28 FIX（配對庫冇更新 — detector 寫錯位置）：detector 喺 TradotcomAgent → STATIC_DIR = AppData/Local/server/static/detector（錯！）
 # → server 讀 Desktop/mt5-cloud/server/static/detector（開發目錄）→ 兩個位置唔同步 → 配對庫永遠讀舊檔
-# → 修正：如果喺 TradotcomAgent（安裝位置）→ 用開發目錄（Desktop/mt5-cloud 或 mt5-cloud-stable）
-if not os.path.isdir(STATIC_DIR):
+# → 修正：如果 detector 喺 TradotcomAgent（安裝位置 — %LOCALAPPDATA%）→ 強制用開發目錄
+#   （唔可以用「目錄唔存在」判斷 — AppData/Local/server/static/detector 之前寫過 — 目錄已存在 → 唔觸發 fallback）
+_IS_INSTALLED = 'TradotcomAgent' in os.path.dirname(os.path.abspath(__file__))
+if _IS_INSTALLED:
     _cand_static = [
         os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'server', 'static', 'detector'),
         os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud-stable', 'server', 'static', 'detector'),
