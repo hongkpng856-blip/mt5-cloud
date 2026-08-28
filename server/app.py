@@ -146,6 +146,32 @@ def log_activity(action, message, ea='', source='server'):
         pass
 
 
+def _write_ai_flags(sig, steps):
+    """🚨 2026-08-28 FIX（電腦版 + 網頁版警告視窗要一致）：雙寫 show/steps flag
+    開發目錄（server 讀 — 網頁 modal）+ TradotcomAgent（alert_worker 讀 — 電腦版視窗）
+    → 兩個位置都寫 → 電腦版 + 網頁版都見到 → 一致
+    """
+    _dirs = []
+    # 1. 開發目錄（agent/）
+    _adir_dev = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+    _dirs.append(_adir_dev)
+    # 2. TradotcomAgent（alert_worker 讀）
+    _adir_inst = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+    if os.path.isdir(_adir_inst):
+        _dirs.append(_adir_inst)
+    for _d in _dirs:
+        try:
+            os.makedirs(_d, exist_ok=True)
+            if sig:
+                with open(os.path.join(_d, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                    _f.write(sig)
+            if isinstance(steps, list):
+                with open(os.path.join(_d, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                    json.dump(steps, _f, ensure_ascii=False)
+        except Exception:
+            pass
+
+
 @app.route('/api/control-steps', methods=['GET', 'POST'])
 @login_required
 def api_control_steps():
@@ -2671,19 +2697,25 @@ def api_ea_install_local(filename):
     try:
         import json as _jin
         _adir_in = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-        with open(os.path.join(_adir_in, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-            _f.write(f'配對 {_base0}')
-        with open(os.path.join(_adir_in, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
-            # 🚨 2026-08-12 FIX：配對詳細步驟（活動記錄式 — 同刪除一致 — 唔會同 watcher 編譯步驟唔對應）
-            _jin.dump([
-                {'text': f'開始配對 {_base0}', 'status': 'doing'},
-                {'text': '複製檔案至本機（Experts 根）', 'status': 'pending'},
-                {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
-                {'text': '完成配對', 'status': 'pending'},
-            ], _f2, ensure_ascii=False)
-        # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
-        os.replace(os.path.join(_adir_in, '.ai_control.steps') + '.tmp',
-                   os.path.join(_adir_in, '.ai_control.steps'))
+        # 🚨 2026-08-28 FIX（電腦版警告視窗冇彈）：雙寫 show + steps（開發目錄 + TradotcomAgent — alert_worker 讀自己目錄）
+        _steps_new = [
+            {'text': f'開始配對 {_base0}', 'status': 'doing'},
+            {'text': '複製檔案至本機（Experts 根）', 'status': 'pending'},
+            {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
+            {'text': '完成配對', 'status': 'pending'},
+        ]
+        for _wdir in [_adir_in, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
+            try:
+                os.makedirs(_wdir, exist_ok=True)
+                with open(os.path.join(_wdir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                    _f.write(f'配對 {_base0}')
+                with open(os.path.join(_wdir, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
+                    _jin.dump(_steps_new, _f2, ensure_ascii=False)
+                # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
+                os.replace(os.path.join(_wdir, '.ai_control.steps') + '.tmp',
+                           os.path.join(_wdir, '.ai_control.steps'))
+            except Exception:
+                pass
     except Exception as _ein_err:
         print(f"[DEBUG] install-local steps write failed: {_ein_err}", flush=True)
 
@@ -3987,15 +4019,13 @@ def api_deploy():
         import json as _jdp
         _adir_dp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         os.makedirs(_adir_dp, exist_ok=True)
-        with open(os.path.join(_adir_dp, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-            _f.write(f'部署 {ea_name}')
-        with open(os.path.join(_adir_dp, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
-            _jdp.dump([
-                {'text': f'部署 {ea_name}（{symbol.upper()}）', 'status': 'doing'},
-                {'text': f'建立新圖表（{symbol.upper()}）', 'status': 'pending'},
-                {'text': f'附加 {ea_name}', 'status': 'pending'},
-                {'text': '驗證運行狀態', 'status': 'pending'},
-            ], _f, ensure_ascii=False)
+        # 🚨 2026-08-28 FIX（電腦版警告視窗冇彈）：雙寫 show + steps（開發目錄 + TradotcomAgent）
+        _write_ai_flags(f'部署 {ea_name}', [
+            {'text': f'部署 {ea_name}（{symbol.upper()}）', 'status': 'doing'},
+            {'text': f'建立新圖表（{symbol.upper()}）', 'status': 'pending'},
+            {'text': f'附加 {ea_name}', 'status': 'pending'},
+            {'text': '驗證運行狀態', 'status': 'pending'},
+        ])
     except Exception:
         pass
 
