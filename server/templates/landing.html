@@ -157,26 +157,43 @@ tr:hover td { background: var(--bg-muted); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 768px) {
+  /* 🚨 2026-08-28：UI/UX Pro Max skill 手機版修正（可讀性 + 觸控）*/
+  body { font-size: 16px; }  /* readable-font-size：body 最小 16px */
+  html { -webkit-tap-highlight-color: transparent; }
+  button, .btn, .lang-btn, .card-close { touch-action: manipulation; }  /* tap-delay */
   .nav-links { display: none; }
-  .hero { padding-top: 48px; }
-  .hero h1 { font-size: 26px; }
-  .hero p.lead { font-size: 15px; }
+  .hero { padding-top: 40px; }
+  .hero h1 { font-size: 26px; line-height: 1.25; }
+  .hero p.lead { font-size: 16px; line-height: 1.6; }
   .hero-stats { flex-wrap: wrap; gap: 20px; }
   .hero-stats .stat h3 { font-size: 22px; }
   .hero-form { flex-direction: column; }
+  .hero-form input { padding: 16px; font-size: 16px; }  /* touch-friendly-input ≥44px */
+  .hero-form .btn { padding: 16px 24px; font-size: 16px; min-height: 48px; }  /* touch-target-size 48dp */
   .feat-grid { grid-template-columns: 1fr; }
-  .cta h2 { font-size: 24px; }
-  .cta p { font-size: 15px; }
-  /* 🚨 2026-08-28：howto 手機 1 欄（原本 2 欄 — 手機迫）*/
+  .feat-card { padding: 22px; }
+  .feat-card h3 { font-size: 17px; }
+  .feat-card p { font-size: 15px; line-height: 1.6; }
+  .cta h2 { font-size: 24px; line-height: 1.3; }
+  .cta p { font-size: 16px; }
+  .cta .btn { padding: 16px 28px; font-size: 16px; min-height: 48px; }
+  /* howto 手機 1 欄 */
   .howto > div > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-  /* 比較表格字體縮細 */
-  .compare-table th, .compare-table td { padding: 10px 12px; font-size: 12px; }
+  .howto img { margin-bottom: 24px; }
+  /* 比較表格縮細 */
+  .compare-table th, .compare-table td { padding: 10px 10px; font-size: 12px; }
+  .compare-table { -webkit-overflow-scrolling: touch; }
   /* section padding 縮細 */
-  .features, .compare, .cta, .howto { padding: 60px 0 !important; }
-  .section-head h2 { font-size: 26px; }
-  .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .features, .compare, .cta, .howto { padding: 56px 0 !important; }
+  .section-head h2 { font-size: 24px; }
+  .section-head p { font-size: 15px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 28px; }
   .logo { font-size: 17px; }
-  .nav-cta .btn { padding: 6px 14px; font-size: 13px; }
+  .logo-badge { width: 32px; height: 32px; }
+  .nav-cta .btn { padding: 10px 16px; font-size: 14px; min-height: 44px; }  /* touch-target-size */
+  .lang-btn { padding: 8px 12px; font-size: 14px; min-height: 36px; }
+  /* line-length-control */
+  .hero p.lead, .feat-card p, .section-head p, .footer p { max-width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
