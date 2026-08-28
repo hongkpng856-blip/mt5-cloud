@@ -1336,6 +1336,20 @@ def process_pause_cmd(fp):
                     _s['status'] = 'done'
             with open(_sf2, 'w', encoding='utf-8') as _f:
                 _jp2.dump(_old2, _f, ensure_ascii=False)
+            # 🚨 2026-08-28 FIX（網頁版警告視窗卡「剷除緊」— 同編譯完成一樣）：同步埋開發目錄 steps
+            try:
+                import os as _os3
+                _cand3 = [
+                    _os3.path.join(_os3.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'agent'),
+                    _os3.path.join(_os3.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud-stable', 'agent'),
+                ]
+                for _cd3 in _cand3:
+                    if _os3.path.isdir(_cd3):
+                        with open(_os3.path.join(_cd3, '.ai_control.steps'), 'w', encoding='utf-8') as _f3:
+                            _jp2.dump(_old2, _f3, ensure_ascii=False)
+                        break
+            except Exception:
+                pass
         except Exception:
             pass
         os.remove(fp)
