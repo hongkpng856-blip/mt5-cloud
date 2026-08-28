@@ -384,6 +384,15 @@ def dashboard():
     resp.headers['Pragma'] = 'no-cache'
     return resp
 
+@app.route('/home')
+def home():
+    # 🚨 2026-08-28：返回主頁（landing — 已登入都顯示 — 唔 redirect dashboard）
+    # 登入後想去返介紹頁（比較/特點）用 — 唔同 /（已登入 redirect dashboard）
+    resp = make_response(render_template('landing.html'))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    return resp
+
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
