@@ -3419,7 +3419,13 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                     tb = _ct.create_unicode_buffer(tl + 1)
                     _u.GetWindowTextW(h, tb, tl + 1)
                     if tb.value.strip():
-                        found.append((tb.value, h))
+                        # 🚨 2026-08-29 FIX（剷除假失敗 — 窗口 dialog 誤判）：只認「窗口」dialog 本身
+                        # 之前所有 #32770 有文字都算 → 其他 dialog（殘留/其他 app）title 含「窗口」→ 誤判「未關」
+                        # → 精準匹配：class #32770 + title 以「窗口」開頭（MT5「窗口」dialog 標準標題）
+                        # （唔可以用『窗口』in title — 其他 dialog title 可能含「窗口」兩字）
+                        _t = tb.value.strip()
+                        if _t.startswith('窗口') or _t == 'Windows':
+                            found.append((_t, h))
             return True
         _u.EnumWindows(_ct.WINFUNCTYPE(_ct.c_bool, _ct.c_void_p, _ct.c_void_p)(cb), 0)
         return found
@@ -3619,20 +3625,65 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
 
         # 7. 確認 dialog 關咗（彈返 chart）
         _dlgs_now = _dlgs()
-        if any('窗口' in t for t, h in _dlgs_now):
+        if any('窗口' in t for t, h in _dlgs_now) or any(t == 'Windows' for t, h in _dlgs_now):
             print("⚠️ 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
             _sk('{ENTER}')
             time.sleep(2)
             _dlgs_now2 = _dlgs()
-            if any('窗口' in t for t, h in _dlgs_now2):
+            if any('窗口' in t for t, h in _dlgs_now2) or any(t == 'Windows' for t, h in _dlgs_now2):
                 # 🚨 2026-08-21 FIX（Breakout AMD 案例 — 網頁話成功但 MT5 卡窗口 dialog）：
                 # dialog 再試都未關 → fail（唔好繼續 Ctrl+W 亂關 — 關唔到 + 誤判成功）
-                print(f"❌ 窗口 dialog 未關（再試 Enter 都冇效）— 剷除中止（唔好誤判成功）")
+                # 🚨 2026-08-29 FIX（剷除假失敗 — EMA_Cross 案例）：dialog 未關但 EA 可能已經移除
+                # （Enter 已生效 + 移除完成 — 但 dialog handle 未釋放/殘留 → 誤判「未關」→ 假失敗）
+                # → 最後確認：心跳停 / MT5 log removed（EA 真移除 = 唔當失敗 — 跳去關 chart）
+                _ea_really_gone = False
                 try:
-                    _sk('{ESC}')
+                    _cfd3 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+                    _hb_any = False
+                    for _hfn4 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+                        _hfp4 = os.path.join(_cfd3, _hfn4)
+                        if os.path.isfile(_hfp4) and time.time() - os.path.getmtime(_hfp4) < 30:
+                            _hb_any = True
+                            break
+                    if not _hb_any:
+                        _ea_really_gone = True
+                        print(f"✅ {ea_name} 心跳已停（EA 真移除 — dialog 未關但移除成功，繼續關 chart）")
                 except Exception:
                     pass
-                return False
+                # MT5 log removed 確認
+                if not _ea_really_gone:
+                    try:
+                        if _lat_r and os.path.isfile(_lat_r):
+                            _raw_r3 = open(_lat_r, 'rb').read()
+                            _txt_r3 = None
+                            for _enc_r3 in ('utf-16', 'utf-8', 'cp1252'):
+                                try:
+                                    _txt_r3 = _raw_r3.decode(_enc_r3)
+                                    break
+                                except Exception:
+                                    continue
+                            if _txt_r3:
+                                _recent3 = _txt_r3.splitlines()[-30:]
+                                _last_state3 = None
+                                for _l4 in reversed(_recent3):
+                                    if ea_name in _l4 and ('loaded' in _l4 or 'removed' in _l4 or '已启动' in _l4 or '已停止' in _l4):
+                                        if 'removed' in _l4 or '已停止' in _l4:
+                                            _last_state3 = 'removed'
+                                        elif 'loaded' in _l4 or '已启动' in _l4:
+                                            _last_state3 = 'loaded'
+                                        break
+                                if _last_state3 == 'removed':
+                                    _ea_really_gone = True
+                                    print(f"✅ MT5 log 確認 {ea_name} removed（EA 真移除 — dialog 未關但移除成功，繼續關 chart）")
+                    except Exception:
+                        pass
+                if not _ea_really_gone:
+                    print(f"❌ 窗口 dialog 未關（再試 Enter 都冇效）— 剷除中止（唔好誤判成功）")
+                    try:
+                        _sk('{ESC}')
+                    except Exception:
+                        pass
+                    return False
 
         # 8. Ctrl+W 關閉該 chart（EA 一齊移除）
         _sk('^w')
