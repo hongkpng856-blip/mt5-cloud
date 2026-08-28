@@ -1562,7 +1562,22 @@ def sync_loop():
     while True:
         try:
             # 🚨 2026-08-27 FIX（部署收唔到 — tunnel 斷線窗口）：poll server deploy_queue（fallback）
-            # server emit deploy_ea 收唔到（tunnel 每分鐘斷）→ deploy_queue 有記錄 → 呢度讀返執行
+            # 🚨 2026-08-28 FIX（添加卡「等待中」）：watcher 寫 steps 去自己目錄（TradotcomAgent/.ai_control.steps）
+            # 但 server 讀開發目錄（agent/.ai_control.steps）→ 唔同步 → 前端永遠 pending
+            # → agent 每次 poll 同步：讀自己目錄 steps → POST server（更新 server 讀嘅檔）
+            try:
+                _sf_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                if os.path.isfile(_sf_local):
+                    _steps_local = json.load(open(_sf_local, 'r', encoding='utf-8'))
+                    import urllib.request as _ur_st
+                    _req_st = _ur_st.Request(f"{SERVER_URL}/api/control-steps?t={int(time.time()*1000)}",
+                                             data=json.dumps({'steps': _steps_local}).encode(),
+                                             headers={'Content-Type': 'application/json'}, method='POST')
+                    with _ur_st.urlopen(_req_st, timeout=8) as _r_st:
+                        _r_st.read()
+            except Exception:
+                pass
+            # poll server deploy_queue（fallback）
             if sio.connected and time.time() - last_poll_dq >= 5:
                 last_poll_dq = time.time()
                 try:
