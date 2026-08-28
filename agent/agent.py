@@ -1570,9 +1570,12 @@ def sync_loop():
                 if os.path.isfile(_sf_local):
                     _steps_local = json.load(open(_sf_local, 'r', encoding='utf-8'))
                     import urllib.request as _ur_st
-                    _req_st = _ur_st.Request(f"{SERVER_URL}/api/control-steps?t={int(time.time()*1000)}",
+                    # 🚨 2026-08-28 FIX：加 browser UA（過 Cloudflare 403）+ agent_id/token 驗證（server 唔再要 login）
+                    _req_st = _ur_st.Request(f"{SERVER_URL}/api/control-steps?t={int(time.time()*1000)}&agent_id={AGENT_ID}&token={AGENT_TOKEN}",
                                              data=json.dumps({'steps': _steps_local}).encode(),
-                                             headers={'Content-Type': 'application/json'}, method='POST')
+                                             headers={'Content-Type': 'application/json',
+                                                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 TradotcomAgent/1.0'},
+                                             method='POST')
                     with _ur_st.urlopen(_req_st, timeout=8) as _r_st:
                         _r_st.read()
             except Exception:

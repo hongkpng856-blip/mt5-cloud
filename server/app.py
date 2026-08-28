@@ -147,16 +147,24 @@ def log_activity(action, message, ea='', source='server'):
 
 
 @app.route('/api/control-steps', methods=['GET', 'POST'])
-@login_required
 def api_control_steps():
     """🚨 2026-08-10：攞操作步驟（警告視窗顯示 — 一排排）
-    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔成功）"""
+    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔成功）
+    POST（2026-08-28 FIX）：agent 同步 steps（agent_id + token 驗證 — 唔需要 login session）"""
     if request.method == 'POST':
         try:
             import time as _tw
             data = request.json or {}
             steps_in = data.get('steps')
             sig = data.get('sig', '')
+            # 🚨 2026-08-28 FIX：agent 同步（冇 session）→ 驗證 agent_id + token
+            _aid_in = request.args.get('agent_id') or data.get('agent_id', '')
+            _tok_in = request.args.get('token') or data.get('token', '')
+            if _aid_in:
+                _ag = Agent.query.filter_by(agent_id=_aid_in).first()
+                _tk_real = str(_ag.agent_token or '') if _ag else ''
+                if not _tk_real or _tok_in != _tk_real:
+                    return jsonify({"success": False, "error": "invalid agent token"}), 403
             agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             if sig:
                 with open(os.path.join(agent_dir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
