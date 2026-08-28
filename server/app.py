@@ -2516,6 +2516,15 @@ def api_ea_remove_local(filename):
                 f.write('1')
         except Exception:
             pass
+        # 🚨 2026-08-28 FIX（用戶實錘：配對庫「刪除」只刪檔案+config — 唔移除 chart EA → EA 仲行緊 + 心跳仲寫）：
+        # remove-local 加寫 pause_cmd（action=delete）→ watcher process_pause_cmd → auto_attach --remove（移除圖表 EA — 同 ea-config/delete 一樣）
+        try:
+            _pcmd_path = os.path.join(common_files, f'pause_cmd_{base_only}_{int(__import__("time").time())}.json')
+            with open(_pcmd_path, 'w', encoding='utf-8') as _fpc:
+                json.dump({'ea_name': base_only, 'action': 'delete'}, _fpc, ensure_ascii=False)
+            print(f"[remove-local] pause_cmd 已寫（移除圖表 EA）: {os.path.basename(_pcmd_path)}", flush=True)
+        except Exception as _epc:
+            print(f"[remove-local] ⚠️ 寫 pause_cmd 失敗: {_epc}", flush=True)
         # 🚨 2026-08-15 FIX（用戶：Magic/Symbol 剸除後再配對返嚟）：remove-local 都要刪 config + 釋放快捷鍵
         # （之前只刪本機檔案 — config 殘留 → 重新配對 setdefault 舊值返嚟）
         try:
