@@ -141,7 +141,7 @@ tr:hover td { background: var(--bg-muted); }
 <!-- NAV -->
 <nav class="nav">
   <div class="container nav-inner">
-    <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">Tradotcom</span></a>
+    <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">交易掂</span></a>
     <div class="nav-links">
       <a href="#features" data-i18n="nav_features">平台特點</a>
       <a href="#compare" data-i18n="nav_compare">方案比較</a>
@@ -163,6 +163,8 @@ tr:hover td { background: var(--bg-muted); }
   <div class="container hero-grid">
     <div>
       <h1 data-i18n="hero_title">遠端管理您的 <span class="gold">MetaTrader 5</span><br>交易終端</h1>
+      <p class="slogan" style="font-family:var(--font-head);font-size:20px;color:var(--gold);font-weight:600;margin-bottom:12px;" data-i18n="slogan">交易，點一點，搞掂</p>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;" data-i18n="slogan_sub">Trade dot com dot com</p>
       <p class="lead" data-i18n="hero_lead">Tradotcom 為多用戶交易管理平台，讓每位客戶透過網頁介面遠端控制其專屬的 MetaTrader 5 終端。部署專家顧問（EA）、監控交易活動、管理風險 — 全部於瀏覽器完成，無需遠端桌面。</p>
       <form class="hero-form" action="/register" method="get">
         <input type="email" placeholder="電子郵件地址" aria-label="Email" data-i18n="hero_email" required>
@@ -283,7 +285,7 @@ tr:hover td { background: var(--bg-muted); }
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">Tradotcom</span></a>
+        <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">交易掂</span></a>
         <p data-i18n="footer_tagline">遠端管理您的 MetaTrader 5 交易終端 — 隨時隨地，掌控全局。</p>
       </div>
       <div>
@@ -325,7 +327,10 @@ tr:hover td { background: var(--bg-muted); }
 <script>
 const I18N = {
   zh: {
-    brand: 'Tradotcom',
+    brand: '交易掂',
+    slogan: '交易，點一點，搞掂',
+    slogan_en: 'Trade. dot. Done.',
+    slogan_sub: 'Trade dot com dot com',
     nav_features: '平台特點', nav_compare: '方案比較', nav_platform: '立即開始',
     btn_login: '登入', btn_register: '註冊', btn_start: '立即開始', btn_register2: '立即註冊',
     hero_title: '遠端管理您的 <span class="gold">MetaTrader 5</span><br>交易終端',
@@ -355,6 +360,9 @@ const I18N = {
   },
   en: {
     brand: 'Tradotcom',
+    slogan: 'Trade. dot. Done.',
+    slogan_en: 'Trade. dot. Done.',
+    slogan_sub: 'Trade dot com dot com',
     nav_features: 'Features', nav_compare: 'Comparison', nav_platform: 'Get Started',
     btn_login: 'Log In', btn_register: 'Register', btn_start: 'Get Started', btn_register2: 'Register Now',
     hero_title: 'Manage Your <span class="gold">MetaTrader 5</span><br>Trading Terminal Remotely',
