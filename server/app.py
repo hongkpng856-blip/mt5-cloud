@@ -3792,14 +3792,12 @@ def api_agent_remove():
         _rm_flag['_remove_agent'] = True
         _rm_flag['_remove_ts'] = time.time()
         agent.deploy_queue = json.dumps(_rm_flag)
-        # 🚨 2026-08-28 FIX：agent offline（斷線/冇行）→ 直接刪 DB 記錄（唔等 remove-complete 回報 — agent 唔會回報）
+        # 🚨 2026-08-28 FIX：agent offline（斷線/冇行）→ 唔刪 DB（用戶要求：剷除 = 清本機 agent — DB 記錄保留 — 之後可重新安裝連接返）
+        # 只清本機（平台服務 + lock + 安裝目錄）
         if agent.status != 'connected':
-            print(f"[API] ⚠️ Agent {agent.agent_id} 已 offline — 直接刪除 DB 記錄（唔等回報）")
-            db.session.delete(agent)
-            db.session.commit()
-            # 🚨 2026-08-28 FIX：同時清本機 agent 嘢（運行緊嘅平台服務 + lock + 安裝目錄 — 用戶要求：剷除 = 清晒而家電腦運行緊嘅 agent）
+            print(f"[API] ⚠️ Agent {agent.agent_id} 已 offline — 清理本機（保留 DB 記錄）")
             _cleanup_local_agent()
-            return jsonify({"success": True, "message": f"Agent {agent.agent_id}（offline）已剷除 + 本機已清理"})
+            return jsonify({"success": True, "message": f"Agent {agent.agent_id}（offline）本機已清理（DB 記錄保留）"})
         # 標記 agent 已剷除（status=offline — 等 agent 回報 remove-complete 再刪）
         agent.status = 'offline'
         db.session.commit()
@@ -3811,14 +3809,14 @@ def api_agent_remove():
 
 @app.route('/api/agent/remove-complete', methods=['POST'])
 def api_agent_remove_complete():
-    """Agent 剷除完成回報（agent 自己清理完 call）— 刪除 DB agent 記錄"""
+    """Agent 剷除完成回報（agent 自己清理完 call）— 🚨 2026-08-28 FIX：唔刪 DB（用戶要求：剷除 = 清本機 — DB 記錄保留 — 之後可重新安裝連接返）— 只標記 offline"""
     agent_id = request.args.get('agent_id') or (request.get_json(silent=True) or {}).get('agent_id')
     if not agent_id:
         return jsonify({"success": False, "error": "no agent_id"}), 400
     agent = Agent.query.filter_by(agent_id=agent_id).first()
     if agent:
-        print(f"[API] ✅ Agent {agent_id} 已剷除（agent 回報）— 刪除 DB 記錄")
-        db.session.delete(agent)
+        print(f"[API] ✅ Agent {agent_id} 已剷除（agent 回報）— 標記 offline（DB 記錄保留）")
+        agent.status = 'offline'
         db.session.commit()
     return jsonify({"success": True})
 
