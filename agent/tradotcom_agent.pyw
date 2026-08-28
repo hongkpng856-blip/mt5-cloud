@@ -47,7 +47,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 APP_TITLE = "Tradotcom Agent"
-DEFAULT_URL = "https://mt5cloud.esgov.org"
+DEFAULT_URL = "https://tradotcom.com"
 # 🚨 2026-08-26：固定安裝位置（唔使估喺邊 — launcher 會放呢度）
 _FIXED_DIR = os.path.join(os.environ.get("LOCALAPPDATA", ""), "TradotcomAgent")
 _my_dir = os.path.dirname(os.path.abspath(__file__))
