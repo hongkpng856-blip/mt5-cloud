@@ -3734,6 +3734,42 @@ def _detect_uac_server():
     except Exception:
         return []
 
+def _cleanup_local_agent():
+    """🚨 2026-08-28（用戶要求：剷除 Agent = 清晒而家電腦運行緊嘅 agent 嘢）：
+    殺平台服務（watcher/detector/alert — 本機 agent 目錄）+ 刪 lock + 刪安裝目錄
+    """
+    import subprocess, shutil
+    print("[API] 🧹 清理本機 Agent（平台服務 + lock + 安裝目錄）...")
+    # 1. 殺平台服務（agent 目錄嘅 python process — 唔好殺自己/server/hermes）
+    try:
+        _ps = subprocess.run(
+            'powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq \'python.exe\' -and ($_.CommandLine -match \'TradotcomAgent|agent/(deploy_watcher|auto_trade_detector|alert_worker|auto_attach|deploy_notify|control_guard)\') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"',
+            shell=True, capture_output=True, timeout=30)
+        print(f"   ✅ 平台服務已殺（{_ps.returncode}）")
+    except Exception as e:
+        print(f"   ⚠️ 殺平台服務失敗: {e}")
+    time.sleep(2)
+    # 2. 刪 lock + 安裝目錄
+    _agent_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+    try:
+        if os.path.isdir(_agent_dir):
+            shutil.rmtree(_agent_dir, ignore_errors=True)
+            print(f"   ✅ 安裝目錄已刪: {_agent_dir}")
+        else:
+            print(f"   ℹ️ 安裝目錄唔存在: {_agent_dir}")
+    except Exception as e:
+        print(f"   ⚠️ 刪安裝目錄失敗: {e}")
+    # 3. 刪桌面捷徑
+    try:
+        _desktop = os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop')
+        for _f in os.listdir(_desktop):
+            if 'Tradotcom' in _f or '交易點' in _f:
+                os.remove(os.path.join(_desktop, _f))
+                print(f"   ✅ 桌面捷徑已刪: {_f}")
+    except Exception:
+        pass
+    print("[API] 🧹 本機清理完成")
+
 @app.route('/api/agent/remove', methods=['POST'])
 @login_required
 def api_agent_remove():
@@ -3756,6 +3792,14 @@ def api_agent_remove():
         _rm_flag['_remove_agent'] = True
         _rm_flag['_remove_ts'] = time.time()
         agent.deploy_queue = json.dumps(_rm_flag)
+        # 🚨 2026-08-28 FIX：agent offline（斷線/冇行）→ 直接刪 DB 記錄（唔等 remove-complete 回報 — agent 唔會回報）
+        if agent.status != 'connected':
+            print(f"[API] ⚠️ Agent {agent.agent_id} 已 offline — 直接刪除 DB 記錄（唔等回報）")
+            db.session.delete(agent)
+            db.session.commit()
+            # 🚨 2026-08-28 FIX：同時清本機 agent 嘢（運行緊嘅平台服務 + lock + 安裝目錄 — 用戶要求：剷除 = 清晒而家電腦運行緊嘅 agent）
+            _cleanup_local_agent()
+            return jsonify({"success": True, "message": f"Agent {agent.agent_id}（offline）已剷除 + 本機已清理"})
         # 標記 agent 已剷除（status=offline — 等 agent 回報 remove-complete 再刪）
         agent.status = 'offline'
         db.session.commit()
