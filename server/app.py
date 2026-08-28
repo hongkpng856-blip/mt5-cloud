@@ -372,7 +372,8 @@ def index():
         resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         resp.headers['Pragma'] = 'no-cache'
         return resp
-    return render_template('index.html')
+    # 🚨 2026-08-28：Landing page（介紹網站 — tradotcom.com 首頁）— 未登入顯示
+    return render_template('landing.html')
 
 @app.route('/dashboard')
 @login_required
