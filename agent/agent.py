@@ -1562,8 +1562,9 @@ def sync_loop():
     while True:
         try:
             # 🚨 2026-08-27 FIX（部署收唔到 — tunnel 斷線窗口）：poll server deploy_queue（fallback）
-            # poll server deploy_queue（fallback）
-            if sio.connected and time.time() - last_poll_dq >= 5:
+            # 🚨 2026-08-28 FIX（部署卡住 — 根據 stable 版本結構）：poll 唔依賴 sio.connected（agent 每分鐘重連 → sio.connected False → poll 唔行 → deploy_queue 冇被讀 → 部署卡死）
+            # → 斷線都照 poll（deploy_queue 係 fallback — 斷線時更需要 poll）
+            if time.time() - last_poll_dq >= 5:
                 last_poll_dq = time.time()
                 try:
                     import urllib.request as _ur_dq
