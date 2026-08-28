@@ -326,6 +326,18 @@ class DetectorHandler(BaseHTTPRequestHandler):
 # （避開 HTTPS tunnel fetch HTTP localhost 嘅混合內容封鎖）
 # ============================================================
 STATIC_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server', 'static', 'detector'))
+# 🚨 2026-08-28 FIX（配對庫冇更新 — detector 寫錯位置）：detector 喺 TradotcomAgent → STATIC_DIR = AppData/Local/server/static/detector（錯！）
+# → server 讀 Desktop/mt5-cloud/server/static/detector（開發目錄）→ 兩個位置唔同步 → 配對庫永遠讀舊檔
+# → 修正：如果喺 TradotcomAgent（安裝位置）→ 用開發目錄（Desktop/mt5-cloud 或 mt5-cloud-stable）
+if not os.path.isdir(STATIC_DIR):
+    _cand_static = [
+        os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'server', 'static', 'detector'),
+        os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud-stable', 'server', 'static', 'detector'),
+    ]
+    for _cs in _cand_static:
+        if os.path.isdir(_cs):
+            STATIC_DIR = _cs
+            break
 
 
 def write_static_json():
