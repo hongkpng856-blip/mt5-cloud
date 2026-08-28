@@ -147,24 +147,16 @@ def log_activity(action, message, ea='', source='server'):
 
 
 @app.route('/api/control-steps', methods=['GET', 'POST'])
+@login_required
 def api_control_steps():
     """🚨 2026-08-10：攞操作步驟（警告視窗顯示 — 一排排）
-    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔成功）
-    POST（2026-08-28 FIX）：agent 同步 steps（agent_id + token 驗證 — 唔需要 login session）"""
+    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔成功）"""
     if request.method == 'POST':
         try:
             import time as _tw
             data = request.json or {}
             steps_in = data.get('steps')
             sig = data.get('sig', '')
-            # 🚨 2026-08-28 FIX：agent 同步（冇 session）→ 驗證 agent_id + token
-            _aid_in = request.args.get('agent_id') or data.get('agent_id', '')
-            _tok_in = request.args.get('token') or data.get('token', '')
-            if _aid_in:
-                _ag = Agent.query.filter_by(agent_id=_aid_in).first()
-                _tk_real = str(_ag.agent_token or '') if _ag else ''
-                if not _tk_real or _tok_in != _tk_real:
-                    return jsonify({"success": False, "error": "invalid agent token"}), 403
             agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             if sig:
                 with open(os.path.join(agent_dir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
@@ -178,48 +170,18 @@ def api_control_steps():
     try:
         agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         steps_file = os.path.join(agent_dir, '.ai_control.steps')
-        # 🚨 2026-08-28 FIX（警告視窗資訊同操作唔一致）：steps 有兩個位置（server 寫 agent/ + watcher 寫 TradotcomAgent/）
-        # → 讀時合併：TradotcomAgent steps 較新（watcher 啱啱寫）→ 用佢（但要保留 server 寫嘅「開始配對」步驟）
-        _steps_final = None
-        _mtime_dev = os.path.getmtime(steps_file) if os.path.isfile(steps_file) else 0
-        _agent_dir_local = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent', '.ai_control.steps')
-        _mtime_inst = os.path.getmtime(_agent_dir_local) if os.path.isfile(_agent_dir_local) else 0
-        if _mtime_inst > _mtime_dev and os.path.isfile(_agent_dir_local):
-            # 用 TradotcomAgent（較新）— 但保留 server 寫嘅「開始配對 X」（唔好被舊覆蓋）
-            try:
-                with open(_agent_dir_local, 'r', encoding='utf-8') as f:
-                    _steps_final = json.load(f)
-                # 合併：如果 server 有「開始配對 X」但 TradotcomAgent 冇 → 加返
-                if isinstance(_steps_final, list):
-                    _dev_steps = []
-                    if os.path.isfile(steps_file):
-                        try:
-                            with open(steps_file, 'r', encoding='utf-8') as f2:
-                                _dev_steps = json.load(f2)
-                        except Exception:
-                            _dev_steps = []
-                    _has_start = any('開始配對' in (s.get('text', '') if isinstance(s, dict) else '') for s in _steps_final)
-                    if not _has_start and isinstance(_dev_steps, list):
-                        for _ds in _dev_steps:
-                            if isinstance(_ds, dict) and '開始配對' in _ds.get('text', ''):
-                                _steps_final.insert(0, _ds)
-                                break
-            except Exception:
-                _steps_final = None
-        if _steps_final is None and os.path.isfile(steps_file):
+        if os.path.isfile(steps_file):
             try:
                 with open(steps_file, 'r', encoding='utf-8') as f:
-                    _steps_final = json.load(f)
+                    steps_data = json.load(f)
+                if not isinstance(steps_data, list):
+                    steps_data = []
             except Exception:
-                _steps_final = None
-        if isinstance(_steps_final, list):
-            steps_data = _steps_final
-        else:
-            # 🚨 2026-08-12：讀唔到（多個 process 同時寫 → 檔案損壞/空）→ 唔返回 []（網頁唔會空白 — 彈嚟彈去根治）
-            steps_data = [{'text': '等待操作開始…', 'status': 'pending'}]
-        # 🚨 2026-08-11：返回 steps + mtime（前端用嚟判斷「舊 steps 唔顯示」— 新任務開始唔會殘留上一個操作 — 用戶投訴）
-        import time as _tm
-        return jsonify({"steps": steps_data, "mtime": _steps_final and os.path.getmtime(steps_file) or 0})
+                # 🚨 2026-08-12：讀唔到（多個 process 同時寫 → 檔案損壞/空）→ 唔返回 []（網頁唔會空白 — 彈嚟彈去根治）
+                steps_data = [{'text': '等待操作開始…', 'status': 'pending'}]
+            # 🚨 2026-08-11：返回 steps + mtime（前端用嚟判斷「舊 steps 唔顯示」— 新任務開始唔會殘留上一個操作 — 用戶投訴）
+            import time as _tm
+            return jsonify({"steps": steps_data, "mtime": os.path.getmtime(steps_file)})
     except Exception:
         return jsonify([])
 

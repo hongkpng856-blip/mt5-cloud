@@ -790,7 +790,6 @@ def process_compile_cmd(fp):
         if ok:
             print(f"   ✅ Compiled: {base}.ex5 ({os.path.getsize(ex5_path)} bytes)")
             # 🚨 2026-08-12 FIX：編譯完成 → 「編譯」done + 「完成配對」done（累積更新 — 唔覆蓋）
-            # 🚨 2026-08-28 FIX：只更新「當前 EA」嘅編譯步驟（唔好將所有「編譯」都 done — 之前累積舊 EA steps → 混雜）
             try:
                 import json as _jc2
                 _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
@@ -805,8 +804,7 @@ def process_compile_cmd(fp):
                 for _s in _old2:
                     if isinstance(_s, dict):
                         _t = _s.get('text', '')
-                        # 只更新「當前 EA」相關步驟（編譯 X + 完成配對）— 唔好碰其他 EA 嘅舊 steps
-                        if f'編譯 {base}' in _t or _t == '完成配對':
+                        if '編譯' in _t or _t == '完成配對':
                             _s['status'] = 'done'
                 with open(_sf2, 'w', encoding='utf-8') as _f:
                     _jc2.dump(_old2, _f, ensure_ascii=False)
