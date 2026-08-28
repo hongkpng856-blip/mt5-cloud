@@ -810,6 +810,21 @@ def process_compile_cmd(fp):
                             _s['status'] = 'done'
                 with open(_sf2, 'w', encoding='utf-8') as _f:
                     _jc2.dump(_old2, _f, ensure_ascii=False)
+                # 🚨 2026-08-28 FIX（網頁版警告視窗冇同步 — 用戶對比 stable-v0.10.91）：watcher 只更新自己目錄（TradotcomAgent）
+                # → server 讀開發目錄（agent/.ai_control.steps — 網頁版）永遠 pending → 同步埋開發目錄
+                try:
+                    import os as _os2
+                    _cand2 = [
+                        _os2.path.join(_os2.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'agent'),
+                        _os2.path.join(_os2.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud-stable', 'agent'),
+                    ]
+                    for _cd2 in _cand2:
+                        if _os2.path.isdir(_cd2):
+                            with open(_os2.path.join(_cd2, '.ai_control.steps'), 'w', encoding='utf-8') as _f3:
+                                _jc2.dump(_old2, _f3, ensure_ascii=False)
+                            break
+                except Exception:
+                    pass
             except Exception:
                 pass
             os.remove(fp)  # 成功 → 清理指令
