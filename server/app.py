@@ -183,13 +183,9 @@ def api_control_steps():
             data = request.json or {}
             steps_in = data.get('steps')
             sig = data.get('sig', '')
-            agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-            if sig:
-                with open(os.path.join(agent_dir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                    _f.write(sig)
-            if isinstance(steps_in, list):
-                with open(os.path.join(agent_dir, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
-                    json.dump(steps_in, _f, ensure_ascii=False)
+            # 🚨 2026-08-29 FIX（電腦版警告視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
+            # 之前淨寫開發目錄（agent_dir）→ alert_worker（讀 TradotcomAgent）冇 flag → 電腦版唔彈
+            _write_ai_flags(sig, steps_in)
             return jsonify({"success": True})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
@@ -2055,22 +2051,17 @@ def api_ea_library_refresh():
     except Exception:
         _cg = None
     try:
-        with open(os.path.join(_adir_rf, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-            _f.write('重新整理配對庫')
-        # 🚨 2026-08-12：詳細步驟（刷新邊一項 + 成唔成功 — 用戶要求）
-        with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
-            _jrf.dump([
-                {'text': '開始重新整理', 'status': 'doing'},
-                {'text': '掃描本機 EA 檔案', 'status': 'pending'},
-                {'text': '清理殘留配對設定', 'status': 'pending'},
-                {'text': '同步配對設定', 'status': 'pending'},
-                {'text': '刷新本機運行狀態', 'status': 'pending'},
-                {'text': '刷新 EA 倉庫', 'status': 'pending'},
-                {'text': '完成重新整理', 'status': 'pending'},
-            ], _f, ensure_ascii=False)
-        # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
-        os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
-                   os.path.join(_adir_rf, '.ai_control.steps'))
+        # 🚨 2026-08-29 FIX（電腦版警告視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
+        # 之前淨寫開發目錄（_adir_rf）→ alert_worker（讀 TradotcomAgent）冇 flag → 電腦版唔彈
+        _write_ai_flags('重新整理配對庫', [
+            {'text': '開始重新整理', 'status': 'doing'},
+            {'text': '掃描本機 EA 檔案', 'status': 'pending'},
+            {'text': '清理殘留配對設定', 'status': 'pending'},
+            {'text': '同步配對設定', 'status': 'pending'},
+            {'text': '刷新本機運行狀態', 'status': 'pending'},
+            {'text': '刷新 EA 倉庫', 'status': 'pending'},
+            {'text': '完成重新整理', 'status': 'pending'},
+        ])
     except Exception:
         pass
     # 🚨 2026-08-12：步驟 1 done + 步驟 2 doing（掃描本機 EA — 停留 0.8s 用戶見到）
@@ -2083,8 +2074,8 @@ def api_ea_library_refresh():
                 _s2['status'] = 'done'
             elif _s2.get('text') == '掃描本機 EA 檔案':
                 _s2['status'] = 'doing'
-        with open(os.path.join(_adir_rf, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
-            _jrf.dump(_st2, _f, ensure_ascii=False)
+        # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版一致）
+        _write_ai_flags(None, _st2)
     except Exception:
         pass
     try:
@@ -2158,17 +2149,19 @@ def api_ea_library_refresh():
                         files.append({"name": f, "size": f"{os.path.getsize(path)/1024:.1f} KB", "type": "user", "author": current_user.username})
         # 成功 → steps done（完成重新整理）
         try:
-            with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
-                _jrf.dump([
-                    {'text': '重新整理配對庫 進行中…', 'status': 'done'},
-                    {'text': '完成重新整理', 'status': 'done'},
-                ], _f, ensure_ascii=False)
-            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
-            os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
-                       os.path.join(_adir_rf, '.ai_control.steps'))
-            _sf_show = os.path.join(_adir_rf, '.ai_control.show')
-            if os.path.exists(_sf_show):
-                os.remove(_sf_show)
+            # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版一致）
+            _write_ai_flags(None, [
+                {'text': '重新整理配對庫 進行中…', 'status': 'done'},
+                {'text': '完成重新整理', 'status': 'done'},
+            ])
+            # 🚨 2026-08-29 FIX：雙刪 show flag（開發目錄 + TradotcomAgent）
+            for _sf_dir in [_adir_rf, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
+                _sf_show = os.path.join(_sf_dir, '.ai_control.show')
+                try:
+                    if os.path.exists(_sf_show):
+                        os.remove(_sf_show)
+                except Exception:
+                    pass
         except Exception:
             pass
         # release（完成 — 網頁 modal 唔自動關 — 確定撳先關）
@@ -2181,17 +2174,19 @@ def api_ea_library_refresh():
     except Exception as e:
         # 失敗 → steps 顯示失敗原因（紅色）+ 確定（唔需要緊急停止）
         try:
-            with open(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f:
-                _jrf.dump([
-                    {'text': '重新整理配對庫 進行中…', 'status': 'done'},
-                    {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
-                ], _f, ensure_ascii=False)
-            # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
-            os.replace(os.path.join(_adir_rf, '.ai_control.steps') + '.tmp',
-                       os.path.join(_adir_rf, '.ai_control.steps'))
-            _sf_show = os.path.join(_adir_rf, '.ai_control.show')
-            if os.path.exists(_sf_show):
-                os.remove(_sf_show)
+            # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版一致）
+            _write_ai_flags(None, [
+                {'text': '重新整理配對庫 進行中…', 'status': 'done'},
+                {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
+            ])
+            # 🚨 2026-08-29 FIX：雙刪 show flag（開發目錄 + TradotcomAgent）
+            for _sf_dir in [_adir_rf, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
+                _sf_show = os.path.join(_sf_dir, '.ai_control.show')
+                try:
+                    if os.path.exists(_sf_show):
+                        os.remove(_sf_show)
+                except Exception:
+                    pass
         except Exception:
             pass
         try:
