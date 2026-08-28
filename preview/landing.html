@@ -195,6 +195,21 @@ tr:hover td { background: var(--bg-muted); }
   /* line-length-control */
   .hero p.lead, .feat-card p, .section-head p, .footer p { max-width: 100%; }
 }
+@media (max-width: 480px) {
+  /* 🚨 2026-08-28：小手機（375px）特別排版 */
+  .hero h1 { font-size: 22px; }
+  .hero-icon { width: 40px !important; height: 40px !important; margin-right: 8px !important; vertical-align: -6px !important; }
+  .hero h1 br { display: none; }  /* 標題唔換行 — 自然排 */
+  .hero-stats { gap: 16px; }
+  .hero-stats .stat h3 { font-size: 20px; }
+  .hero-stats .stat p { font-size: 12px; }
+  .slogan { font-size: 17px !important; }
+  .compare-table { font-size: 11px; }
+  .compare-table th, .compare-table td { padding: 8px 6px; font-size: 11px; white-space: nowrap; }
+  .compare-table th .small { font-size: 9px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
+  .howto img { border-radius: 6px; }
+}
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
