@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tradotcom — MetaTrader 5 遠端管理平台</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="shortcut icon" href="/static/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -33,7 +35,7 @@ button { font-family: var(--font); cursor: pointer; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
 /* ===== NAV ===== */
-.nav { position: sticky; top: 0; z-index: 100; background: rgba(11,14,17,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+.nav { position: sticky; position: -webkit-sticky; top: 0; z-index: 100; background: rgba(11,14,17,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
 .logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; font-size: 20px; color: var(--text); cursor: pointer; }
 .logo-badge { width: 36px; height: 36px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0b0e11; font-weight: 700; font-size: 18px; position: relative; }
@@ -190,8 +192,10 @@ tr:hover td { background: var(--bg-muted); }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
   .logo { font-size: 17px; }
   .logo-badge { width: 32px; height: 32px; }
-  .nav-cta .btn { padding: 10px 16px; font-size: 14px; min-height: 44px; }  /* touch-target-size */
-  .lang-btn { padding: 8px 12px; font-size: 14px; min-height: 36px; }
+  .nav-cta .btn { padding: 8px 12px; font-size: 13px; min-height: 40px; }
+  .lang-btn { padding: 6px 10px; font-size: 13px; min-height: 32px; }
+  .nav-cta { gap: 8px; }
+  .nav-inner { height: 56px; }
   /* line-length-control */
   .hero p.lead, .feat-card p, .section-head p, .footer p { max-width: 100%; }
 }
@@ -204,6 +208,13 @@ tr:hover td { background: var(--bg-muted); }
   .hero-stats .stat h3 { font-size: 20px; }
   .hero-stats .stat p { font-size: 12px; }
   .slogan { font-size: 17px !important; }
+  /* 平台核心功能 — 手機 2 欄（一目瞭然 — 唔使拉到勁底）*/
+  .feat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .feat-card { padding: 16px 14px; }
+  .feat-card h3 { font-size: 14px; }
+  .feat-card p { font-size: 12px; line-height: 1.5; }
+  .feat-icon { width: 36px; height: 36px; margin-bottom: 10px; }
+  .feat-icon svg { width: 18px; height: 18px; }
   .compare-table { font-size: 11px; }
   .compare-table th, .compare-table td { padding: 8px 6px; font-size: 11px; white-space: nowrap; }
   .compare-table th .small { font-size: 9px; }
