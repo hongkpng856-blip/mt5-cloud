@@ -36,14 +36,9 @@ button { font-family: var(--font); cursor: pointer; }
 .nav { position: sticky; top: 0; z-index: 100; background: rgba(11,14,17,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
 .logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; font-size: 20px; color: var(--text); cursor: pointer; }
-.logo-badge { width: 36px; height: 36px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0b0e11; font-weight: 700; font-size: 18px; position: relative; transition: transform 0.15s; }
+.logo-badge { width: 36px; height: 36px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0b0e11; font-weight: 700; font-size: 18px; position: relative; }
 .logo-badge:hover { transform: scale(1.08); }
 .logo-badge.clicked { animation: logoClick 0.4s ease-out; }
-.logo-cursor { position: absolute; width: 20px; height: 20px; pointer-events: none; z-index: 5; transform: translate(-40%, -40%); animation: cursorFloat 2.5s ease-in-out infinite; }
-@keyframes cursorFloat {
-  0%, 100% { transform: translate(-40%, -40%) rotate(0deg); }
-  50% { transform: translate(-30%, -55%) rotate(3deg); }
-}
 @keyframes logoClick {
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,185,11,0.7); }
   50% { transform: scale(0.9); box-shadow: 0 0 0 18px rgba(240,185,11,0); }
@@ -54,6 +49,27 @@ button { font-family: var(--font); cursor: pointer; }
 @keyframes ripple {
   0% { box-shadow: 0 0 0 0 rgba(240,185,11,0.8); }
   100% { box-shadow: 0 0 0 26px rgba(240,185,11,0); }
+}
+/* ===== HERO ICON (mouse cursor + T with click animation) ===== */
+.hero-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: var(--gold); border-radius: 14px; position: relative; margin-right: 10px; vertical-align: -8px; cursor: pointer; box-shadow: 0 4px 16px rgba(240,185,11,0.35); }
+.hero-icon .hero-t { font-family: var(--font-head); font-weight: 700; font-size: 30px; color: #0b0e11; position: relative; z-index: 2; }
+.hero-icon .hero-cursor { position: absolute; width: 24px; height: 24px; z-index: 3; transform: translate(30%, 30%); animation: cursorFloat 2.5s ease-in-out infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+@keyframes cursorFloat {
+  0%, 100% { transform: translate(30%, 30%) rotate(0deg); }
+  50% { transform: translate(20%, 12%) rotate(-4deg); }
+}
+.hero-icon.clicked { animation: heroClick 0.45s ease-out; }
+@keyframes heroClick {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.85) rotate(-3deg); }
+  70% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.hero-ripple { position: absolute; width: 100%; height: 100%; border-radius: 14px; pointer-events: none; }
+.hero-ripple.active { animation: heroRipple 0.6s ease-out; }
+@keyframes heroRipple {
+  0% { box-shadow: 0 0 0 0 rgba(240,185,11,0.8); }
+  100% { box-shadow: 0 0 0 30px rgba(240,185,11,0); }
 }
 .nav-links { display: flex; gap: 28px; align-items: center; }
 .nav-links a { color: var(--text-muted); font-size: 14px; transition: color 0.2s; }
@@ -161,7 +177,6 @@ tr:hover td { background: var(--bg-muted); }
   <div class="container nav-inner">
     <a href="#" class="logo" id="logo" aria-label="Tradotcom">
       <span class="logo-badge" id="logoBadge">
-        <svg class="logo-cursor" viewBox="0 0 24 24" fill="none" stroke="#0b0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2l16 7-7 2-3 7z" fill="#0b0e11" stroke="#0b0e11"/></svg>
         <span class="logo-ripple" id="logoRipple"></span>
         <span style="position:relative;z-index:2;">T</span>
       </span>
@@ -187,7 +202,11 @@ tr:hover td { background: var(--bg-muted); }
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <h1 data-i18n="hero_title">遠端管理您的 <span class="gold">MetaTrader 5</span><br>交易終端</h1>
+      <h1 data-i18n="hero_title"><span class="hero-icon" id="heroIcon" aria-hidden="true">
+        <svg class="hero-cursor" viewBox="0 0 24 24" fill="none" stroke="#0b0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2l16 7-7 2-3 7z" fill="#0b0e11" stroke="#0b0e11"/></svg>
+        <span class="hero-t">T</span>
+        <span class="hero-ripple" id="heroRipple"></span>
+      </span>遠端管理您的 <span class="gold">MetaTrader 5</span><br>交易終端</h1>
       <p class="slogan" style="font-family:var(--font-head);font-size:20px;color:var(--gold);font-weight:600;margin-bottom:12px;" data-i18n="slogan">交易，點一點，搞掂</p>
       <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;" data-i18n="slogan_sub">Trade dot com dot com</p>
       <p class="lead" data-i18n="hero_lead">Tradotcom 為多用戶交易管理平台，讓每位客戶透過網頁介面遠端控制其專屬的 MetaTrader 5 終端。部署專家顧問（EA）、監控交易活動、管理風險 — 全部於瀏覽器完成，無需遠端桌面。</p>
@@ -345,7 +364,6 @@ tr:hover td { background: var(--bg-muted); }
       <div>
         <a href="#" class="logo" aria-label="Tradotcom">
           <span class="logo-badge">
-            <svg class="logo-cursor" viewBox="0 0 24 24" fill="none" stroke="#0b0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2l16 7-7 2-3 7z" fill="#0b0e11" stroke="#0b0e11"/></svg>
             <span class="logo-ripple"></span>
             <span style="position:relative;z-index:2;">T</span>
           </span>
@@ -520,6 +538,35 @@ try {
     playClick();
     // Scroll to top (brand click)
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+
+// ===== Hero icon click animation (mouse cursor + T) =====
+(function() {
+  const heroIcon = document.getElementById('heroIcon');
+  if (!heroIcon) return;
+  const ripple = document.getElementById('heroRipple');
+  const badge = heroIcon;
+  let audioCtx2 = null;
+  function playHeroClick() {
+    try {
+      if (!audioCtx2) audioCtx2 = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx2.createOscillator();
+      const gain = audioCtx2.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1800, audioCtx2.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx2.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.25, audioCtx2.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx2.currentTime + 0.12);
+      osc.connect(gain); gain.connect(audioCtx2.destination);
+      osc.start(); osc.stop(audioCtx2.currentTime + 0.13);
+    } catch(e) {}
+  }
+  heroIcon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (ripple) { ripple.classList.remove('active'); void ripple.offsetWidth; ripple.classList.add('active'); }
+    badge.classList.remove('clicked'); void badge.offsetWidth; badge.classList.add('clicked');
+    playHeroClick();
   });
 })();
 </script>
