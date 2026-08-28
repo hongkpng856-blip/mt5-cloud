@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT5 Cloud — Trade Your Strategies with Confidence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e11;
+    --bg-soft: #0f1216;
+    --card: #181a20;
+    --card-2: #1e2329;
+    --border: #2b3139;
+    --border-hover: #3a424c;
+    --text: #eaecef;
+    --text-2: #848e9c;
+    --text-3: #5e6673;
+    --accent: #f0b90b;
+    --accent-hover: #f8d33a;
+    --accent-dim: rgba(240, 185, 11, 0.12);
+    --blue: #4b9fff;
+    --green: #0ecb81;
+    --red: #f6465d;
+    --yellow: #f0b90b;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'DM Sans', -apple-system, sans-serif;
+    --font-display: 'Space Grotesk', 'DM Sans', sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--accent-dim); color: var(--accent-hover); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ─── Background Glow ─── */
+  .bg-glow {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(900px 480px at 75% -10%, rgba(240, 185, 11, 0.07), transparent 60%),
+      radial-gradient(700px 420px at 15% 20%, rgba(75, 159, 255, 0.05), transparent 60%),
+      radial-gradient(800px 500px at 50% 110%, rgba(240, 185, 11, 0.04), transparent 60%);
+  }
+  .grid-overlay {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(132, 142, 156, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(132, 142, 156, 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 75%);
+  }
+
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ─── Nav ─── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(14px);
+    background: rgba(11, 14, 17, 0.82);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center;
+    background: var(--accent);
+    box-shadow: 0 0 24px rgba(240, 185, 11, 0.3);
+    font-size: 14px; font-weight: 800; color: #0b0e11;
+  }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { color: var(--text-2); text-decoration: none; font-size: 13.5px; font-weight: 500; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border-radius: 6px; font-weight: 600; font-size: 13.5px; cursor: pointer;
+    transition: all .15s; text-decoration: none; border: 1px solid transparent;
+    font-family: var(--font);
+  }
+  .btn-ghost { color: var(--text-2); padding: 8px 16px; background: transparent; }
+  .btn-ghost:hover { color: var(--text); background: rgba(132,142,156,0.08); }
+  .btn-primary { background: var(--accent); color: #0b0e11; padding: 9px 18px; box-shadow: 0 4px 20px rgba(240,185,11,0.2); }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-outline { border-color: var(--border-hover); color: var(--text); padding: 9px 18px; background: rgba(132,142,156,0.05); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── Hero ─── */
+  .hero { padding: 88px 0 72px; text-align: center; position: relative; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+    color: var(--accent); background: var(--accent-dim);
+    border: 1px solid rgba(240,185,11,0.25);
+    margin-bottom: 24px;
+  }
+  .hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(38px, 6vw, 64px);
+    font-weight: 700; letter-spacing: -0.03em; line-height: 1.06;
+    margin-bottom: 20px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(100deg, var(--accent) 10%, #f8d33a 45%, #f0b90b 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.sub { color: var(--text-2); font-size: 17px; line-height: 1.6; max-width: 620px; margin: 0 auto 36px; }
+  .hero-form { display: flex; gap: 10px; justify-content: center; max-width: 480px; margin: 0 auto; }
+  .hero-form input {
+    flex: 1; padding: 13px 18px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--border-hover);
+    color: var(--text); font-size: 14.5px; font-family: var(--font); outline: none;
+    transition: border-color .15s;
+  }
+  .hero-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,185,11,0.12); }
+  .hero-form input::placeholder { color: var(--text-3); }
+  .hero-form .btn { padding: 13px 24px; font-size: 14.5px; }
+  .hero-note { margin-top: 14px; font-size: 12.5px; color: var(--text-3); }
+  .hero-note b { color: var(--accent); font-weight: 600; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    max-width: 820px; margin: 52px auto 0;
+  }
+  .stat {
+    padding: 20px 16px; border-radius: var(--radius);
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: border-color .15s;
+  }
+  .stat:hover { border-color: var(--border-hover); }
+  .stat .num { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .lbl { font-size: 12px; color: var(--text-3); margin-top: 4px; letter-spacing: 0.03em; text-transform: uppercase; }
+
+  /* ─── Trading Preview ─── */
+  .preview { padding: 40px 0 80px; }
+  .preview-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .preview-tabs { display: flex; align-items: center; gap: 4px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-soft); }
+  .ptab { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-3); cursor: pointer; }
+  .ptab:hover { color: var(--text); }
+  .ptab.active { background: var(--accent-dim); color: var(--accent); }
+  .p-symbol { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 13px; }
+  .p-symbol .price { color: var(--green); font-weight: 700; font-size: 14px; }
+  .p-symbol .chg { color: var(--green); font-size: 12px; }
+  .preview-body { display: grid; grid-template-columns: 1fr 300px; min-height: 380px; }
+  .chart-area { padding: 18px; border-right: 1px solid var(--border); position: relative; }
+  .chart-area svg { width: 100%; height: 100%; display: block; }
+  .ob { border-left: 1px solid var(--border); padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-soft); }
+  .ob h4 { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .ob-row { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 12px; padding: 5px 8px; border-radius: 4px; position: relative; }
+  .ob-row .depth { position: absolute; inset: 0; opacity: 0.14; border-radius: 4px; }
+  .ob-row.buy .depth { background: var(--green); }
+  .ob-row.sell .depth { background: var(--red); }
+  .ob-row span { position: relative; z-index: 1; }
+  .ob-row .px { color: var(--text-2); }
+  .ob-row.buy .px { color: var(--green); }
+  .ob-row.sell .px { color: var(--red); }
+  .ob-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+  .ob-btn { padding: 10px; border-radius: 6px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; font-family: var(--font); }
+  .ob-btn.buy { background: var(--green); color: #0b0e11; }
+  .ob-btn.sell { background: var(--red); color: #0b0e11; }
+  .ob-btn:hover { filter: brightness(1.1); }
+  .tf-row { display: flex; gap: 6px; margin-top: 8px; }
+  .tf { padding: 5px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; color: var(--text-3); cursor: pointer; border: 1px solid transparent; }
+  .tf:hover { color: var(--text); background: var(--card-2); }
+  .tf.active { color: var(--accent); background: var(--accent-dim); }
+
+  /* ─── Section Headers ─── */
+  .sec { padding: 72px 0; }
+  .sec-head { text-align: center; margin-bottom: 44px; }
+  .sec-head .tag { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  .sec-head h2 { font-family: var(--font-display); font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .sec-head p { color: var(--text-2); font-size: 15.5px; max-width: 560px; margin: 0 auto; }
+
+  /* ─── Markets Table ─── */
+  .market-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .market-table { width: 100%; border-collapse: collapse; }
+  .market-table th {
+    text-align: left; padding: 13px 20px; font-size: 11.5px; font-weight: 600;
+    color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border); background: var(--bg-soft);
+  }
+  .market-table td { padding: 15px 20px; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .market-table tr:last-child td { border-bottom: none; }
+  .market-table tbody tr { transition: background .12s; cursor: default; }
+  .market-table tbody tr:hover { background: var(--card-2); }
+  .sym-cell { display: flex; align-items: center; gap: 12px; }
+  .sym-ico {
+    width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; color: #0b0e11; font-family: var(--font-display);
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+  }
+  .sym-name { font-weight: 600; }
+  .sym-full { color: var(--text-3); font-size: 12.5px; margin-top: 1px; }
+  .mono { font-family: var(--font-mono); }
+  .chg-pos { color: var(--green); font-weight: 600; }
+  .chg-neg { color: var(--red); font-weight: 600; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(240,185,11,0.2);
+  }
+  .trade-link { color: var(--accent); font-weight: 600; font-size: 13px; text-decoration: none; }
+  .trade-link:hover { text-decoration: underline; }
+  .table-foot { padding: 14px 20px; text-align: center; border-top: 1px solid var(--border); background: var(--bg-soft); }
+  .table-foot a { color: var(--text-2); font-size: 13px; font-weight: 600; text-decoration: none; }
+  .table-foot a:hover { color: var(--accent); }
+
+  /* ─── Strategies Grid ─── */
+  .strat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .strat {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; transition: all .18s; cursor: default;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .strat:hover { border-color: var(--border-hover); transform: translateY(-3px); background: var(--card-2); box-shadow: 0 12px 34px rgba(0,0,0,0.4); }
+  .strat .s-ico {
+    width: 38px; height: 38px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 15px; font-weight: 800; color: #0b0e11; font-family: var(--font-display);
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+  }
+  .strat .s-name { font-weight: 650; font-size: 14.5px; }
+  .strat .s-type { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); }
+  .strat .s-stat { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-3); margin-top: auto; }
+  .strat .s-stat b { color: var(--text-2); font-family: var(--font-mono); font-weight: 600; }
+
+  /* ─── Security ─── */
+  .sec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .sec-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 26px 22px; text-align: left;
+    transition: border-color .15s;
+  }
+  .sec-card:hover { border-color: var(--border-hover); }
+  .sec-card .ic {
+    width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--accent-dim); color: var(--accent); font-size: 19px; margin-bottom: 16px;
+    border: 1px solid rgba(240,185,11,0.2);
+  }
+  .sec-card h3 { font-size: 15.5px; font-weight: 650; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .sec-card p { font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
+  .badges { display: flex; justify-content: center; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 22px; border-radius: var(--radius); background: var(--card);
+    border: 1px solid var(--border); font-size: 13.5px; font-weight: 600;
+  }
+  .badge:hover { border-color: var(--border-hover); }
+  .badge .b-num { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--accent); }
+
+  /* ─── Register / CTA ─── */
+  .cta {
+    position: relative; border-radius: var(--radius-lg); overflow: hidden;
+    background: linear-gradient(135deg, rgba(240,185,11,0.12), rgba(75,159,255,0.08));
+    border: 1px solid rgba(240,185,11,0.25);
+    padding: 60px 40px; text-align: center; margin: 20px 0 80px;
+  }
+  .cta::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(500px 200px at 50% 0%, rgba(240,185,11,0.12), transparent 70%),
+      radial-gradient(400px 180px at 85% 100%, rgba(75,159,255,0.1), transparent 70%);
+    pointer-events: none;
+  }
+  .cta h2 { font-family: var(--font-display); font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 14px; position: relative; }
+  .cta p { color: var(--text-2); font-size: 15px; max-width: 480px; margin: 0 auto 28px; position: relative; }
+  .cta-form { display: flex; gap: 10px; justify-content: center; max-width: 460px; margin: 0 auto; position: relative; flex-wrap: wrap; }
+  .cta-form input {
+    flex: 1; min-width: 220px; padding: 13px 18px; border-radius: 6px;
+    background: var(--bg); border: 1px solid var(--border-hover); color: var(--text);
+    font-size: 14.5px; outline: none; font-family: var(--font);
+  }
+  .cta-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,185,11,0.12); }
+  .success-msg { display: none; color: var(--accent); font-weight: 600; font-size: 14.5px; margin-top: 14px; }
+  .success-msg.show { display: block; animation: fadeUp .4s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .cta-feats { display: flex; justify-content: center; gap: 26px; margin-top: 26px; font-size: 13px; color: var(--text-2); flex-wrap: wrap; position: relative; }
+  .cta-feats span { display: inline-flex; align-items: center; gap: 7px; }
+  .cta-feats .tick { color: var(--accent); font-weight: 800; }
+
+  /* ─── Footer ─── */
+  footer { border-top: 1px solid var(--border); padding: 48px 0 36px; background: var(--bg-soft); }
+  .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 30px; margin-bottom: 36px; }
+  .foot-brand p { color: var(--text-3); font-size: 13px; margin-top: 12px; line-height: 1.6; max-width: 260px; }
+  .foot-col h4 { font-size: 13px; font-weight: 650; margin-bottom: 14px; letter-spacing: 0.02em; }
+  .foot-col a { display: block; color: var(--text-3); font-size: 13px; text-decoration: none; margin-bottom: 9px; transition: color .15s; }
+  .foot-col a:hover { color: var(--text); }
+  .foot-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 24px; border-top: 1px solid var(--border);
+    color: var(--text-3); font-size: 12.5px; flex-wrap: wrap; gap: 12px;
+  }
+  .foot-links { display: flex; gap: 20px; }
+  .foot-links a { color: var(--text-3); text-decoration: none; }
+  .foot-links a:hover { color: var(--text-2); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 960px) {
+    .nav-links { display: none; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .preview-body { grid-template-columns: 1fr; }
+    .chart-area { border-right: none; border-bottom: 1px solid var(--border); min-height: 300px; }
+    .strat-grid { grid-template-columns: repeat(2, 1fr); }
+    .sec-grid { grid-template-columns: repeat(2, 1fr); }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .strat-grid, .sec-grid { grid-template-columns: 1fr; }
+    .hero { padding: 56px 0 48px; }
+    .hero-form { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="grid-overlay"></div>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="container nav-inner">
+    <a class="logo" href="#"><span class="logo-mark">M</span>MT5<span style="color:var(--accent)">CLOUD</span></a>
+    <div class="nav-links">
+      <a href="#markets">Markets</a>
+      <a href="#strategies">Strategies</a>
+      <a href="#security">Security</a>
+      <a href="#register">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="#">Log In</a>
+      <a class="btn btn-primary" href="#register">Register</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero container">
+  <div class="hero-badge"><span class="dot"></span> MT5 Auto-Trading Cloud Platform</div>
+  <h1>Trade Your Strategies<br>with <span class="grad">Confidence</span></h1>
+  <p class="sub">The most trusted MetaTrader 5 automation platform. Deploy your expert advisors to live charts with industry-leading reliability, transparent verification, and zero-trust deployment.</p>
+  <form class="hero-form" onsubmit="return fakeSignup(event, this)">
+    <input type="email" placeholder="Email or phone" required aria-label="Email or phone">
+    <button class="btn btn-primary" type="submit">Get Started</button>
+  </form>
+  <p class="hero-note">Sign up and get <b>$100</b> in trading rewards · <b>5 strategies</b> already running</p>
+  <div class="stats">
+    <div class="stat"><div class="num">39</div><div class="lbl">Strategies</div></div>
+    <div class="stat"><div class="num" style="color:var(--accent)">$2.1B</div><div class="lbl">Demo Balance</div></div>
+    <div class="stat"><div class="num">11</div><div class="lbl">Open Positions</div></div>
+    <div class="stat"><div class="num">99.9%</div><div class="lbl">Uptime</div></div>
+  </div>
+</header>
+
+<!-- ═══ TRADING PREVIEW ═══ -->
+<section class="preview container">
+  <div class="preview-card">
+    <div class="preview-tabs">
+      <div class="ptab active">Spot</div>
+      <div class="ptab">Futures</div>
+      <div class="ptab">Automation</div>
+      <div class="p-symbol"><span>XAUUSD</span><span class="price">$2,431.80</span><span class="chg">▲ +0.84%</span></div>
+    </div>
+    <div class="preview-body">
+      <div class="chart-area">
+        <svg viewBox="0 0 760 340" preserveAspectRatio="none" aria-label="Trading chart preview">
+          <defs>
+            <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f0b90b" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#f0b90b" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="grid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2b3139" stop-opacity="0.7"/>
+              <stop offset="100%" stop-color="#2b3139" stop-opacity="0.2"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,210 L60,196 L120,205 L180,180 L240,188 L300,160 L360,170 L420,138 L480,150 L540,120 L600,132 L660,96 L720,110 L760,84 L760,340 L0,340 Z" fill="url(#fill)"/>
+          <path d="M0,210 L60,196 L120,205 L180,180 L240,188 L300,160 L360,170 L420,138 L480,150 L540,120 L600,132 L660,96 L720,110 L760,84" fill="none" stroke="#f0b90b" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M0,210 L60,196 L120,205 L180,180 L240,188 L300,160 L360,170 L420,138 L480,150 L540,120 L600,132 L660,96 L720,110 L760,84" fill="none" stroke="#f0b90b" stroke-width="6" opacity="0.12" stroke-linecap="round"/>
+          <line x1="540" y1="0" x2="540" y2="340" stroke="#f0b90b" stroke-width="0.7" stroke-dasharray="4 5" opacity="0.5"/>
+          <circle cx="540" cy="120" r="5" fill="#f0b90b" stroke="#0b0e11" stroke-width="2.5"/>
+          <g stroke="url(#grid)" stroke-width="1">
+            <line x1="0" y1="68" x2="760" y2="68"/><line x1="0" y1="136" x2="760" y2="136"/>
+            <line x1="0" y1="204" x2="760" y2="204"/><line x1="0" y1="272" x2="760" y2="272"/>
+            <line x1="152" y1="0" x2="152" y2="340"/><line x1="304" y1="0" x2="304" y2="340"/>
+            <line x1="456" y1="0" x2="456" y2="340"/><line x1="608" y1="0" x2="608" y2="340"/>
+          </g>
+          <g font-family="ui-monospace, monospace" font-size="10.5" fill="#5e6673">
+            <text x="8" y="60">2,432.40</text><text x="8" y="128">2,431.80</text>
+            <text x="8" y="196">2,431.20</text><text x="8" y="264">2,430.60</text>
+            <text x="8" y="332">2,430.00</text>
+          </g>
+        </svg>
+        <div class="tf-row">
+          <div class="tf">1m</div><div class="tf">5m</div><div class="tf">15m</div><div class="tf active">1H</div><div class="tf">4H</div><div class="tf">1D</div>
+          <div style="margin-left:auto;font-size:11px;color:var(--text-3);font-family:var(--font-mono)">▶ Live · EA Heartbeat 12s ago</div>
+        </div>
+      </div>
+      <div class="ob">
+        <h4>Order Book · XAUUSD</h4>
+        <div class="ob-row sell"><div class="depth" style="width:72%"></div><span class="px">2,432.40</span><span>3.6474</span></div>
+        <div class="ob-row sell"><div class="depth" style="width:55%"></div><span class="px">2,432.35</span><span>2.7059</span></div>
+        <div class="ob-row sell"><div class="depth" style="width:38%"></div><span class="px">2,432.30</span><span>1.2945</span></div>
+        <div class="ob-row sell"><div class="depth" style="width:64%"></div><span class="px">2,432.25</span><span>2.8821</span></div>
+        <div style="text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);padding:4px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">2,431.80 <span style="color:var(--green);font-size:11px">▲</span></div>
+        <div class="ob-row buy"><div class="depth" style="width:60%"></div><span class="px">2,431.75</span><span>4.7215</span></div>
+        <div class="ob-row buy"><div class="depth" style="width:44%"></div><span class="px">2,431.70</span><span>3.4652</span></div>
+        <div class="ob-row buy"><div class="depth" style="width:30%"></div><span class="px">2,431.65</span><span>2.2825</span></div>
+        <div class="ob-row buy"><div class="depth" style="width:78%"></div><span class="px">2,431.60</span><span>5.1408</span></div>
+        <div class="ob-actions">
+          <button class="ob-btn buy">Buy XAU</button>
+          <button class="ob-btn sell">Sell XAU</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MARKETS ═══ -->
+<section class="sec" id="markets">
+  <div class="container">
+    <div class="sec-head">
+      <div class="tag">Markets</div>
+      <h2>Trade 20+ Global Markets</h2>
+      <p>Forex, metals, indices — the symbols your MetaQuotes-Demo account actually supports, verified against the server.</p>
+    </div>
+    <div class="market-card">
+      <table class="market-table">
+        <thead><tr><th>Symbol</th><th>Price</th><th>24h Change</th><th>Spread</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#f5b50a;--c2:#d18a00">Au</span><div><div class="sym-name">XAUUSD</div><div class="sym-full">Gold / US Dollar</div></div></div></td>
+            <td class="mono">$2,431.80</td><td class="chg-pos">+0.84%</td><td class="mono" style="color:var(--text-2)">0.30</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#4b9fff;--c2:#2f7bd6">EU</span><div><div class="sym-name">EURUSD</div><div class="sym-full">Euro / US Dollar</div></div></div></td>
+            <td class="mono">1.08642</td><td class="chg-pos">+0.12%</td><td class="mono" style="color:var(--text-2)">0.10</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#8b7cf6;--c2:#5b4bd6">GB</span><div><div class="sym-name">GBPUSD</div><div class="sym-full">British Pound / US Dollar</div></div></div></td>
+            <td class="mono">1.27130</td><td class="chg-neg">-0.23%</td><td class="mono" style="color:var(--text-2)">0.20</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#f0566c;--c2:#c2364c">JP</span><div><div class="sym-name">USDJPY</div><div class="sym-full">US Dollar / Japanese Yen</div></div></div></td>
+            <td class="mono">153.842</td><td class="chg-pos">+0.45%</td><td class="mono" style="color:var(--text-2)">0.15</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#26d07c;--c2:#149a55">AU</span><div><div class="sym-name">AUDUSD</div><div class="sym-full">Australian Dollar / US Dollar</div></div></div></td>
+            <td class="mono">0.65984</td><td class="chg-pos">+0.31%</td><td class="mono" style="color:var(--text-2)">0.10</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#3b82f6;--c2:#1e4fb8">US</span><div><div class="sym-name">US30</div><div class="sym-full">US Dow Jones 30 Index</div></div></div></td>
+            <td class="mono">40,812.4</td><td class="chg-pos">+1.02%</td><td class="mono" style="color:var(--text-2)">1.5</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#7f5af0;--c2:#4a32a8">UK</span><div><div class="sym-name">UK100</div><div class="sym-full">UK FTSE 100 Index</div></div></div></td>
+            <td class="mono">8,356.2</td><td class="chg-neg">-0.18%</td><td class="mono" style="color:var(--text-2)">1.2</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+          <tr>
+            <td><div class="sym-cell"><span class="sym-ico" style="--c1:#e2a93b;--c2:#a97a1c">DE</span><div><div class="sym-name">DE40</div><div class="sym-full">German DAX 40 Index</div></div></div></td>
+            <td class="mono">18,612.9</td><td class="chg-pos">+0.66%</td><td class="mono" style="color:var(--text-2)">1.4</td><td><span class="chip"><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span> Live</span></td><td><a class="trade-link" href="#register">Trade →</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-foot"><a href="#register">View All Markets →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STRATEGIES ═══ -->
+<section class="sec" id="strategies" style="padding-top:20px">
+  <div class="container">
+    <div class="sec-head">
+      <div class="tag">Strategy Library</div>
+      <h2>39 Battle-Tested Strategies</h2>
+      <p>One-click deploy to your MT5 charts — verified compile, heartbeat monitoring, and chart-level verification on every run.</p>
+    </div>
+    <div class="strat-grid" id="stratGrid"></div>
+  </div>
+</section>
+
+<!-- ═══ SECURITY ═══ -->
+<section class="sec" id="security">
+  <div class="container">
+    <div class="sec-head">
+      <div class="tag">Security</div>
+      <h2>Industry-Leading Trust Infrastructure</h2>
+      <p>Every deployment is verified against the real terminal log — no fake success, ever.</p>
+    </div>
+    <div class="sec-grid">
+      <div class="sec-card">
+        <div class="ic">🔒</div>
+        <h3>Zero-Trust Verification</h3>
+        <p>Success is confirmed against the actual MT5 terminal log, not just process exit codes. Chart-level verification on every deployment.</p>
+      </div>
+      <div class="sec-card">
+        <div class="ic">🛡️</div>
+        <h3>AI Control Guard</h3>
+        <p>Every computer-controlling action triggers a warning window with emergency stop. You stay in control at all times.</p>
+      </div>
+      <div class="sec-card">
+        <div class="ic">🔐</div>
+        <h3>2FA + Account Binding</h3>
+        <p>Multi-factor authentication and MT5 account binding — only your matched account can execute deployments.</p>
+      </div>
+      <div class="sec-card">
+        <div class="ic">📊</div>
+        <h3>Real-time Heartbeat</h3>
+        <p>24/7 EA heartbeat monitoring with automatic recovery. Downtime is detected within seconds and alerted instantly.</p>
+      </div>
+    </div>
+    <div class="badges">
+      <div class="badge"><span class="b-num">100%</span> Verified Deployments</div>
+      <div class="badge"><span class="b-num">0</span> Fake Success</div>
+      <div class="badge"><span class="b-num">30s</span> Detection SLA</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ REGISTER / CTA ═══ -->
+<section class="container" id="register">
+  <div class="cta">
+    <h2>Start Trading Your Strategies in Minutes</h2>
+    <p>Register now — connect your MT5 account, upload your strategy, and go live with full monitoring.</p>
+    <form class="cta-form" onsubmit="return fakeSignup(event, this)">
+      <input type="email" placeholder="Email or phone" required aria-label="Email">
+      <button class="btn btn-primary" type="submit">Create Account</button>
+    </form>
+    <div class="success-msg" aria-live="polite">✅ 註冊流程已觸發（預覽版）— 正式版會連接到 MT5 帳戶綁定</div>
+    <div class="cta-feats">
+      <span><span class="tick">✓</span> Free demo account</span>
+      <span><span class="tick">✓</span> $100 trading rewards</span>
+      <span><span class="tick">✓</span> No credit card required</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="logo" href="#"><span class="logo-mark">M</span>MT5<span style="color:var(--accent)">CLOUD</span></a>
+        <p>Trade MetaTrader 5 strategies with confidence. Automated, verified, monitored.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Products</h4>
+        <a href="#strategies">Strategy Library</a>
+        <a href="#markets">Live Markets</a>
+        <a href="#">Auto-Deploy</a>
+        <a href="#">Heartbeat Monitor</a>
+      </div>
+      <div class="foot-col">
+        <h4>Services</h4>
+        <a href="#">VIP Support</a>
+        <a href="#">Referral</a>
+        <a href="#">API Access</a>
+        <a href="#">EA Development</a>
+      </div>
+      <div class="foot-col">
+        <h4>Support</h4>
+        <a href="#">Help Center</a>
+        <a href="#">Fees</a>
+        <a href="#">Trading Rules</a>
+        <a href="#">System Status</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Blog</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 MT5 Cloud. Demo preview — not financial advice.</span>
+      <div class="foot-links">
+        <a href="#">Terms</a><a href="#">Privacy</a><a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ═══ 真數據：39 個 EA 策略（mt5-cloud EA library） ═══
+const STRATS = [
+  ["ADX_Trend","ADX","Trend","#4b9fff","#2f7bd6"],
+  ["ATR_Stop","ATR","Volatility","#f5b50a","#d18a00"],
+  ["AgentHelper","AGT","System","#8b7cf6","#5b4bd6"],
+  ["Bollinger_Band","BB","Volatility","#26d07c","#149a55"],
+  ["Breakout","BRK","Momentum","#ff7a45","#d94f2b"],
+  ["Correlation","COR","StatArb","#f0566c","#c2364c"],
+  ["Divergence","DIV","Momentum","#f0b90b","#d18a00"],
+  ["EMA_Cross","EMA","Trend","#4b9fff","#2f7bd6"],
+  ["Fibonacci","FIB","Reversal","#e2a93b","#a97a1c"],
+  ["Grid_Trading","GRD","Grid","#7f5af0","#4a32a8"],
+  ["Hedge_Fund","HDG","Hedging","#2dd4bf","#14919b"],
+  ["Heikin_Ashi","HA","Candles","#f5b50a","#d18a00"],
+  ["Ichimoku","ICH","Trend","#f0b90b","#d18a00"],
+  ["MACD_Cross","MACD","Momentum","#4b9fff","#2f7bd6"],
+  ["Machine_Learn","ML","ML/AI","#b18aff","#6d4fd8"],
+  ["Martingale","MAR","Grid","#ff7a45","#d94f2b"],
+  ["Mean_Reversion","MR","Reversal","#26d07c","#149a55"],
+  ["Momentum","MOM","Momentum","#f0566c","#c2364c"],
+  ["Multi_TimeFrame","MTF","Trend","#8b7cf6","#5b4bd6"],
+  ["News_Trader","NEWS","Event","#4b9fff","#2f7bd6"],
+  ["OpenChart","OC","Utility","#848e9c","#5e6673"],
+  ["OpenChart_Helper","OCH","Utility","#848e9c","#5e6673"],
+  ["Parabolic_SAR","SAR","Trend","#f0b90b","#d18a00"],
+  ["Price_Action","PA","Reversal","#e2a93b","#a97a1c"],
+  ["RSI_Over","RSI","Oscillator","#ff7a45","#d94f2b"],
+  ["SMA_Cross","SMA","Trend","#4b9fff","#2f7bd6"],
+  ["Scalping_M1","SCALP","Scalping","#f0566c","#c2364c"],
+  ["Seasonal","SEAS","Seasonality","#2dd4bf","#14919b"],
+  ["StartAgentHelper","SAH","System","#848e9c","#5e6673"],
+  ["Stochastic","STO","Oscillator","#26d07c","#149a55"],
+  ["Support_Resist","SR","Reversal","#7f5af0","#4a32a8"],
+  ["Swing_Trader","SWING","Swing","#b18aff","#6d4fd8"],
+  ["TestHB_None","THB","Test","#5e6673","#3a4657"],
+  ["TestHB_Run","THB","Test","#5e6673","#3a4657"],
+  ["TestHB_Start","THB","Test","#5e6673","#3a4657"],
+  ["TestHB_Stop","THB","Test","#5e6673","#3a4657"],
+  ["TestRunner","TR","Test","#5e6673","#3a4657"],
+  ["Trend_Follow","TF","Trend","#f0b90b","#d18a00"],
+  ["Volume_Spike","VOL","Volume","#e2a93b","#a97a1c"]
+];
+const RUNNING = ["Bollinger_Band","EMA_Cross","MACD_Cross","Grid_Trading","Heikin_Ashi"];
+const grid = document.getElementById('stratGrid');
+grid.innerHTML = STRATS.map(([name,abbr,type,c1,c2],i) => `
+  <div class="strat">
+    <div class="s-ico" style="--c1:${c1};--c2:${c2}">${abbr}</div>
+    <div class="s-name">${name}</div>
+    <div class="s-type">${type}</div>
+    <div class="s-stat">
+      <span>${RUNNING.includes(name) ? '<b style="color:var(--accent)">● RUNNING</b>' : '<b>Ready</b>'}</span>
+      <span><b>${(1.1 + (i*0.13) % 6.8).toFixed(2)}%</b> 24h</span>
+    </div>
+  </div>`).join('');
+
+// ═══ 模擬註冊流程（預覽版） ═══
+function fakeSignup(e, form) {
+  e.preventDefault();
+  const msg = form.parentElement.querySelector('.success-msg') ||
+              form.nextElementSibling;
+  if (msg) msg.classList.add('show');
+  form.querySelector('button').textContent = '✓ Done';
+  form.querySelector('button').disabled = true;
+  return false;
+}
+</script>
+</body>
+</html>
