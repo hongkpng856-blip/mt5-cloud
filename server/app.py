@@ -379,7 +379,8 @@ def index():
 @login_required
 def dashboard():
     # 🚨 2026-08-11：dashboard.html 唔 cache
-    resp = make_response(render_template('dashboard.html'))
+    # 🚨 2026-08-28：傳當前登入用戶（sidebar 顯示「登入：username」）
+    resp = make_response(render_template('dashboard.html', user=current_user))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     return resp

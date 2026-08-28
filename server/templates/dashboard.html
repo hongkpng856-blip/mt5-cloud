@@ -548,6 +548,13 @@
     <a href="/dashboard" class="active"><i class="icon-layout-dashboard"></i> Dashboard</a>
     <a href="/analysis"><i class="icon-bar-chart-3"></i> Analysis</a>
     <div class="spacer"></div>
+    <div style="padding:10px 16px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <i class="icon-user" style="color:var(--accent)"></i>
+            <span id="loggedInUser" style="font-weight:600;color:var(--text);font-size:13px;">{{ user.username if user else '—' }}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="loggedInEmail">{{ user.email if user else '' }}</div>
+    </div>
     <a href="/logout" class="logout"><i class="icon-log-out"></i> Logout</a>
 </div>
 
