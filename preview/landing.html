@@ -35,8 +35,26 @@ button { font-family: var(--font); cursor: pointer; }
 /* ===== NAV ===== */
 .nav { position: sticky; top: 0; z-index: 100; background: rgba(11,14,17,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; font-size: 20px; color: var(--text); }
-.logo-badge { width: 32px; height: 32px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0b0e11; font-weight: 700; font-size: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; font-size: 20px; color: var(--text); cursor: pointer; }
+.logo-badge { width: 36px; height: 36px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0b0e11; font-weight: 700; font-size: 18px; position: relative; transition: transform 0.15s; }
+.logo-badge:hover { transform: scale(1.08); }
+.logo-badge.clicked { animation: logoClick 0.4s ease-out; }
+.logo-cursor { position: absolute; width: 20px; height: 20px; pointer-events: none; z-index: 5; transform: translate(-40%, -40%); animation: cursorFloat 2.5s ease-in-out infinite; }
+@keyframes cursorFloat {
+  0%, 100% { transform: translate(-40%, -40%) rotate(0deg); }
+  50% { transform: translate(-30%, -55%) rotate(3deg); }
+}
+@keyframes logoClick {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,185,11,0.7); }
+  50% { transform: scale(0.9); box-shadow: 0 0 0 18px rgba(240,185,11,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,185,11,0); }
+}
+.logo-ripple { position: absolute; width: 100%; height: 100%; border-radius: 10px; pointer-events: none; }
+.logo-ripple.active { animation: ripple 0.6s ease-out; }
+@keyframes ripple {
+  0% { box-shadow: 0 0 0 0 rgba(240,185,11,0.8); }
+  100% { box-shadow: 0 0 0 26px rgba(240,185,11,0); }
+}
 .nav-links { display: flex; gap: 28px; align-items: center; }
 .nav-links a { color: var(--text-muted); font-size: 14px; transition: color 0.2s; }
 .nav-links a:hover { color: var(--text); }
@@ -141,7 +159,14 @@ tr:hover td { background: var(--bg-muted); }
 <!-- NAV -->
 <nav class="nav">
   <div class="container nav-inner">
-    <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">交易掂</span></a>
+    <a href="#" class="logo" id="logo" aria-label="Tradotcom">
+      <span class="logo-badge" id="logoBadge">
+        <svg class="logo-cursor" viewBox="0 0 24 24" fill="none" stroke="#0b0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2l16 7-7 2-3 7z" fill="#0b0e11" stroke="#0b0e11"/></svg>
+        <span class="logo-ripple" id="logoRipple"></span>
+        <span style="position:relative;z-index:2;">T</span>
+      </span>
+      <span data-i18n="brand">交易掂</span>
+    </a>
     <div class="nav-links">
       <a href="#features" data-i18n="nav_features">平台特點</a>
       <a href="#compare" data-i18n="nav_compare">方案比較</a>
@@ -236,6 +261,39 @@ tr:hover td { background: var(--bg-muted); }
   </div>
 </section>
 
+<!-- HOWTO -->
+<section class="howto" id="howto" style="padding:100px 0;background:var(--bg-elev);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-head">
+      <h2 data-i18n="howto_title">平台操作示範</h2>
+      <p data-i18n="howto_sub">三分鐘掌握完整操作流程</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;">
+      <div>
+        <img src="/static/howto.gif" alt="Tradotcom 操作示範" style="width:100%;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);">
+      </div>
+      <div>
+        <div style="display:flex;gap:16px;margin-bottom:24px;align-items:flex-start;">
+          <span style="min-width:32px;height:32px;background:var(--gold);color:#0b0e11;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">1</span>
+          <div><h3 style="font-size:16px;margin-bottom:6px;" data-i18n="howto_s1">註冊並安裝 Agent</h3><p style="font-size:14px;color:var(--text-muted);" data-i18n="howto_s1d">建立帳戶，下載一鍵安裝精靈，自動偵測環境並啟動平台服務。</p></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:24px;align-items:flex-start;">
+          <span style="min-width:32px;height:32px;background:var(--gold);color:#0b0e11;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">2</span>
+          <div><h3 style="font-size:16px;margin-bottom:6px;" data-i18n="howto_s2">添加 EA 至配對庫</h3><p style="font-size:14px;color:var(--text-muted);" data-i18n="howto_s2d">從 EA 倉庫選取策略，一鍵移去配對庫，自動下載並編譯。</p></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:24px;align-items:flex-start;">
+          <span style="min-width:32px;height:32px;background:var(--gold);color:#0b0e11;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">3</span>
+          <div><h3 style="font-size:16px;margin-bottom:6px;" data-i18n="howto_s3">部署至指定圖表</h3><p style="font-size:14px;color:var(--text-muted);" data-i18n="howto_s3d">選擇貨幣對與時間框架，一鍵部署 — 平台自動掛載 EA 至您的 MT5。</p></div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+          <span style="min-width:32px;height:32px;background:var(--gold);color:#0b0e11;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">4</span>
+          <div><h3 style="font-size:16px;margin-bottom:6px;" data-i18n="howto_s4">監控績效</h3><p style="font-size:14px;color:var(--text-muted);" data-i18n="howto_s4d">即時查看每隻 EA 的 P&L 統計、交易歷史與活動記錄，隨時調整策略。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- COMPARE -->
 <section class="compare" id="compare">
   <div class="container">
@@ -285,7 +343,14 @@ tr:hover td { background: var(--bg-muted); }
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">交易掂</span></a>
+        <a href="#" class="logo" aria-label="Tradotcom">
+          <span class="logo-badge">
+            <svg class="logo-cursor" viewBox="0 0 24 24" fill="none" stroke="#0b0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2l16 7-7 2-3 7z" fill="#0b0e11" stroke="#0b0e11"/></svg>
+            <span class="logo-ripple"></span>
+            <span style="position:relative;z-index:2;">T</span>
+          </span>
+          <span data-i18n="brand">交易掂</span>
+        </a>
         <p data-i18n="footer_tagline">遠端管理您的 MetaTrader 5 交易終端 — 隨時隨地，掌控全局。</p>
       </div>
       <div>
@@ -351,6 +416,11 @@ const I18N = {
     cmp_h1: '功能', cmp_h2: 'Tradotcom', cmp_h3: 'MetaApi', cmp_h4: '自有 VPS + RDP', cmp_h5: 'MQL5 Signal', cmp_h6: 'MT5 官方 VPS',
     c1: '網頁直接控制終端（免 RDP）', c2: '一鍵 EA 部署（下載+編譯+附加）', c3: '在自己硬體執行交易（低延遲）', c4: '即時 P&L 分析（8 項指標）', c5: '多客戶完整隔離', c6: '自動 Magic Number 管理', c7: '操作警告 + 緊急停止機制', c8: '活動記錄永久保存', c9: '無需遷移終端（保留現有環境）',
     cta_title: '準備好掌握完整的交易控制權？', cta_sub: '免費註冊 · 下載 Agent · 一分鐘連接您的 MT5',
+    howto_title: '平台操作示範', howto_sub: '三分鐘掌握完整操作流程',
+    howto_s1: '註冊並安裝 Agent', howto_s1d: '建立帳戶，下載一鍵安裝精靈，自動偵測環境並啟動平台服務。',
+    howto_s2: '添加 EA 至配對庫', howto_s2d: '從 EA 倉庫選取策略，一鍵移去配對庫，自動下載並編譯。',
+    howto_s3: '部署至指定圖表', howto_s3d: '選擇貨幣對與時間框架，一鍵部署 — 平台自動掛載 EA 至您的 MT5。',
+    howto_s4: '監控績效', howto_s4d: '即時查看每隻 EA 的 P&L 統計、交易歷史與活動記錄，隨時調整策略。',
     footer_tagline: '遠端管理您的 MetaTrader 5 交易終端 — 隨時隨地，掌控全局。',
     ft_prod: '產品', ft_p1: '遠端控制', ft_p2: 'EA 自動化', ft_p3: '風險管理', ft_p4: 'API',
     ft_svc: '服務', ft_s1: '企業方案', ft_s2: '推薦計劃', ft_s3: '技術支援', ft_s4: '服務狀態',
@@ -383,6 +453,11 @@ const I18N = {
     cmp_h1: 'Feature', cmp_h2: 'Tradotcom', cmp_h3: 'MetaApi', cmp_h4: 'Self-Hosted VPS + RDP', cmp_h5: 'MQL5 Signal', cmp_h6: 'MT5 Official VPS',
     c1: 'Direct web control of terminal (no RDP)', c2: 'One-click EA deployment (download+compile+attach)', c3: 'Trading on your own hardware (low latency)', c4: 'Real-time P&L analytics (8 metrics)', c5: 'Full multi-client isolation', c6: 'Automatic Magic Number management', c7: 'Operation warning + emergency stop', c8: 'Permanent activity logs', c9: 'No terminal migration (keep existing setup)',
     cta_title: 'Ready to Take Full Control of Your Trading?', cta_sub: 'Free registration · Download Agent · Connect your MT5 in one minute',
+    howto_title: 'Platform Walkthrough', howto_sub: 'Master the full workflow in three minutes',
+    howto_s1: 'Register & Install Agent', howto_s1d: 'Create an account, download the one-click installer, auto-detect environment and launch platform services.',
+    howto_s2: 'Add EA to Portfolio', howto_s2d: 'Select strategies from the EA library, move them to your portfolio with one click — auto download and compile.',
+    howto_s3: 'Deploy to Charts', howto_s3d: 'Choose currency pair and timeframe, deploy with one click — the platform automatically attaches the EA to your MT5.',
+    howto_s4: 'Monitor Performance', howto_s4d: 'View real-time P&L statistics, trade history and activity logs for each EA — adjust strategies anytime.',
     footer_tagline: 'Manage your MetaTrader 5 trading terminal remotely — anytime, anywhere.',
     ft_prod: 'Product', ft_p1: 'Remote Control', ft_p2: 'EA Automation', ft_p3: 'Risk Management', ft_p4: 'API',
     ft_svc: 'Services', ft_s1: 'Enterprise', ft_s2: 'Referral Program', ft_s3: 'Support', ft_s4: 'Status',
@@ -413,6 +488,40 @@ try {
   const saved = localStorage.getItem('tradotcom_lang');
   if (saved && I18N[saved]) setLang(saved);
 } catch(e) {}
+
+// ===== Logo click effect (mouse cursor + click sound + ripple) =====
+(function() {
+  const logo = document.getElementById('logo');
+  if (!logo) return;
+  const badge = logo.querySelector('.logo-badge');
+  const ripple = logo.querySelector('.logo-ripple');
+  // Web Audio click sound (synthesized "tick")
+  let audioCtx = null;
+  function playClick() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.13);
+    } catch(e) {}
+  }
+  logo.addEventListener('click', function(e) {
+    e.preventDefault();
+    // Ripple effect
+    if (ripple) { ripple.classList.remove('active'); void ripple.offsetWidth; ripple.classList.add('active'); }
+    // Badge click animation
+    if (badge) { badge.classList.remove('clicked'); void badge.offsetWidth; badge.classList.add('clicked'); }
+    playClick();
+    // Scroll to top (brand click)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
 </script>
 </body>
 </html>
