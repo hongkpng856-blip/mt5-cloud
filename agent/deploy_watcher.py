@@ -513,7 +513,9 @@ def _notify_ea_change(change_type, ea_name):
                 _url2 = f"{SERVER_URL}/api/ea-config?t={int(time.time()*1000)}"
                 with _ur2.urlopen(_url2, timeout=8) as _r2:
                     _d2 = json.loads(_r2.read().decode('utf-8'))
-                _cfg_has_ea = ea_name in _d2.get('mappings', {})
+                # 🚨 2026-08-28 FIX：check agent_eas（配對庫名單 — 有 EA = 唔係真刪除）
+                # 之前 check mappings（部署咗先有）→ 部署中途（未完成）mappings 冇 → 誤判刪除 → purge 打斷部署
+                _cfg_has_ea = ea_name in _d2.get('agent_eas', []) or ea_name in _d2.get('mappings', {})
             except Exception:
                 pass
             if source == '電腦' and not _deploying and not _cfg_has_ea:
