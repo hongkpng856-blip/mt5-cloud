@@ -830,13 +830,16 @@ def api_ea_config():
         try:
             _snap_e = _current_agent_snapshot()
             if _snap_e:
-                _hb_e = set((_snap_e.get('heartbeats') or {}).keys())
+                # 🚨 2026-08-29 FIX：heartbeats 都要 alive 過濾（同 log_last 一致）
+                # 之前 _hb_e = heartbeats.keys() 冇過濾 → 死 agent 嘅舊 snapshot（殘留心跳檔上報）
+                # 包含已剷除 EA → 前端 agentEasCache 有殘留 → 配對庫顯示「已加入」（用戶：電腦冇 EA 但配對庫有）
+                _hb_alive = set(k for k, v in (_snap_e.get('heartbeats') or {}).items()
+                                if isinstance(v, dict) and v.get('status') == 'alive')
+                _hb_e = _hb_alive
                 _log_e = set((_snap_e.get('log_last') or {}).keys())
                 _hk_e = set(_snap_e.get('hotkeys') or [])
                 # 🚨 2026-08-28 FIX：log_last 包含殘留（MT5 log 舊「loaded successfully」記錄 — 新 account 安裝後顯示唔屬於佢嘅 EA）
                 # → log_last 只計「心跳 alive」嘅 EA（有新鮮心跳 = 真運行）；冇心跳 = 舊記錄殘留 — 唔上報
-                _hb_alive = set(k for k, v in (_snap_e.get('heartbeats') or {}).items()
-                                if isinstance(v, dict) and v.get('status') == 'alive')
                 _log_e = _log_e & _hb_alive
                 _agent_eas = sorted(set(list(_hb_e) + list(_log_e) + list(_hk_e)))
             else:
