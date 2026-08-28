@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tradotcom — 控制你嘅 MT5 交易終端</title>
+<title>Tradotcom — MetaTrader 5 遠端管理平台</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -41,6 +41,9 @@ button { font-family: var(--font); cursor: pointer; }
 .nav-links a { color: var(--text-muted); font-size: 14px; transition: color 0.2s; }
 .nav-links a:hover { color: var(--text); }
 .nav-cta { display: flex; gap: 12px; align-items: center; }
+.lang-switch { display: flex; gap: 4px; background: var(--bg-muted); border-radius: var(--radius); padding: 3px; }
+.lang-btn { padding: 5px 12px; font-size: 13px; background: transparent; color: var(--text-muted); border: none; border-radius: 3px; transition: all 0.2s; }
+.lang-btn.active { background: var(--gold); color: #0b0e11; font-weight: 600; }
 .btn { padding: 8px 20px; border-radius: var(--radius); font-size: 14px; font-weight: 600; transition: all 0.2s; border: none; }
 .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
@@ -52,9 +55,9 @@ button { font-family: var(--font); cursor: pointer; }
 .hero { padding: 80px 0 0; position: relative; }
 .hero::before { content: ''; position: absolute; top: -120px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(ellipse, rgba(240,185,11,0.08), transparent 60%); pointer-events: none; }
 .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-.hero h1 { font-size: 52px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.02em; }
+.hero h1 { font-size: 48px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.02em; }
 .hero h1 .gold { color: var(--gold); }
-.hero p.lead { font-size: 18px; color: var(--text-muted); margin-bottom: 32px; max-width: 480px; }
+.hero p.lead { font-size: 17px; color: var(--text-muted); margin-bottom: 32px; max-width: 500px; }
 .hero-form { display: flex; gap: 12px; margin-bottom: 16px; }
 .hero-form input { flex: 1; padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 15px; font-family: var(--font); outline: none; transition: border-color 0.2s; }
 .hero-form input:focus { border-color: var(--gold); }
@@ -85,15 +88,16 @@ button { font-family: var(--font); cursor: pointer; }
 
 /* ===== COMPARE ===== */
 .compare { padding: 100px 0; background: var(--bg-elev); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.compare-table { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 16px 20px; font-size: 14px; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+.compare-table { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
+th { text-align: left; padding: 16px 20px; font-size: 13px; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
 td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid var(--border); }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg-muted); }
 .check { color: var(--green); font-weight: 700; }
 .cross { color: var(--red); font-weight: 700; }
 .us { color: var(--gold); font-weight: 600; }
+.small { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
 
 /* ===== CTA ===== */
 .cta { padding: 100px 0; text-align: center; position: relative; }
@@ -114,18 +118,18 @@ tr:hover td { background: var(--bg-muted); }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .hero-grid { grid-template-columns: 1fr; gap: 40px; }
-  .hero h1 { font-size: 40px; }
+  .hero h1 { font-size: 38px; }
   .feat-grid { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 768px) {
   .nav-links { display: none; }
   .hero { padding-top: 48px; }
-  .hero h1 { font-size: 32px; }
+  .hero h1 { font-size: 30px; }
   .hero-stats { flex-wrap: wrap; gap: 24px; }
   .hero-form { flex-direction: column; }
   .feat-grid { grid-template-columns: 1fr; }
-  .cta h2 { font-size: 30px; }
+  .cta h2 { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
@@ -137,16 +141,19 @@ tr:hover td { background: var(--bg-muted); }
 <!-- NAV -->
 <nav class="nav">
   <div class="container nav-inner">
-    <a href="#" class="logo"><span class="logo-badge">T</span> Tradotcom</a>
+    <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">Tradotcom</span></a>
     <div class="nav-links">
-      <a href="#features">特點</a>
-      <a href="#compare">比較</a>
-      <a href="#security">安全</a>
-      <a href="#platform">平台</a>
+      <a href="#features" data-i18n="nav_features">平台特點</a>
+      <a href="#compare" data-i18n="nav_compare">方案比較</a>
+      <a href="#platform" data-i18n="nav_platform">立即開始</a>
     </div>
     <div class="nav-cta">
-      <a href="/login"><button class="btn btn-ghost">登入</button></a>
-      <a href="/register"><button class="btn btn-gold">註冊</button></a>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button class="lang-btn active" onclick="setLang('zh')">繁中</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="/login"><button class="btn btn-ghost" data-i18n="btn_login">登入</button></a>
+      <a href="/register"><button class="btn btn-gold" data-i18n="btn_register">註冊</button></a>
     </div>
   </div>
 </nav>
@@ -155,21 +162,21 @@ tr:hover td { background: var(--bg-muted); }
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <h1>控制你嘅 <span class="gold">MT5</span> 交易終端<br>由任何地方</h1>
-      <p class="lead">Tradotcom 係一個多用戶交易平台 — 每個客戶登入自己帳戶，遠端控制自己部機嘅 MetaTrader 5 終端。部署 EA、監察交易、管理風險 — 全部喺網頁完成。</p>
+      <h1 data-i18n="hero_title">遠端管理您的 <span class="gold">MetaTrader 5</span><br>交易終端</h1>
+      <p class="lead" data-i18n="hero_lead">Tradotcom 為多用戶交易管理平台，讓每位客戶透過網頁介面遠端控制其專屬的 MetaTrader 5 終端。部署專家顧問（EA）、監控交易活動、管理風險 — 全部於瀏覽器完成，無需遠端桌面。</p>
       <form class="hero-form" action="/register" method="get">
-        <input type="email" placeholder="電郵地址" aria-label="電郵地址" required>
-        <button type="submit" class="btn btn-gold btn-lg">立即開始</button>
+        <input type="email" placeholder="電子郵件地址" aria-label="Email" data-i18n="hero_email" required>
+        <button type="submit" class="btn btn-gold btn-lg" data-i18n="btn_start">立即開始</button>
       </form>
-      <p class="hero-note">註冊免費帳戶 · 一分鐘連接你嘅 MT5</p>
+      <p class="hero-note" data-i18n="hero_note">免費註冊 · 一分鐘連接您的 MT5</p>
       <div class="hero-stats">
-        <div class="stat"><h3>99.9%</h3><p>平台正常運行</p></div>
-        <div class="stat"><h3>24/7</h3><p>自動化交易</p></div>
-        <div class="stat"><h3>1 分鐘</h3><p>安裝連接</p></div>
+        <div class="stat"><h3>99.9%</h3><p data-i18n="stat_uptime">平台正常運行</p></div>
+        <div class="stat"><h3>24/7</h3><p data-i18n="stat_auto">自動化交易</p></div>
+        <div class="stat"><h3>1 分鐘</h3><p data-i18n="stat_setup">安裝連接</p></div>
       </div>
     </div>
     <div class="dash-shot">
-      <img src="dashboard-shot.png" alt="Tradotcom 平台控制台真實截圖">
+      <img src="/static/dashboard-shot.png" alt="Tradotcom Dashboard">
       <div class="dash-shot-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px;font-size:12px;color:var(--text-muted)">Tradotcom Dashboard</span></div>
     </div>
   </div>
@@ -179,39 +186,49 @@ tr:hover td { background: var(--bg-muted); }
 <section class="features" id="features">
   <div class="container">
     <div class="section-head">
-      <h2>點解揀 Tradotcom？</h2>
-      <p>我哋唔係另一個跟單平台 — 我哋俾你真正控制權，配合你嘅交易策略</p>
+      <h2 data-i18n="feat_title">平台核心功能</h2>
+      <p data-i18n="feat_sub">為嚴謹交易者設計的專業工具組合</p>
     </div>
     <div class="feat-grid">
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-        <h3>遠端控制你嘅 MT5</h3>
-        <p>唔使坐喺電腦前 — 登入網頁，喺任何地方部署 EA、睇交易、管理風險。你部機行緊 MT5，我哋行緊平台。</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
-        <h3>每個客戶完全隔離</h3>
-        <p>方案 A 架構 — 一部機一個 Agent，一個 Agent 一個帳戶。你嘅 MT5、你嘅 EA、你嘅交易記錄 — 全部獨立。</p>
+        <h3 data-i18n="f1_t">網頁遠端控制</h3>
+        <p data-i18n="f1_d">無需 RDP、TeamViewer 或任何遠端桌面軟體。透過瀏覽器即可部署 EA、管理圖表、查看即時狀態 — 支援任何裝置。</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-        <h3>EA 即撳即部署</h3>
-        <p>唔使開 MetaEditor、唔使抄檔案 — 網頁撳一下，EA 自動下載、編譯、掛上你指定嘅圖表。支援全部熱鍵自動化。</p>
+        <h3 data-i18n="f2_t">一鍵 EA 部署</h3>
+        <p data-i18n="f2_d">自動完成下載、編譯、附加至指定圖表全流程。支援熱鍵自動化掛載，無需開啟 MetaEditor 或手動複製檔案。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
+        <h3 data-i18n="f3_t">客戶端完全隔離</h3>
+        <p data-i18n="f3_d">一機一帳戶架構。每位客戶擁有獨立終端、獨立 EA、獨立交易記錄 — 互不干擾，確保策略絕對保密。</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>
-        <h3>真實時間 P&L 統計</h3>
-        <p>每個 EA 自動計算 — 淨利潤、獲利因子、最大回撤、期望值 — 8 個指標排序，一目了然你邊隻策略賺錢。</p>
+        <h3 data-i18n="f4_t">即時績效分析</h3>
+        <p data-i18n="f4_d">自動計算每隻 EA 的淨利潤、獲利因子、最大回撤、期望值等 8 項指標，支援排序比較，策略表現一目了然。</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <h3>自動化 24/7</h3>
-        <p>平台服務自動監察 — 心跳偵測、斷線重連、EA 自動恢復。你訓覺，佢交易，有事即刻通知你。</p>
+        <h3 data-i18n="f5_t">全天候自動監控</h3>
+        <p data-i18n="f5_d">平台服務持續監控終端狀態 — 心跳偵測、斷線自動重連、EA 異常恢復。異常事件即時通知，無需時刻盯盤。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h3 data-i18n="f6_t">企業級安全</h3>
+        <p data-i18n="f6_d">Cloudflare 加密隧道傳輸、Token 身份驗證防冒認、操作前警告確認機制與緊急停止 — 多重防護保障帳戶安全。</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <h3>中文支援</h3>
-        <p>全平台繁體中文介面 — 警告視窗、操作步驟、活動記錄全部中文。唔使再估英文術語。</p>
+        <h3 data-i18n="f7_t">完整交易報告</h3>
+        <p data-i18n="f7_d">詳細交易歷史報告、活動記錄永久保存。每筆操作可追溯 — 部署、暫停、刪除全部留有完整紀錄。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <h3 data-i18n="f8_t">簡易安裝部署</h3>
+        <p data-i18n="f8_d">一鍵安裝精靈，自動檢測環境、下載平台服務、建立桌面捷徑。安裝完成即自動啟動，如安裝一般應用程式。</p>
       </div>
     </div>
   </div>
@@ -221,24 +238,31 @@ tr:hover td { background: var(--bg-muted); }
 <section class="compare" id="compare">
   <div class="container">
     <div class="section-head">
-      <h2>我哋有，人哋冇</h2>
-      <p>同傳統 MT5 遠端方案、VPS 托管、跟單平台比較</p>
+      <h2 data-i18n="cmp_title">與主流方案比較</h2>
+      <p data-i18n="cmp_sub">Tradotcom 提供其他方案無法兼得的完整組合</p>
     </div>
     <div class="compare-table">
       <table>
         <thead>
-          <tr><th>功能</th><th class="us">Tradotcom</th><th>VPS 托管</th><th>跟單平台</th><th>遠端桌面</th></tr>
+          <tr>
+            <th data-i18n="cmp_h1">功能</th>
+            <th class="us" data-i18n="cmp_h2">Tradotcom</th>
+            <th data-i18n="cmp_h3">MetaApi<br><span class="small">雲端 MT5 API</span></th>
+            <th data-i18n="cmp_h4">自有 VPS + RDP<br><span class="small">遠端桌面</span></th>
+            <th data-i18n="cmp_h5">MQL5 Signal<br><span class="small">跟單平台</span></th>
+            <th data-i18n="cmp_h6">MT5 官方 VPS</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td><strong>網頁控制 MT5（唔使 RDP/TeamViewer）</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
-          <tr><td><strong>部署 EA 自動化（下載+編譯+掛圖表）</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
-          <tr><td><strong>自己部機行 MT5（唔使搬去 VPS）</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓</td></tr>
-          <tr><td><strong>真實時間 P&L 統計（8 指標排序）</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
-          <tr><td><strong>每個 EA 自動 Magic Number</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
-          <tr><td><strong>多用戶隔離（每客戶一部機）</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
-          <tr><td><strong>警告視窗 + 緊急停止</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
-          <tr><td><strong>活動記錄永久保存</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
-          <tr><td><strong>中文介面</strong></td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c1">網頁直接控制終端（免 RDP）</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c2">一鍵 EA 部署（下載+編譯+附加）</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c3">在自己硬體執行交易（低延遲）</td><td class="check">✓</td><td class="cross">✗</td><td class="check">✓</td><td class="cross">✗</td><td class="check">✓</td></tr>
+          <tr><td data-i18n="c4">即時 P&L 分析（8 項指標）</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c5">多客戶完整隔離</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c6">自動 Magic Number 管理</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c7">操作警告 + 緊急停止機制</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c8">活動記錄永久保存</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          <tr><td data-i18n="c9">無需遷移終端（保留現有環境）</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td><td class="cross">✗</td></tr>
         </tbody>
       </table>
     </div>
@@ -248,9 +272,9 @@ tr:hover td { background: var(--bg-muted); }
 <!-- CTA -->
 <section class="cta" id="platform">
   <div class="container">
-    <h2>準備好真正控制你嘅交易？</h2>
-    <p>註冊免費帳戶 · 下載 Agent · 一分鐘連接你嘅 MT5</p>
-    <a href="/register"><button class="btn btn-gold btn-lg">立即註冊</button></a>
+    <h2 data-i18n="cta_title">準備好掌握完整的交易控制權？</h2>
+    <p data-i18n="cta_sub">免費註冊 · 下載 Agent · 一分鐘連接您的 MT5</p>
+    <a href="/register"><button class="btn btn-gold btn-lg" data-i18n="btn_register2">立即註冊</button></a>
   </div>
 </section>
 
@@ -259,44 +283,128 @@ tr:hover td { background: var(--bg-muted); }
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a href="#" class="logo"><span class="logo-badge">T</span> Tradotcom</a>
-        <p>控制你嘅 MT5 交易終端 — 由任何地方、任何時間。</p>
+        <a href="#" class="logo"><span class="logo-badge">T</span> <span data-i18n="brand">Tradotcom</span></a>
+        <p data-i18n="footer_tagline">遠端管理您的 MetaTrader 5 交易終端 — 隨時隨地，掌控全局。</p>
       </div>
       <div>
-        <h4>產品</h4>
-        <a href="#">遠端控制</a>
-        <a href="#">EA 自動化</a>
-        <a href="#">風險管理</a>
-        <a href="#">API</a>
+        <h4 data-i18n="ft_prod">產品</h4>
+        <a href="#" data-i18n="ft_p1">遠端控制</a>
+        <a href="#" data-i18n="ft_p2">EA 自動化</a>
+        <a href="#" data-i18n="ft_p3">風險管理</a>
+        <a href="#" data-i18n="ft_p4">API</a>
       </div>
       <div>
-        <h4>服務</h4>
-        <a href="#">VIP</a>
-        <a href="#">推薦計劃</a>
-        <a href="#">支援</a>
-        <a href="#">狀態</a>
+        <h4 data-i18n="ft_svc">服務</h4>
+        <a href="#" data-i18n="ft_s1">企業方案</a>
+        <a href="#" data-i18n="ft_s2">推薦計劃</a>
+        <a href="#" data-i18n="ft_s3">技術支援</a>
+        <a href="#" data-i18n="ft_s4">服務狀態</a>
       </div>
       <div>
-        <h4>支援</h4>
-        <a href="#">說明中心</a>
-        <a href="#">收費</a>
-        <a href="#">交易規則</a>
-        <a href="#">常見問題</a>
+        <h4 data-i18n="ft_sup">支援</h4>
+        <a href="#" data-i18n="ft_u1">說明中心</a>
+        <a href="#" data-i18n="ft_u2">費用說明</a>
+        <a href="#" data-i18n="ft_u3">交易規則</a>
+        <a href="#" data-i18n="ft_u4">常見問題</a>
       </div>
       <div>
-        <h4>公司</h4>
-        <a href="#">關於</a>
-        <a href="#">職位</a>
-        <a href="#">新聞</a>
-        <a href="#">部落格</a>
+        <h4 data-i18n="ft_co">公司</h4>
+        <a href="#" data-i18n="ft_c1">關於我們</a>
+        <a href="#" data-i18n="ft_c2">聯絡我們</a>
+        <a href="#" data-i18n="ft_c3">新聞中心</a>
+        <a href="#" data-i18n="ft_c4">部落格</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Tradotcom. All rights reserved.</span>
-      <div><a href="#" style="display:inline;margin-right:16px;">條款</a><a href="#" style="display:inline;margin-right:16px;">私隱</a><a href="#" style="display:inline;">Cookies</a></div>
+      <span>© 2026 Tradotcom. <span data-i18n="ft_rights">版權所有</span></span>
+      <div><a href="#" style="display:inline;margin-right:16px;" data-i18n="ft_terms">服務條款</a><a href="#" style="display:inline;margin-right:16px;" data-i18n="ft_priv">隱私政策</a><a href="#" style="display:inline;" data-i18n="ft_cookies">Cookie 政策</a></div>
     </div>
   </div>
 </footer>
 
+<script>
+const I18N = {
+  zh: {
+    brand: 'Tradotcom',
+    nav_features: '平台特點', nav_compare: '方案比較', nav_platform: '立即開始',
+    btn_login: '登入', btn_register: '註冊', btn_start: '立即開始', btn_register2: '立即註冊',
+    hero_title: '遠端管理您的 <span class="gold">MetaTrader 5</span><br>交易終端',
+    hero_lead: 'Tradotcom 為多用戶交易管理平台，讓每位客戶透過網頁介面遠端控制其專屬的 MetaTrader 5 終端。部署專家顧問（EA）、監控交易活動、管理風險 — 全部於瀏覽器完成，無需遠端桌面。',
+    hero_email: '電子郵件地址',
+    hero_note: '免費註冊 · 一分鐘連接您的 MT5',
+    stat_uptime: '平台正常運行', stat_auto: '自動化交易', stat_setup: '安裝連接',
+    feat_title: '平台核心功能', feat_sub: '為嚴謹交易者設計的專業工具組合',
+    f1_t: '網頁遠端控制', f1_d: '無需 RDP、TeamViewer 或任何遠端桌面軟體。透過瀏覽器即可部署 EA、管理圖表、查看即時狀態 — 支援任何裝置。',
+    f2_t: '一鍵 EA 部署', f2_d: '自動完成下載、編譯、附加至指定圖表全流程。支援熱鍵自動化掛載，無需開啟 MetaEditor 或手動複製檔案。',
+    f3_t: '客戶端完全隔離', f3_d: '一機一帳戶架構。每位客戶擁有獨立終端、獨立 EA、獨立交易記錄 — 互不干擾，確保策略絕對保密。',
+    f4_t: '即時績效分析', f4_d: '自動計算每隻 EA 的淨利潤、獲利因子、最大回撤、期望值等 8 項指標，支援排序比較，策略表現一目了然。',
+    f5_t: '全天候自動監控', f5_d: '平台服務持續監控終端狀態 — 心跳偵測、斷線自動重連、EA 異常恢復。異常事件即時通知，無需時刻盯盤。',
+    f6_t: '企業級安全', f6_d: 'Cloudflare 加密隧道傳輸、Token 身份驗證防冒認、操作前警告確認機制與緊急停止 — 多重防護保障帳戶安全。',
+    f7_t: '完整交易報告', f7_d: '詳細交易歷史報告、活動記錄永久保存。每筆操作可追溯 — 部署、暫停、刪除全部留有完整紀錄。',
+    f8_t: '簡易安裝部署', f8_d: '一鍵安裝精靈，自動檢測環境、下載平台服務、建立桌面捷徑。安裝完成即自動啟動，如安裝一般應用程式。',
+    cmp_title: '與主流方案比較', cmp_sub: 'Tradotcom 提供其他方案無法兼得的完整組合',
+    cmp_h1: '功能', cmp_h2: 'Tradotcom', cmp_h3: 'MetaApi', cmp_h4: '自有 VPS + RDP', cmp_h5: 'MQL5 Signal', cmp_h6: 'MT5 官方 VPS',
+    c1: '網頁直接控制終端（免 RDP）', c2: '一鍵 EA 部署（下載+編譯+附加）', c3: '在自己硬體執行交易（低延遲）', c4: '即時 P&L 分析（8 項指標）', c5: '多客戶完整隔離', c6: '自動 Magic Number 管理', c7: '操作警告 + 緊急停止機制', c8: '活動記錄永久保存', c9: '無需遷移終端（保留現有環境）',
+    cta_title: '準備好掌握完整的交易控制權？', cta_sub: '免費註冊 · 下載 Agent · 一分鐘連接您的 MT5',
+    footer_tagline: '遠端管理您的 MetaTrader 5 交易終端 — 隨時隨地，掌控全局。',
+    ft_prod: '產品', ft_p1: '遠端控制', ft_p2: 'EA 自動化', ft_p3: '風險管理', ft_p4: 'API',
+    ft_svc: '服務', ft_s1: '企業方案', ft_s2: '推薦計劃', ft_s3: '技術支援', ft_s4: '服務狀態',
+    ft_sup: '支援', ft_u1: '說明中心', ft_u2: '費用說明', ft_u3: '交易規則', ft_u4: '常見問題',
+    ft_co: '公司', ft_c1: '關於我們', ft_c2: '聯絡我們', ft_c3: '新聞中心', ft_c4: '部落格',
+    ft_rights: '版權所有', ft_terms: '服務條款', ft_priv: '隱私政策', ft_cookies: 'Cookie 政策'
+  },
+  en: {
+    brand: 'Tradotcom',
+    nav_features: 'Features', nav_compare: 'Comparison', nav_platform: 'Get Started',
+    btn_login: 'Log In', btn_register: 'Register', btn_start: 'Get Started', btn_register2: 'Register Now',
+    hero_title: 'Manage Your <span class="gold">MetaTrader 5</span><br>Trading Terminal Remotely',
+    hero_lead: 'Tradotcom is a multi-user trading management platform that lets each client control their dedicated MetaTrader 5 terminal through a web interface. Deploy Expert Advisors (EAs), monitor trading activity, and manage risk — all from your browser, no remote desktop required.',
+    hero_email: 'Email address',
+    hero_note: 'Free registration · Connect your MT5 in one minute',
+    stat_uptime: 'Platform Uptime', stat_auto: 'Automated Trading', stat_setup: 'Setup Time',
+    feat_title: 'Core Platform Features', feat_sub: 'A professional toolset designed for serious traders',
+    f1_t: 'Web-Based Terminal Control', f1_d: 'No RDP, TeamViewer, or any remote desktop software needed. Deploy EAs, manage charts, and view real-time status from any device via browser.',
+    f2_t: 'One-Click EA Deployment', f2_d: 'Automated download, compilation, and attachment to your chosen chart. Hotkey automation supported — no MetaEditor or manual file copying required.',
+    f3_t: 'Full Client Isolation', f3_d: 'One machine, one account architecture. Each client has independent terminal, EAs, and trade history — fully isolated to protect your strategy.',
+    f4_t: 'Real-Time Performance Analytics', f4_d: 'Automatic calculation of net profit, profit factor, max drawdown, expectancy and 4 more metrics per EA — sortable for instant strategy comparison.',
+    f5_t: '24/7 Automated Monitoring', f5_d: 'Platform services continuously monitor terminal health — heartbeat detection, auto-reconnect, and EA recovery. Instant alerts on anomalies.',
+    f6_t: 'Enterprise-Grade Security', f6_d: 'Cloudflare encrypted tunnel, token-based authentication, operation confirmation prompts, and emergency stop — multi-layer protection.',
+    f7_t: 'Comprehensive Trading Reports', f7_d: 'Detailed trade history reports with permanent activity logs. Every action — deploy, pause, remove — fully traceable.',
+    f8_t: 'Streamlined Installation', f8_d: 'One-click installer wizard with environment detection, platform service setup, and desktop shortcut creation. Auto-starts on completion.',
+    cmp_title: 'Compare With Mainstream Solutions', cmp_sub: 'Tradotcom delivers a combination no other solution offers',
+    cmp_h1: 'Feature', cmp_h2: 'Tradotcom', cmp_h3: 'MetaApi', cmp_h4: 'Self-Hosted VPS + RDP', cmp_h5: 'MQL5 Signal', cmp_h6: 'MT5 Official VPS',
+    c1: 'Direct web control of terminal (no RDP)', c2: 'One-click EA deployment (download+compile+attach)', c3: 'Trading on your own hardware (low latency)', c4: 'Real-time P&L analytics (8 metrics)', c5: 'Full multi-client isolation', c6: 'Automatic Magic Number management', c7: 'Operation warning + emergency stop', c8: 'Permanent activity logs', c9: 'No terminal migration (keep existing setup)',
+    cta_title: 'Ready to Take Full Control of Your Trading?', cta_sub: 'Free registration · Download Agent · Connect your MT5 in one minute',
+    footer_tagline: 'Manage your MetaTrader 5 trading terminal remotely — anytime, anywhere.',
+    ft_prod: 'Product', ft_p1: 'Remote Control', ft_p2: 'EA Automation', ft_p3: 'Risk Management', ft_p4: 'API',
+    ft_svc: 'Services', ft_s1: 'Enterprise', ft_s2: 'Referral Program', ft_s3: 'Support', ft_s4: 'Status',
+    ft_sup: 'Support', ft_u1: 'Help Center', ft_u2: 'Fees', ft_u3: 'Trading Rules', ft_u4: 'FAQ',
+    ft_co: 'Company', ft_c1: 'About Us', ft_c2: 'Contact', ft_c3: 'Press', ft_c4: 'Blog',
+    ft_rights: 'All rights reserved', ft_terms: 'Terms of Service', ft_priv: 'Privacy Policy', ft_cookies: 'Cookie Policy'
+  }
+};
+
+function setLang(lang) {
+  const dict = I18N[lang] || I18N.zh;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.innerHTML = dict[key];
+  });
+  document.documentElement.lang = lang === 'en' ? 'en' : 'zh-HK';
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  if (lang === 'en') {
+    document.querySelectorAll('.lang-btn')[1].classList.add('active');
+  } else {
+    document.querySelectorAll('.lang-btn')[0].classList.add('active');
+  }
+  try { localStorage.setItem('tradotcom_lang', lang); } catch(e) {}
+}
+
+// Load saved language
+try {
+  const saved = localStorage.getItem('tradotcom_lang');
+  if (saved && I18N[saved]) setLang(saved);
+} catch(e) {}
+</script>
 </body>
 </html>
