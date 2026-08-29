@@ -276,7 +276,35 @@ def main():
                         else:
                             root._status_label.config(text='已完成', fg='#34d399')
         except tk.TclError:
-            break
+            # 🚨 2026-08-29 FIX：TclError 唔好 break（之前 break → process 死 → 警告視窗永遠冇 → 用戶投訴「警告視窗冇彈」）
+            # WM_CLOSE / 視窗被銷毀 → root.update() 拋 TclError → 之前 break 成個 loop → alert_worker 死
+            # 修復：記錄 + 重建視窗（保持 process 生存 — 下次 flag 再彈）
+            try:
+                import traceback as _tb3
+                with open(os.path.join(AGENT_DIR, 'alert_worker.log'), 'a', encoding='utf-8') as _f:
+                    _f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] TclError — 重建視窗\n{_tb3.format_exc()}\n")
+            except Exception:
+                pass
+            try:
+                root.destroy()
+            except Exception:
+                pass
+            try:
+                root = tk.Tk()
+                build_window(root)
+                shown = False
+                _all_done_shown = False
+                _last_sig = None
+                time.sleep(1.0)
+                continue
+            except Exception as _e2:
+                try:
+                    with open(os.path.join(AGENT_DIR, 'alert_worker.log'), 'a', encoding='utf-8') as _f:
+                        _f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 重建失敗: {_e2}\n")
+                except Exception:
+                    pass
+                time.sleep(2.0)
+                continue
         except Exception as _e:
             # 🚨 2026-08-12 FIX：唔好食晒 exception — 記錄（診斷「可視化步驟停咗」）
             try:
