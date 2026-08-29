@@ -104,7 +104,11 @@ except Exception as _ebw:
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mt5cloud.db'
+# 🚨 2026-08-29 FIX：SQLALCHEMY_DATABASE_URI 改絕對路徑（之前相對 sqlite:///mt5cloud.db →
+# resolve 去 server/instance/mt5cloud.db 舊 DB — ORM 寫入同 raw SQL 讀（repo/instance/mt5cloud.db）分家
+# → install-local config 寫入去錯 DB → 配對庫唔見新 EA；v0.9.67 修過但之後被 revert）
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'mt5cloud.db').replace('\\', '/')
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -2912,8 +2916,8 @@ void __mt5c_append_trade() {
                                 _s2['status'] = 'done'
                 except Exception:
                     pass
-                with open(_sf_ic, 'w', encoding='utf-8') as _f:
-                    _jc3.dump(_cur_ic, _f, ensure_ascii=False)
+                # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版警告視窗一致）
+                _write_ai_flags(None, _cur_ic)
             except Exception:
                 pass
         except Exception as e:
@@ -3072,18 +3076,19 @@ void __mt5c_append_trade() {
             import json as _jin2
             _adir_in2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
-            if os.path.isfile(_sf_in):
-                with open(_sf_in + '.tmp', 'w', encoding='utf-8') as _f:
-                    _jin2.dump([
-                        {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
-                        {'text': '配對失敗（compile 失敗）', 'status': 'done'},
-                    ], _f, ensure_ascii=False)
-                # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
-                os.replace(_sf_in + '.tmp', _sf_in)
+            # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版警告視窗一致）
+            _write_ai_flags(None, [
+                {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
+                {'text': '配對失敗（compile 失敗）', 'status': 'done'},
+            ])
             # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
-            _sf_show = os.path.join(_adir_in2, '.ai_control.show')
-            if os.path.exists(_sf_show):
-                os.remove(_sf_show)
+            for _sf_dir2 in [_adir_in2, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
+                _sf_show2 = os.path.join(_sf_dir2, '.ai_control.show')
+                try:
+                    if os.path.exists(_sf_show2):
+                        os.remove(_sf_show2)
+                except Exception:
+                    pass
         except Exception:
             pass
     return jsonify({
