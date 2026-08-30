@@ -6,12 +6,14 @@ Background: agent.py 嘅 auto_attach_ea() spawn subprocess 冇 desktop access �
 Solution: deploy_watcher.py 長行喺 terminal(background=true) — 有 desktop access ✅
 
 流程：
-1. 監控 Common/Files/deploy_cmd_*.json (由 agent.py 寫入)
+1. 監控 Common/Files/deploy_cmd_*.json (由 agent.py write)
 2. detect 到新 file → 行 auto_attach.py (pyautogui 得!)
 3. 回報結果俾 server
 4. 清理 command file
 """
 import os
+import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import sys
 import time
 import json
@@ -22,7 +24,7 @@ import threading
 import subprocess
 import requests
 
-# 🚨 2026-08-20：auto_attach 一律用 python.exe 絕對路徑（唔可以用 pythonw — pyautogui/pywinauto 無 console hang 5min timeout）
+# 🚨 2026-08-20：auto_attach 一律用 python.exe 絕對path（唔可以用 pythonw — pyautogui/pywinauto 無 console hang 5min timeout）
 _PY_EXE = r"C:\Users\hongk\AppData\Local\Programs\Python\Python311\python.exe"
 if not os.path.isfile(_PY_EXE):
     _PY_EXE = shutil.which('python') or shutil.which('python3') or sys.executable
@@ -116,19 +118,19 @@ def run_auto_attach(cmd_data):
     ea_name = cmd_data.get('ea_name', '')
     symbol = cmd_data.get('symbol', 'EURUSD')
     tf = cmd_data.get('tf', 'H1')
-    # 🚨 2026-08-20 FIX：magic 空 string → fallback default（auto_attach --magic 空 → argparse 失敗 → 假成功）
+    # 🚨 2026-08-20 FIX：magic 空 string → fallback default（auto_attach --magic 空 → argparse failed → 假success）
     magic = cmd_data.get('magic') or '240701'
     lot = cmd_data.get('lot', '1.00')
 
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署前檢查有冇 UAC alert（auto_attach 寫嘅 — 需要用戶手動撳授權）
+    # 🚨 2026-08-22（user要求：UAC 檢測機制）：deploy前檢查有冇 UAC alert（auto_attach 寫嘅 — 需要user手動撳授權）
     try:
         _uac_flag = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), '.uac_alert')
         if os.path.isfile(_uac_flag):
             _uac_txt = open(_uac_flag, encoding='utf-8').read().strip()
             print(f"⚠️ [WATCHER] 偵測到 UAC 授權需要處理: {_uac_txt[:80]}")
-            # 通知用戶（activity log）
+            # 通知user（activity log）
             try:
-                _append_activity_log({'type': 'uac', 'message': f'MT5 需要授權 — 請喺電腦撳「允許/是」({_uac_txt[:60]})'})
+                _append_activity_log({'type': 'uac', 'message': f'MT5 需要授權 — 請喺PC撳「允許/是」({_uac_txt[:60]})'})
             except Exception:
                 pass
     except Exception:
@@ -140,7 +142,7 @@ def run_auto_attach(cmd_data):
     print(f"{'='*50}")
     
     # Build auto_attach command
-    # 🚨 2026-08-20：hardcode python.exe 絕對路徑（唔用 sys.executable — 如果 watcher 用 pythonw 起 → sys.executable=pythonw → auto_attach hang 5min timeout）
+    # 🚨 2026-08-20：hardcode python.exe 絕對path（唔用 sys.executable — 如果 watcher 用 pythonw 起 → sys.executable=pythonw → auto_attach hang 5min timeout）
     _PYEXE = _PY_EXE
     cmd = [
         _PYEXE,
@@ -155,8 +157,8 @@ def run_auto_attach(cmd_data):
     print(f"   Running: {' '.join(cmd)}")
     sys.stdout.flush()
 
-    # 🚨 2026-08-22 FIX（Breakout 假成功 — watcher 讀舊 output）：spawn 前先清 aa_debug.log
-    # （auto_attach 死喺中途 → tee 覆寫唔完整 → watcher 讀到上次 SUCCESS 殘留 → 假成功）
+    # 🚨 2026-08-22 FIX（Breakout 假success — watcher 讀舊 output）：spawn 前先清 aa_debug.log
+    # （auto_attach 死喺中途 → tee 覆寫唔完整 → watcher 讀到上次 SUCCESS 殘留 → 假success）
     # → 先清空，確保讀到嘅一定係今次 output
     try:
         _dbg_clear = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
@@ -168,14 +170,14 @@ def run_auto_attach(cmd_data):
 
     try:
         # 🚨 2026-08-20（watcher-aa-debug-tee）：auto_attach 完整 stdout tee 去 aa_debug.log
-        # 之前 capture_output 只 print keyword lines → 真實失敗 output（not found under / attempt x/3）被過濾
-        # → 睇唔到真因。而家完整 output 寫落 file，診斷時直接讀。
+        # before capture_output 只 print keyword lines → 真實failed output（not found under / attempt x/3）被過濾
+        # → 睇唔到真因。now完整 output 寫落 file，診斷時直接讀。
         import subprocess as _sp_dbg
         _dbg = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
-        # 🚨 2026-08-21 FIX：tee -a（append）累積舊 output → watcher 讀「最近 60 行」誤判（讀到上次 Breakout/Grid output → ATR_Stop 假成功）
-        # 🚨 2026-08-25 FIX（人手模擬測試 0/5 — auto_attach spawn 255）：之前用 shell=True + tee + encoding='utf-8'
+        # 🚨 2026-08-21 FIX：tee -a（append）累積舊 output → watcher 讀「最近 60 行」誤判（讀到上次 Breakout/Grid output → ATR_Stop 假success）
+        # 🚨 2026-08-25 FIX（人手模擬測試 0/5 — auto_attach spawn 255）：before用 shell=True + tee + encoding='utf-8'
         # → auto_attach output 有 GBK 中文字節（0xb8 等）→ subprocess reader thread decode crash（即使 errors='replace' 都 crash — Windows subprocess bug）
-        # → exit 255 → 部署全部失敗
+        # → exit 255 → deploy全部failed
         # 改：唔用 shell/tee — 直接 run（bytes — 無 reader crash）+ 手動寫 output 去 aa_debug.log
         _dbg = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'aa_debug.log')
         try:
@@ -207,14 +209,14 @@ def run_auto_attach(cmd_data):
             pass
         
         if result.returncode == 0:
-            # 🚨 2026-08-21 FIX：唔好淨靠 returncode — 確認 auto_attach output 有真 SUCCESS（return 0 都可能內部 fail — 例如開 chart 失敗 return False → argparse 都係 0）
+            # 🚨 2026-08-21 FIX：唔好淨靠 returncode — 確認 auto_attach output 有真 SUCCESS（return 0 都可能內部 fail — 例如open chart failed return False → argparse 都係 0）
             _aa_output = ''
             try:
                 with open(_dbg, 'r', encoding='utf-8', errors='replace') as _fchk:
                     _aa_output = _fchk.read()
             except Exception:
                 pass
-            _aa_ok = ('SUCCESS' in _aa_output) or ('成功 attach' in _aa_output) or ('附加成功' in _aa_output)
+            _aa_ok = ('SUCCESS' in _aa_output) or ('success attach' in _aa_output) or ('attach success' in _aa_output)
             if not _aa_ok and _aa_output.strip():
                 print(f"   ⚠️ auto_attach output 冇 SUCCESS（可能內部 fail）— 最後幾行：")
                 for _l in _aa_output.split('\\n')[-8:]:
@@ -225,32 +227,32 @@ def run_auto_attach(cmd_data):
                     'time': time.time(),
                     'action': 'deploy_result',
                     'ea': ea_name,
-                    'message': f'{ea_name} 部署未確認（auto_attach 冇 SUCCESS — 檢查 MT5）',
+                    'message': f'{ea_name} deploy未確認（auto_attach 冇 SUCCESS — 檢查 MT5）',
                     'source': 'watcher'
                 })
                 return False
-            print(f"   🎉 {ea_name} 已成功 attach!")
+            print(f"   🎉 {ea_name} 已success attach!")
             sys.stdout.flush()
-            # 寫 deploy 完成 activity log（前端 poll 嚟關警告視窗）
+            # 寫 deploy done activity log（前端 poll 嚟關warning視窗）
             _append_activity_log({
                 'time': time.time(),
                 'action': 'deploy_result',
                 'ea': ea_name,
-                'message': f'{ea_name} 部署完成（attach 成功）',
+                'message': f'{ea_name} deploydone（attach success）',
                 'source': 'watcher'
             })
             return True
         else:
             if result.stderr:
                 print(f"   Stderr: {result.stderr[-300:]}")
-            print(f"   ❌ {ea_name} attach 失敗 (exit={result.returncode})")
+            print(f"   ❌ {ea_name} attach failed (exit={result.returncode})")
             sys.stdout.flush()
-            # 寫 deploy 失敗 activity log（前端 poll 嚟關警告視窗）
+            # 寫 deploy failed activity log（前端 poll 嚟關warning視窗）
             _append_activity_log({
                 'time': time.time(),
                 'action': 'deploy_result',
                 'ea': ea_name,
-                'message': f'{ea_name} 部署失敗（attach 失敗）',
+                'message': f'{ea_name} deploy failed（attach failed）',
                 'source': 'watcher'
             })
             return False
@@ -262,7 +264,7 @@ def run_auto_attach(cmd_data):
             'time': time.time(),
             'action': 'deploy_result',
             'ea': ea_name,
-            'message': f'{ea_name} 部署失敗（timeout）',
+            'message': f'{ea_name} deploy failed（timeout）',
             'source': 'watcher'
         })
         return False
@@ -273,7 +275,7 @@ def run_auto_attach(cmd_data):
             'time': time.time(),
             'action': 'deploy_result',
             'ea': ea_name,
-            'message': f'{ea_name} 部署失敗（{e}）',
+            'message': f'{ea_name} deploy failed（{e}）',
             'source': 'watcher'
         })
         return False
@@ -304,25 +306,25 @@ def process_deploy(filepath):
         return
     ea_name = cmd_data.get('ea_name', 'unknown')
     
-    # 🚨 2026-08-31 FIX（#152）：auto_attach running 檢查**喺刪 deploy_cmd 之前**
-    # 之前：讀完即刻刪 cmd → 偵測到 running → return → cmd 冇咗 + 冇人排隊 → 部署卡死（Mean_Reversion 案例）
-    # 而家：running → 唔刪 cmd（留返）→ return → watcher 下次 poll 再試（deploy_cmd 仲喺度）
+    # 🚨 2026-08-31 FIX（#152）：auto_attach running 檢查**喺刪 deploy_cmd before**
+    # before：讀完immediately刪 cmd → 偵測到 running → return → cmd 冇咗 + 冇人排隊 → deploy卡死（Mean_Reversion 案例）
+    # now：running → 唔刪 cmd（留返）→ return → watcher 下次 poll 再試（deploy_cmd 仲喺度）
     if is_auto_attach_running():
         print(f"   ⚠️ auto_attach.py already running — 保留 deploy_cmd 等下次 poll（唔刪 — #152 FIX）")
         deploy_notify.hide()
         sys.stdout.flush()
         return  # deploy_cmd 保留 — watcher 下次 poll 會再處理
 
-    # 🚨 2026-08-10：確認冇 auto_attach running 先刪 deploy_cmd（防中斷殘留 — 重複處理）
+    # 🚨 2026-08-10：確認冇 auto_attach running 先刪 deploy_cmd（防interrupted殘留 — 重複處理）
     try:
         if os.path.exists(filepath):
             os.remove(filepath)
-            print(f"   🗑️ 已刪 command file（處理前 — 防中斷殘留）: {os.path.basename(filepath)}")
+            print(f"   🗑️ 已刪 command file（處理前 — 防interrupted殘留）: {os.path.basename(filepath)}")
     except Exception:
         pass
     
     # === 通知：Web log + 本地視窗 ===
-    print(f"🤖 AI 正在部署 {ea_name} 到 MT5，請勿使用滑鼠及鍵盤...")
+    print(f"🤖 AI 正在deploy {ea_name} 到 MT5，請勿使用滑鼠及鍵盤...")
     sys.stdout.flush()
     
     # 1. 通知 Server → Dashboard log 顯示
@@ -332,7 +334,7 @@ def process_deploy(filepath):
             'agent_id': AGENT_ID,
             'ea_name': ea_name,
             'status': 'info',
-            'message': f'🤖 AI 開始部署 {ea_name} → MT5，請勿操作電腦...'
+            'message': f'🤖 AI startdeploy {ea_name} → MT5，請勿操作PC...'
         }, timeout=3)
     except:
         pass
@@ -354,33 +356,33 @@ def process_deploy(filepath):
         pass
     
     try:
-        # 🚨 2026-08-27 FIX（用戶要求方案二）：部署前收返已掛嘅 EA（防止「愈部署愈多 chart」）
-        # 檢查 EA 心跳（state_<EA>.json 新鮮 = 已經掛緊 chart）→ 有就 auto_attach --remove 收返
+        # 🚨 2026-08-27 FIX（user要求方案二）：deploy前收返已掛嘅 EA（防止「愈deploy愈多 chart」）
+        # 檢查 EA 心跳（state_<EA>.json 新鮮 = 已經running on chart）→ 有就 auto_attach --remove 收返
         _ea_ck = cmd_data.get('ea_name', '')
         _hb_ck = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'state_{_ea_ck}.json')
         _already_running = False
         try:
             if os.path.isfile(_hb_ck):
                 _hb_age = time.time() - os.path.getmtime(_hb_ck)
-                if _hb_age < 120:  # 2 分鐘內更新 = 運行緊
+                if _hb_age < 120:  # 2 分鐘內更新 = running緊
                     _already_running = True
         except Exception:
             pass
         if _already_running:
-            print(f"🔁 [WATCHER] {_ea_ck} 已經掛緊（心跳新鮮）→ 先收返舊 chart 再部署（防累積）")
+            print(f"🔁 [WATCHER] {_ea_ck} 已經running on（心跳新鮮）→ 先收返舊 chart 再deploy（防累積）")
             sys.stdout.flush()
             try:
                 _rm_cmd = [_PY_EXE, '-u', AUTO_ATTACH_SCRIPT, '--remove', '--ea', _ea_ck]
                 _rm_res = subprocess.run(_rm_cmd, capture_output=True, text=True, timeout=180, encoding='utf-8', errors='replace')
-                print(f"   ✅ 收返 {_ea_ck} 完成（returncode={_rm_res.returncode}）")
+                print(f"   ✅ 收返 {_ea_ck} done（returncode={_rm_res.returncode}）")
                 sys.stdout.flush()
             except Exception as _e_rm:
-                print(f"   ⚠️ 收返 {_ea_ck} 失敗（繼續部署）: {_e_rm}")
+                print(f"   ⚠️ 收返 {_ea_ck} failed（繼續deploy）: {_e_rm}")
                 sys.stdout.flush()
         # Run auto_attach
         success = run_auto_attach(cmd_data)
     finally:
-        # 3. 無論成功失敗，都關閉通知視窗 + 清除 lock
+        # 3. 無論successfailed，都關閉通知視窗 + 清除 lock
         deploy_notify.hide()
         try:
             if os.path.exists(AUTO_ATTACH_LOCK):
@@ -406,7 +408,7 @@ def process_deploy(filepath):
     time.sleep(2)
     sys.stdout.flush()
 
-# ─── Experts 目錄監控 ───
+# ─── Experts dir監控 ───
 
 MT5_EXPERTS_DIR = os.path.join(os.environ.get('APPDATA', ''),
                                'MetaQuotes', 'Terminal',
@@ -418,8 +420,8 @@ _refresh_cooldown = 60  # 秒 — 防連環觸發（2026-08-28：3 秒太短 —
 
 
 def get_experts_snapshot():
-    """攞 Experts 目錄檔案清單（name + size + mtime）做 fingerprint
-    ⚠️ 2026-08：只掃根目錄 — 唔掃 MT5 內建 folder（Free Robots/Examples 等樣本）"""
+    """攞 Experts dirfile清單（name + size + mtime）做 fingerprint
+    ⚠️ 2026-08：只掃根dir — 唔掃 MT5 內建 folder（Free Robots/Examples 等樣本）"""
     try:
         if not os.path.isdir(MT5_EXPERTS_DIR):
             return None
@@ -442,13 +444,13 @@ def get_experts_snapshot():
         return None
 
 
-# 最近網頁操作記錄（base -> timestamp）— 網頁安裝/刪除會產生多個檔案變化（.mq5 + .ex5），
+# 最近網頁操作記錄（base -> timestamp）— 網頁安裝/delete會產生多個file變化（.mq5 + .ex5），
 # 用 60 秒窗口令後續變化都計做同一來源
 _web_action_window = {}
 
 
 def _purge_config(ea_name):
-    """電腦（MT5）刪除 EA 後，自動移除配對 config → 配對庫即刻消失"""
+    """PC（MT5）delete EA 後，自動remove配對 config → 配對庫immediately消失"""
     try:
         import urllib.request as _ur
         agent_id = os.environ.get('AGENT_ID', 'DEV00001')
@@ -457,21 +459,21 @@ def _purge_config(ea_name):
         with _ur.urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read().decode('utf-8'))
         if data.get('success'):
-            print(f"🗑️ [WATCHER] 已自動移除 {ea_name} 配對（電腦刪除）")
+            print(f"🗑️ [WATCHER] 已自動remove {ea_name} 配對（PCdelete）")
         else:
-            print(f"   ⚠️ purge config 失敗: {data.get('error')}")
+            print(f"   ⚠️ purge config failed: {data.get('error')}")
     except Exception as e:
-        print(f"   ⚠️ purge config 失敗: {e}")
+        print(f"   ⚠️ purge config failed: {e}")
     sys.stdout.flush()
 
 
 def _notify_ea_change(change_type, ea_name):
-    """寫 EA 變化通知去 server/static/detector/notifications.json（Dashboard 讀取顯示 toast）
-    同時寫入持久化 activity log（server/activity_log.jsonl）
+    """寫 EA 變化通知去 server/static/detector/notifications.json（Dashboard read顯示 toast）
+    同時write持久化 activity log（server/activity_log.jsonl）
     change_type: 'added' | 'deleted' | 'modified'
     來源分辨：server 寫 web_add_<name>.flag / web_delete_<name>.flag → 網頁操作；
               flag 消費後 60 秒內嘅變化（例如 .ex5 compile 產物）都計網頁；
-              冇 flag → 電腦（MT5）直接操作
+              冇 flag → PC（MT5）直接操作
     """
     global _web_action_window
     try:
@@ -479,9 +481,9 @@ def _notify_ea_change(change_type, ea_name):
             os.path.dirname(__file__), '..', 'server', 'static', 'detector', 'notifications.json'))
         os.makedirs(os.path.dirname(notify_path), exist_ok=True)
 
-        # 分辨來源：網頁操作（server 寫咗 flag）vs 電腦直接操作
+        # 分辨來源：網頁操作（server 寫咗 flag）vs PC直接操作
         common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-        source = '電腦'
+        source = 'PC'
         now = time.time()
 
         if change_type in ('deleted', 'added'):
@@ -495,7 +497,7 @@ def _notify_ea_change(change_type, ea_name):
                     pass
 
         # 統一去重窗口：同一 base + 同 type 60 秒內只出一次通知
-        # （網頁安裝 .mq5 + .ex5 兩次 added；電腦刪除 .mq5 + .ex5 兩次 deleted）
+        # （網頁安裝 .mq5 + .ex5 兩次 added；PCdelete .mq5 + .ex5 兩次 deleted）
         win_key = f'{ea_name}|{change_type}'
         last = _web_action_window.get(win_key)
         if last is not None and now - last < 60:
@@ -508,29 +510,29 @@ def _notify_ea_change(change_type, ea_name):
         if change_type == 'added':
             msg = f'{ea_name} 已於{source}新增至 MT5'
         elif change_type == 'deleted':
-            msg = f'{ea_name} 已於{source}刪除'
-            # 電腦刪除 → 自動移除配對 config（配對庫即刻消失）
-            # 🚨 2026-08-27 FIX：部署/編譯流程會短暫刪 .ex5（metaeditor 重編譯 — 先刪舊再寫新）
-            # → flag 可能已消費（added 時）→ deleted 冇 flag → 誤判電腦刪除 → purge 錯配對
-            # → 三重檢查先 purge：①冇 web_add flag ②config 冇 EA（真係刪除 — 有 EA = 部署中）
+            msg = f'{ea_name} 已於{source}delete'
+            # PCdelete → 自動remove配對 config（配對庫immediately消失）
+            # 🚨 2026-08-27 FIX：deploy/編譯流程會短暫刪 .ex5（metaeditor 重編譯 — 先刪舊再寫新）
+            # → flag 可能已消費（added 時）→ deleted 冇 flag → 誤判PCdelete → purge 錯配對
+            # → 三重檢查先 purge：①冇 web_add flag ②config 冇 EA（真係delete — 有 EA = deploy中）
             _flag_purge_check = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'web_add_{ea_name}.flag')
             _deploying = os.path.isfile(_flag_purge_check)
-            # check config 有冇 EA（server 端 — 有 EA = 唔係真刪除）
+            # check config 有冇 EA（server 端 — 有 EA = 唔係真delete）
             _cfg_has_ea = False
             try:
                 import urllib.request as _ur2
                 _url2 = f"{SERVER_URL}/api/ea-config?t={int(time.time()*1000)}"
                 with _ur2.urlopen(_url2, timeout=8) as _r2:
                     _d2 = json.loads(_r2.read().decode('utf-8'))
-                # 🚨 2026-08-28 FIX：check agent_eas（配對庫名單 — 有 EA = 唔係真刪除）
-                # 之前 check mappings（部署咗先有）→ 部署中途（未完成）mappings 冇 → 誤判刪除 → purge 打斷部署
+                # 🚨 2026-08-28 FIX：check agent_eas（配對庫名單 — 有 EA = 唔係真delete）
+                # before check mappings（deploy咗先有）→ deploy中途（未done）mappings 冇 → 誤判delete → purge 打斷deploy
                 _cfg_has_ea = ea_name in _d2.get('agent_eas', []) or ea_name in _d2.get('mappings', {})
             except Exception:
                 pass
-            if source == '電腦' and not _deploying and not _cfg_has_ea:
+            if source == 'PC' and not _deploying and not _cfg_has_ea:
                 _purge_config(ea_name)
-            elif source == '電腦' and (_deploying or _cfg_has_ea):
-                print(f"🔔 [WATCHER] {ea_name} deleted 但部署中/有 config（flag={_deploying} cfg={_cfg_has_ea}）→ 唔 purge（防誤判）")
+            elif source == 'PC' and (_deploying or _cfg_has_ea):
+                print(f"🔔 [WATCHER] {ea_name} deleted 但deploy中/有 config（flag={_deploying} cfg={_cfg_has_ea}）→ 唔 purge（防誤判）")
         else:
             msg = f'{ea_name} 已更新'
         notif = {
@@ -558,21 +560,21 @@ def _notify_ea_change(change_type, ea_name):
         print(f"🔔 [WATCHER] 通知已寫: {notif['message']}")
         sys.stdout.flush()
 
-        # 同時寫入持久化 activity log（append JSONL，原子寫入）
+        # 同時write持久化 activity log（append JSONL，原子write）
         _append_activity_log(notif)
     except Exception as e:
-        print(f"   ⚠️ 寫通知失敗: {e}")
+        print(f"   ⚠️ 寫通知failed: {e}")
 
 
 def _append_activity_log(notif):
-    """append 一行 JSONL 去 server/activity_log.jsonl（持久保存，server /api/activity 讀取）"""
+    """append 一行 JSONL 去 server/activity_log.jsonl（持久保存，server /api/activity read）"""
     try:
         log_path = os.path.normpath(os.path.join(
             os.path.dirname(__file__), '..', 'server', 'activity_log.jsonl'))
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         entry = {
             'time': notif.get('time', time.time()),
-            'action': notif.get('action', notif.get('type', 'unknown')),  # 🚨 2026-08-19 FIX：caller 用 'action' key（deploy_result 等）— 之前只讀 'type' → deploy_result 寫成 unknown → 前端等唔到 → modal 卡
+            'action': notif.get('action', notif.get('type', 'unknown')),  # 🚨 2026-08-19 FIX：caller 用 'action' key（deploy_result 等）— before只讀 'type' → deploy_result 寫成 unknown → 前端等唔到 → modal 卡
             'ea': notif.get('ea', ''),
             'message': notif.get('message', ''),
             'source': 'watcher',
@@ -583,7 +585,7 @@ def _append_activity_log(notif):
         print(f"📜 [WATCHER] activity log 已寫: {entry['message']}")
         sys.stdout.flush()
     except Exception as e:
-        print(f"   ⚠️ 寫 activity log 失敗: {e}")
+        print(f"   ⚠️ 寫 activity log failed: {e}")
 
 
 _refresh_lock = threading.Lock()  # 同一時間只允許一個 refresh 跑（pyautogui 搶滑鼠會互卡）
@@ -625,16 +627,16 @@ def _refresh_worker_loop():
                     sys.stdout.flush()
                     continue
                 else:
-                    print("   ⚠️ refresh 循環超過上限（3 次）— 停止（防卡死）")
+                    print("   ⚠️ refresh 循環超過上限（3 次）— stop（防卡死）")
                     sys.stdout.flush()
                     break
             except Exception:
-                break  # queue 空 — 完成
+                break  # queue 空 — done
         time.sleep(2)  # 防連環觸發
 
 
 def _notify_refresh_needed():
-    """目錄變化 → 觸發 refresh（queue 已滿 = 已有 pending，唔使再加）"""
+    """dir變化 → 觸發 refresh（queue 已滿 = 已有 pending，唔使再加）"""
     try:
         _refresh_queue.put_nowait(1)
     except Exception:
@@ -642,7 +644,7 @@ def _notify_refresh_needed():
 
 
 def check_experts_changes():
-    """偵測 Experts 目錄變化（EA 新增/刪除/修改）→ 通知 + activity log + 自動 refresh Navigator"""
+    """偵測 Experts dir變化（EA 新增/delete/修改）→ 通知 + activity log + 自動 refresh Navigator"""
     global _last_experts_snapshot, _last_refresh_time
 
     snap = get_experts_snapshot()
@@ -658,15 +660,15 @@ def check_experts_changes():
         _last_experts_snapshot = snap
         now = time.time()
 
-        # 搵出新增/刪除嘅檔案名（喺 cooldown check 之前，通知一定要出）
+        # 搵出新增/delete嘅file名（喺 cooldown check before，通知一定要出）
         changed = []
         all_keys = set(snap) | set(old_snap)
         for k in all_keys:
             if snap.get(k) != old_snap.get(k):
                 changed.append(k)
 
-        # 分類：新增（之前冇而家有）/ 刪除（之前有而家冇）
-        # 通知 + activity log 永遠寫（唔受 AI 控制守衛影響 — 用戶刪除 EA 要即時知）
+        # 分類：新增（before冇now有）/ delete（before有now冇）
+        # 通知 + activity log 永遠寫（唔受 AI 控制守衛影響 — userdelete EA 要即時知）
         for k in changed:
             base = k.rsplit('.', 1)[0] if '.' in k else k
             if k in snap and k not in old_snap:
@@ -691,14 +693,14 @@ def check_experts_changes():
         except:
             pass
 
-        print(f"🔄 [WATCHER] Experts 目錄變化: {', '.join(changed[:5]) or '?'} — 自動 refresh Navigator")
+        print(f"🔄 [WATCHER] Experts dir變化: {', '.join(changed[:5]) or '?'} — 自動 refresh Navigator")
         sys.stdout.flush()
         # 觸發 refresh（single worker queue 處理，coalesce 唔會漏）
         _notify_refresh_needed()
 
 
 def find_compile_commands():
-    """搵 compile_cmd_*.json（server 寫入，俾 watcher 用 desktop access compile）"""
+    """搵 compile_cmd_*.json（server write，俾 watcher 用 desktop access compile）"""
     common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
     pattern = os.path.join(common_files, 'compile_cmd_*.json')
     return sorted(glob.glob(pattern), key=os.path.getmtime)
@@ -706,10 +708,10 @@ def find_compile_commands():
 
 def process_compile_cmd(fp):
     """處理 compile 指令：用 MetaEditor GUI compile .mq5 → .ex5（watcher 有 desktop access）
-    ⚠️ MetaEditor CLI `/compile` 喺 background 環境唔 work（靜默失敗）
-    ⚠️ GUI 方式（開 file → F7）先成功 — 用 pywinauto 操作
-    ⚠️ 失敗自動重試（最多 3 次）— compile_cmd 保留 + retries 計數
-    ⚠️ 緊急停止（ControlAborted）→ 唔重試，直接放棄
+    ⚠️ MetaEditor CLI `/compile` 喺 background 環境唔 work（靜默failed）
+    ⚠️ GUI 方式（開 file → F7）先success — 用 pywinauto 操作
+    ⚠️ failed自動重試（最多 3 次）— compile_cmd 保留 + retries 計數
+    ⚠️ 緊急stop（ControlAborted）→ 唔重試，直接放棄
     """
     try:
         from control_guard import ControlAborted as _CGAbort
@@ -724,7 +726,7 @@ def process_compile_cmd(fp):
         retries = data.get('retries', 0)
 
         if not mq5_path or not os.path.isfile(mq5_path):
-            print(f"   ⚠️ compile cmd: {mq5_path} 唔存在")
+            print(f"   ⚠️ compile cmd: {mq5_path} not exist")
             os.remove(fp)
             return
 
@@ -760,10 +762,10 @@ def process_compile_cmd(fp):
                 _list.append({'text': _text, 'status': _status})
             if not _cur:
                 # 冇現有 steps（直接 compile — 唔經 install-local）→ 建完整流程
-                _cur = [{'text': f'開始配對 {base}', 'status': 'done'},
-                        {'text': '複製檔案至本機（Experts 根）', 'status': 'done'},
+                _cur = [{'text': f'start配對 {base}', 'status': 'done'},
+                        {'text': '複製file至local（Experts 根）', 'status': 'done'},
                         {'text': f'編譯 {base}.mq5 → .ex5', 'status': 'doing'},
-                        {'text': '完成配對', 'status': 'pending'}]
+                        {'text': 'done配對', 'status': 'pending'}]
             else:
                 _upd(_cur, f'編譯 {base}.mq5 → .ex5', 'doing')
             with open(_sf, 'w', encoding='utf-8') as _f2:
@@ -772,27 +774,27 @@ def process_compile_cmd(fp):
             pass
         # ⚠️ 控制層注入（網頁操控 EA — CONTROL_LAYER_DESIGN.md）：
         # compile 前自動注入控制層（tick 檢查 ctrl_ 檔 + 心跳寫 state_ 檔）
-        # 失敗（冇 OnTick）→ 用原版 compile（唔阻塞部署）
+        # failed（冇 OnTick）→ 用原版 compile（唔阻塞deploy）
         try:
             from inject_control_layer import inject_control_layer as _inject
             _inject(mq5_path)
         except Exception as _ie:
-            print(f"   ⚠️ [注入器] 整合呼叫失敗: {_ie}")
+            print(f"   ⚠️ [注入器] 整合呼叫failed: {_ie}")
         # 同 refresh_navigator 共用互斥鎖 — 兩個 pywinauto 唔可以同時操作 GUI（會搶滑鼠打架）
         import threading as _th
         try:
             with _refresh_lock:
                 ok = _compile_via_gui(mq5_path, ex5_path)
         except ControlAborted:
-            # 緊急停止 — 唔可以重試，直接放棄 + 刪 compile cmd（真正停止）
-            print("   🛑 緊急停止 — 放棄 compile，唔重試")
+            # 緊急stop — 唔可以重試，直接放棄 + 刪 compile cmd（真正stop）
+            print("   🛑 緊急stop — 放棄 compile，唔重試")
             try:
                 os.remove(fp)
             except Exception:
                 pass
             return
         except _CGAbort:
-            print("   🛑 緊急停止 — 放棄 compile，唔重試")
+            print("   🛑 緊急stop — 放棄 compile，唔重試")
             try:
                 os.remove(fp)
             except Exception:
@@ -800,7 +802,7 @@ def process_compile_cmd(fp):
             return
         if ok:
             print(f"   ✅ Compiled: {base}.ex5 ({os.path.getsize(ex5_path)} bytes)")
-            # 🚨 2026-08-12 FIX：編譯完成 → 「編譯」done + 「完成配對」done（累積更新 — 唔覆蓋）
+            # 🚨 2026-08-12 FIX：編譯done → 「編譯」done + 「done配對」done（累積更新 — 唔覆蓋）
             try:
                 import json as _jc2
                 _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
@@ -815,12 +817,12 @@ def process_compile_cmd(fp):
                 for _s in _old2:
                     if isinstance(_s, dict):
                         _t = _s.get('text', '')
-                        if '編譯' in _t or _t == '完成配對':
+                        if '編譯' in _t or _t == 'done配對':
                             _s['status'] = 'done'
                 with open(_sf2, 'w', encoding='utf-8') as _f:
                     _jc2.dump(_old2, _f, ensure_ascii=False)
-                # 🚨 2026-08-28 FIX（網頁版警告視窗冇同步 — 用戶對比 stable-v0.10.91）：watcher 只更新自己目錄（TradotcomAgent）
-                # → server 讀開發目錄（agent/.ai_control.steps — 網頁版）永遠 pending → 同步埋開發目錄
+                # 🚨 2026-08-28 FIX（網頁版warning視窗冇同步 — user對比 stable-v0.10.91）：watcher 只更新自己dir（TradotcomAgent）
+                # → server 讀開發dir（agent/.ai_control.steps — 網頁版）永遠 pending → 同步埋開發dir
                 try:
                     import os as _os2
                     _cand2 = [
@@ -836,16 +838,16 @@ def process_compile_cmd(fp):
                     pass
             except Exception:
                 pass
-            os.remove(fp)  # 成功 → 清理指令
-            # 即刻 queue refresh（唔等 3 秒 poll）— compile 生成 .ex5 後 Navigator 要即刻更新，
-            # 令 compile → refresh 動作連續，警告視窗唔會「彈出 → 關 → 又彈出」（Bug #70）
+            os.remove(fp)  # success → 清理指令
+            # immediately queue refresh（唔等 3 秒 poll）— compile 生成 .ex5 後 Navigator 要immediately更新，
+            # 令 compile → refresh 動作連續，warning視窗唔會「彈出 → 關 → 又彈出」（Bug #70）
             try:
                 _notify_refresh_needed()
             except Exception:
                 pass
         else:
-            # 🚨 2026-08-10：失敗 → 唔自動重試（用戶要求 — 失敗應該停 + 彈視窗「編譯失敗」+ 確定/緊急停止 — 用戶決定）
-            print(f"   ❌ Compile failed: {base}.ex5 未生成（停止重試 — 檢查源碼或手動重試）")
+            # 🚨 2026-08-10：failed → 唔自動重試（user要求 — failed應該停 + 彈視窗「編譯failed」+ 確定/緊急stop — user決定）
+            print(f"   ❌ Compile failed: {base}.ex5 未生成（stop重試 — 檢查源碼或手動重試）")
             try:
                 import json as _jcf
                 _adir_cf = os.path.dirname(os.path.abspath(__file__))
@@ -858,20 +860,20 @@ def process_compile_cmd(fp):
                             _old_cf = []
                 except Exception:
                     _old_cf = []
-                # 更新「編譯」步驟 → 失敗
+                # 更新「編譯」步驟 → failed
                 for _s in _old_cf:
                     if isinstance(_s, dict) and '編譯' in _s.get('text', ''):
                         _s['status'] = 'done'
-                if not any('編譯失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _old_cf):
-                    _old_cf.append({'text': '編譯失敗', 'status': 'done'})
+                if not any('編譯failed' in (s.get('text', '') if isinstance(s, dict) else '') for s in _old_cf):
+                    _old_cf.append({'text': '編譯failed', 'status': 'done'})
                 with open(_sf_cf, 'w', encoding='utf-8') as _f:
                     _jcf.dump(_old_cf, _f, ensure_ascii=False)
             except Exception:
                 pass
-            os.remove(fp)  # 失敗 → 清理（唔重試 — 用戶手動決定）
+            os.remove(fp)  # failed → 清理（唔重試 — user手動決定）
         sys.stdout.flush()
     except Exception as e:
-        print(f"   ⚠️ compile cmd 處理失敗: {e}")
+        print(f"   ⚠️ compile cmd 處理failed: {e}")
         try:
             os.remove(fp)
         except:
@@ -880,14 +882,14 @@ def process_compile_cmd(fp):
 
 def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
     """用 MetaEditor GUI compile（開 file → F7）— CLI /compile 喺 background 唔 work
-    用 control_guard 彈警告視窗（GUI 操作緊要話俾用戶知）
+    用 control_guard 彈warning視窗（GUI 操作緊要話俾user知）
     """
     import subprocess as _sp
     import time as _t
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
 
-    # AI 控制守衛 — 彈警告視窗 + 支援緊急停止
+    # AI 控制守衛 — 彈warning視窗 + 支援緊急stop
     try:
         from control_guard import acquire, check_abort, release, ControlAborted
         acquire(f"編譯 {os.path.splitext(os.path.basename(mq5_path))[0]}")
@@ -901,9 +903,9 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
         metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
         exp_dir = os.path.dirname(mq5_path)
 
-        # 🚨 2026-08-18 FIX（用戶要求：OpenChart 配對 compile 失敗根治）：先試 CLI /compile
-        # （GUI F7 自動化間歇性失敗 — CLI /compile 100% 可靠 — metaeditor64 /compile:file /log:log）
-        # 成功（.ex5 生成）→ 即刻返 True，唔使 GUI
+        # 🚨 2026-08-18 FIX（user要求：OpenChart 配對 compile failed根治）：先試 CLI /compile
+        # （GUI F7 自動化間歇性failed — CLI /compile 100% 可靠 — metaeditor64 /compile:file /log:log）
+        # success（.ex5 生成）→ immediately返 True，唔使 GUI
         try:
             _log_path = os.path.join(exp_dir, f'_cli_compile_{os.path.splitext(os.path.basename(mq5_path))[0]}.log')
             if os.path.exists(_log_path):
@@ -922,7 +924,7 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                 _cli_ok = True
             if _cli_ok:
                 print(f"   ✅ CLI Compiled: {os.path.basename(ex5_path)} ({os.path.getsize(ex5_path)} bytes)")
-                # 🚨 2026-08-28 FIX：CLI compile 完都即刻關 MetaEditor（CLI /compile 都用 metaeditor64.exe — 會留低 process → 監察 Experts → 彈「外部修改」dialog）
+                # 🚨 2026-08-28 FIX：CLI compile 完都immediately關 MetaEditor（CLI /compile 都用 metaeditor64.exe — 會留低 process → 監察 Experts → 彈「外部修改」dialog）
                 try:
                     _sp.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
                 except Exception:
@@ -931,16 +933,16 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
             else:
                 print("   ⚠️ CLI compile 未確認，fallback 去 GUI...")
         except Exception as _ce:
-            print(f"   ⚠️ CLI compile 失敗（fallback GUI）: {_ce}")
+            print(f"   ⚠️ CLI compile failed（fallback GUI）: {_ce}")
 
-        # 記錄 MetaEditor 之前係咪已經開住（如果係我哋開嘅 → 用完自動關閉）
+        # 記錄 MetaEditor before係咪已經開住（如果係我哋開嘅 → 用完自動關閉）
         out_before = _sp.check_output(
                     'tasklist /FI "IMAGENAME eq metaeditor64.exe" /FO CSV /NH',
                     shell=True, timeout=5).decode(errors='ignore')
         was_running = 'MetaEditor64.exe' in out_before
 
         for attempt in range(max_retries):
-            check_abort()  # 每步檢查緊急停止
+            check_abort()  # 每步檢查緊急stop
             try:
                 # 確保 MetaEditor 開住（唔開就開）
                 out = _sp.check_output(
@@ -953,7 +955,7 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                         pid = int(parts[1])
                         break
                 if not pid:
-                    # 🚨 2026-08-27 FIX：唔好開 metaeditor GUI（佢監察 Experts 目錄 → 自動重編譯 → 刪舊 .ex5 但寫唔返 → 部署失敗）
+                    # 🚨 2026-08-27 FIX：唔好開 metaeditor GUI（佢監察 Experts dir → 自動重編譯 → 刪舊 .ex5 但寫唔返 → deploy failed）
                     # → CLI /compile 已經可靠（line 849）— 唔需要 GUI fallback
                     print("   ⚠️ MetaEditor 未開 — 用 CLI compile（唔開 GUI — 避免佢搞亂 .ex5）")
                     _t.sleep(1)
@@ -1002,7 +1004,7 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                 win.set_focus()
                 _t.sleep(0.8)
 
-                # 確保 MetaEditor 係 active window（警告視窗可能搶 focus）→ 唔係就再 focus
+                # 確保 MetaEditor 係 active window（warning視窗可能搶 focus）→ 唔係就再 focus
                 try:
                     from pywinauto import Desktop as _Desktop
                     _active = _Desktop(backend='win32').window(active_only=True)
@@ -1021,10 +1023,10 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                         dlg = w
                         break
                 if dlg is None:
-                    print(f"   ⚠️ 搵唔到打開 dialog (attempt {attempt+1})")
+                    print(f"   ⚠️ not found打開 dialog (attempt {attempt+1})")
                     continue
 
-                # 喺 filename edit 輸入路徑
+                # 喺 filename edit 輸入path
                 edits = dlg.children(class_name='Edit')
                 if len(edits) >= 2:
                     edits[0].set_text(mq5_path)
@@ -1042,8 +1044,8 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                 _t.sleep(3)
                 check_abort()
 
-                # 開 file 之後可能彈「外部修改」dialog（.mq5 被外部改過）→ 即刻 click 是
-                # ⚠️ 一定要喺 F7 之前處理 — 唔係 F7 會落咗去 dialog（compile 失敗）
+                # 開 file after可能彈「外部修改」dialog（.mq5 被外部改過）→ immediately click 是
+                # ⚠️ 一定要喺 F7 before處理 — 唔係 F7 會落咗去 dialog（compile failed）
                 try:
                     for w in app.windows():
                         if w.class_name() == '#32770':
@@ -1061,10 +1063,10 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
 
                 # F7 compile
                 send_keys('{F7}')
-                # 🚨 2026-08-12 FIX：編譯等待期間每 2 秒 check_abort（緊急停止即時中止 — 之前等 8 秒 block → 冇反應）
+                # 🚨 2026-08-12 FIX：編譯wait期間每 2 秒 check_abort（緊急stop即時中止 — before等 8 秒 block → 冇反應）
                 _compile_done = False
                 for _cc in range(8):  # 最多 16 秒（8 次 × 2 秒）
-                    check_abort()  # 🚨 緊急停止 → 即刻 raise
+                    check_abort()  # 🚨 緊急stop → immediately raise
                     _t.sleep(2)
                     if os.path.exists(ex5_path):
                         _compile_done = True
@@ -1091,11 +1093,11 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                 _t.sleep(2)
         return False
     except ControlAborted:
-        print("🚨 compile 被用戶緊急停止！")
-        raise  # 傳俾 caller — 唔當普通失敗重試（緊急停止要真正停止後續動作）
+        print("🚨 compile 被user緊急stop！")
+        raise  # 傳俾 caller — 唔當普通failed重試（緊急stop要真正stop後續動作）
     finally:
         # 如果 MetaEditor 係我哋開嘅 → 自動關閉（唔儲存 — 我哋冇改過源碼）
-        # 如果係用戶原本開住嘅 → 唔好閂（尊重用戶）
+        # 如果係user原本開住嘅 → 唔好閂（尊重user）
         try:
             if not was_running:
                 _t.sleep(1)
@@ -1113,7 +1115,7 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
                             parts = [p.strip().strip('"') for p in line.split(',')]
                             if len(parts) >= 2 and parts[0] == 'MetaEditor64.exe' and parts[1].isdigit():
                                 me_pid = int(parts[1])
-                                # timeout=5 防 blocking 卡死（connect 卡住 → 緊急停止都冇反應）
+                                # timeout=5 防 blocking 卡死（connect 卡住 → 緊急stop都冇反應）
                                 _App(backend='win32').connect(process=me_pid, timeout=5).window(
                                     class_name='MetaQuotes::MetaEditor::5.00').close()
                                 break
@@ -1125,7 +1127,7 @@ def _compile_via_gui(mq5_path, ex5_path, max_retries=3):
         except Exception:
             pass
         try:
-            release()  # 關警告視窗 + 清 lock
+            release()  # 關warning視窗 + 清 lock
         except Exception:
             pass
 
@@ -1137,7 +1139,7 @@ _deploy_queue = queue.Queue(maxsize=50)  # deploy 指令 queue（single worker �
 
 def _deploy_worker_loop():
     """永遠行緊嘅 deploy worker：攞指令 → process_deploy（唔 block 主 loop）"""
-    _last_ea_time = {}  # 🚨 2026-08-31 FIX（#152 雙保險重複）：同一 EA 60 秒內只處理一次（emit+poll 雙 cmd → 兩個 file → 雙重部署）
+    _last_ea_time = {}  # 🚨 2026-08-31 FIX（#152 雙保險重複）：同一 EA 60 秒內只處理一次（emit+poll 雙 cmd → 兩個 file → 雙重deploy）
     while True:
         try:
             fp = _deploy_queue.get()
@@ -1151,7 +1153,7 @@ def _deploy_worker_loop():
                 _ea_fp = _dd_fp.get('ea_name', '')
                 _now_fp = time.time()
                 if _ea_fp and _now_fp - _last_ea_time.get(_ea_fp, 0) < 60:
-                    print(f"   ⏭️ [WATCHER] {_ea_fp} 60 秒內已部署過（#152 dedupe）— 跳過重複 cmd: {os.path.basename(fp)}")
+                    print(f"   ⏭️ [WATCHER] {_ea_fp} 60 秒內已deploy過（#152 dedupe）— 跳過重複 cmd: {os.path.basename(fp)}")
                     sys.stdout.flush()
                     # 刪重複 cmd（唔留殘留）
                     try:
@@ -1165,7 +1167,7 @@ def _deploy_worker_loop():
                 pass
             print(f"\n📥 [WATCHER] Deploy worker: {os.path.basename(fp)}")
             sys.stdout.flush()
-            # 🚨 2026-08-10：處理前檢查 .ex5 存在（唔存在 skip + 刪 — 唔好 auto_attach 失敗循環）
+            # 🚨 2026-08-10：處理前檢查 .ex5 exists（not exist skip + 刪 — 唔好 auto_attach failed循環）
             try:
                 with open(fp, 'r', encoding='utf-8') as f:
                     _dd = json.load(f)
@@ -1178,9 +1180,9 @@ def _deploy_worker_loop():
                         _found = True
                         break
                 if not _found:
-                    # 🚨 2026-08-27 FIX：.ex5 唔存在（可能剷除時刪咗）→ 自動 compile（metaeditor CLI）
-                    # 之前直接 skip — 用戶剷除後再部署同一 EA 就永遠部署唔到
-                    print(f"   ⚠️ {_ea}.ex5 唔存在 — 嘗試自動 compile...")
+                    # 🚨 2026-08-27 FIX：.ex5 not exist（可能remove時刪咗）→ 自動 compile（metaeditor CLI）
+                    # before直接 skip — userremove後再deploy同一 EA 就永遠deploy唔到
+                    print(f"   ⚠️ {_ea}.ex5 not exist — 嘗試自動 compile...")
                     _compiled = False
                     try:
                         _me_dir = r'C:\Program Files\MetaTrader 5\metaeditor64.exe'
@@ -1194,7 +1196,7 @@ def _deploy_worker_loop():
                             _log_p = os.path.join(os.path.dirname(_mq5_p), f'_cli_compile_{_ea}.log')
                             subprocess.run([_me_dir, f'/compile:{_mq5_p}', f'/log:{_log_p}'], timeout=60)
                             time.sleep(2)
-                            # 🚨 2026-08-27 FIX：compile 完即刻關 MetaEditor（唔關 → 佢監察 Experts 目錄 → 見 .mq5 變化 → 彈一堆「外部修改」dialog）
+                            # 🚨 2026-08-27 FIX：compile 完immediately關 MetaEditor（唔關 → 佢監察 Experts dir → 見 .mq5 變化 → 彈一堆「外部修改」dialog）
                             try:
                                 subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
                             except Exception:
@@ -1204,16 +1206,16 @@ def _deploy_worker_loop():
                                     _compiled = True
                                     break
                     except Exception as _e_cmp:
-                        print(f"   ⚠️ 自動 compile 失敗: {_e_cmp}")
+                        print(f"   ⚠️ 自動 compile failed: {_e_cmp}")
                     if not _compiled:
-                        print(f"   ⚠️ {_ea}.ex5 自動 compile 後仍然唔存在（skip — 防止失敗循環）")
+                        print(f"   ⚠️ {_ea}.ex5 自動 compile 後仍然not exist（skip — 防止failed循環）")
                         try:
                             os.remove(fp)
                         except Exception:
                             pass
                         continue
                     else:
-                        print(f"   ✅ 自動 compile 成功: {_ea}.ex5")
+                        print(f"   ✅ 自動 compile success: {_ea}.ex5")
             except Exception:
                 pass
             process_deploy(fp)
@@ -1223,20 +1225,20 @@ def _deploy_worker_loop():
 
 
 def process_pause_cmd(fp):
-    """真暫停：處理 pause_cmd（移除圖表 EA — auto_attach --remove）
-    網頁撳「暫停」→ server 寫 pause_cmd → watcher 執行移除"""
+    """真pause：處理 pause_cmd（remove圖表 EA — auto_attach --remove）
+    網頁撳「pause」→ server 寫 pause_cmd → watcher 執行remove"""
     try:
         with open(fp, 'r', encoding='utf-8') as f:
             data = json.load(f)
         ea_name = data.get('ea_name', '')
-        action = data.get('action', 'pause')  # 🚨 2026-08-14：pause=暫停 / delete=刪除（文字唔同 — 用戶投訴「刪除顯示暫停」）
+        action = data.get('action', 'pause')  # 🚨 2026-08-14：pause=pause / delete=delete（文字唔同 — user投訴「delete顯示pause」）
         if not ea_name:
             os.remove(fp)
             return
-        _act_word = '暫停' if action != 'delete' else '刪除'
-        print(f"⏸️ [WATCHER] {_act_word} {ea_name}（移除圖表 EA）...")
+        _act_word = 'pause' if action != 'delete' else 'delete'
+        print(f"⏸️ [WATCHER] {_act_word} {ea_name}（remove圖表 EA）...")
         sys.stdout.flush()
-        # 🚨 2026-08-14 FIX：暫停/刪除用唔同字眼（之前統一「暫停」— 刪除顯示錯）
+        # 🚨 2026-08-14 FIX：pause/delete用唔同字眼（before統一「pause」— delete顯示錯）
         try:
             import json as _jp
             _adir = os.path.dirname(os.path.abspath(__file__))
@@ -1244,23 +1246,23 @@ def process_pause_cmd(fp):
                 _f.write(f'{_act_word} {ea_name}')
             _sf = os.path.join(_adir, '.ai_control.steps')
             if action == 'delete':
-                # 刪除流程（完整刪除 — 檔案+設定）
-                _old = [{'text': f'開始刪除 {ea_name}', 'status': 'doing'},
-                        {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
-                        {'text': '移除圖表 EA（停止交易）', 'status': 'pending'},
-                        {'text': '完成刪除', 'status': 'pending'}]
+                # delete流程（完整delete — file+設定）
+                _old = [{'text': f'startdelete {ea_name}', 'status': 'doing'},
+                        {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
+                        {'text': 'remove圖表 EA（stop交易）', 'status': 'pending'},
+                        {'text': 'donedelete', 'status': 'pending'}]
             else:
-                # 暫停流程（保留配置）
-                _old = [{'text': f'開始暫停 {ea_name}', 'status': 'doing'},
-                        {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
-                        {'text': '移除圖表 EA（停止交易）', 'status': 'pending'},
-                        {'text': '完成暫停（配置保留 — 可隨時恢復）', 'status': 'pending'}]
+                # pause流程（保留配置）
+                _old = [{'text': f'startpause {ea_name}', 'status': 'doing'},
+                        {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
+                        {'text': 'remove圖表 EA（stop交易）', 'status': 'pending'},
+                        {'text': 'donepause（配置保留 — 可隨時恢復）', 'status': 'pending'}]
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _jp.dump(_old, _f2, ensure_ascii=False)
         except Exception:
             pass
 
-        # 🚨 2026-08-12：真逐步（每步延遲 — 網頁捕到「進行中」— 用戶要求「成個過程好似活動記錄」）
+        # 🚨 2026-08-12：真逐步（每步延遲 — 網頁捕到「in progress」— user要求「成個過程好似活動記錄」）
         def _prog_steps(done_texts, doing_text=None):
             """逐步更新 steps：指定 steps done + 可選下一個 doing"""
             try:
@@ -1278,12 +1280,12 @@ def process_pause_cmd(fp):
                     _jp3.dump(_st3, _f3, ensure_ascii=False)
             except Exception:
                 pass
-            time.sleep(0.8)  # 每步停留（網頁 poll 捕到「進行中」）
+            time.sleep(0.8)  # 每步停留（網頁 poll 捕到「in progress」）
 
-        # 🚨 2026-08-12 FIX：步驟順序反映實際動作 — auto_attach --remove（移除圖表）期間顯示「移除圖表 EA 進行中」（唔係「檢查圖表」）
-        _prog_steps([f'開始暫停 {ea_name}'], '移除圖表 EA（停止交易）')
+        # 🚨 2026-08-12 FIX：步驟順序反映實際動作 — auto_attach --remove（remove圖表）期間顯示「remove圖表 EA in progress」（唔係「檢查圖表」）
+        _prog_steps([f'startpause {ea_name}'], 'remove圖表 EA（stop交易）')
         try:
-            # 🚨 2026-08-21 FIX：_PYEXE 未定義（run_auto_attach 入面先定義 — process_pause_cmd 唔同 scope）→ NameError → 剷除卡住
+            # 🚨 2026-08-21 FIX：_PYEXE 未定義（run_auto_attach 入面先定義 — process_pause_cmd 唔同 scope）→ NameError → remove卡住
             _PYEXE = _PY_EXE
             result = subprocess.run(
                 [_PYEXE, AUTO_ATTACH_SCRIPT, '--ea', ea_name, '--remove'],
@@ -1293,30 +1295,30 @@ def process_pause_cmd(fp):
             print(f"   Exit: {result.returncode}")
             for line in result.stdout.split('\n'):
                 ls = line.strip()
-                if any(kw in ls for kw in ['✅', '❌', '⚠️', 'ℹ️', '移除', '暫停']):
+                if any(kw in ls for kw in ['✅', '❌', '⚠️', 'ℹ️', 'remove', 'pause']):
                     print(f"   {ls}")
         except subprocess.TimeoutExpired:
-            print(f"   ⚠️ 暫停 {ea_name} timeout")
-        # 🚨 2026-08-22 FIX（用戶實測「刪除咗但圖表仲掛住 EA」— 剷除假成功）：
-        # 之前冇 check auto_attach returncode/output → 剷除失敗都照寫「已暫停」假成功
-        # → 而家 check：returncode + output 有冇「✅ 暫停/剷除完成」— 冇 → 寫「剷除失敗」+ 通知用戶
+            print(f"   ⚠️ pause {ea_name} timeout")
+        # 🚨 2026-08-22 FIX（user實測「delete咗但圖表仲掛住 EA」— remove假success）：
+        # before冇 check auto_attach returncode/output → removefailed都照寫「已pause」假success
+        # → now check：returncode + output 有冇「✅ pause/removedone」— 冇 → 寫「removefailed」+ 通知user
         _remove_ok = False
         try:
             if 'result' in dir() and result.returncode == 0:
                 _out_txt = (result.stdout or '')
-                if '已暫停' in _out_txt or '剷除' in _out_txt or '完成' in _out_txt or '移除成功' in _out_txt or '唔使移除' in _out_txt:
+                if '已pause' in _out_txt or 'remove' in _out_txt or 'done' in _out_txt or 'removesuccess' in _out_txt or '唔使remove' in _out_txt:
                     _remove_ok = True
-                elif '未能確認移除' in _out_txt or '失敗' in _out_txt:
+                elif 'cannot confirm removal' in _out_txt or 'failed' in _out_txt:
                     _remove_ok = False
                 else:
-                    # 冇明確成功/失敗 — 用 exit code 0 當成功（但 warn）
+                    # 冇明確success/failed — 用 exit code 0 當success（但 warn）
                     _remove_ok = True
-                    print(f"   ⚠️ 暫停 {ea_name} output 冇明確成功標記（exit 0 — 當成功）")
+                    print(f"   ⚠️ pause {ea_name} output 冇明確success標記（exit 0 — 當success）")
         except Exception:
             _remove_ok = False
-        # 🚨 2026-08-12：逐步（auto_attach 完成 → 移除 done → 刪檔 doing → …）
-        _prog_steps(['移除圖表 EA'], '刪除本機檔案（.mq5/.ex5）')
-        # 🚨 2026-08-27 FIX：action=delete → 實際刪除本機 .mq5/.ex5（用戶要求「剷除 = 完整移除」— 之前只刪 config + 移除 chart — 檔案留低！）
+        # 🚨 2026-08-12：逐步（auto_attach done → remove done → 刪檔 doing → …）
+        _prog_steps(['remove圖表 EA'], 'deletelocalfile（.mq5/.ex5）')
+        # 🚨 2026-08-27 FIX：action=delete → 實際deletelocal .mq5/.ex5（user要求「remove = 完整remove」— before只刪 config + remove chart — file留低！）
         if action == 'delete' and _remove_ok:
             try:
                 _exp_dir_del = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -1325,30 +1327,30 @@ def process_pause_cmd(fp):
                         _fp_del = os.path.join(_exp_dir_del, _d_del, 'MQL5', 'Experts', ea_name + _ext_del)
                         if os.path.isfile(_fp_del):
                             os.remove(_fp_del)
-                            print(f"   ✅ 已刪除本機檔案: {os.path.basename(_fp_del)}")
+                            print(f"   ✅ 已deletelocalfile: {os.path.basename(_fp_del)}")
             except Exception as _e_del:
-                print(f"   ⚠️ 刪除本機檔案失敗: {_e_del}")
+                print(f"   ⚠️ deletelocalfilefailed: {_e_del}")
             sys.stdout.flush()
-        _prog_steps(['刪除本機檔案（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
-        _prog_steps(['清理設定並釋放快捷鍵'], '完成刪除')
-        _prog_steps(['完成刪除'])
-        # 🚨 2026-08-21 FIX（用戶實測「剷除成功但 MT5 Navigator 仲殘留 — 要自己 refresh」）：
-        # 剷除完成 → 觸發 refresh Navigator。⚠️ v0.10.38 用 _refresh_queue.put() 會疊加「Experts 目錄變化」觸發
-        # → refresh 兩次（第二次又撳右鍵做多餘動作）→ 用戶實測「第一次成功之後第二次又撳右鍵」
-        # → 唔好 put — 剷除刪 .mq5/.ex5 已經觸發 file-watch「Experts 目錄變化 → 自動 refresh Navigator」
+        _prog_steps(['deletelocalfile（.mq5/.ex5）'], '清理設定並釋放快捷鍵')
+        _prog_steps(['清理設定並釋放快捷鍵'], 'donedelete')
+        _prog_steps(['donedelete'])
+        # 🚨 2026-08-21 FIX（user實測「removesuccess但 MT5 Navigator 仲殘留 — 要自己 refresh」）：
+        # removedone → 觸發 refresh Navigator。⚠️ v0.10.38 用 _refresh_queue.put() 會疊加「Experts dir變化」觸發
+        # → refresh 兩次（第二次又撳右鍵做多餘動作）→ user實測「第一次successafter第二次又撳右鍵」
+        # → 唔好 put — remove刪 .mq5/.ex5 已經觸發 file-watch「Experts dir變化 → 自動 refresh Navigator」
         # 通知 server
         try:
             if _remove_ok:
                 _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
-                                      'message': f'{ea_name} 已暫停（EA 已從圖表移除）', 'source': 'watcher'})
-                print(f"   ✅ 暫停 {ea_name} 成功")
+                                      'message': f'{ea_name} 已pause（EA 已從圖表remove）', 'source': 'watcher'})
+                print(f"   ✅ pause {ea_name} success")
             else:
                 _append_activity_log({'time': time.time(), 'action': 'pause_result', 'ea': ea_name,
-                                      'message': f'❌ {ea_name} 剷除失敗（EA 可能仲掛住圖表 — 請檢查 MT5 或再試）', 'source': 'watcher'})
-                print(f"   ❌ 暫停 {ea_name} 失敗（auto_attach 冇確認移除）")
+                                      'message': f'❌ {ea_name} removefailed（EA 可能仲掛住圖表 — 請檢查 MT5 或再試）', 'source': 'watcher'})
+                print(f"   ❌ pause {ea_name} failed（auto_attach 冇確認remove）")
         except Exception:
             pass
-        # 🚨 2026-08-10：刪除完成 → 步驟全部 done（累積更新）
+        # 🚨 2026-08-10：deletedone → 步驟全部 done（累積更新）
         try:
             import json as _jp2
             _sf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
@@ -1365,7 +1367,7 @@ def process_pause_cmd(fp):
                     _s['status'] = 'done'
             with open(_sf2, 'w', encoding='utf-8') as _f:
                 _jp2.dump(_old2, _f, ensure_ascii=False)
-            # 🚨 2026-08-28 FIX（網頁版警告視窗卡「剷除緊」— 同編譯完成一樣）：同步埋開發目錄 steps
+            # 🚨 2026-08-28 FIX（網頁版warning視窗卡「remove緊」— 同編譯done一樣）：同步埋開發dir steps
             try:
                 import os as _os3
                 _cand3 = [
@@ -1391,7 +1393,7 @@ def process_pause_cmd(fp):
 
 
 def main():
-    # 單實例守衛：如果已有另一個 watcher 行緊就退出（防兩個 watcher 搶滑鼠/彈兩個視窗）
+    # single-instance guard：如果已有另一個 watcher 行緊就退出（防兩個 watcher 搶滑鼠/彈兩個視窗）
     if os.path.exists(WATCHER_LOCK_FILE):
         try:
             with open(WATCHER_LOCK_FILE) as f:
@@ -1405,7 +1407,7 @@ def main():
                     capture_output=True, encoding='utf-8', errors='replace', timeout=5  # ⚠️ GBK 修
                 ).stdout
                 if 'deploy_watcher' in out and str(old_pid) not in ('', '0'):
-                    print(f"⚠️ 已有 watcher 行緊 (PID {old_pid}) — 退出（單實例守衛）")
+                    print(f"⚠️ 已有 watcher 行緊 (PID {old_pid}) — 退出（single-instance guard）")
                     sys.exit(0)
         except Exception:
             pass
@@ -1422,30 +1424,30 @@ def main():
     print("  Starting watcher...")
     sys.stdout.flush()
 
-    # 預先起動警告視窗（常駐 — 建好隱藏）— 動作開始即刻顯示，唔會「動作完先彈出」（Bug #71）
+    # 預先起動warning視窗（常駐 — 建好隱藏）— 動作startimmediately顯示，唔會「動作完先彈出」（Bug #71）
     try:
         from control_guard import init_window
         ok = init_window()
-        print(f"  {'✓' if ok else '⚠️'} AI 控制警告視窗已預先就緒{'（隱藏）' if ok else '（建立失敗 — 用時先建）'}")
+        print(f"  {'✓' if ok else '⚠️'} AI 控制warning視窗已預先就緒{'（隱藏）' if ok else '（createfailed — 用時先建）'}")
         sys.stdout.flush()
     except Exception as e:
-        print(f"  ⚠️ 警告視窗預建失敗（唔影響功能）: {e}")
+        print(f"  ⚠️ warning視窗預建failed（唔影響功能）: {e}")
 
-    # 啟動 Navigator refresh worker（single worker + queue — 永遠行緊，等訊號）
+    # start Navigator refresh worker（single worker + queue — 永遠行緊，等訊號）
     try:
         threading.Thread(target=_refresh_worker_loop, daemon=True).start()
-        print("  ✓ Navigator refresh worker 已啟動")
+        print("  ✓ Navigator refresh worker 已start")
         sys.stdout.flush()
     except Exception as e:
-        print(f"  ⚠️ refresh worker 啟動失敗: {e}")
+        print(f"  ⚠️ refresh worker startfailed: {e}")
 
-    # 啟動 deploy worker（single worker — auto_attach 唔可以 block 主 loop）
+    # start deploy worker（single worker — auto_attach 唔可以 block 主 loop）
     try:
         threading.Thread(target=_deploy_worker_loop, daemon=True).start()
-        print("  ✓ Deploy worker 已啟動")
+        print("  ✓ Deploy worker 已start")
         sys.stdout.flush()
     except Exception as e:
-        print(f"  ⚠️ deploy worker 啟動失敗: {e}")
+        print(f"  ⚠️ deploy worker startfailed: {e}")
     
     # Write lock file to show we're alive
     try:
@@ -1468,7 +1470,7 @@ def main():
                 print("🔄 [WATCHER] deploy worker 已重生（死咗自動開返）")
                 sys.stdout.flush()
         except Exception as e:
-            print(f"   ⚠️ worker 重生失敗: {e}")
+            print(f"   ⚠️ worker 重生failed: {e}")
     
     while True:
         try:
@@ -1480,7 +1482,7 @@ def main():
                 processed.add(fp)
                 print(f"\n📥 [WATCHER] New deploy command: {os.path.basename(fp)}")
                 sys.stdout.flush()
-                # 🚨 2026-08-10：put 唔可以阻塞（queue 滿 → 主 loop 卡死 → 新 deploy_cmd 唔處理 — 部署冇反應）
+                # 🚨 2026-08-10：put 唔可以阻塞（queue 滿 → 主 loop 卡死 → 新 deploy_cmd 唔處理 — deploy冇反應）
                 try:
                     _deploy_queue.put(fp, timeout=2)
                 except queue.Full:
@@ -1494,7 +1496,7 @@ def main():
                 sys.stdout.flush()
                 process_compile_cmd(ccmd)
             
-            # ─── Pause 指令（真暫停 — 移除圖表 EA）───
+            # ─── Pause 指令（真pause — remove圖表 EA）───
             try:
                 pause_cmds = sorted(glob.glob(os.path.join(COMMON_FILES, 'pause_cmd_*.json')), key=os.path.getmtime)
                 for pcmd in pause_cmds:
@@ -1507,12 +1509,12 @@ def main():
             # Clean processed set (keep only files that still exist)
             processed = {p for p in processed if os.path.exists(p)}
             
-            # ─── Experts 目錄監控：EA 檔案新增/刪除 → 自動 refresh Navigator ───
+            # ─── Experts dir監控：EA file新增/delete → 自動 refresh Navigator ───
             check_experts_changes()
             
-            # ─── Controller 自動恢復（系統檔案 — 心跳冇 → 自動重新部署）───
-            # Controller 係網頁控制中樞 — 一定要運行 — 心跳停咗就寫 deploy_cmd 重新附加
-            # ⚠️ 開關：agent/.controller_recover 存在先恢復（部署成功前保持關 — 唔會無限循環）
+            # ─── Controller 自動恢復（系統file — 心跳冇 → 自動重新deploy）───
+            # Controller 係網頁控制中樞 — 一定要running — 心跳停咗就寫 deploy_cmd 重新attach
+            # ⚠️ 開關：agent/.controller_recover exists先恢復（deploy success前保持關 — 唔會無限循環）
             _recover_flag = os.path.join(os.path.dirname(__file__), '.controller_recover')
             if os.path.isfile(_recover_flag):
                 try:
@@ -1529,7 +1531,7 @@ def main():
                             pass
                     if not _controller_alive:
                         # Controller 心跳冇 — 但係 ⚠️ 只有 MT5 開住先恢復（MT5 死咗就唔好試 —
-                        # 之前無限循環：寫 deploy_cmd → auto_attach → 彈警告窗 → 殺 MT5 → 又寫）
+                        # before無限循環：寫 deploy_cmd → auto_attach → 彈warning窗 → 殺 MT5 → 又寫）
                         _mt5_running = False
                         try:
                             import subprocess as _sp2
@@ -1544,18 +1546,18 @@ def main():
                             # 檢查有冇 pending deploy_cmd（避免重複寫）
                             _has_pending = any(f.startswith('deploy_cmd_Controller') for f in os.listdir(_cf)) if os.path.isdir(_cf) else False
                             if not _has_pending:
-                                # 寫 deploy_cmd（auto_attach 重新附加 Controller — 保持系統中樞運行）
+                                # 寫 deploy_cmd（auto_attach 重新attach Controller — 保持系統中樞running）
                                 _dp = os.path.join(_cf, f'deploy_cmd_Controller_{int(time.time())}.json')
                                 with open(_dp, 'w', encoding='utf-8') as _f:
                                     json.dump({'ea_name': 'Controller', 'symbol': 'EURUSD', 'tf': 'H1',
                                                'magic': '240701', 'lot': '0.01', 'source': 'watcher_auto_recover'}, _f, ensure_ascii=False)
-                                print("🔄 [WATCHER] Controller 心跳停咗（MT5 開住）— 自動重新部署（系統中樞恢復）")
+                                print("🔄 [WATCHER] Controller 心跳停咗（MT5 開住）— 自動重新deploy（系統中樞恢復）")
                                 sys.stdout.flush()
                 except Exception as _ce:
                     print(f"   ⚠️ Controller auto-recover error: {_ce}")
             
-            # ─── 手動部署監測（Controller）：用戶 double-click 後 Properties dialog 彈出 →
-            # 自動撳「確定」（唔使佢再操作）— 標記喺 server 部署 Controller 時寫
+            # ─── 手動deploy監測（Controller）：user double-click 後 Properties dialog 彈出 →
+            # 自動撳「確定」（唔使佢再操作）— 標記喺 server deploy Controller 時寫
             try:
                 _pending_fp = os.path.join(os.path.dirname(__file__), '.manual_deploy_pending')
                 if os.path.isfile(_pending_fp):
@@ -1580,7 +1582,7 @@ def main():
                                             _bt2 = _b2.window_text()
                                             if '確定' in _bt2 or 'OK' in _bt2:
                                                 _b2.click()
-                                                print("✅ [WATCHER] 偵測到 Controller Properties — 已自動撳「確定」（附加完成）")
+                                                print("✅ [WATCHER] 偵測到 Controller Properties — 已自動撳「確定」（attachdone）")
                                                 sys.stdout.flush()
                                                 try:
                                                     os.remove(_pending_fp)

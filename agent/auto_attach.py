@@ -12,6 +12,8 @@ MT5 EA Auto-Attach — 可靠嘅 GUI 自動化方案
 """
 import os
 import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+import sys
 import time
 import struct
 import subprocess
@@ -24,7 +26,7 @@ TPL_DIR = os.path.join(MT5_DATA, 'Profiles', 'Templates')
 COMMON_FILES = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                             'Common', 'Files')
 
-# 🚨 2026-08-28：部署開始時間（log 驗證只認部署開始之後嘅 loaded — 修假成功）
+# [ALERT] 2026-08-28：deploystart時間（log verify只認deploystartafter嘅 loaded — 修假success）
 _last_deploy_start_ts = 0
 
 # MT5 timeframe codes for .tpl period_size
@@ -47,7 +49,7 @@ def find_mt5_pid():
 
 
 def _mt5_alive():
-    """🚨 2026-08-20（部署流程檢測系統）：terminal64.exe 有冇運行（tasklist — 唔靠 psutil cached）"""
+    """[ALERT] 2026-08-20（deploy流程檢測系統）：terminal64.exe 有冇running（tasklist — 唔靠 psutil cached）"""
     try:
         _out = subprocess.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH',
                               shell=True, capture_output=True, timeout=10)
@@ -57,27 +59,27 @@ def _mt5_alive():
 
 
 def _wait_until(check_fn, timeout=60, desc='', interval=2):
-    """🚨 2026-08-20（部署流程檢測系統 — docs/deployment-checkpoint-system.md）
-    poll check_fn 直到 True 或者 timeout — 每步驗證 gate（成功先落下一步）
-    驗證要「等」：唔可以即刻 check（資料未就緒 → 假失敗）——poll 到成功或者 timeout
+    """[ALERT] 2026-08-20（deploy流程檢測系統 — docs/deployment-checkpoint-system.md）
+    poll check_fn 直到 True 或者 timeout — 每步驗證 gate（success先落next step）
+    驗證要「等」：唔可以immediately check（資料未就緒 → 假failed）——poll 到success或者 timeout
     返回：check_fn 嘅真值（bool check → True；攞值 check（如 PID）→ 嗰個值）"""
     start = time.time()
     while time.time() - start < timeout:
         try:
             _res = check_fn()
             if _res:
-                print(f"✅ {desc}")
+                print(f"[OK] {desc}")
                 return _res
         except Exception:
             pass
         time.sleep(interval)
-    print(f"❌ {desc} — timeout {timeout}s")
+    print(f"[FAIL] {desc} — timeout {timeout}s")
     return False
 
 
 def wait_for_mt5(timeout=30):
-    """等 MT5 啟動完成
-    ⚠️ 用 backend='win32'（快）+ 主視窗存在檢查 — 唔可以用 uia（MT5 大 UI connect 超慢 → 卡 60 秒）"""
+    """等 MT5 startdone
+    [WARN] 用 backend='win32'（快）+ 主視窗exists檢查 — 唔可以用 uia（MT5 大 UI connect 超慢 → 卡 60 秒）"""
     start = time.time()
     while time.time() - start < timeout:
         pid = find_mt5_pid()
@@ -96,15 +98,15 @@ def wait_for_mt5(timeout=30):
 
 def do_restart_mt5():
     """重啟 MT5（確保 Navigator refresh）"""
-    # 🚨 2026-08-10：重啟期間顯示警告視窗（用戶要知道操作緊 — 55 秒）
+    # [ALERT] 2026-08-10：重啟期間顯示warning視窗（user要知道操作緊 — 55 秒）
     try:
         _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
         with open(_rf, 'w', encoding='utf-8') as _f:
-            _f.write('🔄 重啟 MT5 中（快捷鍵載入）— 請稍候約 1 分鐘')
+            _f.write('[RETRY] 重啟 MT5 中（快捷鍵載入）— 請稍候約 1 分鐘')
         _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
         try:
             import json as _j2
-            # 🚨 2026-08-12 FIX：累積模式（保留現有 steps — 部署入口已寫 4 步 — 唔好覆寫走）
+            # [ALERT] 2026-08-12 FIX：累積模式（保留現有 steps — deploy入口已寫 4 步 — 唔好覆寫走）
             _cur_rst = []
             try:
                 if os.path.isfile(_sf):
@@ -113,12 +115,12 @@ def do_restart_mt5():
                         _cur_rst = []
             except Exception:
                 _cur_rst = []
-            _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != '等待操作開始…']
-            # 🚨 2026-08-12 FIX：重啟 3 步放最前（之前 append 尾 → 步驟順序「部署 4 步 + 重啟 3 步」亂 — 重啟應該喺部署前）
+            _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != 'wait操作start…']
+            # [ALERT] 2026-08-12 FIX：重啟 3 步放最前（before append 尾 → 步驟順序「deploy 4 步 + 重啟 3 步」亂 — 重啟應該喺deploy前）
             _RESTART3 = [{"text": "關閉 MT5", "status": "doing"},
                          {"text": "載入快捷鍵設定", "status": "pending"},
-                         {"text": "重新啟動 MT5", "status": "pending"}]
-            _cur_rst = [s for s in _cur_rst if s.get('text') not in ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5')]
+                         {"text": "重新start MT5", "status": "pending"}]
+            _cur_rst = [s for s in _cur_rst if s.get('text') not in ('關閉 MT5', '載入快捷鍵設定', '重新start MT5')]
             _cur_rst = _RESTART3 + _cur_rst
             with open(_sf, 'w', encoding='utf-8') as _f2:
                 _j2.dump(_cur_rst, _f2, ensure_ascii=False)
@@ -129,10 +131,10 @@ def do_restart_mt5():
     import psutil
     import ctypes as _ct
     
-    # 🚨 2026-08-19 FIX：restart 前唔好「關閉全部圖表」— 否則其他已掛 EA（EMA_Cross 等）chart 被關 → EA 消失
+    # [ALERT] 2026-08-19 FIX：restart 前唔好「關閉全部圖表」— 否則其他已掛 EA（EMA_Cross 等）chart 被關 → EA 消失
     # MT5 restart 會自然 save + restore chart（profile）→ 保留其他 chart + EA；同時 reload hotkeys（新 EA 熱鍵生效）
-    # （之前 v0.9.71 為咗「部署唔累積 chart」而關晒 — 但搞死其他已掛 EA — 改為保留）
-    # 🚨 2026-08-19 FIX2：唔可以用 proc.kill() 強制殺 — MT5 冇機會 save chart profile → 開機唔 restore 其他 EA（「restart 後其他 EA 移出圖表」）
+    # （before v0.9.71 為咗「deploy唔累積 chart」而關晒 — 但搞死其他已掛 EA — 改為保留）
+    # [ALERT] 2026-08-19 FIX2：唔可以用 proc.kill() 強制殺 — MT5 冇機會 save chart profile → 開機唔 restore 其他 EA（「restart 後其他 EA 移出圖表」）
     # → 用「正常關閉」（WM_CLOSE 俾主窗口）令 MT5 save profile → 開機 restore chart + EA
     try:
         import subprocess as _sp3
@@ -148,15 +150,15 @@ def do_restart_mt5():
             _app3 = _App3(backend='win32').connect(process=_pid3, timeout=8)
             _main3 = _app3.window(class_name_re='MetaQuotes::MetaTrader')
             _ct.windll.user32.PostMessageW(_ct.c_void_p(int(_main3.element_info.handle)), 0x0010, 0, 0)  # WM_CLOSE — 正常關閉（save profile）
-            print("📋 MT5 正常關閉中（save chart profile）...")
+            print("[CLIP] MT5 正常關閉中（save chart profile）...")
             time.sleep(8)
             # 如果仲未退（可能彈對話框）→ 用 taskkill 兜底（萬一 hang）
             _alive3 = _sp3.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
             if 'terminal64.exe' in _alive3.stdout.decode('utf-8', errors='replace'):
-                print("⚠️ MT5 未退出（可能彈窗）— 等 5 秒再試，唔強制 kill（保護 profile）")
+                print("[WARN] MT5 未退出（可能彈窗）— 等 5 秒再試，唔強制 kill（保護 profile）")
                 time.sleep(5)
     except Exception as _e3:
-        print(f"⚠️ MT5 正常關閉失敗（{_e3}）— 用強制 kill 兜底")
+        print(f"[WARN] MT5 正常關閉failed（{_e3}）— 用強制 kill 兜底")
         for proc in psutil.process_iter(['pid', 'name']):
             if proc.info['name'] and 'terminal64' in proc.info['name'].lower():
                 proc.kill()
@@ -168,16 +170,16 @@ def do_restart_mt5():
     # Wait for ready
     pid = wait_for_mt5(timeout=90)
     if pid:
-        # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：MT5 重啟後檢查 UAC/授權窗口
-        # （MT5 更新/異常 → 彈「Client Terminal AVX2 授權」→ 唔處理會擋住之後部署）
+        # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：MT5 重啟後檢查 UAC/授權窗口
+        # （MT5 更新/exception → 彈「Client Terminal AVX2 授權」→ 唔處理會擋住afterdeploy）
         try:
             if not _detect_and_handle_uac('MT5 重啟後 UAC 檢查', max_wait=30):
-                print("⚠️ MT5 重啟後有 UAC 授權窗口未處理（可能係 MT5 更新要求授權）— 等用戶手動處理")
+                print("[WARN] MT5 重啟後有 UAC 授權窗口未處理（可能係 MT5 更新要求授權）— 等user手動處理")
         except Exception:
             pass
         # Extra wait for Navigator to fully load + refresh
         time.sleep(10)
-        # 🚨 2026-08-12 FIX：重啟完成 → 唔好寫「等待操作開始」覆寫（保留現有 steps — 更新重啟 3 步 done — 完整流程唔消失）
+        # [ALERT] 2026-08-12 FIX：重啟done → 唔好寫「wait操作start」覆寫（保留現有 steps — 更新重啟 3 步 done — 完整流程唔消失）
         try:
             _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
             if os.path.exists(_rf):
@@ -193,17 +195,17 @@ def do_restart_mt5():
                 except Exception:
                     _cur_rst2 = []
                 for _s in _cur_rst2:
-                    if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5'):
+                    if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入快捷鍵設定', '重新start MT5'):
                         _s['status'] = 'done'
                 if _cur_rst2:
                     with open(_sf, 'w', encoding='utf-8') as _f3:
                         _j3.dump(_cur_rst2, _f3, ensure_ascii=False)
         except Exception:
             pass
-        print(f"✅ MT5 restarted, PID={pid}")
+        print(f"[OK] MT5 restarted, PID={pid}")
         return pid
     else:
-        print("❌ MT5 failed to start")
+        print("[FAIL] MT5 failed to start")
         return None
 
 
@@ -310,7 +312,7 @@ def generate_template(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
         f.write(b'\xff\xfe')  # UTF-16 LE BOM
         f.write(tpl_content.encode('utf-16-le'))
     
-    print(f"📋 Template saved: {tpl_path} ({os.path.getsize(tpl_path)} bytes)")
+    print(f"[CLIP] Template saved: {tpl_path} ({os.path.getsize(tpl_path)} bytes)")
     return tpl_path
 
 
@@ -347,10 +349,10 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
 
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：Navigator 附加前檢查 UAC/授權窗口
+    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：Navigator attach前檢查 UAC/授權窗口
     try:
-        if not _detect_and_handle_uac(f'Navigator 附加 {ea_name} UAC 檢查', max_wait=20):
-            print(f"⚠️ Navigator 附加 {ea_name}：UAC 授權窗口未處理")
+        if not _detect_and_handle_uac(f'Navigator attach {ea_name} UAC 檢查', max_wait=20):
+            print(f"[WARN] Navigator attach {ea_name}：UAC 授權窗口未處理")
     except Exception:
         pass
 
@@ -364,7 +366,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 pass  # No active desktop (background process)
             time.sleep(0.5)
         except Exception as e:
-            print(f"⚠️ win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")
             time.sleep(5)
             continue
         
@@ -377,13 +379,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         has_charts = mdi and len(mdi.children()) > 0
         
         if not has_charts:
-            print("📋 No chart open, opening new one...")
+            print("[CLIP] No chart open, opening new one...")
             send_keys('^n')
             time.sleep(1)
             send_keys('{ENTER}')
             time.sleep(3)
         else:
-            print(f"📋 Chart already open, skipping Ctrl+N...")
+            print(f"[CLIP] Chart already open, skipping Ctrl+N...")
         
         # Step 2: Open Navigator panel DIRECTLY via ShowWindow
         # Much more reliable than menu clicks or keyboard shortcuts
@@ -392,7 +394,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         
         # 搵 Navigator panel（包括浮動 MiniFrame「導航」— Bug: 浮動視窗係 top-level，
         # 唔喺主視窗 descendants → 要掃 MT5 process 所有 top-level（同 refresh_navigator Bug #47 一樣）
-        # ⚠️ 一定要用 app.windows()（只限 MT5 process）— 唔可以用 Desktop 掃全部 process（會掃到 MetaEditor/其他嘅 tree）
+        # [WARN] 一定要用 app.windows()（只限 MT5 process）— 唔可以用 Desktop 掃全部 process（會掃到 MetaEditor/其他嘅 tree）
         nav_panel = None
         _all_windows = []
         try:
@@ -419,24 +421,24 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             hwnd = nav_panel.element_info.handle
             user32.ShowWindow(ctypes.c_void_p(hwnd), 5)  # SW_SHOW
             time.sleep(1)
-            print(f"📋 Navigator panel shown via ShowWindow")
-            # Refresh Navigator: toggle hidden→shown 強制重新掃描 Experts 目錄
+            print(f"[CLIP] Navigator panel shown via ShowWindow")
+            # Refresh Navigator: toggle hidden→shown 強制重新掃描 Experts dir
             user32.ShowWindow(ctypes.c_void_p(hwnd), 0)  # SW_HIDE
             time.sleep(0.5)
             user32.ShowWindow(ctypes.c_void_p(hwnd), 5)  # SW_SHOW
             time.sleep(1.5)
-            print(f"🔄 Navigator refreshed (toggle)")
+            print(f"[RETRY] Navigator refreshed (toggle)")
         else:
             # Fallback: WM_COMMAND 32808 (Navigator toggle command ID)
-            print(f"📋 Navigator panel not found, trying WM_COMMAND...")
+            print(f"[CLIP] Navigator panel not found, trying WM_COMMAND...")
             user32.SendMessageW(ctypes.c_void_p(win.element_info.handle), 0x0111, 32808, 0)
             time.sleep(1.5)
         
         # Step 3: Find SysTreeView32 and verify it's visible
-        # ⚠️ 要掃所有 top-level（浮動 Navigator MiniFrame）— 唔可以淨掃主視窗 descendants
-        # ⚠️ 2026-08 驗證 rect：之前揀到錯 tree（rect (8,131) 但實際 Navigator 喺 (201,139)）
+        # [WARN] 要掃所有 top-level（浮動 Navigator MiniFrame）— 唔可以淨掃主視窗 descendants
+        # [WARN] 2026-08 驗證 rect：before揀到錯 tree（rect (8,131) 但實際 Navigator 喺 (201,139)）
         # → scan click 全部落桌面（double-click 開咗 TestAItest 記事本 ×3！）+ MT5 crash
-        # ⚠️ 2026-08-06 修：MT5 有兩個 tree（docked 細 + 浮動大）— 揀「最大」嗰個（浮動/主要 Navigator）
+        # [WARN] 2026-08-06 修：MT5 有兩個 tree（docked 細 + 浮動大）— 揀「最大」嗰個（浮動/主要 Navigator）
         tree_view = None
         _best_tree = None
         _best_area = 0
@@ -446,7 +448,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     if child.element_info.class_name == 'SysTreeView32':
                         try:
                             _tr = child.rectangle()
-                            # 驗證：tree 夠大 + 中心位置屬於 MT5（WindowFromPoint — 唔係就係錯 tree/隱藏 tree）
+                            # 驗證：tree 夠大 + 中心位置belongs to MT5（WindowFromPoint — 唔係就係錯 tree/隱藏 tree）
                             if _tr.width() > 50 and _tr.height() > 50:
                                 _cx = _tr.left + _tr.width() // 2
                                 _cy = _tr.top + _tr.height() // 2
@@ -462,12 +464,12 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator）
         
         if not tree_view:
-            print(f"⚠️ 搵唔到有效 TreeView（rect 驗證失敗 — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] not found有效 TreeView（rect verify failed — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
         
-        # 固定 Navigator 視窗（浮動 MiniFrame「導航」— 用戶移動過都要鎖定返左邊固定位置）
+        # 固定 Navigator 視窗（浮動 MiniFrame「導航」— user移動過都要鎖定返左邊固定位置）
         try:
             nav_hwnd = None
             for w in app.windows():
@@ -483,7 +485,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         except Exception:
             pass
         
-        # ⚠️ MT5 用 custom draw — is_visible() 唔可靠（tree 有正常 rect 但 WS_VISIBLE 唔 set）
+        # [WARN] MT5 用 custom draw — is_visible() 唔可靠（tree 有正常 rect 但 WS_VISIBLE 唔 set）
         # → 用 rect 判斷（有尺寸 + 喺螢幕內 = 當 visible）
         def _tree_visible(t):
             try:
@@ -493,7 +495,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 return False
 
         if not _tree_visible(tree_view):
-            print(f"⚠️ TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
             # Try WM_COMMAND as fallback
             user32.SendMessageW(ctypes.c_void_p(win.element_info.handle), 0x0111, 32808, 0)
             time.sleep(1.5)
@@ -509,13 +511,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 if tree_view:
                     break
             if not tree_view or not _tree_visible(tree_view):
-                print(f"⚠️ TreeView still not visible")
+                print(f"[WARN] TreeView still not visible")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
         
         tv_rect = tree_view.rectangle()
-        print(f"📋 TreeView rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
+        print(f"[CLIP] TreeView rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
         
         # Step 4: Navigate tree → Expand EA交易 → Select + EnsureVisible
         try:
@@ -525,7 +527,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             # MT5 Navigator language varies: 'EA交易', 'المستشارون المختصون', 'Expert Advisors', etc.
             # Use position (3rd child = index 2) as primary, text match as fallback
             children = root.children()
-            # ⚠️ 先 text match（語言唔同都搵到）— MT5 新版加咗「訂閱」folder，
+            # [WARN] 先 text match（語言唔同都found）— MT5 新版加咗「訂閱」folder，
             # EA交易 由 index 2 變 index 3 → 唔可以硬性用 index！
             for child in children:
                 try:
@@ -540,7 +542,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 ea_trading_node = children[2]
             
             if not ea_trading_node:
-                print(f"⚠️ EA交易 node not found (attempt {attempt+1}/{max_retries})")
+                print(f"[WARN] EA交易 node not found (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
@@ -554,7 +556,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     ea_node = ea
                     break
             
-            # ⚠️ 2026-08：web 配對嘅 EA 喺根 Experts 節點
+            # [WARN] 2026-08：web 配對嘅 EA 喺根 Experts 節點
             if not ea_node:
                 for sub in ea_trading_node.children():
                     try:
@@ -571,19 +573,19 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                         pass
             
             if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
+                print(f"[WARN] {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
             
-            print(f"🎯 Found {ea_name}, attaching via pyautogui double-click...")
+            print(f"[TARGET] Found {ea_name}, attaching via pyautogui double-click...")
             ea_node.select()
             time.sleep(0.3)
             ea_node.ensure_visible()
             time.sleep(0.5)
             
         except Exception as e:
-            print(f"⚠️ Tree navigation error: {e} (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] Tree navigation error: {e} (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
@@ -593,13 +595,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
         click_x = tv_rect.left + 50  # EA item text area
         click_y = None
         try:
-            # ⚠️ 方法：ea_node.select()（pywinauto 揀中 item）→ TVM_GETNEXTITEM(CARET) 攞 hItem
+            # [WARN] 方法：ea_node.select()（pywinauto 揀中 item）→ TVM_GETNEXTITEM(CARET) 攞 hItem
             # → TVM_GETITEMRECT 攞屏幕位置（唔使讀文字 — MT5 owner-draw tree 讀唔到文字）
             ea_node.select()
             time.sleep(0.5)
             import ctypes as _ct
             from ctypes import wintypes as _wt
-            # ⚠️ 64-bit handle 溢出問題：SendMessageW 返回 32-bit c_int → 負數 → 要 set restype c_size_t
+            # [WARN] 64-bit handle 溢出問題：SendMessageW 返回 32-bit c_int → 負數 → 要 set restype c_size_t
             _ct.windll.user32.SendMessageW.restype = _ct.c_size_t
             _tree_hwnd = _ct.c_void_p(int(tree_view.element_info.handle))
             _caret = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x110A, 0x0009, 0)  # TVGN_CARET
@@ -611,13 +613,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     _ct.windll.user32.ClientToScreen(_tree_hwnd, _ct.byref(_pt))
                     click_x = _rect.left + _pt.x + 30
                     click_y = _rect.top + _pt.y + ((_rect.bottom - _rect.top) // 2)
-                    print(f"🎯 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
+                    print(f"[TARGET] 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
                 else:
-                    print(f"⚠️ GETITEMRECT fail (caret={_caret})")
+                    print(f"[WARN] GETITEMRECT fail (caret={_caret})")
             else:
-                print("⚠️ CARET 攞唔到（select 可能冇生效）")
+                print("[WARN] CARET 攞唔到（select 可能冇生效）")
         except Exception as e:
-            print(f"⚠️ 精確定位 exception: {type(e).__name__} {e}")
+            print(f"[WARN] 精確定位 exception: {type(e).__name__} {e}")
             click_y = None
         if not click_y:
             try:
@@ -626,12 +628,12 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 if ea_rect.width() > 0 and ea_rect.height() > 0:
                     click_x = ea_rect.left + 30
                     click_y = ea_rect.top + (ea_rect.height() // 2)
-                    print(f"🎯 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
+                    print(f"[TARGET] 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
             except Exception:
                 click_y = None  # fallback 掃描
         
-        # ⚠️ 確保 AutoTrading ON — EA 附加時 OnInit 即刻執行（TestRunner 會即刻開單）！
-        # 一定要喺 double-click 之前開 — Properties 之後先開太遲（OnInit 已跑，開單失敗 retcode 10027）
+        # [WARN] 確保 AutoTrading ON — EA attach時 OnInit immediately執行（TestRunner 會immediately開單）！
+        # 一定要喺 double-click before開 — Properties after先開太遲（OnInit 已跑，開單failed retcode 10027）
         try:
             log_path2 = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
             at_on = False
@@ -644,8 +646,8 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                             at_on = True
                         break
             if not at_on:
-                # ⚠️ 警告視窗（AI 控制中）會搶 focus → send ^e 落錯視窗！
-                # 方法：短暫隱藏警告視窗 → set_focus(MT5) → send ^e → 恢復警告視窗
+                # [WARN] warning視窗（AI 控制中）會搶 focus → send ^e 落錯視窗！
+                # 方法：短暫隱藏warning視窗 → set_focus(MT5) → send ^e → 恢復warning視窗
                 try:
                     from control_guard import pause_window, resume_window
                     pause_window()
@@ -663,7 +665,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     resume_window()
                 except Exception:
                     pass
-                # ⚠️ 等 MT5 log 確認 enabled 先繼續（OnInit 即刻開單 — ^e 效果可能延遲 2-3 秒）
+                # [WARN] 等 MT5 log 確認 enabled 先繼續（OnInit immediately開單 — ^e 效果可能延遲 2-3 秒）
                 for _attempt in range(10):
                     try:
                         _lp = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
@@ -680,9 +682,9 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     except Exception:
                         pass
                     time.sleep(1)
-                print("🔴 AutoTrading OFF → toggled ON（double-click 前）" + (" ✅ 已確認" if at_on else " ⚠️ 未確認"))
+                print("[RED] AutoTrading OFF → toggled ON（double-click 前）" + (" [OK] 已確認" if at_on else " [WARN] 未確認"))
             else:
-                print("🟢 AutoTrading is ON（double-click 前）")
+                print("[GREEN] AutoTrading is ON（double-click 前）")
         except Exception:
             pass
         
@@ -711,7 +713,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 except Exception:
                     pass
                 if replace_dialog:
-                    print("🔄 偵測到「代替」確認 dialog — 自動撳「是」（接受取代）")
+                    print("[RETRY] 偵測到「代替」確認 dialog — 自動撳「是」（接受取代）")
                     for b in replace_dialog.children(class_name='Button'):
                         try:
                             bt = b.window_text()
@@ -723,13 +725,13 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                             pass
                     dialogs = find_ea_dialog(ea_name)
             if dialogs:
-                print(f"🎉 {ea_name} Properties dialog found at ({click_x}, {click_y})!")
+                print(f"[DONE] {ea_name} Properties dialog found at ({click_x}, {click_y})!")
                 found_dialog = True
         else:
-            # fallback：掃描模式（精確定位失敗先用）
-            # ⚠️ 改善：由 EA 區域開始（tree_top + 80 — 避開 帳戶/訂閱/指標 folders）+ 文字區域 click_x
+            # fallback：掃描模式（精確定位failed先用）
+            # [WARN] 改善：由 EA 區域start（tree_top + 80 — 避開 account/訂閱/指標 folders）+ 文字區域 click_x
             row_height = 18
-            # ⚠️ 還原穩定版：由 tree 頂開始掃（今日下午改 scan_start=80 之後 crash — 還原）
+            # [WARN] 還原穩定版：由 tree 頂start掃（今日下午改 scan_start=80 after crash — 還原）
             click_x = tv_rect.left + 50  # 還原穩定版 click_x
             for y_step in range(0, tv_rect.bottom - tv_rect.top, row_height):
                 click_y2 = tv_rect.top + y_step + 9
@@ -758,8 +760,8 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             
             dialogs = find_ea_dialog(ea_name)
             
-            # ⚠️ 掃描模式：遇到任何唔係 target 嘅 dialog → 直接 ESC 關閉（唔好撳「是」！
-            # 之前 bug：double-click 咗其他 EA → 彈「代替」dialog → 撳「是」→ 其他 EA 附加咗落圖表！）
+            # [WARN] 掃描模式：遇到任何唔係 target 嘅 dialog → 直接 ESC 關閉（唔好撳「是」！
+            # before bug：double-click 咗其他 EA → 彈「代替」dialog → 撳「是」→ 其他 EA attach咗落圖表！）
             if not dialogs:
                 # 有冇其他 dialog 彈出？（任何 #32770 — 可能係其他 EA 嘅 Properties/代替）
                 other_dlg = None
@@ -780,7 +782,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     continue  # 繼續 scan 下一行
             
             if dialogs:
-                print(f"🎉 {ea_name} Properties dialog found at ({click_x}, {click_y2})!")
+                print(f"[DONE] {ea_name} Properties dialog found at ({click_x}, {click_y2})!")
                 found_dialog = True
                 
                 # 固定 Properties dialog 位置（彈出後鎖定 — 唔會漂移）
@@ -797,8 +799,8 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                 send_keys('{ENTER}')
                 time.sleep(2)
                 
-                # Step 7 已移除 — AutoTrading 喺 double-click 前已確保 ON（唔可以再 toggle —
-                # 兩次 ^e = ON→OFF → OnInit 開單失敗 retcode 10027）
+                # Step 7 已remove — AutoTrading 喺 double-click 前已確保 ON（唔可以再 toggle —
+                # 兩次 ^e = ON→OFF → OnInit 開單failed retcode 10027）
                 
                 return True
             
@@ -807,7 +809,7 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
             time.sleep(0.3)
         
         if not found_dialog:
-            print(f"⚠️ {ea_name} dialog not found after scan (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] {ea_name} dialog not found after scan (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
@@ -828,8 +830,8 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
     except Exception:
         pass
     
-    print(f"❌ {ea_name} attach failed after {max_retries} attempts")
-    # 🚨 2026-08-12 FIX：失敗 → 寫「附加失敗」steps（唔係「等待操作開始」— 用戶要知道失敗 + 確定/緊急停止）
+    print(f"[FAIL] {ea_name} attach failed after {max_retries} attempts")
+    # [ALERT] 2026-08-12 FIX：failed → 寫「attach failed」steps（唔係「wait操作start」— user要知道failed + 確定/緊急stop）
     try:
         import json as _jfl
         _sf_fl = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
@@ -841,9 +843,9 @@ def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
                     _cur_fl = []
         except Exception:
             _cur_fl = []
-        _cur_fl = [s for s in _cur_fl if isinstance(s, dict) and s.get('text') != '等待操作開始…']
-        if not any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_fl):
-            _cur_fl.append({'text': f'附加 {ea_name} 失敗', 'status': 'done'})
+        _cur_fl = [s for s in _cur_fl if isinstance(s, dict) and s.get('text') != 'wait操作start…']
+        if not any('failed' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_fl):
+            _cur_fl.append({'text': f'attach {ea_name} failed', 'status': 'done'})
         with open(_sf_fl, 'w', encoding='utf-8') as _f:
             _jfl.dump(_cur_fl, _f, ensure_ascii=False)
     except Exception:
@@ -856,22 +858,22 @@ def ensure_auto_trading_on(mt5_pid):
     from pywinauto import Application
     from pywinauto.keyboard import send_keys
 
-    # 🚨 2026-08-18 FIX：部署中途 MT5 可能重啟過（熱鍵 reload）→ 舊 PID 唔存在 → connect crash
+    # [ALERT] 2026-08-18 FIX：deploy中途 MT5 可能重啟過（熱鍵 reload）→ 舊 PID not exist → connect crash
     # 連唔到就用 find_mt5_pid() 重新搵，再唔得就 skip（唔好令成個 auto_attach 死）
     try:
         app = Application(backend='uia').connect(process=mt5_pid)
     except Exception:
         _new_pid = find_mt5_pid()
         if _new_pid and _new_pid != mt5_pid:
-            print(f"🔄 MT5 PID 變咗（舊 {mt5_pid} → 新 {_new_pid}），重新 connect")
+            print(f"[RETRY] MT5 PID 變咗（舊 {mt5_pid} → 新 {_new_pid}），重新 connect")
             mt5_pid = _new_pid
             try:
                 app = Application(backend='uia').connect(process=mt5_pid)
             except Exception as _e:
-                print(f"⚠️ ensure_auto_trading_on 連 MT5 失敗（skip）: {_e}")
+                print(f"[WARN] ensure_auto_trading_on 連 MT5 failed（skip）: {_e}")
                 return False
         else:
-            print(f"⚠️ ensure_auto_trading_on 連 MT5 失敗（PID {mt5_pid} 唔在，skip）")
+            print(f"[WARN] ensure_auto_trading_on 連 MT5 failed（PID {mt5_pid} 唔在，skip）")
             return False
     win = app.top_window()
     
@@ -893,12 +895,12 @@ def ensure_auto_trading_on(mt5_pid):
         for line in reversed(lines):
             if 'automated trading' in line.lower():
                 if 'disabled' in line.lower():
-                    print("🔴 AutoTrading is OFF, enabling...")
+                    print("[RED] AutoTrading is OFF, enabling...")
                     send_keys('^e')  # Ctrl+E
                     time.sleep(1)
                     return True
                 elif 'enabled' in line.lower():
-                    print("🟢 AutoTrading is already ON")
+                    print("[GREEN] AutoTrading is already ON")
                     return True
     
     # Fallback: toggle twice to ensure ON
@@ -906,7 +908,7 @@ def ensure_auto_trading_on(mt5_pid):
     time.sleep(0.5)
     send_keys('^e')
     time.sleep(1)
-    print("✅ AutoTrading toggled")
+    print("[OK] AutoTrading toggled")
     return True
 
 
@@ -950,7 +952,7 @@ def get_tree_item_rect(tree_hwnd, target_name):
                     ('cChildren', ctypes.c_int), ('lParam', ctypes.c_void_p)]
     
     hwnd = ctypes.c_void_p(tree_hwnd)
-    # ⚠️ 64-bit handle：SendMessageW 返回 hItem 一定要 c_size_t（唔 set 會溢出負數）
+    # [WARN] 64-bit handle：SendMessageW 返回 hItem 一定要 c_size_t（唔 set 會溢出負數）
     user32.SendMessageW.restype = ctypes.c_size_t
     
     def get_item_text(hItem):
@@ -991,8 +993,8 @@ def get_tree_item_rect(tree_hwnd, target_name):
             # 5. 攞 rect（屏幕座標 — TVM_GETITEMRECT 用 TRUE = 屏幕）
             rect = wintypes.RECT()
             item2 = TVITEM(0, child, 0, 0, 0, 0, 0, 0, 0, 0)
-            # ⚠️ TVM_GETITEMRECT 正確簽名：wParam = hItem（要攞 rect 嘅 item），lParam = RECT*
-            # 之前用 wParam=1（固定）→ 一直 fail！→ 精確定位做唔到（Bug #82 延伸）
+            # [WARN] TVM_GETITEMRECT 正確簽名：wParam = hItem（要攞 rect 嘅 item），lParam = RECT*
+            # before用 wParam=1（固定）→ 一直 fail！→ 精確定位做唔到（Bug #82 延伸）
             res = user32.SendMessageW(hwnd, TVM_GETITEMRECT, ctypes.c_size_t(child), ctypes.byref(rect))
             # 注意：TVM_GETITEMRECT 嘅 rect 係「client 座標」— 要轉屏幕座標
             if res:
@@ -1008,7 +1010,7 @@ def get_tree_item_rect(tree_hwnd, target_name):
 
 
 def pin_window(hwnd, x, y, w, h):
-    """固定任何視窗位置 + 大小（pop-up 彈出後即刻鎖定 — 唔會因為位置漂移而 click 唔到）
+    """固定任何視窗位置 + 大小（pop-up 彈出後immediately鎖定 — 唔會因為位置漂移而 click 唔到）
     所有操作涉及嘅視窗（dialog/Navigator/MetaEditor）都要 pin"""
     import ctypes
     from ctypes import wintypes
@@ -1021,14 +1023,14 @@ def pin_window(hwnd, x, y, w, h):
         return False
 
 
-# ─── 安全滑鼠操作（用戶要求 2026-08：避免撳到電腦嘅其他嘢）───
-# 每次 click 前用 WindowFromPoint 檢查嗰個屏幕座標屬於邊個 process —
+# ─── 安全滑鼠操作（user要求 2026-08：避免撳到PC嘅其他嘢）───
+# 每次 click 前用 WindowFromPoint 檢查嗰個屏幕座標belongs to邊個 process —
 # 唔係 MT5 就跳過（唔會撳到 TG Scheduler / 記事本 / 其他視窗）
 
 def pin_deskin_away():
     """將 DeskIn（遠端控制視窗）移去右上角 — 唔遮 MT5 圖表/Navigator 操作區域
-    ⚠️ 2026-08 實測：DeskIn 視窗遮住圖表 (560,222)-(1360,817) → 所有 click 俾佢食咗！
-    操作前 call（DeskIn 存在就移走）— 大眾化：用螢幕實際解析度計位置（唔 hardcode 1400）"""
+    [WARN] 2026-08 實測：DeskIn 視窗遮住圖表 (560,222)-(1360,817) → 所有 click 俾佢食咗！
+    操作前 call（DeskIn exists就移走）— 大眾化：用螢幕實際解析度計位置（唔 hardcode 1400）"""
     import ctypes
     from ctypes import wintypes
     user32 = ctypes.windll.user32
@@ -1053,7 +1055,7 @@ def pin_deskin_away():
             user32.SetWindowPos(ctypes.c_void_p(hwnd), 0, target_x, 0, 500, 400, 0x0004 | 0x0040)
             moved = True
         if moved:
-            print(f"📌 DeskIn 已移去右上角 ({target_x},0)（唔遮 MT5）")
+            print(f"[PIN] DeskIn 已移去右上角 ({target_x},0)（唔遮 MT5）")
             time.sleep(0.5)
     except Exception:
         pass
@@ -1076,15 +1078,15 @@ def _window_pid_at(x, y):
 
 
 def _safe_target_check(x, y, mt5_pid):
-    """檢查 (x,y) 係咪 MT5 嘅視窗 — 唔係就 print 警告 + 唔 click
-    ⚠️ 開關：agent/.safe_click_off 存在 → 跳過檢查（A/B 測試用 — 還原之前可靠行為）"""
+    """檢查 (x,y) 係咪 MT5 嘅視窗 — 唔係就 print warning + 唔 click
+    [WARN] 開關：agent/.safe_click_off exists → 跳過檢查（A/B 測試用 — 還原before可靠行為）"""
     if os.path.isfile(os.path.join(os.path.dirname(__file__), '.safe_click_off')):
         return True
     if not mt5_pid:
         return True
     pid = _window_pid_at(x, y)
     if pid != mt5_pid:
-        print(f"⚠️ [安全防護] ({x},{y}) 目標係 PID {pid}（唔係 MT5 PID {mt5_pid}）— 跳過，避免撳到其他視窗")
+        print(f"[WARN] [安全防護] ({x},{y}) 目標係 PID {pid}（唔係 MT5 PID {mt5_pid}）— 跳過，避免撳到其他視窗")
         return False
     return True
 
@@ -1122,7 +1124,7 @@ def safe_doubleclick(x, y, mt5_pid=None):
 def ensure_mt5_window(mt5_pid):
     """固定 MT5 視窗位置（大眾化：用螢幕解析度比例 — 唔 hardcode 1920x1040）
     每次操作前 call — 最小化還原 + 固定位置
-    ⚠️ 2026-08 實測：BringWindowToTop/SetForegroundWindow 令 MT5 crash（之前 work 嗰陣冇呢啲）
+    [WARN] 2026-08 實測：BringWindowToTop/SetForegroundWindow 令 MT5 crash（before work 嗰陣冇呢啲）
     → 只 SetWindowPos（唔帶最前 — 避免 crash）"""
     import ctypes
     from ctypes import wintypes
@@ -1132,32 +1134,32 @@ def ensure_mt5_window(mt5_pid):
         app = Application(backend='win32').connect(process=mt5_pid)
         win = app.window(class_name='MetaQuotes::MetaTrader::5.00')
         hwnd = int(win.element_info.handle)
-        # ⚠️ 2026-08 實測：MT5 最小化（rect -32000）→ WindowFromPoint 全部返桌面 → click 落錯！
+        # [WARN] 2026-08 實測：MT5 最小化（rect -32000）→ WindowFromPoint 全部返桌面 → click 落錯！
         # 最小化時要 ShowWindow(SW_RESTORE) 先
         if user32.IsIconic(ctypes.c_void_p(hwnd)):
             user32.ShowWindow(ctypes.c_void_p(hwnd), 9)  # SW_RESTORE
             time.sleep(1)
             print("🪟 MT5 已從最小化還原")
-        # ⚠️ 帶最前（2026-08 還原）：pyautogui double-click 需要 MT5 active 先收到輸入
-        # 之前 crash 係 GBK decode + 舊 deploy_cmd 循環（已修）— 唔係 bring-to-front
+        # [WARN] 帶最前（2026-08 還原）：pyautogui double-click 需要 MT5 active 先收到輸入
+        # before crash 係 GBK decode + 舊 deploy_cmd 循環（已修）— 唔係 bring-to-front
         user32.BringWindowToTop(ctypes.c_void_p(hwnd))
         user32.SetForegroundWindow(ctypes.c_void_p(hwnd))
         time.sleep(1)
-        print("🎯 MT5 已帶到最前（輸入生效）")
+        print("[TARGET] MT5 已帶到最前（輸入生效）")
         # 位置 (0,0) + 固定大小（用螢幕解析度 — 大眾化）
         sw = user32.GetSystemMetrics(0)
         sh = user32.GetSystemMetrics(1)
         user32.SetWindowPos(ctypes.c_void_p(hwnd), 0, 0, 0, sw, sh - 40, 0x0004 | 0x0040)
         time.sleep(0.5)
-        print(f"📐 MT5 視窗已固定 ({sw}x{sh-40} @ 0,0)")
+        print(f"[TRIANGLE] MT5 視窗已固定 ({sw}x{sh-40} @ 0,0)")
         return True
     except Exception as e:
-        print(f"⚠️ 固定 MT5 視窗失敗: {e}")
+        print(f"[WARN] 固定 MT5 視窗failed: {e}")
         return False
 
 
 def tile_charts(mt5_pid):
-    """平鋪圖表窗口（如果有圖表）— 2026-08 用戶要求：每次操作前圖表平鋪（座標穩定）
+    """平鋪圖表窗口（如果有圖表）— 2026-08 user要求：每次操作前圖表平鋪（座標穩定）
     用 MT5 內建「平鋪窗口」快捷鍵 Alt+R（menu: 窗口 → 平鋪窗口）"""
     try:
         import ctypes as _ct
@@ -1174,7 +1176,7 @@ def tile_charts(mt5_pid):
             except Exception:
                 pass
         if not charts:
-            print("📊 冇圖表 — 唔使平鋪")
+            print("[STATS] 冇圖表 — 唔使平鋪")
             return True
         # 平鋪（MT5 快捷鍵 Alt+R = 平鋪窗口）
         try:
@@ -1186,16 +1188,16 @@ def tile_charts(mt5_pid):
         from pywinauto.keyboard import send_keys
         send_keys('%r')  # Alt+R = 平鋪窗口（menu「窗口→平鋪窗口」快捷鍵）
         time.sleep(1.5)
-        print(f"📊 圖表平鋪完成（{len(charts)} 個圖表）")
+        print(f"[STATS] 圖表平鋪done（{len(charts)} 個圖表）")
         return True
     except Exception as _e:
-        print(f"⚠️ 平鋪圖表失敗: {_e}")
+        print(f"[WARN] 平鋪圖表failed: {_e}")
         return False
 
 
 def ensure_navigator_unified(mt5_pid):
-    """操作前統一 Navigator 位置（2026-08 用戶要求：每次操作 Navigator 最大 + 固定位置）
-    之前 Navigator 一時左一時右（rect (201,139) vs (1079,111)）→ 操作錯位
+    """操作前統一 Navigator 位置（2026-08 user要求：每次操作 Navigator 最大 + 固定位置）
+    before Navigator 一時左一時右（rect (201,139) vs (1079,111)）→ 操作錯位
     統一：左邊 (0,100) 起，闊 = 螢幕 20%，高 = 螢幕 - 140（最大）"""
     try:
         import ctypes as _ct
@@ -1219,12 +1221,12 @@ def ensure_navigator_unified(mt5_pid):
                     _nav_h = _sh - 140
                     _user32.SetWindowPos(_ct.c_void_p(_hwnd), 0, 0, 100, _nav_w, _nav_h, 0x0004 | 0x0040)
                     time.sleep(0.6)
-                    print(f"📌 Navigator 已統一位置（(0,100) {_nav_w}x{_nav_h} — 最大）")
+                    print(f"[PIN] Navigator 已統一位置（(0,100) {_nav_w}x{_nav_h} — 最大）")
                     return True
             except Exception as _e2:
-                print(f"   ⚠️ Navigator 統一位置 inner: {_e2}")
+                print(f"   [WARN] Navigator 統一位置 inner: {_e2}")
     except Exception as _e:
-        print(f"⚠️ Navigator 統一位置失敗: {_e}")
+        print(f"[WARN] Navigator 統一位置failed: {_e}")
     return False
 
 
@@ -1280,7 +1282,7 @@ def load_hotkey_map():
 
 
 def _update_steps(steps):
-    """🚨 2026-08-10：更新警告視窗步驟 — 累積模式（一條條加落去 — 完成嘅留低 — 唔好蓋過 — 用戶要求）"""
+    """[ALERT] 2026-08-10：更新warning視窗步驟 — 累積模式（一條條加落去 — done嘅留低 — 唔好蓋過 — user要求）"""
     try:
         import json as _j
         _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
@@ -1292,8 +1294,8 @@ def _update_steps(steps):
                     old = []
         except Exception:
             old = []
-        # 🚨 2026-08-12 FIX：移除 placeholder「等待操作開始…」（_clear_steps 寫嘅）— 有新步驟就唔好殘留
-        merged = [s for s in old if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+        # [ALERT] 2026-08-12 FIX：remove placeholder「wait操作start…」（_clear_steps 寫嘅）— 有新步驟就唔好殘留
+        merged = [s for s in old if isinstance(s, dict) and s.get('text') != 'wait操作start…']
         for ns in steps:
             found = False
             for i, os_ in enumerate(merged):
@@ -1312,31 +1314,31 @@ def _update_steps(steps):
         pass
 
 def _clear_steps():
-    # 🚨 2026-08-12：寫「等待操作開始…」（唔係空 [] — 空 → 網頁 placeholder 同 steps 交替 → 「彈嚟彈去」— 用戶投訴）
+    # [ALERT] 2026-08-12：寫「wait操作start…」（唔係空 [] — 空 → 網頁 placeholder 同 steps 交替 → 「彈嚟彈去」— user投訴）
     try:
         import json as _j
         _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
         with open(_f + '.tmp', 'w', encoding='utf-8') as _fh:
-            _j.dump([{'text': '等待操作開始…', 'status': 'pending'}], _fh)
-        # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
+            _j.dump([{'text': 'wait操作start…', 'status': 'pending'}], _fh)
+        # [ALERT] 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
         os.replace(_f + '.tmp', _f)
     except Exception:
         pass
 
 
 def _ensure_hotkey_loaded(ea_name, mt5_pid):
-    """🚨 2026-08-20（用戶實測成功流程）：確保 EA 熱鍵寫入 hotkeys.ini 且 MT5 load
+    """[ALERT] 2026-08-20（user實測success流程）：確保 EA 熱鍵write hotkeys.ini 且 MT5 load
     流程：① 檢查 hotkeys.ini 有冇 ea_name 熱鍵（冇先做）
           ② 冇 → 分配未用 Ctrl+N → 關 MT5（WM_CLOSE 正常關閉 save profile）
           ③ 寫 hotkeys.ini（<experts>Experts\\<EA>.ex5=Ctrl+N</experts> — UTF-16）
           ④ 開 MT5 → 熱鍵 load → 返新 PID
-    破綻注意：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
+    破綻注意：EA 必須local有 .ex5（冇 → 熱鍵指向not exist EA → 失效）
     """
     try:
         import ctypes as _ct_hk
         import subprocess as _sp_hk
-        # 🚨 2026-08-20（用戶實測破綻）：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
-        # → 檢查本機 Experts/ 有冇 <EA>.ex5；冇 → 報錯 + 唔預載（部署會失敗 — 但至少原因清楚）
+        # [ALERT] 2026-08-20（user實測破綻）：EA 必須local有 .ex5（冇 → 熱鍵指向not exist EA → 失效）
+        # → 檢查local Experts/ 有冇 <EA>.ex5；冇 → 報錯 + 唔預載（deploy會failed — 但至少原因清楚）
         _ex5_found = False
         _data_root = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         try:
@@ -1348,7 +1350,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         except Exception:
             pass
         if not _ex5_found:
-            print(f"❌ {ea_name}.ex5 唔存在（本機未配對/未 compile）— 熱鍵無法預載，請先配對 EA")
+            print(f"[FAIL] {ea_name}.ex5 not exist（local未配對/未 compile）— 熱鍵cannot預載，請先配對 EA")
             return mt5_pid
         # 1. 讀 hotkeys.ini 有冇 ea_name
         experts = {}
@@ -1361,7 +1363,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _hk_ini = _pp
                     break
         if not _hk_ini:
-            print(f"⚠️ 搵唔到 hotkeys.ini — 唔做熱鍵預載")
+            print(f"[WARN] not found hotkeys.ini — 唔做熱鍵預載")
             return mt5_pid
         # 讀現有 experts
         try:
@@ -1381,14 +1383,14 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         except Exception:
             pass
         # 2. 已有熱鍵 → 檢查係咪真係 load 到（唔可以淨係見 hotkeys.ini 有就 return）
-        # 🚨 2026-08-20（v0.10.10）：MT5 開住時寫入嘅熱鍵唔 load（用戶實測：關 MT5 → 寫 → 開先 work）
-        # → 比較 hotkeys.ini mtime vs MT5 啟動時間：hotkeys.ini 喺 MT5 開機後先寫 = MT5 未 load → 要 restart 重寫
-        _combo_n = None  # 🚨 2026-08-20 v0.10.11：一定要提前定義（experts 空 → loop 唔行 → 下面用 _combo_n 會 NameError）
+        # [ALERT] 2026-08-20（v0.10.10）：MT5 開住時write嘅熱鍵唔 load（user實測：關 MT5 → 寫 → 開先 work）
+        # → 比較 hotkeys.ini mtime vs MT5 start時間：hotkeys.ini 喺 MT5 開機後先寫 = MT5 未 load → 要 restart 重寫
+        _combo_n = None  # [ALERT] 2026-08-20 v0.10.11：一定要提前定義（experts 空 → loop 唔行 → 下面用 _combo_n 會 NameError）
         for _k in experts:
             if ea_name in _k:
                 _combo_exist = experts[_k]
-                # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross）：唔可以淨靠 hotkeys.ini mtime 判斷「未 load」
-                # （MT5 自己/其他 EA 部署都會更新 hotkeys.ini → mtime 比 MT5 啟動新 → 誤判 → 無謂 restart → 搞走其他 EA）
+                # [ALERT] 2026-08-22 FIX（deploy Grid 搞走 EMA_Cross）：唔可以淨靠 hotkeys.ini mtime 判斷「未 load」
+                # （MT5 自己/其他 EA deploy都會更新 hotkeys.ini → mtime 比 MT5 start新 → 誤判 → 無謂 restart → 搞走其他 EA）
                 # → 直接 send 熱鍵測試 — 彈到 Properties = 熱鍵真係 load 咗 = 唔使 restart
                 _hk_actually_loaded = False
                 try:
@@ -1398,7 +1400,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _w_hkt.set_focus()
                     time.sleep(1)
                     from pywinauto.keyboard import send_keys as _sk_hkt
-                    # 🚨 2026-08-22 FIX：熱鍵測試前先 click MT5 中央（確保有 active chart — 熱鍵要先有 chart 先彈 Properties）
+                    # [ALERT] 2026-08-22 FIX：熱鍵測試前先 click MT5 中央（確保有 active chart — 熱鍵要先有 chart 先彈 Properties）
                     # （冇 active chart → Ctrl+N 唔彈 → 誤判「未 load」→ 無謂 restart → 搞走其他 EA — Grid 案例）
                     try:
                         import pyautogui as _pg_hkt
@@ -1434,9 +1436,9 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 except Exception:
                     pass
                 if _hk_actually_loaded:
-                    print(f"✅ {ea_name} 熱鍵（{_combo_exist}）實測 load 成功（彈 Properties）— 唔使 restart")
+                    print(f"[OK] {ea_name} 熱鍵（{_combo_exist}）實測 load success（彈 Properties）— 唔使 restart")
                     return mt5_pid
-                print(f"⚠️ {ea_name} 熱鍵（{_combo_exist}）測試冇彈 Properties — 可能要 restart 重寫")
+                print(f"[WARN] {ea_name} 熱鍵（{_combo_exist}）測試冇彈 Properties — 可能要 restart 重寫")
                 _combo_n = _combo_exist  # 保留原本 combo（重寫用返）
                 break  # 唔 return — 繼續落去 restart（關→寫→開）
         # 3. 分配未用 Ctrl+N（如果 break 落嚟已有 _combo_n — skip）
@@ -1452,10 +1454,10 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _combo_n = f'Ctrl+{_i_n}'
                     break
         if not _combo_n:
-            print(f"⚠️ 冇可用熱鍵 — 唔做預載")
+            print(f"[WARN] 冇可用熱鍵 — 唔做預載")
             return mt5_pid
-        print(f"🔄 熱鍵預載：{ea_name}（關 MT5 → 批次寫入熱鍵 → 開）")
-        # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross — restore 唔齊）：restart 前記錄所有 chart
+        print(f"[RETRY] 熱鍵預載：{ea_name}（關 MT5 → 批次write熱鍵 → 開）")
+        # [ALERT] 2026-08-22 FIX（deploy Grid 搞走 EMA_Cross — restore 唔齊）：restart 前記錄所有 chart
         # → restart 後檢查 restore 咗幾多 → 唔齊就補開（開返同 symbol 嘅 chart — EA 會自動 restore？唔會 — 但至少 chart 喺度）
         _charts_before_hk = []
         try:
@@ -1488,9 +1490,9 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                 _charts_before_hk.append(_b2.value)
                     return True
                 _u_cb.EnumChildWindows(_ct_cb.c_void_p(_mt5_win_cb), _ct_cb.WINFUNCTYPE(_ct_cb.c_bool, _ct_cb.c_size_t, _ct_cb.c_size_t)(_cb_child), 0)
-            print(f"📋 restart 前 chart: {_charts_before_hk}")
+            print(f"[CLIP] restart 前 chart: {_charts_before_hk}")
         except Exception as _e_cb:
-            print(f"⚠️ restart 前記錄 chart 失敗: {_e_cb}")
+            print(f"[WARN] restart 前記錄 chart failed: {_e_cb}")
         # 4. 關 MT5（WM_CLOSE 正常關閉）
         try:
             _out_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
@@ -1507,20 +1509,20 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 time.sleep(8)
         except Exception:
             pass
-        # 強制確認關咗（WM_CLOSE 可能彈窗）— 🚨 2026-08-20 gate：確認 terminal64 已關（poll 最多 20s）
-        _closed_hk = _wait_until(lambda: not _mt5_alive(), 20, 'MT5 已關閉（WM_CLOSE 後確認）', interval=2)
+        # 強制確認關咗（WM_CLOSE 可能彈窗）— [ALERT] 2026-08-20 gate：確認 terminal64 已關（poll 最多 20s）
+        _closed_hk = _wait_until(lambda: not _mt5_alive(), 20, 'MT5 closed（WM_CLOSE 後確認）', interval=2)
         if not _closed_hk:
-            print("⚠️ MT5 未完全關閉 — 強制 kill")
+            print("[WARN] MT5 未完全關閉 — 強制 kill")
             try:
                 _sp_hk.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
                 time.sleep(4)
             except Exception:
                 pass
-        # 5. 寫熱鍵（MT5 關閉狀態下寫 — 用戶實測先 load）
-        # 🚨 2026-08-22 用戶要求：每次部署都用 Ctrl+1（單一熱鍵重用）— 部署完釋放，下隻 EA 又用返 Ctrl+1
+        # 5. 寫熱鍵（MT5 關閉狀態下寫 — user實測先 load）
+        # [ALERT] 2026-08-22 user要求：每次deploy都用 Ctrl+1（單一熱鍵重用）— deploy完釋放，下隻 EA 又用返 Ctrl+1
         # → 唔再批次分配 Ctrl+1~9 — 只寫「新 EA = Ctrl+1」+ 清走舊 mapping
         _experts_hk = {}
-        # 掃描 Experts 目錄全部 .ex5（排除子目錄 — 只掃根目錄）— 只留「新 EA」熱鍵
+        # 掃描 Experts dir全部 .ex5（排除子dir — 只掃根dir）— 只留「新 EA」熱鍵
         _all_ex5 = []
         try:
             for _d_root in os.listdir(_data_root):
@@ -1531,7 +1533,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             _all_ex5.append(_f5[:-4])
         except Exception:
             pass
-        # 🚨 2026-08-22：只用 Ctrl+1（重用）— 每次部署都係 Ctrl+1
+        # [ALERT] 2026-08-22：只用 Ctrl+1（重用）— 每次deploy都係 Ctrl+1
         _experts_hk[f'Experts\\{ea_name}.ex5'] = 'Ctrl+1'
         _lines_hk = ['<experts>']
         for _k2, _v2 in _experts_hk.items():
@@ -1540,7 +1542,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         _text_out_hk = '\r\n'.join(_lines_hk) + '\r\n'
         with open(_hk_ini, 'wb') as _f_hk:
             _f_hk.write(_text_out_hk.encode('utf-16'))
-        print(f"✅ 熱鍵已寫入 hotkeys.ini（只用 Ctrl+1 — {ea_name}=Ctrl+1，舊 mapping 已清）")
+        print(f"[OK] 熱鍵已write hotkeys.ini（只用 Ctrl+1 — {ea_name}=Ctrl+1，舊 mapping 已清）")
         # 同步更新 hotkeys.json（agent 記憶 — 保持一致）
         try:
             import json as _json_hk
@@ -1558,9 +1560,9 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             pass
         # 6. 開 MT5
         subprocess.Popen([MT5_PATH])
-        # 🚨 2026-08-20（部署流程檢測系統落地）：開完 MT5 唔可以即刻部署 — 要等 MT5 load 完熱鍵
-        # 驗證 gate：等主視窗 ready（poll 最多 90s）→ send Ctrl+<N> 測試熱鍵 load（彈 Properties = load 成功）
-        # 🚨 2026-08-20 優化：用批次預載後 ea_name 實際嘅 combo（可能唔係 _combo_n）
+        # [ALERT] 2026-08-20（deploy流程檢測系統落地）：開完 MT5 唔可以immediatelydeploy — 要等 MT5 load 完熱鍵
+        # 驗證 gate：等主視窗 ready（poll 最多 90s）→ send Ctrl+<N> 測試熱鍵 load（彈 Properties = load success）
+        # [ALERT] 2026-08-20 優化：用批次預載後 ea_name 實際嘅 combo（可能唔係 _combo_n）
         _combo_actual = _experts_hk.get(f'Experts\\{ea_name}.ex5') or _combo_n
         _start_hk = time.time()
         _mt5_ready_hk = False
@@ -1579,18 +1581,18 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 pass
             time.sleep(3)
         if not _mt5_ready_hk:
-            print("⚠️ 熱鍵預載：MT5 主視窗 90s 未 ready（繼續 — 部署時會再驗證）")
+            print("[WARN] 熱鍵預載：MT5 主視窗 90s 未 ready（繼續 — deploy時會再驗證）")
         else:
-            print("✅ 熱鍵預載：MT5 主視窗 ready")
-            # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：熱鍵預載開完 MT5 檢查 UAC/授權窗口
-            # （MT5 更新/異常 → 彈「Client Terminal AVX2 授權」→ 唔處理會擋熱鍵 load 測試）
+            print("[OK] 熱鍵預載：MT5 主視窗 ready")
+            # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：熱鍵預載開完 MT5 檢查 UAC/授權窗口
+            # （MT5 更新/exception → 彈「Client Terminal AVX2 授權」→ 唔處理會擋熱鍵 load 測試）
             try:
                 if not _detect_and_handle_uac('熱鍵預載 UAC 檢查', max_wait=30):
-                    print("⚠️ 熱鍵預載：UAC 授權窗口未處理（等用戶手動撳）")
+                    print("[WARN] 熱鍵預載：UAC 授權窗口未處理（等user手動撳）")
             except Exception:
                 pass
-            # 熱鍵 load 驗證：send Ctrl+N 測試 — 彈出 <EA> Properties = 熱鍵 load 成功（失敗關閉 dialog 再重試）
-                        # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：主視窗 ready 唔等於熱鍵 load 完
+            # 熱鍵 load 驗證：send Ctrl+N 測試 — 彈出 <EA> Properties = 熱鍵 load success（failed關閉 dialog 再重試）
+                        # [ALERT] 2026-08-25 FIX（連環deploy偶發failed — Breakout 案例）：主視窗 ready 唔等於熱鍵 load 完
             # → 等 MT5 完全穩定（10 秒）先 send 測試 — MT5 初始化順序：UI → 數據 → 設定 → 熱鍵
             time.sleep(10)
             _hk_loaded_ok = False
@@ -1598,7 +1600,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 try:
                     _w_hk.set_focus()
                     time.sleep(0.8)
-                    # 🚨 2026-08-20 FIX：熱鍵附加 EA 需要 active chart（冇 chart → Ctrl+N 唔彈 Properties → 誤判未 load）
+                    # [ALERT] 2026-08-20 FIX：熱鍵attach EA 需要 active chart（冇 chart → Ctrl+N 唔彈 Properties → 誤判未 load）
                     # → 先 click MT5 主視窗中央（chart 區域）確保有 active chart
                     try:
                         import pyautogui as _pg_hk
@@ -1631,7 +1633,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _ct_hk.windll.user32.EnumWindows(_ct_hk.WINFUNCTYPE(_ct_hk.c_bool, _ct_hk.c_size_t, _ct_hk.c_size_t)(_cb_hk), 0)
                     if _dlg_hk_found:
                         _hk_loaded_ok = True
-                        print(f"✅ 熱鍵 load 驗證通過：{_combo_actual} 彈出 {ea_name} Properties（熱鍵已 load）")
+                        print(f"[OK] 熱鍵 load 驗證通過：{_combo_actual} 彈出 {ea_name} Properties（熱鍵已 load）")
                         # 撳「取消」關 dialog（唔好誤掛 EA）
                         try:
                             from pywinauto import Application as _AppDlg
@@ -1648,19 +1650,19 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             _sk_hk('{ESC}')
                         break
                     else:
-                        print(f"⚠️ 熱鍵 load 測試 {_hk_try+1}/3：{_combo_actual} 冇彈 Properties（可能未 load 完 — 重試）")
+                        print(f"[WARN] 熱鍵 load 測試 {_hk_try+1}/3：{_combo_actual} 冇彈 Properties（可能未 load 完 — 重試）")
                         try:
                             _sk_hk('{ESC}')
                         except Exception:
                             pass
                         time.sleep(3)
                 except Exception as _ehk_t:
-                    print(f"⚠️ 熱鍵 load 測試異常: {_ehk_t}")
+                    print(f"[WARN] 熱鍵 load 測試exception: {_ehk_t}")
                     time.sleep(3)
             if not _hk_loaded_ok:
-                # 🚨 2026-08-24 FIX（熱鍵 load 唔穩定 — MT5 開機 cache 舊 hotkeys）：第一次 restart 後 load 測試失敗
-                # → 再 restart 一次（第二次開機 load 到新寫入嘅 hotkeys）— 唔好即刻部署（會彈錯 EA / 附加失敗）
-                print(f"⚠️ 熱鍵 load 3 次測試都冇彈 Properties — 再 restart 一次 reload 熱鍵")
+                # [ALERT] 2026-08-24 FIX（熱鍵 load 唔穩定 — MT5 開機 cache 舊 hotkeys）：第一次 restart 後 load 測試failed
+                # → 再 restart 一次（第二次開機 load 到新write嘅 hotkeys）— 唔好immediatelydeploy（會彈錯 EA / attach failed）
+                print(f"[WARN] 熱鍵 load 3 次測試都冇彈 Properties — 再 restart 一次 reload 熱鍵")
                 try:
                     # 關 MT5（WM_CLOSE → 等 → 強制 kill 兜底）
                     _sp_hk.run('taskkill -f -im terminal64.exe', shell=True, capture_output=True)
@@ -1684,7 +1686,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                 pass
                         time.sleep(3)
                     if _ready2:
-                        print("✅ 熱鍵預載：第二次 restart 完成（reload 熱鍵）")
+                        print("[OK] 熱鍵預載：第二次 restart done（reload 熱鍵）")
                         # 再測熱鍵
                         for _hk_try2 in range(3):
                             try:
@@ -1713,17 +1715,17 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                 _ct_hk.windll.user32.EnumWindows(_ct_hk.WINFUNCTYPE(_ct_hk.c_bool, _ct_hk.c_size_t, _ct_hk.c_size_t)(_cb_hk2b), 0)
                                 if _dlg2:
                                     _hk_loaded_ok = True
-                                    print(f"✅ 第二次 restart 後熱鍵 load 驗證通過（{ea_name} Properties）")
+                                    print(f"[OK] 第二次 restart 後熱鍵 load 驗證通過（{ea_name} Properties）")
                                     _sk_hk('{ESC}')
                                     break
                             except Exception:
                                 pass
                             time.sleep(3)
                     if not _hk_loaded_ok:
-                        print(f"⚠️ 第二次 restart 後熱鍵仍然冇 load — 部署時會再驗證（失敗會明確報錯）")
+                        print(f"[WARN] 第二次 restart 後熱鍵仍然冇 load — deploy時會再驗證（failed會明確報錯）")
                 except Exception as _ehk_r:
-                    print(f"⚠️ 第二次 restart 失敗: {_ehk_r}")
-        # 🚨 2026-08-22 FIX（部署 Grid 搞走 EMA_Cross — restore 唔齊）：restart 後檢查 chart 有冇 restore 齊
+                    print(f"[WARN] 第二次 restart failed: {_ehk_r}")
+        # [ALERT] 2026-08-22 FIX（deploy Grid 搞走 EMA_Cross — restore 唔齊）：restart 後檢查 chart 有冇 restore 齊
         # → 唔齊就補開（記錄咗 restart 前嘅 chart — 逐個 check 有冇喺度）
         if _charts_before_hk:
             try:
@@ -1757,7 +1759,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                                     _charts_after.append(_b2.value)
                         return True
                     _u_rc.EnumChildWindows(_ct_rc.c_void_p(_mt5_win_rc), _ct_rc.WINFUNCTYPE(_ct_rc.c_bool, _ct_rc.c_size_t, _ct_rc.c_size_t)(_cb_child2), 0)
-                print(f"📋 restart 後 chart: {_charts_after}")
+                print(f"[CLIP] restart 後 chart: {_charts_after}")
                 # 搵遺失 chart（restart 前有但 restart 後冇）
                 _missing = []
                 for _c1 in _charts_before_hk:
@@ -1770,7 +1772,7 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     if not _found_m:
                         _missing.append(_sym1)
                 if _missing:
-                    print(f"🚨 restart 後遺失 {len(_missing)} 個 chart: {_missing} — 補開")
+                    print(f"[ALERT] restart 後遺失 {len(_missing)} 個 chart: {_missing} — 補開")
                     from pywinauto.keyboard import send_keys as _sk_rc
                     for _msym in _missing:
                         try:
@@ -1793,29 +1795,29 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             time.sleep(1)
                             _sk_rc('{ENTER}')
                             time.sleep(2)
-                            print(f"  ✅ 補開 chart: {_msym}")
+                            print(f"  [OK] 補開 chart: {_msym}")
                         except Exception as _e_rc:
-                            print(f"  ⚠️ 補開 {_msym} 失敗: {_e_rc}")
+                            print(f"  [WARN] 補開 {_msym} failed: {_e_rc}")
                 else:
-                    print("✅ restart 後 chart 齊全（冇遺失）")
+                    print("[OK] restart 後 chart 齊全（冇遺失）")
             except Exception as _e_rc2:
-                print(f"⚠️ restart 後檢查 chart 失敗: {_e_rc2}")
+                print(f"[WARN] restart 後檢查 chart failed: {_e_rc2}")
         # 7. 攞新 PID
         _new_pid = find_mt5_pid()
         if _new_pid:
             return _new_pid
         return mt5_pid
     except Exception as _e_hk:
-        print(f"⚠️ 熱鍵預載失敗: {_e_hk}")
+        print(f"[WARN] 熱鍵預載failed: {_e_hk}")
         return mt5_pid
 
 def _detect_and_handle_uac(desc='', max_wait=30):
-    """🚨 2026-08-22（用戶要求：UAC 檢測機制 — MT5 更新/授權都會問）
+    """[ALERT] 2026-08-22（user要求：UAC 檢測機制 — MT5 更新/授權都會問）
     偵測「Client Terminal 授權」/ UAC consent 窗口（$$$Secure UAP Dummy Window Class）
     處理策略：
     1. 偵測到授權窗口 → 記錄 + 嘗試按鈕撳「允許/是」（SendMessage BM_CLICK + Enter）
-    2. 撳唔到（Windows 安全層拒絕自動化）→ 通知用戶（寫 alert flag — 網頁顯示「請撳允許」）
-    3. max_wait 內一直有 → return False（唔好繼續部署 — 會被擋）
+    2. 撳唔到（Windows 安全層refused自動化）→ 通知user（寫 alert flag — 網頁顯示「請撳允許」）
+    3. max_wait 內一直有 → return False（唔好繼續deploy — 會被擋）
     """
     import ctypes as _ct_uac
     _u_uac = _ct_uac.windll.user32
@@ -1851,7 +1853,7 @@ def _detect_and_handle_uac(desc='', max_wait=30):
     if not _found:
         return True  # 冇 UAC — 可以繼續
 
-    print(f"🚨 [UAC Gate] {desc}: 偵測到 {len(_found)} 個授權窗口 — {_found[0][1]}")
+    print(f"[ALERT] [UAC Gate] {desc}: 偵測到 {len(_found)} 個授權窗口 — {_found[0][1]}")
     # 嘗試自動撳「允許/是」（SendMessage BM_CLICK — 對 consent 通常唔 work，但試下）
     for _h, _t, _cl, _pid in _found:
         try:
@@ -1866,38 +1868,38 @@ def _detect_and_handle_uac(desc='', max_wait=30):
     time.sleep(2)
     _still = _scan()
     if _still:
-        # 關唔到 — Windows 安全層拒絕自動化 → 通知用戶手動撳
-        print(f"⚠️ [UAC Gate] {desc}: {len(_still)} 個授權窗口關唔到（Windows 安全層）— 通知用戶手動處理")
+        # 關唔到 — Windows 安全層refused自動化 → 通知user手動撳
+        print(f"[WARN] [UAC Gate] {desc}: {len(_still)} 個授權窗口關唔到（Windows 安全層）— 通知user手動處理")
         try:
             # 寫 alert flag（網頁/tkinter 顯示）
             _adir_u = os.path.dirname(os.path.abspath(__file__))
             with open(os.path.join(_adir_u, '.uac_alert'), 'w', encoding='utf-8') as _f:
-                _f.write(f"MT5 需要授權（{desc}）— 請喺電腦撳「允許/是」\n窗口: {_still[0][1]}")
+                _f.write(f"MT5 需要授權（{desc}）— 請喺PC撳「允許/是」\n窗口: {_still[0][1]}")
         except Exception:
             pass
-        # 等 max_wait 秒（俾用戶手動撳）— 撳完自動繼續
+        # 等 max_wait 秒（俾user手動撳）— 撳完自動繼續
         _deadline = time.time() + max_wait
         while time.time() < _deadline:
             time.sleep(3)
             _now = _scan()
             if not _now:
-                print(f"✅ [UAC Gate] {desc}: 授權窗口已處理（用戶撳咗/自動關）— 可以繼續")
+                print(f"[OK] [UAC Gate] {desc}: 授權窗口已處理（user撳咗/自動關）— 可以繼續")
                 try:
                     os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.uac_alert'))
                 except Exception:
                     pass
                 return True
-        print(f"❌ [UAC Gate] {desc}: {max_wait}s 內授權窗口未處理（可能係 MT5 更新要求授權）— 部署中止")
+        print(f"[FAIL] [UAC Gate] {desc}: {max_wait}s 內授權窗口未處理（可能係 MT5 更新要求授權）— deploy中止")
         return False
-    print(f"✅ [UAC Gate] {desc}: 授權窗口已自動處理")
+    print(f"[OK] [UAC Gate] {desc}: 授權窗口已自動處理")
     return True
 def _detect_and_handle_uac(desc='', max_wait=30):
-    """🚨 2026-08-22（用戶要求：UAC 檢測機制 — MT5 更新/授權都會問）
+    """[ALERT] 2026-08-22（user要求：UAC 檢測機制 — MT5 更新/授權都會問）
     偵測「Client Terminal 授權」/ UAC consent 窗口（$$$Secure UAP Dummy Window Class）
     處理策略：
     1. 偵測到授權窗口 → 記錄 + 嘗試按鈕撳「允許/是」（SendMessage BM_CLICK + Enter）
-    2. 撳唔到（Windows 安全層拒絕自動化）→ 通知用戶（寫 alert flag — 網頁顯示「請撳允許」）
-    3. max_wait 內一直有 → return False（唔好繼續部署 — 會被擋）
+    2. 撳唔到（Windows 安全層refused自動化）→ 通知user（寫 alert flag — 網頁顯示「請撳允許」）
+    3. max_wait 內一直有 → return False（唔好繼續deploy — 會被擋）
     """
     import ctypes as _ct_uac
     _u_uac = _ct_uac.windll.user32
@@ -1933,7 +1935,7 @@ def _detect_and_handle_uac(desc='', max_wait=30):
     if not _found:
         return True  # 冇 UAC — 可以繼續
 
-    print(f"🚨 [UAC Gate] {desc}: 偵測到 {len(_found)} 個授權窗口 — {_found[0][1]}")
+    print(f"[ALERT] [UAC Gate] {desc}: 偵測到 {len(_found)} 個授權窗口 — {_found[0][1]}")
     # 嘗試自動撳「允許/是」（SendMessage BM_CLICK — 對 consent 通常唔 work，但試下）
     for _h, _t, _cl, _pid in _found:
         try:
@@ -1948,39 +1950,39 @@ def _detect_and_handle_uac(desc='', max_wait=30):
     time.sleep(2)
     _still = _scan()
     if _still:
-        # 關唔到 — Windows 安全層拒絕自動化 → 通知用戶手動撳
-        print(f"⚠️ [UAC Gate] {desc}: {len(_still)} 個授權窗口關唔到（Windows 安全層）— 通知用戶手動處理")
+        # 關唔到 — Windows 安全層refused自動化 → 通知user手動撳
+        print(f"[WARN] [UAC Gate] {desc}: {len(_still)} 個授權窗口關唔到（Windows 安全層）— 通知user手動處理")
         try:
             # 寫 alert flag（網頁/tkinter 顯示）
             _adir_u = os.path.dirname(os.path.abspath(__file__))
             with open(os.path.join(_adir_u, '.uac_alert'), 'w', encoding='utf-8') as _f:
-                _f.write(f"MT5 需要授權（{desc}）— 請喺電腦撳「允許/是」\n窗口: {_still[0][1]}")
+                _f.write(f"MT5 需要授權（{desc}）— 請喺PC撳「允許/是」\n窗口: {_still[0][1]}")
         except Exception:
             pass
-        # 等 max_wait 秒（俾用戶手動撳）— 撳完自動繼續
+        # 等 max_wait 秒（俾user手動撳）— 撳完自動繼續
         _deadline = time.time() + max_wait
         while time.time() < _deadline:
             time.sleep(3)
             _now = _scan()
             if not _now:
-                print(f"✅ [UAC Gate] {desc}: 授權窗口已處理（用戶撳咗/自動關）— 可以繼續")
+                print(f"[OK] [UAC Gate] {desc}: 授權窗口已處理（user撳咗/自動關）— 可以繼續")
                 try:
                     os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.uac_alert'))
                 except Exception:
                     pass
                 return True
-        print(f"❌ [UAC Gate] {desc}: {max_wait}s 內授權窗口未處理（可能係 MT5 更新要求授權）— 部署中止")
+        print(f"[FAIL] [UAC Gate] {desc}: {max_wait}s 內授權窗口未處理（可能係 MT5 更新要求授權）— deploy中止")
         return False
-    print(f"✅ [UAC Gate] {desc}: 授權窗口已自動處理")
+    print(f"[OK] [UAC Gate] {desc}: 授權窗口已自動處理")
     return True
 
 
 def _ensure_no_dialog(desc='', max_wait=8, close_btn=True):
-    """🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）
+    """[ALERT] 2026-08-21（user要求：認證有冇 dialog 先繼續next step）
     Dialog 檢查閘門 — 確保冇任何 #32770 dialog 阻住先繼續
     - 有 dialog → WM_CLOSE 強制關閉（實測有效）+ 等 0.5 秒再確認
     - 關唔到（max_wait 內仲有）→ return False（Caller 要 fail，唔好硬嚟）
-    - return True = 確認冇 dialog（可以繼續下一步）
+    - return True = 確認冇 dialog（可以繼續next step）
     """
     import ctypes as _ct_nd
     _u_nd = _ct_nd.windll.user32
@@ -2006,7 +2008,7 @@ def _ensure_no_dialog(desc='', max_wait=8, close_btn=True):
     while time.time() < _deadline:
         _dlgs = [h for h in _scan() if h not in _closed]
         if not _dlgs:
-            print(f"✅ [Dialog Gate] {desc}: dialog 已全部關閉 — 可以繼續")
+            print(f"[OK] [Dialog Gate] {desc}: dialog 已全部關閉 — 可以繼續")
             return True
         for _h in _dlgs:
             try:
@@ -2039,50 +2041,50 @@ def _ensure_no_dialog(desc='', max_wait=8, close_btn=True):
         time.sleep(0.5)
     _left = _scan()
     if _left:
-        print(f"❌ [Dialog Gate] {desc}: {len(_left)} 個 dialog 關唔到（WM_CLOSE 無效）— 唔繼續下一步！")
+        print(f"[FAIL] [Dialog Gate] {desc}: {len(_left)} 個 dialog 關唔到（WM_CLOSE 無效）— 唔繼續next step！")
         return False
     return True
 
 
 def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
-    """🎯 快捷鍵方案（2026-08-06 用戶發現 — 解決 6093 double-click 問題）
-    每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA 附加
+    """[TARGET] 快捷鍵方案（2026-08-06 user發現 — 解決 6093 double-click 問題）
+    每隻 EA 喺「導航快捷鍵」設咗快捷鍵（Ctrl+1/2/3...）— send 快捷鍵 → EA attach
     唔使 double-click Navigator（6093 對 double-click 唔 work）"""
     try:
         import ctypes as _ct
         from pywinauto import Application as _App
         from pywinauto.keyboard import send_keys as _sk
-        # 🚨 2026-08-19：偵測 ea_name 係咪 Script 類型（OpenChart 先係 — Script 用一體化假裝掛；真 EA 用熱鍵真掛）
+        # [ALERT] 2026-08-19：偵測 ea_name 係咪 Script 類型（OpenChart 先係 — Script 用一體化假裝掛；真 EA 用熱鍵真掛）
         _is_script_att = ea_name.startswith('OpenChart')
-        # 🚨 緊急停止支援（2026-08-06：之前 dialog 循環冇 check — 緊急停止冇效）
+        # [ALERT] 緊急stop支援（2026-08-06：before dialog 循環冇 check — 緊急stop冇效）
         try:
             from control_guard import check_abort as _chk_abort
         except Exception:
             _chk_abort = lambda: None
         hotkeys = load_hotkey_map()
         combo = hotkeys.get(ea_name)
-        # 🚨 2026-08-17 FIX：一體化模式（open_chart=True）唔需要 combo（OpenChart script 套模板掛 EA — 唔使熱鍵附加）— combo check 只限非一體化
+        # [ALERT] 2026-08-17 FIX：一體化模式（open_chart=True）唔需要 combo（OpenChart script 套模板掛 EA — 唔使熱鍵attach）— combo check 只限非一體化
         if not open_chart and not combo:
-            print(f"⚠️ {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
+            print(f"[WARN] {ea_name} 未有快捷鍵設定（agent/hotkeys.json）")
             return False
-        # 🚨 2026-08-24（用戶要求：Ctrl+O / OpenChart 已失效 — 回復熱鍵為主）：
+        # [ALERT] 2026-08-24（user要求：Ctrl+O / OpenChart 已失效 — 回復熱鍵為主）：
         # 一體化（Ctrl+O 套模板）已失效（MT5 build 6140 — OpenChart script 熱鍵冇 load）
-        # → 真 EA 一律用熱鍵（Ctrl+1）附加 — send 快捷鍵 → EA 掛 active chart
+        # → 真 EA 一律用熱鍵（Ctrl+1）attach — send 快捷鍵 → EA 掛 active chart
         if open_chart and _is_script_att:
-            print(f"✅ 一體化：{ea_name} 已由套模板掛落圖表（跳過附加熱鍵）")
+            print(f"[OK] 一體化：{ea_name} 已由套模板掛落圖表（跳過attach熱鍵）")
             _saw_props = True  # Script（OpenChart）一體化假裝已掛
         else:
-            print(f"🎯 用快捷鍵 {combo} 附加 {ea_name}...")
+            print(f"[TARGET] 用快捷鍵 {combo} attach {ea_name}...")
         _app = _App(backend='win32').connect(process=mt5_pid, timeout=8)
-        # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署前先檢查 UAC/授權窗口
-        # （MT5 更新後/帳戶異常 → 彈「Client Terminal AVX2 授權」→ 擋住部署 → 先處理）
+        # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：deploy前先檢查 UAC/授權窗口
+        # （MT5 更新後/accountexception → 彈「Client Terminal AVX2 授權」→ 擋住deploy → 先處理）
         try:
-            if not _detect_and_handle_uac(f'{ea_name} 部署前 UAC 檢查', max_wait=30):
-                print(f"❌ {ea_name} 部署中止：UAC 授權窗口未處理")
+            if not _detect_and_handle_uac(f'{ea_name} deploy前 UAC 檢查', max_wait=30):
+                print(f"[FAIL] {ea_name} deploy中止：UAC 授權窗口未處理")
                 return False
         except Exception:
             pass
-        # 🚨 2026-08-12 FIX：部署前檢查有冇 pending compile_cmd（配對後未編譯 — 等編譯完成先部署 — 唔會「部署完又彈編譯視窗」）
+        # [ALERT] 2026-08-12 FIX：deploy前檢查有冇 pending compile_cmd（配對後未編譯 — 等編譯done先deploy — 唔會「deploy完又彈編譯視窗」）
         try:
             _cf_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             for _wc in range(20):  # 最多等 40 秒
@@ -2097,17 +2099,17 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 _chk_abort()
                 time.sleep(2)
             if _pending_compile:
-                print(f"⚠️ compile_cmd 等咗 40 秒仲未完成 — 繼續部署（.ex5 可能未生成）")
+                print(f"[WARN] compile_cmd 等咗 40 秒仲未done — 繼續deploy（.ex5 可能未生成）")
         except Exception:
             pass
-        # 🚨 2026-08-12 FIX：steps 喺函數開頭寫（開圖表之前 — 用戶撳部署即刻見到「部署進行中」）
-        # 🚨 2026-08-12 FIX2：直接覆寫（唔用 _update_steps 累積 — 新任務開始清舊任務 steps — spec：唔跨任務累積）
-        # 🚨 2026-08-12 FIX3：保留「重啟 MT5」3 步（部署前 ensure_hotkey 重啟寫嘅 — 唔好洗走 — 完整流程）
+        # [ALERT] 2026-08-12 FIX：steps 喺函數開頭寫（開圖表before — user撳deployimmediately見到「deployin progress」）
+        # [ALERT] 2026-08-12 FIX2：直接覆寫（唔用 _update_steps 累積 — 新任務start清舊任務 steps — spec：唔跨任務累積）
+        # [ALERT] 2026-08-12 FIX3：保留「重啟 MT5」3 步（deploy前 ensure_hotkey 重啟寫嘅 — 唔好洗走 — 完整流程）
         _steps = [
-            {"text": f"部署 {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
-            {"text": f"建立新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
-            {"text": f"附加 {ea_name}（快捷鍵 {combo}）", "status": "pending"},
-            {"text": "驗證運行狀態", "status": "pending"},
+            {"text": f"deploy {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
+            {"text": f"create新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
+            {"text": f"attach {ea_name}（快捷鍵 {combo}）", "status": "pending"},
+            {"text": "驗證running狀態", "status": "pending"},
         ]
         try:
             import json as _jdep
@@ -2120,19 +2122,19 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         _prev_dep = []
             except Exception:
                 _prev_dep = []
-            # 保留「重啟 MT5」3 步（已完成嘅留低 — 部署流程一部分）+ 過濾舊任務/等待
-            _RESTART_TEXTS = ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5')
+            # 保留「重啟 MT5」3 步（已done嘅留低 — deploy流程一部分）+ 過濾舊任務/wait
+            _RESTART_TEXTS = ('關閉 MT5', '載入快捷鍵設定', '重新start MT5')
             _kept = [s for s in _prev_dep if isinstance(s, dict) and s.get('text') in _RESTART_TEXTS]
             with open(_sf_dep, 'w', encoding='utf-8') as _fdep:
                 _jdep.dump(_kept + _steps, _fdep, ensure_ascii=False)
         except Exception:
             pass
-        time.sleep(0.8)  # 🚨 網頁 poll 捕到「部署」進行中
-        # 🚨 2026-08-10 部署穩定性：一次過 reload（hotkeys.ini mtime > MT5 啟動 → 外部寫入未 load — reload 一次）
-        # 🚨 2026-08-19 FIX：唔好 restart MT5 — do_restart_mt5 前會「關閉全部圖表」→ 其他已掛 EA（如 EMA_Cross）chart 被關 → EA 消失
-        #   而家部署用「Alt+F→Enter→Enter→Space→symbol→Enter」menu 方法開 chart，唔靠 Ctrl+熱鍵 → 唔需要 restart reload hotkeys
+        time.sleep(0.8)  # [ALERT] 網頁 poll 捕到「deploy」in progress
+        # [ALERT] 2026-08-10 deploy穩定性：一次過 reload（hotkeys.ini mtime > MT5 start → 外部write未 load — reload 一次）
+        # [ALERT] 2026-08-19 FIX：唔好 restart MT5 — do_restart_mt5 前會「關閉全部圖表」→ 其他已掛 EA（如 EMA_Cross）chart 被關 → EA 消失
+        #   nowdeploy用「Alt+F→Enter→Enter→Space→symbol→Enter」menu 方法開 chart，唔靠 Ctrl+熱鍵 → 唔需要 restart reload hotkeys
         #   → hotkeys.ini 有變都唔 restart（避免搞死其他 EA）
-        _HK_RESTART_DISABLED = True  # 🚨 2026-08-20：熱鍵已由 _ensure_hotkey_loaded 預載（關 MT5 → 寫 → 開）— 部署時唔可以再 restart（restart 會令 MT5 用內部設定覆寫 hotkeys.ini → 我哋寫嘅熱鍵消失 → Ctrl+N 失效）
+        _HK_RESTART_DISABLED = True  # [ALERT] 2026-08-20：熱鍵已由 _ensure_hotkey_loaded 預載（關 MT5 → 寫 → 開）— deploy時唔可以再 restart（restart 會令 MT5 用內部設定覆寫 hotkeys.ini → 我哋寫嘅熱鍵消失 → Ctrl+N 失效）
         try:
             _hk_ini = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal',
                                    'D0E8209F77C8CF37AD8BF550E51FF075', 'config', 'hotkeys.ini')
@@ -2148,7 +2150,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
                 if (not _HK_RESTART_DISABLED) and _mt5_start is not None and _hk_mt > _mt5_start:
-                    print(f"🔄 hotkeys.ini 有變（外部寫入 — MT5 未 load）→ reload 一次（關 MT5 → 開）")
+                    print(f"[RETRY] hotkeys.ini 有變（外部write — MT5 未 load）→ reload 一次（關 MT5 → 開）")
                     _chk_abort()
                     do_restart_mt5()
                     # reload 後重新攞 MT5 PID + connect
@@ -2172,9 +2174,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             time.sleep(1)
         except Exception:
             pass
-        # 🆕 建立新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
-        # ✅ 用戶方法（2026-08-15）：OpenChart script 熱鍵（Ctrl+O — 用戶 set 咗）— 開目標圖表 → 附加 EA 落去
-        # 流程：寫 json → 確保有圖表（熱鍵要圖表）→ Ctrl+O（OpenChart script 讀 json → ChartOpen 開目標圖表 active）→ 附加 EA（熱鍵 — 落 active）
+        # [NEW] create新圖表（2026-08：唔代替 — 每個 EA 一個圖表 — 品種選擇）
+        # [OK] user方法（2026-08-15）：OpenChart script 熱鍵（Ctrl+O — user set 咗）— 開目標圖表 → attach EA 落去
+        # 流程：寫 json → 確保有圖表（熱鍵要圖表）→ Ctrl+O（OpenChart script 讀 json → ChartOpen 開目標圖表 active）→ attach EA（熱鍵 — 落 active）
         if open_chart:
             try:
                 _sym = (symbol or '').upper()
@@ -2183,8 +2185,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     import json as _joc
                     _cmd_file = os.path.join(COMMON_FILES, 'open_chart_cmd.json')
                     _tpl_name = f"{ea_name}_{_sym or 'EURUSD'}_{(tf or 'H1').upper()}.tpl"
-                    # 🚨 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → Experts 根）
-                    # （之前「複製現有 <ea>_*.tpl」— 但係好多 EA 未部署過 → 冇源頭 tpl → 生成失敗 → 套模板冇 tpl → EA 掛唔到！）
+                    # [ALERT] 2026-08-17 FIX：直接用 MT5 模板格式生成完整 tpl（含 path → Experts 根）
+                    # （before「複製現有 <ea>_*.tpl」— 但係好多 EA 未deploy過 → 冇源頭 tpl → 生成failed → 套模板冇 tpl → EA 掛唔到！）
                     try:
                         _mt5_data_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
                         _tpl_full_t = None
@@ -2205,22 +2207,22 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             with open(_tpl_full_t, 'wb') as _f_t:
                                 _f_t.write(b'\xff\xfe')
                                 _f_t.write(_tpl_t.encode('utf-16-le'))
-                            print(f"📋 模板已生成: {_tpl_name}（path → Experts 根）")
+                            print(f"[CLIP] 模板已生成: {_tpl_name}（path → Experts 根）")
                     except Exception as _ete:
-                        print(f"⚠️ 生成模板失敗: {_ete}")
+                        print(f"[WARN] 生成模板failed: {_ete}")
                     with open(_cmd_file, 'w', encoding='utf-8') as _f:
                         _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
                                    'ea': ea_name, 'tpl': _tpl_name}, _f)
-                    # 🚨 2026-08-15 FIX：寫入後驗證（讀返確認 — json 舊值問題：部署 USDJPY 但 script 讀到舊 GBPUSD）
+                    # [ALERT] 2026-08-15 FIX：write後驗證（讀返確認 — json 舊值問題：deploy USDJPY 但 script 讀到舊 GBPUSD）
                     try:
                         _chk = _joc.load(open(_cmd_file, encoding='utf-8'))
                         if _chk.get('symbol') != _sym:
                             with open(_cmd_file, 'w', encoding='utf-8') as _f2:
                                 _joc.dump({'symbol': _sym or 'EURUSD', 'tf': (tf or 'H1').upper(),
                                            'ea': ea_name, 'tpl': _tpl_name}, _f2)
-                            print(f"📋 json 重寫（驗證唔啱 → {_sym}）")
+                            print(f"[CLIP] json 重寫（驗證唔啱 → {_sym}）")
                         else:
-                            print(f"📋 json 寫入驗證 OK: {_sym}")
+                            print(f"[CLIP] json write驗證 OK: {_sym}")
                     except Exception:
                         pass
                 except Exception:
@@ -2234,7 +2236,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             break
                 except Exception:
                     pass
-                # ③ OpenChart 開 chart — 用下方「用戶方法」Alt+F→Enter→Enter→Space→symbol→Enter（唔再 Ctrl+9）
+                # ③ OpenChart 開 chart — 用下方「user方法」Alt+F→Enter→Enter→Space→symbol→Enter（唔再 Ctrl+9）
                 # 確保有圖表 + focus
                 try:
                     import ctypes as _ct_oc
@@ -2251,20 +2253,20 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         pass
                 except Exception:
                     pass
-                # 🚨 2026-08-19（用戶發現嘅可靠方法）：直接開 target symbol chart
+                # [ALERT] 2026-08-19（user發現嘅可靠方法）：直接開 target symbol chart
                 # Alt+F → Enter → Enter → Space → 打 symbol → Enter
                 # （pyautogui 實測 work — 取代 Ctrl+9 熱鍵 — 唔受 MT5 重啟洗走 hotkeys.ini <scripts> 區影響）
-                # 成功（active chart = _sym）→ skip Ctrl+9
+                # success（active chart = _sym）→ skip Ctrl+9
                 _oc_ok2 = False
                 try:
                     import pyautogui as _pg_new2
                     _pg_new2.FAILSAFE = False
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    print(f"📌 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
-                    # 🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）：開 chart 前檢查閘門 — 有 dialog 擋住 Alt+F menu → 開 chart 必失敗
+                    print(f"[PIN] 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
+                    # [ALERT] 2026-08-21（user要求：認證有冇 dialog 先繼續next step）：開 chart 前檢查閘門 — 有 dialog 擋住 Alt+F menu → 開 chart 必failed
                     if not _ensure_no_dialog(f'開 chart {_sym} 前', max_wait=8):
-                        print(f"❌ 開 chart 中止：dialog 關唔到 — 唔開 chart（避免假失敗）")
+                        print(f"[FAIL] 開 chart 中止：dialog 關唔到 — 唔開 chart（避免假failed）")
                         return False
                     _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
                     _pg_new2.press('enter'); time.sleep(1.5)
@@ -2273,9 +2275,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _pg_new2.typewrite(_sym, interval=0.2); time.sleep(1)
                     _pg_new2.press('enter'); time.sleep(3)
                     _new_title2 = win.window_text()
-                    # 🚨 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
-                    # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart 存在）— chart 開咗就算成功
-                    # 🚨 2026-08-21 FIX：改用 EnumChildWindows（pywinauto descendants 對 MT5 chart 窗口不可靠 — 實測開 chart 成功但 descendants check fail → 假失敗）
+                    # [ALERT] 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
+                    # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart exists）— chart 開咗就算success
+                    # [ALERT] 2026-08-21 FIX：改用 EnumChildWindows（pywinauto descendants 對 MT5 chart 窗口不可靠 — 實測開 chart success但 descendants check fail → 假failed）
                     _chart_found2 = False
                     try:
                         import ctypes as _ct_f2
@@ -2300,19 +2302,19 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         pass
                     if _sym in _new_title2 or _chart_found2:
                         _oc_ok2 = True
-                        print(f"✅ 新方法開圖成功: active chart = {_sym}")
+                        print(f"[OK] 新方法chart opened: active chart = {_sym}")
                     else:
-                        print(f"⚠️ 新方法未確認（active: {_new_title2[:50]}...）— 開 chart 失敗，唔附加！")
+                        print(f"[WARN] 新方法未確認（active: {_new_title2[:50]}...）— open chart failed，唔attach！")
                 except Exception as _eneg2:
-                    print(f"⚠️ 新方法開 chart 失敗: {_eneg2}")
+                    print(f"[WARN] 新方法open chart failed: {_eneg2}")
 
                 time.sleep(1)
                 if not _oc_ok2:
-                    # 🚨 2026-08-25 FIX（連環部署偶發失敗 — Breakout 案例）：開 chart 失敗重試 2 次
-                    # （Alt+F menu 時序 — MT5 restart 後 UI 未完全穩定 → 第一次開 chart 可能失敗 → 重試成功）
+                    # [ALERT] 2026-08-25 FIX（連環deploy偶發failed — Breakout 案例）：open chart failed重試 2 次
+                    # （Alt+F menu 時序 — MT5 restart 後 UI 未完全穩定 → 第一次開 chart 可能failed → 重試success）
                     _oc_retried = False
                     for _oc_r2 in range(2):
-                        print(f"🔄 開 chart 重試 {_oc_r2+1}/2（{_sym}）...")
+                        print(f"[RETRY] open chart retry {_oc_r2+1}/2（{_sym}）...")
                         try:
                             import pyautogui as _pg_r2
                             _pg_r2.FAILSAFE = False
@@ -2331,15 +2333,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             if _chart_found2:
                                 _oc_ok2 = True
                                 _oc_retried = True
-                                print(f"✅ 開 chart 重試成功（{_sym} chart 出現）")
+                                print(f"[OK] open chart retrysuccess（{_sym} chart 出現）")
                                 break
                         except Exception:
                             pass
                         time.sleep(2)
                 if not _oc_ok2:
-                    print(f"❌ 開 chart 失敗（{_sym}）— 唔用備用方案（用戶要求）")
+                    print(f"[FAIL] open chart failed（{_sym}）— 唔用備用方案（user要求）")
                     return False
-                # 🚨 2026-08-10：驗證圖表 symbol（打字自動完成可能揀錯 — AMD 案例）
+                # [ALERT] 2026-08-10：驗證圖表 symbol（打字自動done可能揀錯 — AMD 案例）
                 # 用「市場報價」active 高亮唔可靠 — 用圖表標題（AfxFrameOrView 內嘅 Chart 標題）
                 try:
                     import ctypes as _c9
@@ -2366,9 +2368,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         if _chart_title:
                             break
                     if _chart_title:
-                        print(f"   ✅ 圖表標題驗證: {_chart_title[:40]}")
+                        print(f"   [OK] 圖表標題驗證: {_chart_title[:40]}")
                     else:
-                        print(f"   ⚠️ 圖表標題讀唔到（繼續 — 唔阻塞）")
+                        print(f"   [WARN] 圖表標題讀唔到（繼續 — 唔阻塞）")
                 except Exception:
                     pass
                 try:
@@ -2379,22 +2381,22 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     pass
             except Exception:
                 pass
-        # 🚨 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「進行中」）
+        # [ALERT] 2026-08-12：steps 已喺函數開頭寫（開圖表前）— 呢度唔好重複寫（會將 step0 由 done 重置做 doing → 第一行永遠「in progress」）
         # send 快捷鍵
-        # 🚨 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過 send 熱鍵
-        # 🚨 2026-08-19 FIX：只有 Script（OpenChart）先跳過熱鍵（一體化假裝掛）；真 EA（ADX 等）即使 open_chart=True 都要用熱鍵真掛落 target chart
+        # [ALERT] 2026-08-15 FIX：一體化模式（open_chart=True — OpenChart script 套模板已掛 EA）→ 跳過 send 熱鍵
+        # [ALERT] 2026-08-19 FIX：只有 Script（OpenChart）先跳過熱鍵（一體化假裝掛）；真 EA（ADX 等）即使 open_chart=True 都要用熱鍵真掛落 target chart
         if open_chart and _is_script_att:
             _saw_props = True  # Script（OpenChart）一體化假裝已掛
         else:
-            _saw_props = False  # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判成功）
+            _saw_props = False  # [ALERT] 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 唔好誤判success）
             if not open_chart:
                 _sk(combo)
             else:
                 # open_chart=True 但係真 EA → 開 chart 後用熱鍵真掛落 active chart
                 if combo:
-                    # 🚨 2026-08-20 FIX（附加錯 chart 根治 — 用戶實測）：send 熱鍵前驗證 active chart 係目標 symbol
-                    # （OpenChart 開 chart 失敗 → active chart 係舊 restore 嘅 GBPUSD → 附加落去 → 代替 dialog → 一鑊泡）
-                    # → 驗證唔到目標 chart → 明確 fail（唔好附加落錯 chart）
+                    # [ALERT] 2026-08-20 FIX（attach錯 chart 根治 — user實測）：send 熱鍵前驗證 active chart 係target symbol
+                    # （OpenChart open chart failed → active chart 係舊 restore 嘅 GBPUSD → attach落去 → 代替 dialog → 一鑊泡）
+                    # → 驗證唔到目標 chart → 明確 fail（唔好attach落錯 chart）
                     _active_ok = False
                     try:
                         import ctypes as _c_act
@@ -2420,9 +2422,9 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             if _act_title:
                                 break
                         _sym_u = (symbol or '').upper().split('.')[0]
-                        # 🚨 2026-08-20 FIX：EnumChildWindows「Chart」class 喺 MT5 搵唔到（chart 窗口係 AfxFrameOrView 類）
+                        # [ALERT] 2026-08-20 FIX：EnumChildWindows「Chart」class 喺 MT5 not found（chart 窗口係 AfxFrameOrView 類）
                         # → 改用 MDI chart 窗口檢查（同「新方法開圖」驗證一致 — 可靠）
-                        # 🚨 2026-08-21 FIX：改用 EnumChildWindows Afx 檢查（pywinauto descendants 不可靠 — 假失敗）
+                        # [ALERT] 2026-08-21 FIX：改用 EnumChildWindows Afx 檢查（pywinauto descendants 不可靠 — 假failed）
                         _mdi_ok = False
                         try:
                             import ctypes as _ct_mdi2
@@ -2449,18 +2451,18 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             pass
                         if _mdi_ok:
                             _active_ok = True
-                            print(f"   ✅ active chart 驗證: {_act_title[:40]}（目標 {_sym_u} — 啱）")
+                            print(f"   [OK] active chart 驗證: {_act_title[:40]}（目標 {_sym_u} — 啱）")
                         else:
-                            print(f"   ⚠️ active chart 唔係目標 {_sym_u}（現: {_act_title[:40] or '未知'}）— 唔附加！")
+                            print(f"   [WARN] active chart 唔係目標 {_sym_u}（現: {_act_title[:40] or '未知'}）— 唔attach！")
                     except Exception as _e_act:
-                        print(f"   ⚠️ active chart 驗證異常: {_e_act}（保守 — 當唔啱）")
+                        print(f"   [WARN] active chart 驗證exception: {_e_act}（保守 — 當唔啱）")
                     if _active_ok:
-                        # 🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）：send 熱鍵前檢查閘門
+                        # [ALERT] 2026-08-21（user要求：認證有冇 dialog 先繼續next step）：send 熱鍵前檢查閘門
                         # 有 dialog（Properties 殘留）→ 熱鍵 send 咗會彈錯 dialog / 被擋 → 先確認冇 dialog
-                        if not _ensure_no_dialog(f'附加 {ea_name} 前', max_wait=8):
-                            print(f"❌ 附加中止：dialog 關唔到 — 唔 send 熱鍵（避免彈錯 dialog）")
+                        if not _ensure_no_dialog(f'attach {ea_name} 前', max_wait=8):
+                            print(f"[FAIL] attach中止：dialog 關唔到 — 唔 send 熱鍵（避免彈錯 dialog）")
                             return False
-                        # 🚨 2026-08-24 FIX（熱鍵 load 慢 — 人手模擬測試 ATR/ATR 附加失敗）：send 前等耐啲（MT5 開機後熱鍵 load 慢）
+                        # [ALERT] 2026-08-24 FIX（熱鍵 load 慢 — 人手模擬測試 ATR/ATR attach failed）：send 前等耐啲（MT5 開機後熱鍵 load 慢）
                         # + send 後冇彈 Properties → 重試（最多 5 次 — 每次等 3 秒）
                         time.sleep(5)
                         _hk_ok = False
@@ -2487,30 +2489,30 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             except Exception:
                                 pass
                             if _props_found:
-                                print(f"✅ 快捷鍵 {combo} 彈出 Properties（try {_hk_try+1}）")
+                                print(f"[OK] 快捷鍵 {combo} 彈出 Properties（try {_hk_try+1}）")
                                 _hk_ok = True
                                 break
-                            print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試 {_hk_try+1}/5）...")
+                            print(f"[WARN] 快捷鍵 {combo} 冇彈出 Properties（重試 {_hk_try+1}/5）...")
                             time.sleep(3)
                         if not _hk_ok:
-                            print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
+                            print(f"[FAIL] 快捷鍵 {combo} 重試後都冇彈出 Properties — attach failed（快捷鍵可能未 load）")
                     else:
-                        print(f"❌ 附加中止：active chart 唔係目標 symbol（{symbol}）— 避免代替 dialog 一鑊泡")
+                        print(f"[FAIL] attach中止：active chart 唔係target symbol（{symbol}）— 避免代替 dialog 一鑊泡")
                         # 寫 fail steps
                         try:
                             import json as _jf2
                             _stf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                             with open(_stf2, 'w', encoding='utf-8') as _f2:
-                                _jf2.dump([{'text': f'部署 {ea_name}（{symbol}）', 'status': 'done'},
+                                _jf2.dump([{'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
                                            {'text': f'開圖表（{symbol}）', 'status': 'done'},
-                                           {'text': f'附加 {ea_name}', 'status': 'doing'},
-                                           {'text': '驗證運行狀態', 'status': 'pending'}], _f2, ensure_ascii=False)
+                                           {'text': f'attach {ea_name}', 'status': 'doing'},
+                                           {'text': '驗證running狀態', 'status': 'pending'}], _f2, ensure_ascii=False)
                         except Exception:
                             pass
                         time.sleep(2)
                         return False
                 else:
-                    print(f"⚠️ {ea_name} 冇快捷鍵 combo — 用 Navigator 附加")
+                    print(f"[WARN] {ea_name} 冇快捷鍵 combo — 用 Navigator attach")
         time.sleep(3)
         def _bm_click(_btn):
             """用 BM_CLICK（SendMessage）撳按鈕 — 唔理位置/遮擋（2026-08-06：確定按鈕喺 dialog 邊界外 — pywinauto click 唔到）"""
@@ -2527,10 +2529,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
 
         # 檢查 dialog（循環處理所有 — Properties 確定 → 代替確認 → 可能有多個）
         _last_dlg_count = 0
-        _clicked_once = set()  # 🚨 防卡死：撳過冇效果嘅 dialog 唔再撳（2026-08-07）
-        _replace_blocked = False  # 🚨 2026-08-21：代替被拒標記（見到代替 dialog → fail 部署）
+        _clicked_once = set()  # [ALERT] 防卡死：撳過冇效果嘅 dialog 唔再撳（2026-08-07）
+        _replace_blocked = False  # [ALERT] 2026-08-21：代替被拒標記（見到代替 dialog → fail deploy）
         for _ in range(8):
-            _chk_abort()  # 🚨 每 round 檢查緊急停止
+            _chk_abort()  # [ALERT] 每 round 檢查緊急stop
             acted = False
             _dlg_count = 0
             for _w in _app.windows():
@@ -2554,10 +2556,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             except Exception:
                                 pass
                         if _is_replace:
-                            # 🚨 2026-08-21 FIX（用戶實測：關 chart 後部署代替咗 TestTrades）：代替 dialog 出現 = 目標 chart 已有 EA
-                            # = 開 chart 失敗/掛錯 chart → 唔可以接受代替（會取代其他 EA）→ 撳「否」+ fail
-                            # （之前撳「是」→ 取代 TestTrades → 其他 EA 消失 + 心跳殘留假成功）
-                            print("🚨 偵測到「代替」dialog — 唔接受（會取代其他 EA）— 撳「否」+ 中止部署")
+                            # [ALERT] 2026-08-21 FIX（user實測：關 chart 後deploy代替咗 TestTrades）：代替 dialog 出現 = 目標 chart 已有 EA
+                            # = open chart failed/掛錯 chart → 唔可以接受代替（會取代其他 EA）→ 撳「否」+ fail
+                            # （before撳「是」→ 取代 TestTrades → 其他 EA 消失 + 心跳殘留假success）
+                            print("[ALERT] 偵測到「代替」dialog — 唔接受（會取代其他 EA）— 撳「否」+ 中止deploy")
                             _dw = _app.window(handle=_h)
                             _clicked_no = False
                             for _b in _dw.children(class_name='Button'):
@@ -2565,32 +2567,32 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                     if '否' in _b.window_text() or 'No' in _b.window_text() or 'Cancel' in _b.window_text():
                                         if _bm_click(_b):
                                             _clicked_no = True
-                                            print("✅ 已撳「否」（拒絕代替）")
+                                            print("[OK] 已撳「否」（refused代替）")
                                             break
                                 except Exception:
                                     pass
                             if not _clicked_no:
                                 try:
                                     _sk('{ESC}')
-                                    print("✅ 已 ESC 關閉代替 dialog")
+                                    print("[OK] 已 ESC 關閉代替 dialog")
                                 except Exception:
                                     pass
                             _clicked_once.add(_h)
                             acted = True
-                            _replace_blocked = True  # 🚨 2026-08-21：標記代替被拒 → 部署失敗
+                            _replace_blocked = True  # [ALERT] 2026-08-21：標記代替被拒 → deploy failed
                         elif any(_k in _t for _k in (ea_name, '1.00', '2.00', '3.00', '.ex5')):
-                            _saw_props = True  # 🚨 Properties 彈出過（快捷鍵有效）
+                            _saw_props = True  # [ALERT] Properties 彈出過（快捷鍵有效）
                             _dw = _app.window(handle=_h)
                             for _b in _dw.children(class_name='Button'):
                                 try:
                                     if '確定' in _b.window_text() or 'OK' in _b.window_text():
                                         if _bm_click(_b):
-                                            print("✅ 已撳「確定」（Properties）")
+                                            print("[OK] 已撳「確定」（Properties）")
                                             try:
                                                 _steps[1]['status'] = 'done'
                                                 _steps[2]['status'] = 'doing'
                                                 _update_steps(_steps)
-                                                time.sleep(0.8)  # 🚨 2026-08-12：每步停留（網頁捕到「附加」進行中）
+                                                time.sleep(0.8)  # [ALERT] 2026-08-12：每步停留（網頁捕到「attach」in progress）
                                             except Exception:
                                                 pass
                                             acted = True
@@ -2599,15 +2601,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                 except Exception:
                                     pass
                         if acted:
-                            break  # 🚨 每輪只處理一個 dialog（防卡死）
+                            break  # [ALERT] 每輪只處理一個 dialog（防卡死）
                 except Exception:
                     pass
             if not acted:
                 time.sleep(1)
-                # 兩 round 冇動作 → 完成
+                # 兩 round 冇動作 → done
                 break
             time.sleep(1.5)
-            # 🚨 防亂按：dialog 數量冇減少（撳咗但冇關）→ 停止（唔好無限撳）
+            # [ALERT] 防亂按：dialog 數量冇減少（撳咗但冇關）→ stop（唔好無限撳）
             _chk_abort()
             _now_dlg = 0
             for _w2 in _app.windows():
@@ -2617,13 +2619,13 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
             if _now_dlg >= _dlg_count and _ > 2:
-                print("⚠️ dialog 冇關（可能撳錯）— 停止循環防亂按")
+                print("[WARN] dialog 冇關（可能撳錯）— stop循環防亂按")
                 break
 
-        # 🚨 2026-08-21 FIX（代替 dialog 唔接受）：如果部署過程見到代替 dialog → 部署失敗
-        # （代替 = 目標 chart 已有 EA — 開 chart 失敗/掛錯 → 唔可以繼續 — 唔好取代其他 EA）
+        # [ALERT] 2026-08-21 FIX（代替 dialog 唔接受）：如果deploy過程見到代替 dialog → deploy failed
+        # （代替 = 目標 chart 已有 EA — open chart failed/掛錯 → 唔可以繼續 — 唔好取代其他 EA）
         if _replace_blocked:
-            print("❌ 部署中止：偵測到「代替」dialog（目標 chart 已有 EA）— 唔接受取代")
+            print("[FAIL] deploy中止：偵測到「代替」dialog（目標 chart 已有 EA）— 唔接受取代")
             try:
                 _sk('{ESC}')
             except Exception:
@@ -2632,18 +2634,18 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 import json as _jf3
                 _stf3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                 with open(_stf3, 'w', encoding='utf-8') as _f3:
-                    _jf3.dump([{'text': f'部署 {ea_name}（{symbol}）', 'status': 'done'},
+                    _jf3.dump([{'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
                                {'text': f'開圖表（{symbol}）', 'status': 'done'},
-                               {'text': f'附加 {ea_name}', 'status': 'doing'},
-                               {'text': '⚠️ 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
-                               {'text': '驗證運行狀態', 'status': 'pending'}], _f3, ensure_ascii=False)
+                               {'text': f'attach {ea_name}', 'status': 'doing'},
+                               {'text': '[WARN] 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
+                               {'text': '驗證running狀態', 'status': 'pending'}], _f3, ensure_ascii=False)
             except Exception:
                 pass
             return False
 
-        # 🚨 2026-08-20 FIX（連環代替確認 — 用戶實測）：撳完「是」之後 MT5 可能連環彈多個「代替」dialog
-        # （附加 EA 落已有 EA 嘅 chart — 逐個代替 — 每個都要再撳「是」）
-        # → loop 完之後再 poll 8 秒睇有冇新代替 dialog → 有就再撳「是」（最多 5 次）
+        # [ALERT] 2026-08-20 FIX（連環代替確認 — user實測）：撳完「是」after MT5 可能連環彈多個「代替」dialog
+        # （attach EA 落已有 EA 嘅 chart — 逐個代替 — 每個都要再撳「是」）
+        # → loop 完after再 poll 8 秒睇有冇新代替 dialog → 有就再撳「是」（最多 5 次）
         for _rpl in range(5):
             _chk_abort()
             _rpl_found = False
@@ -2665,7 +2667,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         except Exception:
                             pass
                     if _is_rpl:
-                        # 🚨 2026-08-21 FIX：連環代替都唔接受（撳「否」— 唔好取代其他 EA）
+                        # [ALERT] 2026-08-21 FIX：連環代替都唔接受（撳「否」— 唔好取代其他 EA）
                         _rpl_found = True
                         _replace_blocked = True
                         _dw_r2 = _app.window(handle=_h_r)
@@ -2673,7 +2675,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             try:
                                 if '否' in _b_r.window_text() or 'No' in _b_r.window_text() or 'Cancel' in _b_r.window_text():
                                     if _bm_click(_b_r):
-                                        print(f"✅ 已撳「否」（拒絕連環代替 {_rpl+1}）")
+                                        print(f"[OK] 已撳「否」（refused連環代替 {_rpl+1}）")
                                     break
                             except Exception:
                                 pass
@@ -2681,12 +2683,12 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
             if not _rpl_found:
-                break  # 冇代替 dialog — 完成
+                break  # 冇代替 dialog — done
             time.sleep(2)
 
-        # 🚨 2026-08-21 FIX：連環代替 loop 完 → 如果有代替被拒 → 部署失敗
+        # [ALERT] 2026-08-21 FIX：連環代替 loop 完 → 如果有代替被拒 → deploy failed
         if _replace_blocked:
-            print("❌ 部署中止：代替 dialog 被拒絕（目標 chart 已有 EA — 唔接受取代）")
+            print("[FAIL] deploy中止：代替 dialog 被refused（目標 chart 已有 EA — 唔接受取代）")
             try:
                 _sk('{ESC}')
             except Exception:
@@ -2695,18 +2697,18 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 import json as _jf4
                 _stf4 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                 with open(_stf4, 'w', encoding='utf-8') as _f4:
-                    _jf4.dump([{'text': f'部署 {ea_name}（{symbol}）', 'status': 'done'},
+                    _jf4.dump([{'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
                                {'text': f'開圖表（{symbol}）', 'status': 'done'},
-                               {'text': f'附加 {ea_name}', 'status': 'doing'},
-                               {'text': '⚠️ 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
-                               {'text': '驗證運行狀態', 'status': 'pending'}], _f4, ensure_ascii=False)
+                               {'text': f'attach {ea_name}', 'status': 'doing'},
+                               {'text': '[WARN] 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
+                               {'text': '驗證running狀態', 'status': 'pending'}], _f4, ensure_ascii=False)
             except Exception:
                 pass
             return False
 
-        # 🚨 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
+        # [ALERT] 2026-08-10：驗證 Properties 有冇彈出（冇彈 = 快捷鍵冇效 — 重試快捷鍵 ×2）
         if not _saw_props:
-            print(f"⚠️ 快捷鍵 {combo} 冇彈出 Properties（重試中）...")
+            print(f"[WARN] 快捷鍵 {combo} 冇彈出 Properties（重試中）...")
             for _rt in range(2):
                 _chk_abort()
                 _sk(combo)
@@ -2731,7 +2733,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                     try:
                                         if '確定' in _b.window_text() or 'OK' in _b.window_text():
                                             if _bm_click(_b):
-                                                print(f"✅ 重試 {_rt+1}: 已撳「確定」")
+                                                print(f"[OK] 重試 {_rt+1}: 已撳「確定」")
                                             break
                                     except Exception:
                                         pass
@@ -2740,28 +2742,28 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     break
                 time.sleep(2)
             if not _saw_props:
-                print(f"❌ 快捷鍵 {combo} 重試後都冇彈出 Properties — 附加失敗（快捷鍵可能未 load）")
+                print(f"[FAIL] 快捷鍵 {combo} 重試後都冇彈出 Properties — attach failed（快捷鍵可能未 load）")
 
-        # 🚨 2026-08-21（用戶要求：認證有冇 dialog 先繼續下一步）：心跳驗證前檢查閘門
-        # 撳「確定」後 Properties dialog 可能殘留 → 唔可以當成功（下次部署會被擋）→ 確認冇 dialog 先繼續
-        if not _ensure_no_dialog(f'{ea_name} 部署完成後', max_wait=8):
-            print(f"❌ {ea_name} 部署後有 dialog 關唔到 — 唔當成功（會擋下次部署）")
+        # [ALERT] 2026-08-21（user要求：認證有冇 dialog 先繼續next step）：heartbeat verify前檢查閘門
+        # 撳「確定」後 Properties dialog 可能殘留 → 唔可以當success（下次deploy會被擋）→ 確認冇 dialog 先繼續
+        if not _ensure_no_dialog(f'{ea_name} deploydone後', max_wait=8):
+            print(f"[FAIL] {ea_name} deploy後有 dialog 關唔到 — 唔當success（會擋下次deploy）")
             return False
 
-        # 心跳驗證
+        # heartbeat verify
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
         if os.path.isfile(hb):
-            print(f"✅ {ea_name} 附加成功（心跳存在）")
+            print(f"[OK] {ea_name} attach success（heartbeat exists）")
         else:
-            print(f"✅ {ea_name} 快捷鍵附加流程完成（心跳等 tick）")
-        # 🚨 2026-08-12 FIX：steps done 搬去函數最尾（所有操作完成後先寫 — 否則用戶見 steps done 撳確定 → active 仲 true → 即刻彈多一次）
-        # 🎯 圖表平鋪（2026-08-08：部署完成後自動 Alt+R — 圖表整齊排列）
+            print(f"[OK] {ea_name} 快捷鍵attach流程done（heartbeat waiting tick）")
+        # [ALERT] 2026-08-12 FIX：steps done 搬去函數最尾（所有操作done後先寫 — 否則user見 steps done 撳確定 → active 仲 true → immediately彈多一次）
+        # [TARGET] 圖表平鋪（2026-08-08：deploydone後自動 Alt+R — 圖表整齊排列）
         try:
             _sk('%r')
             time.sleep(2)
         except Exception:
             pass
-        # 🚨 收埋市場報價（2026-08-08：直接 ShowWindow minimize — 唔好用 Ctrl+M（toggle 會開返））
+        # [ALERT] 收埋市場報價（2026-08-08：直接 ShowWindow minimize — 唔好用 Ctrl+M（toggle 會開返））
         try:
             import ctypes as _ct2
             for _w3 in _app.windows():
@@ -2773,11 +2775,11 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     pass
         except Exception:
             pass
-        # 🚨 2026-08-10：log 驗證 symbol（打字方法可能開錯圖表 — AMD 案例）
+        # [ALERT] 2026-08-10：log verify symbol（打字方法可能開錯圖表 — AMD 案例）
         try:
             import glob as _g4
-            # 🚨 等 OnInit 行 + log 寫入（撳確定後即刻讀 — log 未寫 → 誤判失敗 — Breakout 案例）
-            # 🚨 2026-08-13 FIX：4 秒 → 8 秒（MT5 重啟後 EA 初始化 + log/心跳寫入要時間 — Parabolic_SAR 案例：用戶見成功但驗證話「圖表不符」— log 其實有記錄）
+            # [ALERT] 等 OnInit 行 + log write（撳確定後immediately讀 — log 未寫 → 誤判failed — Breakout 案例）
+            # [ALERT] 2026-08-13 FIX：4 秒 → 8 秒（MT5 重啟後 EA 初始化 + log/心跳write要時間 — Parabolic_SAR 案例：user見success但驗證話「圖表不符」— log 其實有記錄）
             time.sleep(8)
             _lg = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             _latest = None
@@ -2798,21 +2800,21 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 _target_sym = (symbol or 'EURUSD').upper()
                 _ok_sym = False
                 for _line in _txt.splitlines():
-                    if ea_name in _line and _target_sym in _line and ('已启动' in _line or '已啟動' in _line or 'loaded successfully' in _line):
+                    if ea_name in _line and _target_sym in _line and ('已启动' in _line or '已start' in _line or 'loaded successfully' in _line):
                         _ok_sym = True
                         break
                 if _ok_sym:
-                    print(f"✅ log 驗證: {ea_name} 喺 {_target_sym} 啟動（正確圖表）")
+                    print(f"[OK] log verify: {ea_name} 喺 {_target_sym} start（正確圖表）")
                 else:
-                    print(f"❌ log 驗證: {ea_name} 冇喺 {_target_sym} 啟動（可能開錯圖表 — 檢查心跳後備）")
-                    # 🚨 2026-08-12 FIX：心跳後備 — log 冇「已啟動」字眼唔代表 EA 冇運行（重啟 MT5 後 log 時序/字眼問題）
-                    # 用戶實測：電腦實際一致（Breakout 喺 USDJPY 運行）但 log 驗證誤判失敗！
+                    print(f"[FAIL] log verify: {ea_name} 冇喺 {_target_sym} start（可能開錯圖表 — 檢查heartbeat fallback）")
+                    # [ALERT] 2026-08-12 FIX：heartbeat fallback — log 冇「已start」字眼唔代表 EA 冇running（重啟 MT5 後 log 時序/字眼問題）
+                    # user實測：PC實際一致（Breakout 喺 USDJPY running）但 log verify誤判failed！
                     _hb_ok = False
                     try:
                         _hb_f = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
                         if os.path.isfile(_hb_f):
                             import json as _jhbl
-                            # 🚨 2026-08-12 FIX：心跳檔案係 UTF-16 編碼（EA 寫嘅 — 0xff 0xfe BOM）— 多編碼嘗試（之前 utf-8 讀失敗 → 後備冇效 → 誤判失敗）
+                            # [ALERT] 2026-08-12 FIX：心跳file係 UTF-16 編碼（EA 寫嘅 — 0xff 0xfe BOM）— 多編碼嘗試（before utf-8 讀failed → 後備冇效 → 誤判failed）
                             _hb_d = None
                             for _enc_hb in ('utf-16', 'utf-8', 'cp1252'):
                                 try:
@@ -2822,19 +2824,19 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                     continue
                             if isinstance(_hb_d, dict) and _hb_d.get('status') == 'running' and int(time.time()) - int(os.path.getmtime(_hb_f)) < 300:
                                 _hb_ok = True
-                        # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt 格式（舊版 EA）— state_*.json 揾唔到 → 檢查 hb_*.txt（mtime 新鮮 <300s = 運行中）
+                        # [ALERT] 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt 格式（舊版 EA）— state_*.json 揾唔到 → 檢查 hb_*.txt（mtime 新鮮 <300s = running中）
                         if not _hb_ok:
                             _hb_txt = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
                             if os.path.isfile(_hb_txt) and int(time.time()) - os.path.getmtime(_hb_txt) < 300:
                                 _hb_ok = True
-                                print(f"✅ hb_*.txt 心跳: {ea_name} 運行中（{os.path.basename(_hb_txt)} 新鮮）")
+                                print(f"[OK] hb_*.txt 心跳: {ea_name} running中（{os.path.basename(_hb_txt)} 新鮮）")
                     except Exception:
                         pass
                     if _hb_ok:
-                        print(f"✅ 心跳後備: {ea_name} 運行中（心跳新鮮 — 圖表正確）")
+                        print(f"[OK] heartbeat fallback: {ea_name} running中（心跳新鮮 — 圖表正確）")
                     else:
-                        # 🚨 2026-08-13 FIX：心跳後備失敗 → 再等 5 秒重試（EA 初始化延遲 — 心跳檔案未寫 → 誤判失敗 — Parabolic_SAR 案例）
-                        print(f"⏳ 心跳後備第一次失敗 — 等 5 秒再試（EA 可能仲初始化緊）...")
+                        # [ALERT] 2026-08-13 FIX：heartbeat fallbackfailed → 再等 5 秒重試（EA 初始化延遲 — 心跳file未寫 → 誤判failed — Parabolic_SAR 案例）
+                        print(f"[WAIT] heartbeat fallback第一次failed — 等 5 秒再試（EA 可能仲初始化緊）...")
                         time.sleep(5)
                         _hb_ok = False
                         try:
@@ -2851,10 +2853,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         except Exception:
                             pass
                         if _hb_ok:
-                            print(f"✅ 心跳後備（第二次）: {ea_name} 運行中 — 圖表正確")
+                            print(f"[OK] heartbeat fallback（第二次）: {ea_name} running中 — 圖表正確")
                     if not _hb_ok:
-                        # 🚨 2026-08-13 FIX：心跳後備都失敗 → 再等 5 秒重試 log 驗證（log 寫入延遲 — Ichimoku 案例：圖表成功但 log 未寫 → 誤判「圖表不符」）
-                        # （Ichimoku 冇心跳 code — 心跳後備永遠失敗 — 但 log 最終會寫「已啟動」— 第二次 log 驗證）
+                        # [ALERT] 2026-08-13 FIX：heartbeat fallback都failed → 再等 5 秒重試 log verify（log write延遲 — Ichimoku 案例：圖表success但 log 未寫 → 誤判「圖表不符」）
+                        # （Ichimoku 冇心跳 code — heartbeat fallback永遠failed — 但 log 最終會寫「已start」— 第二次 log verify）
                         time.sleep(5)
                         try:
                             import glob as _g5
@@ -2876,22 +2878,22 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                         continue
                                 if _txt2:
                                     for _line2 in _txt2.splitlines():
-                                        if ea_name in _line2 and _target_sym in _line2 and ('已启动' in _line2 or '已啟動' in _line2 or 'loaded successfully' in _line2):
+                                        if ea_name in _line2 and _target_sym in _line2 and ('已启动' in _line2 or '已start' in _line2 or 'loaded successfully' in _line2):
                                             _hb_ok = True
-                                            print(f"✅ log 驗證（第二次）: {ea_name} 喺 {_target_sym} 啟動 — 圖表正確")
+                                            print(f"[OK] log verify（第二次）: {ea_name} 喺 {_target_sym} start — 圖表正確")
                                             break
                         except Exception:
                             pass
                     if not _hb_ok:
-                        # 🚨 2026-08-20（部署流程檢測系統 v0.10.5）：唔再 return False！
-                        # 舊邏輯：log 驗證 fail → return False → 外層新 code Step 4 gate 永遠行唔到
-                        # （EA 明明掛到但 log 寫入延遲 → 假失敗 — Breakout 案例）
+                        # [ALERT] 2026-08-20（deploy流程檢測系統 v0.10.5）：唔再 return False！
+                        # 舊邏輯：log verify fail → return False → 外層新 code Step 4 gate 永遠行唔到
+                        # （EA 明明掛到但 log write延遲 → 假failed — Breakout 案例）
                         # 新邏輯：呢度只 print warning — 最終判定由 auto_attach_ea 嘅 Step 4 gate
-                        # （_ea_loaded_in_log poll 30s + 心跳後備）負責
-                        print(f"⚠️ 驗證 {ea_name} 未確認（log/心跳延遲）— 交俾外層 Step 4 gate 最終判定")
+                        # （_ea_loaded_in_log poll 30s + heartbeat fallback）負責
+                        print(f"[WARN] 驗證 {ea_name} 未確認（log/心跳延遲）— 交俾外層 Step 4 gate 最終判定")
         except Exception:
             pass
-        # 🚨 2026-08-12 FIX：所有操作完成（圖表平鋪/市場報價/log 驗證）→ 最後先寫 steps 全部 done（確定出現 — active 即刻 false — 撳確定唔會再彈）
+        # [ALERT] 2026-08-12 FIX：所有操作done（圖表平鋪/市場報價/log verify）→ 最後先寫 steps 全部 done（確定出現 — active immediately false — 撳確定唔會再彈）
         try:
             _steps[2]['status'] = 'done'
             _steps[3]['status'] = 'doing'
@@ -2899,7 +2901,7 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             time.sleep(0.8)
             _steps[3]['status'] = 'done'
             _update_steps(_steps)
-            # 🚨 即刻寫 ai_control.json active:false（唔等外層 release — 否則用戶撳確定時 active 仲 true → 即刻彈多一次）
+            # [ALERT] immediately寫 ai_control.json active:false（唔等外層 release — 否則user撳確定時 active 仲 true → immediately彈多一次）
             try:
                 import json as _jst
                 _stf = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server', 'static', 'detector', 'ai_control.json'))
@@ -2909,8 +2911,8 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 pass
         except Exception:
             pass
-        # 🚨 2026-08-21 FIX（RSI Properties dialog 殘留 — 用戶實測）：部署完成後清理任何殘留 dialog
-        # （撳「確定」後 dialog 可能冇關 → 殘留 → 下次部署被 modal 擋 → 開 chart 失敗）
+        # [ALERT] 2026-08-21 FIX（RSI Properties dialog 殘留 — user實測）：deploydone後清理任何殘留 dialog
+        # （撳「確定」後 dialog 可能冇關 → 殘留 → 下次deploy被 modal 擋 → open chart failed）
         try:
             import ctypes as _ct_fin
             _u_fin = _ct_fin.windll.user32
@@ -2928,15 +2930,15 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 except Exception:
                     pass
             if _fin_dlgs:
-                print(f"🧹 部署後清理殘留 dialog: {len(_fin_dlgs)} 個（WM_CLOSE）")
+                print(f"[CLEAN] deploy後清理殘留 dialog: {len(_fin_dlgs)} 個（WM_CLOSE）")
         except Exception:
             pass
         return True
     except Exception as e:
-        print(f"⚠️ 快捷鍵附加失敗: {e}")
+        print(f"[WARN] 快捷鍵attach failed: {e}")
         return False
 def verify_heartbeat(ea_name, timeout=60):
-    """驗證 EA heartbeat file 存在且新鮮（+ MT5 log 後備 — 2026-08-10：市場收市冇 tick 心跳唔寫）"""
+    """驗證 EA heartbeat file exists且新鮮（+ MT5 log 後備 — 2026-08-10：market closeno tick 心跳唔寫）"""
     hb_file = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
     start = time.time()
     
@@ -2949,12 +2951,12 @@ def verify_heartbeat(ea_name, timeout=60):
                 with open(hb_file, 'rb') as f:
                     raw = f.read()
                 content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
-                print(f"💓 {ea_name} heartbeat: {content} ({round(age)}s ago)")
+                print(f"[HB] {ea_name} heartbeat: {content} ({round(age)}s ago)")
                 return True
         time.sleep(3)
     
-    # 🚨 2026-08-10：心跳冇 → 睇 MT5 log「已啟動」（市場收市冇 tick — EA 其實啟動咗）
-    # 🚨 2026-08-24 FIX（假成功根治）：讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）而唔係 MQL5/Logs（MetaEditor 中文「已启动」殘留 → 誤判）
+    # [ALERT] 2026-08-10：心跳冇 → 睇 MT5 log「已start」（market closeno tick — EA 其實start咗）
+    # [ALERT] 2026-08-24 FIX（假success根治）：讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）而唔係 MQL5/Logs（MetaEditor 中文「已启动」殘留 → 誤判）
     # + 只認「loaded successfully」+ 最後狀態判斷（removed 後唔算 loaded）
     try:
         log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -2985,20 +2987,20 @@ def verify_heartbeat(ea_name, timeout=60):
                         elif 'removed' in _ln:
                             _last_state = 'removed'
                 if _last_state == 'loaded':
-                    print(f"✅ {ea_name} MT5 log 顯示已啟動（market close 冇 tick — 心跳後備確認）")
+                    print(f"[OK] {ea_name} MT5 log 顯示已start（market close no tick — 心跳fallback confirm）")
                     return True
     except Exception:
         pass
     
-    print(f"❌ {ea_name} heartbeat not detected within {timeout}s")
+    print(f"[FAIL] {ea_name} heartbeat not detected within {timeout}s")
     return False
 
 
 def _ea_loaded_in_log(ea_name, symbol):
-    """🚨 2026-08-20（部署流程檢測系統 — Step 4 gate）
+    """[ALERT] 2026-08-20（deploy流程檢測系統 — Step 4 gate）
     對真 MT5 log：搵 `expert <EA> (<SYM>,H1) loaded successfully`（且無隨後 removed）
-    ⚠️ 2026-08-20 FIX：加新鮮度檢查 — 只認最近 5 分鐘內嘅 loaded（stale 舊記錄會假 True）
-    用於 _wait_until poll — 返 bool（唔 print 成功 — _wait_until 會 print）"""
+    [WARN] 2026-08-20 FIX：加新鮮度檢查 — 只認最近 5 分鐘內嘅 loaded（stale 舊記錄會假 True）
+    用於 _wait_until poll — 返 bool（唔 print success — _wait_until 會 print）"""
     try:
         log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         import glob as _g
@@ -3011,7 +3013,7 @@ def _ea_loaded_in_log(ea_name, symbol):
                         latest = f
         if not latest:
             return False
-        # 新鮮度：log 檔 mtime 要 < 300s（太舊 = MT5 冇寫入 = EA 冇 load 記錄）
+        # 新鮮度：log 檔 mtime 要 < 300s（太舊 = MT5 冇write = EA 冇 load 記錄）
         if time.time() - os.path.getmtime(latest) > 300:
             return False
         with open(latest, 'rb') as f:
@@ -3025,15 +3027,15 @@ def _ea_loaded_in_log(ea_name, symbol):
         _sym = (symbol or '').upper()
         _found = False
         _removed_after = False
-        # 🚨 2026-08-20 FIX（假成功根治）：loaded 記錄本身要新鮮（唔可以淨係 log 檔新鮮）
-        # 舊記錄（例如 18:32 Bollinger EURUSD loaded）喺 log 檔 → log 檔新鮮 → 誤判 True → 假成功
-        # → parse log 行時間（HH:MM:SS）對比而家 — 只認最近 300s 內嘅 loaded
+        # [ALERT] 2026-08-20 FIX（假success根治）：loaded 記錄本身要新鮮（唔可以淨係 log 檔新鮮）
+        # 舊記錄（例如 18:32 Bollinger EURUSD loaded）喺 log 檔 → log 檔新鮮 → 誤判 True → 假success
+        # → parse log 行時間（HH:MM:SS）對比now — 只認最近 300s 內嘅 loaded
         import datetime as _dt
         _now_dt = _dt.datetime.now()
         _cutoff_dt = _now_dt - _dt.timedelta(seconds=300)
         _found_ts = None
         for line in text.splitlines():
-            if ea_name in line and ('loaded successfully' in line.lower() or '已启动' in line or '已啟動' in line):
+            if ea_name in line and ('loaded successfully' in line.lower() or '已启动' in line or '已start' in line):
                 # parse 行時間（log 格式: XX\t0\tHH:MM:SS.mmm\tExperts\texpert ...）
                 _m_ts = None
                 try:
@@ -3072,10 +3074,10 @@ def verify_ea_loaded(ea_name):
                 lines = f.readlines()
             for line in reversed(lines[-50:]):
                 if f'expert {ea_name}' in line.lower() and 'loaded' in line.lower():
-                    print(f"✅ MT5 log: EA loaded successfully")
+                    print(f"[OK] MT5 log: EA loaded successfully")
                     return True
-                if ea_name in line and '啟動' in line:
-                    print(f"✅ EA log: {line.strip()}")
+                if ea_name in line and 'start' in line:
+                    print(f"[OK] EA log: {line.strip()}")
                     return True
     return False
 
@@ -3095,18 +3097,18 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
     Returns: True if EA is running with heartbeat
     """
     print(f"\n{'='*50}")
-    print(f"  🚀 Auto-Attach: {ea_name} → {symbol} {timeframe}")
+    print(f"  [GO] Auto-Attach: {ea_name} → {symbol} {timeframe}")
     print(f"{'='*50}")
-    # 🚨 2026-08-28 FIX：記錄部署開始時間（log 驗證只認「部署開始之後」嘅 loaded — 唔好用 30 分鐘窗口）
-    # （舊：30 分鐘內任何 loaded 都當 fresh → 讀到上一輪部署嘅舊 loaded → 假成功）
+    # [ALERT] 2026-08-28 FIX：記錄deploystart時間（log verify只認「deploystartafter」嘅 loaded — 唔好用 30 分鐘窗口）
+    # （舊：30 分鐘內任何 loaded 都當 fresh → 讀到上一輪deploy嘅舊 loaded → 假success）
     _deploy_start_ts = time.time()
     global _last_deploy_start_ts
     _last_deploy_start_ts = _deploy_start_ts
 
-    # Step 0: AI 控制守衛 — 彈警告視窗 + 支援緊急停止
+    # Step 0: AI 控制守衛 — 彈warning視窗 + 支援緊急stop
     try:
         from control_guard import acquire, check_abort, release, ControlAborted
-        acquire(f"部署 {ea_name}")
+        acquire(f"deploy {ea_name}")
     except ImportError:
         # 冇 control_guard 都照行（向前兼容）
         check_abort = lambda: None
@@ -3114,18 +3116,18 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         ControlAborted = Exception
         acquire = lambda *a, **k: None
 
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署流程最開頭檢查 UAC/授權窗口
-    # （MT5 更新/帳戶異常 → 授權窗口 → 先處理再部署）
+    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：deploy流程最開頭檢查 UAC/授權窗口
+    # （MT5 更新/accountexception → 授權窗口 → 先處理再deploy）
     try:
-        if not _detect_and_handle_uac(f'{ea_name} 部署 UAC 檢查', max_wait=30):
-            print(f"❌ {ea_name} 部署中止：UAC 授權窗口未處理（可能係 MT5 更新要求授權）")
+        if not _detect_and_handle_uac(f'{ea_name} deploy UAC 檢查', max_wait=30):
+            print(f"[FAIL] {ea_name} deploy中止：UAC 授權窗口未處理（可能係 MT5 更新要求授權）")
             return False
     except Exception:
         pass
 
-    # 🚨 2026-08-21 FIX（用戶實測：關 chart 後部署卡 dialog）：部署前先清理所有殘留 dialog
-    # （之前 RSI 部署彈嘅 Properties dialog 殘留未關 → 之後開 chart Alt+F 被 modal 擋 → 開 chart 失敗 → 代替 dialog 一鑊泡）
-    # 🚨 2026-08-21 FIX2：ESC/撳取消對 modal dialog 唔 work（實測撳「確定」/ESC 都關唔到 — RSI Properties 卡死）
+    # [ALERT] 2026-08-21 FIX（user實測：關 chart 後deploy卡 dialog）：deploy前先清理所有殘留 dialog
+    # （before RSI deploy彈嘅 Properties dialog 殘留未關 → after開 chart Alt+F 被 modal 擋 → open chart failed → 代替 dialog 一鑊泡）
+    # [ALERT] 2026-08-21 FIX2：ESC/撳取消對 modal dialog 唔 work（實測撳「確定」/ESC 都關唔到 — RSI Properties 卡死）
     # → 用 WM_CLOSE（PostMessage 0x0010 — 實測有效）
     try:
         import ctypes as _ct_cl
@@ -3172,14 +3174,14 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                         pass
             except Exception:
                 pass
-        print(f"🧹 部署前清理殘留 dialog: {len(_dlg_list)} 個已處理（WM_CLOSE）")
+        print(f"[CLEAN] deploy前清理殘留 dialog: {len(_dlg_list)} 個已處理（WM_CLOSE）")
     except Exception:
         pass
 
     try:
-        # 🚨 2026-08-28 FIX：刪除舊「generate_template」步驟（一體化模板 — stable 前概念 — 掛 EA 已用熱鍵 Ctrl+1 — 模板冇用 → 多餘）
-        # Step 1: 熱鍵預載 — 確保 EA 熱鍵寫入 hotkeys.ini（MT5 關閉狀態下）→ MT5 load
-        # 破綻：EA 必須本機有 .ex5（冇 → 熱鍵指向唔存在 EA → 失效）
+        # [ALERT] 2026-08-28 FIX：delete舊「generate_template」步驟（一體化模板 — stable 前概念 — 掛 EA 已用熱鍵 Ctrl+1 — 模板冇用 → 多餘）
+        # Step 1: 熱鍵預載 — 確保 EA 熱鍵write hotkeys.ini（MT5 關閉狀態下）→ MT5 load
+        # 破綻：EA 必須local有 .ex5（冇 → 熱鍵指向not exist EA → 失效）
         try:
             _cur_pid = find_mt5_pid()
             mt5_pid = _ensure_hotkey_loaded(ea_name, _cur_pid or 0)
@@ -3196,7 +3198,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             if not mt5_pid:
                 print("MT5 not running, starting...")
                 subprocess.Popen([MT5_PATH])
-            # 🚨 2026-08-20（部署流程檢測系統 — Step 1 gate）：等 MT5 開 + 主視窗 ready（poll 最多 90s，唔係固定 30s）
+            # [ALERT] 2026-08-20（deploy流程檢測系統 — Step 1 gate）：等 MT5 開 + 主視窗 ready（poll 最多 90s，唔係固定 30s）
             mt5_pid = _wait_until(lambda: wait_for_mt5(5), 90, 'MT5 已開 + 主視窗 ready（poll 90s）', interval=3)
             if not mt5_pid:
                 return False
@@ -3204,71 +3206,71 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         
         # Step 3: Attach EA（快捷鍵優先 — 2026-08：6093 double-click 唔 work）
         # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
-        # 🚨 2026-08-19 FIX：OpenChart 係 Script（讀 open_chart_cmd.json 開 target chart）— 唔行 attach_ea_navigator（Navigator double-click 對 Script 唔 work — 卡死 not found）
-        # 🚨 2026-08-28 FIX（用戶實錘：Seasonal 冇喺 hotkeys.json → 落去舊 Navigator double-click 方法（Ctrl+N 開 chart — 幾多年前產物）→ 失敗）：
-        # → 全部 EA 一律用熱鍵（attach_ea_hotkey — _ensure_hotkey_loaded 已確保 hotkeys.ini 寫入當前 EA=Ctrl+1）
+        # [ALERT] 2026-08-19 FIX：OpenChart 係 Script（讀 open_chart_cmd.json 開 target chart）— 唔行 attach_ea_navigator（Navigator double-click 對 Script 唔 work — 卡死 not found）
+        # [ALERT] 2026-08-28 FIX（user實錘：Seasonal 冇喺 hotkeys.json → 落去舊 Navigator double-click 方法（Ctrl+N 開 chart — 幾多年前產物）→ failed）：
+        # → 全部 EA 一律用熱鍵（attach_ea_hotkey — _ensure_hotkey_loaded 已確保 hotkeys.ini write當前 EA=Ctrl+1）
         # → 唔再 fallback Navigator double-click（舊方法 — Ctrl+N 開 chart — 唔可靠 + 已經冇需要）
         hotkeys = load_hotkey_map()
         _is_script_ea = ea_name.startswith('OpenChart') or ea_name == 'OpenChart_Helper'
         if _is_script_ea:
             success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         else:
-            # 全部 EA 用熱鍵（Ctrl+1 重用 — _ensure_hotkey_loaded 已寫入）— 唔 check hotkeys.json（可能唔完整）
+            # 全部 EA 用熱鍵（Ctrl+1 重用 — _ensure_hotkey_loaded 已write）— 唔 check hotkeys.json（可能唔完整）
             success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
         if not success:
-            # 🚨 2026-08-20（用戶要求：唔需要備用方案）：失敗直接 fail — 唔重試快捷鍵
-            # （之前重試 ×2 唔開新 chart → 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡：Heikin_Ashi 掛錯 EURUSD 案例）
-            print(f"❌ 附加失敗（{ea_name}）— 唔重試（避免掛錯 chart）")
+            # [ALERT] 2026-08-20（user要求：唔需要備用方案）：failed直接 fail — 唔重試快捷鍵
+            # （before重試 ×2 唔開新 chart → 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡：Heikin_Ashi 掛錯 EURUSD 案例）
+            print(f"[FAIL] attach failed（{ea_name}）— 唔重試（避免掛錯 chart）")
         
         if not success:
-            print("❌ Failed to attach EA")
+            print("[FAIL] Failed to attach EA")
             return False
         check_abort()
         
-        # 🚨 2026-08-20（部署流程檢測系統 — Step 4 gate）：EA loaded 驗證（等 + poll — 唔係即刻 check）
-        # log「loaded successfully」出現先算成功（對真 MT5 log — 心跳/activity 可能假成功）
-        # ⚠️ 2026-08-20 FIX：gate fail 唔好即刻 return False — MT5 restart 後 log 寫入延遲 → 假失敗
+        # [ALERT] 2026-08-20（deploy流程檢測系統 — Step 4 gate）：EA loaded 驗證（等 + poll — 唔係immediately check）
+        # log「loaded successfully」出現先算success（對真 MT5 log — 心跳/activity 可能假success）
+        # [WARN] 2026-08-20 FIX：gate fail 唔好immediately return False — MT5 restart 後 log write延遲 → 假failed
         # → Step 5（心跳 + log 綜合）先係最終判定；呢度只 print 狀態
         _step4_ok = _wait_until(lambda: _ea_loaded_in_log(ea_name, (symbol or 'EURUSD')), 30,
-                                f'EA {ea_name} loaded（MT5 log 驗證）', interval=3)
+                                f'EA {ea_name} loaded（MT5 log verify）', interval=3)
         if not _step4_ok:
-            print(f"⚠️ Step 4 gate：{ea_name} 30s 內 log 未見 loaded — 交 Step 5 心跳後備最終判定")
+            print(f"[WARN] Step 4 gate：{ea_name} 30s 內 log 未見 loaded — 交 Step 5 heartbeat fallback最終判定")
         
         # Step 4: Ensure AutoTrading ON
         ensure_auto_trading_on(mt5_pid)
         check_abort()
         
-        # Step 5: Verify（最終驗證 — 🚨 2026-08-20 部署流程檢測系統）
-        # Step 4 gate 已確認 MT5 log loaded → 心跳只係輔助（市場收市冇 tick 心跳唔寫 — log 有 = 成功）
-        # 心跳有 → 錦上添花；心跳冇但 log 已 loaded → 都係成功（唔好因心跳誤判失敗）
+        # Step 5: Verify（最終驗證 — [ALERT] 2026-08-20 deploy流程檢測系統）
+        # Step 4 gate 已確認 MT5 log loaded → 心跳只係輔助（market closeno tick 心跳唔寫 — log 有 = success）
+        # 心跳有 → 錦上添花；心跳冇但 log 已 loaded → 都係success（唔好因心跳誤判failed）
         _log_loaded = _ea_loaded_in_log(ea_name, (symbol or 'EURUSD'))
         heartbeat = verify_heartbeat(ea_name, timeout=15)
         
         if heartbeat or _log_loaded:
-            print(f"\n🎉 SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
+            print(f"\n[DONE] SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
             return True
         else:
-            print(f"\n❌ 部署完成但驗證失敗：MT5 log 冇 loaded 記錄 + 心跳冇（應該唔會到呢度 — Step 4 gate 已過）")
+            print(f"\n[FAIL] deploydone但verify failed：MT5 log 冇 loaded 記錄 + 心跳冇（應該唔會到呢度 — Step 4 gate 已過）")
             return False
     except ControlAborted:
-        print(f"\n🚨 部署被用戶緊急停止！")
+        print(f"\n[ALERT] deploy被user緊急stop！")
         return False
     finally:
         try:
-            release()  # 無論成功失敗都釋放控制
+            release()  # 無論successfailed都釋放控制
         except Exception:
             pass
 
 
 # ─── CLI ───
 def _exec_open_chart_script():
-    """🚨 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — 用戶實測方法）
+    """[ALERT] 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — user實測方法）
     取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
     try:
-        # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：開 chart script 前檢查 UAC/授權窗口
+        # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：開 chart script 前檢查 UAC/授權窗口
         try:
             if not _detect_and_handle_uac('開 chart script UAC 檢查', max_wait=20):
-                print("⚠️ 開 chart script：UAC 授權窗口未處理")
+                print("[WARN] 開 chart script：UAC 授權窗口未處理")
         except Exception:
             pass
         import subprocess as _sp2
@@ -3295,7 +3297,7 @@ def _exec_open_chart_script():
         except Exception:
             pass
         time.sleep(1)
-        # 🚨 2026-08-15：熱鍵附加 EA — 要「圖表 active」（真正 EA 部署都係先開圖表先 send 熱鍵）
+        # [ALERT] 2026-08-15：熱鍵attach EA — 要「圖表 active」（真正 EA deploy都係先開圖表先 send 熱鍵）
         # 冇圖表 → 開一個空圖表（Alt+F → Enter → Enter）— 有圖表 → 確保 active（click 一下）
         _has_chart2 = False
         try:
@@ -3306,7 +3308,7 @@ def _exec_open_chart_script():
         except Exception:
             pass
         if not _has_chart2:
-            print("   📋 冇圖表 — 開空圖表（Alt+F → Enter → Enter）")
+            print("   [CLIP] 冇圖表 — 開空圖表（Alt+F → Enter → Enter）")
             _sk2('%f')
             time.sleep(1.5)
             _sk2('{ENTER}')
@@ -3323,8 +3325,8 @@ def _exec_open_chart_script():
             except Exception:
                 pass
             time.sleep(0.8)
-        # 熱鍵 Ctrl+4（OpenChart_Helper — 附加落圖表 → OnInit 讀 json → ChartOpen(symbol) → ExpertRemove）
-        # 🚨 2026-08-15：改用 pyautogui（真實 keydown/keyup — 比 pywinauto send_keys 穩定 — 用戶揀 B）
+        # 熱鍵 Ctrl+4（OpenChart_Helper — attach落圖表 → OnInit 讀 json → ChartOpen(symbol) → ExpertRemove）
+        # [ALERT] 2026-08-15：改用 pyautogui（真實 keydown/keyup — 比 pywinauto send_keys 穩定 — user揀 B）
         try:
             import pyautogui as _pg2
             _pg2.FAILSAFE = False
@@ -3332,7 +3334,7 @@ def _exec_open_chart_script():
         except Exception:
             _sk2('^4')
         time.sleep(2.5)
-        # 驗證：Properties dialog 彈出（熱鍵 work — EA 附加準備）
+        # 驗證：Properties dialog 彈出（熱鍵 work — EA attach準備）
         _dlg2 = False
         try:
             def _cb3(_h3, _x3):
@@ -3352,9 +3354,9 @@ def _exec_open_chart_script():
         except Exception:
             pass
         if not _dlg2:
-            print("   ⚠️ Ctrl+4 冇彈 Properties（熱鍵未觸發）")
+            print("   [WARN] Ctrl+4 冇彈 Properties（熱鍵未觸發）")
             return False
-        # 撳「確定」（Properties dialog — EA 附加 → OnInit 執行 → ChartOpen(symbol)）
+        # 撳「確定」（Properties dialog — EA attach → OnInit 執行 → ChartOpen(symbol)）
         try:
             import pyautogui as _pg3
             _pg3.FAILSAFE = False
@@ -3362,21 +3364,21 @@ def _exec_open_chart_script():
         except Exception:
             _sk2('{ENTER}')
         time.sleep(3)
-        print("   ✅ OpenChart_Helper 已附加（Properties → 確定 — 圖表開咗）")
+        print("   [OK] OpenChart_Helper 已attach（Properties → 確定 — 圖表開咗）")
         return True
     except Exception as _e2:
-        print(f"   ⚠️ _exec_open_chart_script 異常: {_e2}")
+        print(f"   [WARN] _exec_open_chart_script exception: {_e2}")
         return False
 
 
 def remove_ea_from_chart(ea_name, mt5_pid=None):
-    """真暫停/剷除：Alt+W 窗口 dialog → ListView 揀 chart → Enter → Ctrl+W 關閉（2026-08-21 用戶方法 — 唔靠座標）
+    """真pause/remove：Alt+W 窗口 dialog → ListView 揀 chart → Enter → Ctrl+W 關閉（2026-08-21 user方法 — 唔靠座標）
     原理：
     - Alt+W 開「窗口」dialog（有 chart 時）→ SysListView32 列出所有 chart（排位順序 = 開 chart 順序）
-    - ListView 即時讀取（MT5 記憶體 — 唔似 .chr 檔延遲）
+    - ListView 即時read（MT5 記憶體 — 唔似 .chr 檔延遲）
     - 揀目標 chart（對應排位）→ Enter → dialog 關閉 + 彈返該 chart
-    - Ctrl+W → 直接關閉該 chart（EA 一齊移除）
-    返回 True = 移除成功/已冇 EA；False = 失敗"""
+    - Ctrl+W → 直接關閉該 chart（EA 一齊remove）
+    返回 True = removesuccess/已冇 EA；False = failed"""
     import subprocess as _sp
     from pywinauto import Application as _App
     from pywinauto.keyboard import send_keys as _sk
@@ -3393,7 +3395,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                 mt5_pid = int(parts[1])
                 break
     if not mt5_pid:
-        print("⚠️ MT5 未開 — 冇嘢要移除")
+        print("[WARN] MT5 未開 — 冇嘢要remove")
         return True
 
     _app = _App(backend='win32').connect(process=mt5_pid)
@@ -3401,10 +3403,10 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     _win.set_focus()
     time.sleep(1)
 
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：剷除流程都檢查 UAC/授權窗口
+    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：remove流程都檢查 UAC/授權窗口
     try:
-        if not _detect_and_handle_uac(f'剷除 {ea_name} UAC 檢查', max_wait=20):
-            print(f"⚠️ 剷除 {ea_name}：UAC 授權窗口未處理（等用戶手動撳）")
+        if not _detect_and_handle_uac(f'remove {ea_name} UAC 檢查', max_wait=20):
+            print(f"[WARN] remove {ea_name}：UAC 授權窗口未處理（等user手動撳）")
     except Exception:
         pass
 
@@ -3419,8 +3421,8 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                     tb = _ct.create_unicode_buffer(tl + 1)
                     _u.GetWindowTextW(h, tb, tl + 1)
                     if tb.value.strip():
-                        # 🚨 2026-08-29 FIX（剷除假失敗 — 窗口 dialog 誤判）：只認「窗口」dialog 本身
-                        # 之前所有 #32770 有文字都算 → 其他 dialog（殘留/其他 app）title 含「窗口」→ 誤判「未關」
+                        # [ALERT] 2026-08-29 FIX（remove假failed — 窗口 dialog 誤判）：只認「窗口」dialog 本身
+                        # before所有 #32770 有文字都算 → 其他 dialog（殘留/其他 app）title 含「窗口」→ 誤判「未關」
                         # → 精準匹配：class #32770 + title 以「窗口」開頭（MT5「窗口」dialog 標準標題）
                         # （唔可以用『窗口』in title — 其他 dialog title 可能含「窗口」兩字）
                         _t = tb.value.strip()
@@ -3430,7 +3432,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         _u.EnumWindows(_ct.WINFUNCTYPE(_ct.c_bool, _ct.c_void_p, _ct.c_void_p)(cb), 0)
         return found
 
-    # 0. 檢查 EA 係咪真係運行（MT5 log 最後狀態 + 心跳）
+    # 0. 檢查 EA 係咪真係running（MT5 log 最後狀態 + 心跳）
     _ea_running = False
     try:
         import glob as _gl_r
@@ -3456,14 +3458,14 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                 _last_r = None
                 for _ln_r in _txt_r.splitlines():
                     if _re_r.search(rf'{_re_r.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)', _ln_r):
-                        if 'removed' in _ln_r or '已停止' in _ln_r:
+                        if 'removed' in _ln_r or '已stop' in _ln_r:
                             _last_r = 'stopped'
-                        elif 'loaded successfully' in _ln_r or '已啟動' in _ln_r:
+                        elif 'loaded successfully' in _ln_r or '已start' in _ln_r:
                             _last_r = 'started'
                 _ea_running = (_last_r == 'started')
     except Exception:
         pass
-    # 心跳檢查（state_<EA>.json 新鮮 = 運行）
+    # 心跳檢查（state_<EA>.json 新鮮 = running）
     _hb_fresh = False
     try:
         _cfd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
@@ -3474,7 +3476,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     except Exception:
         pass
     if not _ea_running and not _hb_fresh:
-        print(f"ℹ️ {ea_name}：未運行（log 最後 stopped / 冇心跳）— 唔使移除，直接完成")
+        print(f"ℹ️ {ea_name}：未running（log 最後 stopped / 冇心跳）— 唔使remove，直接done")
         return True
 
     # 1. Alt+W 開「窗口」dialog（有 chart 時）
@@ -3510,7 +3512,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
             except Exception:
                 continue
     if not _lv_found:
-        print("⚠️ 搵唔到「窗口」dialog 或 ListView（Alt+W 冇彈出？）")
+        print("[WARN] not found「窗口」dialog 或 ListView（Alt+W 冇彈出？）")
         try:
             _sk('{ESC}')
         except Exception:
@@ -3526,11 +3528,11 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
             _items.append(_t)
         except Exception:
             _items.append('')
-    print(f"📋 窗口 dialog 有 {_cnt} 個 chart：")
+    print(f"[CLIP] 窗口 dialog 有 {_cnt} 個 chart：")
     for _i, _t in enumerate(_items):
         print(f"  [{_i}] {_t}")
 
-    # 4. 對應 EA → symbol（由 MT5 log 搵目標 EA 掛邊個 symbol）
+    # 4. 對應 EA → symbol（由 MT5 log 搵target EA 掛邊個 symbol）
     _target_sym = None
     try:
         if _lat_r and os.path.isfile(_lat_r):
@@ -3548,23 +3550,23 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                 for _ln_t in _txt_t.splitlines():
                     _m_t = _re_t.search(rf'{_re_t.escape(ea_name)} \(([A-Za-z0-9._]+),[A-Z0-9]+\)', _ln_t)
                     if _m_t:
-                        if 'removed' in _ln_t or '已停止' in _ln_t:
+                        if 'removed' in _ln_t or '已stop' in _ln_t:
                             _last_sym = None
-                        elif 'loaded successfully' in _ln_t or '已啟動' in _ln_t:
+                        elif 'loaded successfully' in _ln_t or '已start' in _ln_t:
                             _last_sym = _m_t.group(1)
                 _target_sym = _last_sym
     except Exception:
         pass
     if _target_sym:
-        print(f"🎯 目標 EA {ea_name} 掛喺 {_target_sym}（MT5 log）")
+        print(f"[TARGET] target EA {ea_name} attached on {_target_sym}（MT5 log）")
     else:
-        print(f"⚠️ 由 MT5 log 搵唔到 {ea_name} 掛邊個 symbol（用 ListView 第一個 chart 做 target）")
+        print(f"[WARN] 由 MT5 log not found {ea_name} 掛邊個 symbol（用 ListView 第一個 chart 做 target）")
         _target_sym = None
 
     # 5. 揀目標 chart（對應 symbol → ListView index）
-    # 🚨 2026-08-21 FIX（多個同名 chart 揀錯 — 用戶實測）：唔可以淨揀第一個 match symbol 嘅 chart
-    # （3 個 UK100 時 EA 可能掛喺第 2/3 個 → 移除錯 chart → 假成功）
-    # → 策略：逐個試（由 symbol match 開始）→ Ctrl+W 關 → 檢查 EA 真係移除（心跳停/log removed）→ 未移除就下一個
+    # [ALERT] 2026-08-21 FIX（多個同名 chart 揀錯 — user實測）：唔可以淨揀第一個 match symbol 嘅 chart
+    # （3 個 UK100 時 EA 可能attached on第 2/3 個 → remove錯 chart → 假success）
+    # → 策略：逐個試（由 symbol match start）→ Ctrl+W 關 → 檢查 EA 真係remove（心跳停/log removed）→ 未remove就下一個
     _candidates = []
     if _target_sym:
         for _i, _t in enumerate(_items):
@@ -3573,16 +3575,16 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     if not _candidates:
         # fallback：全部 chart 都試（冇 log 記錄時）
         _candidates = list(range(len(_items)))
-    print(f"📌 目標 symbol {_target_sym or '?'} → 候選 chart: {_candidates}")
+    print(f"[PIN] target symbol {_target_sym or '?'} → candidate chart: {_candidates}")
 
     _removed_ok = False
-    _attempted = set()  # 🚨 2026-08-21：已試過嘅 symbol+index 組合（重新讀 ListView 後 index 會移位）
+    _attempted = set()  # [ALERT] 2026-08-21：已試過嘅 symbol+index 組合（重新讀 ListView 後 index 會移位）
     for _target_idx in _candidates:
-        # 🚨 2026-08-21 FIX（index 移位 bug）：每次試之前重新對應 symbol → 最新 index
-        # （移除 chart 後 ListView 重新排位 — 舊 index 會指錯 chart）
-        # 🚨 2026-08-25 FIX（多個同名 chart 剷除失敗 — MACD AUDUSD×2 案例）：_attempted 用 (index, text) 會誤判
+        # [ALERT] 2026-08-21 FIX（index 移位 bug）：每次試before重新對應 symbol → 最新 index
+        # （remove chart 後 ListView 重新排位 — 舊 index 會指錯 chart）
+        # [ALERT] 2026-08-25 FIX（多個同名 chart removefailed — MACD AUDUSD×2 案例）：_attempted 用 (index, text) 會誤判
         # （第二次 ListView 重排後剩返嘅 chart 用返 index 0 + 同名 → (0, AUDUSD) 喺 _attempted → 當「試過」→ 唔試 → 「冇新嘅 chart」）
-        # → 放寬：每次試之前重新搵「未試過嘅同 symbol chart」（text 計數代替 index 計數）
+        # → 放寬：每次試before重新搵「未試過嘅同 symbol chart」（text 計數代替 index 計數）
         _cur_idx = _target_idx
         if _target_sym:
             _found_cur = None
@@ -3595,25 +3597,25 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                     break
             # 同名 chart 全部 text 一樣（同一 ListView item 名）→ 放寬用 index 計數（試過左幾多個同名）
             if _found_cur is None and _all_sym_now:
-                # 🚨 2026-08-25 FIX2（MACD AUDUSD×2 — 重讀 ListView 得返 1 個同名 chart 但 _attempted 阻住）：
-                # 移除咗一個同名 chart 後 ListView 重排 — 剩返嗰個用返 index 0（text 一樣）
+                # [ALERT] 2026-08-25 FIX2（MACD AUDUSD×2 — 重讀 ListView 得返 1 個同名 chart 但 _attempted 阻住）：
+                # remove咗一個同名 chart 後 ListView 重排 — 剩返嗰個用返 index 0（text 一樣）
                 # → 只要「同名 chart 數目 >= 嘗試次數+1」就要再試（唔好因為 text 一樣就當試過）
                 _tried_sym_cnt = sum(1 for _i7, _t7 in _attempted if _t7.upper().startswith(_target_sym.upper()))
                 if _tried_sym_cnt < len(_all_sym_now) or _tried_sym_cnt == 0:
                     _idx_to_try = _tried_sym_cnt if _tried_sym_cnt < len(_all_sym_now) else 0
                     _found_cur = _all_sym_now[_idx_to_try][0]
-                    print(f"✅ 放寬 _attempted 檢查（同名 chart 重試 #{_idx_to_try+1} — 總共試過 {_tried_sym_cnt} 次 / 有 {len(_all_sym_now)} 個）")
+                    print(f"[OK] 放寬 _attempted 檢查（同名 chart 重試 #{_idx_to_try+1} — 總共試過 {_tried_sym_cnt} 次 / 有 {len(_all_sym_now)} 個）")
             if _found_cur is not None:
                 _cur_idx = _found_cur
             else:
-                print(f"⚠️ 冇新嘅 {_target_sym} chart（試過晒）— 停止")
+                print(f"[WARN] 冇新嘅 {_target_sym} chart（試過晒）— stop")
                 break
         if _cur_idx >= len(_items):
             continue
         _attempted.add((_cur_idx, _items[_cur_idx]))
-        print(f"📌 試移除 chart [{_cur_idx}]（{_items[_cur_idx]}）...")
+        print(f"[PIN] try remove chart [{_cur_idx}]（{_items[_cur_idx]}）...")
         # 6. 揀目標 chart → Enter（關閉 dialog + 彈返 chart）
-        # 🚨 2026-08-21 FIX（Breakout AMD 案例 + 用戶要求）：用方向鍵揀（用戶一早講咗 — 唔靠座標）
+        # [ALERT] 2026-08-21 FIX（Breakout AMD 案例 + user要求）：用方向鍵揀（user一早講咗 — 唔靠座標）
         # 唔好有 click fallback（座標唔可靠 — ListView scroll/行高唔同 → 揀錯 → Enter 冇效 → dialog 卡住）
         _sk('{HOME}')
         time.sleep(0.5)
@@ -3626,16 +3628,16 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         # 7. 確認 dialog 關咗（彈返 chart）
         _dlgs_now = _dlgs()
         if any('窗口' in t for t, h in _dlgs_now) or any(t == 'Windows' for t, h in _dlgs_now):
-            print("⚠️ 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
+            print("[WARN] 窗口 dialog 未關（Enter 可能冇生效）— 再試 Enter")
             _sk('{ENTER}')
             time.sleep(2)
             _dlgs_now2 = _dlgs()
             if any('窗口' in t for t, h in _dlgs_now2) or any(t == 'Windows' for t, h in _dlgs_now2):
-                # 🚨 2026-08-21 FIX（Breakout AMD 案例 — 網頁話成功但 MT5 卡窗口 dialog）：
-                # dialog 再試都未關 → fail（唔好繼續 Ctrl+W 亂關 — 關唔到 + 誤判成功）
-                # 🚨 2026-08-29 FIX（剷除假失敗 — EMA_Cross 案例）：dialog 未關但 EA 可能已經移除
-                # （Enter 已生效 + 移除完成 — 但 dialog handle 未釋放/殘留 → 誤判「未關」→ 假失敗）
-                # → 最後確認：心跳停 / MT5 log removed（EA 真移除 = 唔當失敗 — 跳去關 chart）
+                # [ALERT] 2026-08-21 FIX（Breakout AMD 案例 — 網頁話success但 MT5 卡窗口 dialog）：
+                # dialog 再試都未關 → fail（唔好繼續 Ctrl+W 亂關 — 關唔到 + 誤判success）
+                # [ALERT] 2026-08-29 FIX（remove假failed — EMA_Cross 案例）：dialog 未關但 EA 可能已經remove
+                # （Enter 已生效 + removedone — 但 dialog handle 未釋放/殘留 → 誤判「未關」→ 假failed）
+                # → 最後確認：心跳停 / MT5 log removed（EA 真remove = 唔當failed — 跳去關 chart）
                 _ea_really_gone = False
                 try:
                     _cfd3 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
@@ -3647,7 +3649,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                             break
                     if not _hb_any:
                         _ea_really_gone = True
-                        print(f"✅ {ea_name} 心跳已停（EA 真移除 — dialog 未關但移除成功，繼續關 chart）")
+                        print(f"[OK] {ea_name} heartbeat stopped（EA 真remove — dialog 未關但removesuccess，繼續關 chart）")
                 except Exception:
                     pass
                 # MT5 log removed 確認
@@ -3666,37 +3668,37 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                                 _recent3 = _txt_r3.splitlines()[-30:]
                                 _last_state3 = None
                                 for _l4 in reversed(_recent3):
-                                    if ea_name in _l4 and ('loaded' in _l4 or 'removed' in _l4 or '已启动' in _l4 or '已停止' in _l4):
-                                        if 'removed' in _l4 or '已停止' in _l4:
+                                    if ea_name in _l4 and ('loaded' in _l4 or 'removed' in _l4 or '已启动' in _l4 or '已stop' in _l4):
+                                        if 'removed' in _l4 or '已stop' in _l4:
                                             _last_state3 = 'removed'
                                         elif 'loaded' in _l4 or '已启动' in _l4:
                                             _last_state3 = 'loaded'
                                         break
                                 if _last_state3 == 'removed':
                                     _ea_really_gone = True
-                                    print(f"✅ MT5 log 確認 {ea_name} removed（EA 真移除 — dialog 未關但移除成功，繼續關 chart）")
+                                    print(f"[OK] MT5 log 確認 {ea_name} removed（EA 真remove — dialog 未關但removesuccess，繼續關 chart）")
                     except Exception:
                         pass
                 if not _ea_really_gone:
-                    print(f"❌ 窗口 dialog 未關（再試 Enter 都冇效）— 剷除中止（唔好誤判成功）")
+                    print(f"[FAIL] 窗口 dialog 未關（再試 Enter 都冇效）— remove中止（唔好誤判success）")
                     try:
                         _sk('{ESC}')
                     except Exception:
                         pass
                     return False
 
-        # 8. Ctrl+W 關閉該 chart（EA 一齊移除）
+        # 8. Ctrl+W 關閉該 chart（EA 一齊remove）
         _sk('^w')
         time.sleep(2.5)
 
-        # 9. 驗證：MT5 log 有 removed 記錄 / 心跳停（🎯 逐個試 — 冇移除就下一個 candidate）
+        # 9. 驗證：MT5 log 有 removed 記錄 / 心跳停（[TARGET] 逐個試 — 冇remove就下一個 candidate）
         _this_removed = False
         try:
             _start_t = time.time()
-            # 🚨 2026-08-25 FIX6（心跳停判斷等唔夠耐 — 移除後心跳檔 mtime 未過 30s → 誤判「仲運行緊」）：等 40 秒
+            # [ALERT] 2026-08-25 FIX6（心跳停判斷等唔夠耐 — remove後心跳檔 mtime 未過 30s → 誤判「still running」）：等 40 秒
             while time.time() - _start_t < 40:
                 time.sleep(2)
-                # 心跳停 = 移除
+                # 心跳停 = remove
                 _hb_still = False
                 _cfd2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
                 for _hfn2 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
@@ -3705,7 +3707,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                         _hb_still = True
                 if not _hb_still:
                     _this_removed = True
-                    print(f"✅ {ea_name} 心跳已停（EA 已移除）")
+                    print(f"[OK] {ea_name} heartbeat stopped（EA 已remove）")
                     break
                 # MT5 log 有 removed
                 try:
@@ -3720,19 +3722,19 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                                 continue
                         if _txt_r2:
                             _recent = _txt_r2.splitlines()[-30:]
-                            # 🚨 2026-08-25 FIX（剷除假成功 — MACD 案例）：any(match removed) 會讀到舊 removed 記錄（上次測試）→ 誤判移除
-                            # → 改 check「最後狀態」：搵 EA 最後一條 loaded/removed — 最後係 removed 先算真移除
+                            # [ALERT] 2026-08-25 FIX（remove假success — MACD 案例）：any(match removed) 會讀到舊 removed 記錄（上次測試）→ 誤判remove
+                            # → 改 check「最後狀態」：搵 EA 最後一條 loaded/removed — 最後係 removed 先算真remove
                             _last_state_r = None
                             for _l3 in reversed(_recent):
-                                if ea_name in _l3 and ('loaded' in _l3 or 'removed' in _l3 or '已启动' in _l3 or '已停止' in _l3):
-                                    if 'removed' in _l3 or '已停止' in _l3:
+                                if ea_name in _l3 and ('loaded' in _l3 or 'removed' in _l3 or '已启动' in _l3 or '已stop' in _l3):
+                                    if 'removed' in _l3 or '已stop' in _l3:
                                         _last_state_r = 'removed'
                                     elif 'loaded' in _l3 or '已启动' in _l3:
                                         _last_state_r = 'loaded'
                                     break
                             if _last_state_r == 'removed':
-                                # 🚨 2026-08-25 FIX5（多 chart 掛同一 EA — Breakout GBPUSD×2 案例）：log removed 但心跳仲寫
-                                # = 另一個 chart 仲掛住 EA → 唔當完成 → 繼續試下一個 chart
+                                # [ALERT] 2026-08-25 FIX5（多 chart 掛同一 EA — Breakout GBPUSD×2 案例）：log removed 但心跳仲寫
+                                # = 另一個 chart 仲掛住 EA → 唔當done → 繼續try next chart
                                 _hb_after_log = False
                                 try:
                                     for _hfn3 in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
@@ -3743,11 +3745,11 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                                 except Exception:
                                     pass
                                 if _hb_after_log:
-                                    print(f"⚠️ log 話 removed 但心跳仲寫緊（{ea_name} 掛喺另一個 chart）— 繼續試下一個")
+                                    print(f"[WARN] log 話 removed 但heartbeat still writing（{ea_name} attached on另一個 chart）— 繼續試下一個")
                                     time.sleep(2)
                                 else:
                                     _this_removed = True
-                                    print(f"✅ MT5 log 最後狀態確認 {ea_name} removed（心跳已停）")
+                                    print(f"[OK] MT5 log 最後狀態確認 {ea_name} removed（heartbeat stopped）")
                                     break
                 except Exception:
                     pass
@@ -3756,9 +3758,9 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
         if _this_removed:
             _removed_ok = True
             break
-        # 未移除 → 可能移除咗冇 EA 嘅 chart — 再開窗口 dialog 試下一個
-        print(f"⚠️ chart [{_target_idx}] 移除後 {ea_name} 仲運行緊 — 試下一個 chart")
-        # 重新開窗口 dialog（Ctrl+W 關咗 chart 之後 dialog 已關）
+        # 未remove → 可能remove咗冇 EA 嘅 chart — 再開窗口 dialog 試下一個
+        print(f"[WARN] chart [{_target_idx}] remove後 {ea_name} still running — try next chart")
+        # 重新開窗口 dialog（Ctrl+W 關咗 chart after dialog 已關）
         time.sleep(1)
         _sk('%w')
         time.sleep(2)
@@ -3775,7 +3777,7 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
             except Exception:
                 continue
         if not _lv_found2:
-            print("⚠️ 再開窗口 dialog 失敗 — 剷除中止")
+            print("[WARN] 再開窗口 dialog failed — remove中止")
             try:
                 _sk('{ESC}')
             except Exception:
@@ -3789,14 +3791,14 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
                 _items.append(_t2)
             except Exception:
                 _items.append('')
-        print(f"📋 重新讀 ListView（{_cnt2} 個 chart）")
+        print(f"[CLIP] 重新讀 ListView（{_cnt2} 個 chart）")
         for _i2, _t2 in enumerate(_items):
             print(f"  [{_i2}] {_t2}")
 
     if _removed_ok:
-        print(f"✅ 暫停/剷除 {ea_name} 完成（Ctrl+W 關 chart）")
+        print(f"[OK] pause/remove {ea_name} done（Ctrl+W 關 chart）")
         return True
-    print(f"❌ {ea_name} 未能確認移除（試晒所有候選 chart 都仲運行緊）")
+    print(f"[FAIL] {ea_name} cannot confirm removal（試晒所有candidate chart 都still running）")
     try:
         _sk('{ESC}')
     except Exception:
@@ -3814,30 +3816,30 @@ if __name__ == '__main__':
     parser.add_argument('--lot', type=float, default=1.0, help='Lot size (default: 1.0)')
     parser.add_argument('--magic', type=int, default=240701, help='Magic number')
     parser.add_argument('--restart', action='store_true', help='Restart MT5 first')
-    parser.add_argument('--remove', action='store_true', help='Remove EA from chart (真暫停)')
+    parser.add_argument('--remove', action='store_true', help='Remove EA from chart (真pause)')
     parser.add_argument('--account', default='', help='Account username (fingerprint — 2026-08-31)')
     args = parser.parse_args()
-    # 🔐 2026-08-31 指紋：所有 log 加 account 前綴
+    # [FP] 2026-08-31 fingerprint：所有 log 加 account 前綴
     _FP = f"[{args.account or 'unknown'}] " if args.account else ''
     if args.account:
-        print(f"🔐 [FINGERPRINT] auto_attach 屬於 account: {args.account}（EA={args.ea}）")
+        print(f"[FP] [FINGERPRINT] auto_attach belongs to account: {args.account}（EA={args.ea}）")
         try:
             _alog = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aa_debug.log')
             with open(_alog, 'a', encoding='utf-8') as _f:
-                _f.write(f"\n🔐 [FINGERPRINT] auto_attach account={args.account} ea={args.ea} symbol={args.symbol} tf={args.tf} action={'remove' if args.remove else 'deploy'}\n")
+                _f.write(f"\n[FP] [FINGERPRINT] auto_attach account={args.account} ea={args.ea} symbol={args.symbol} tf={args.tf} action={'remove' if args.remove else 'deploy'}\n")
         except Exception:
             pass
     
     if args.remove:
-        # 真暫停模式：移除圖表 EA
+        # 真pause模式：remove圖表 EA
         from control_guard import acquire, release, ControlAborted
         try:
-            acquire(f'暫停 {args.ea}')
+            acquire(f'pause {args.ea}')
         except Exception:
             pass
         try:
             ok = remove_ea_from_chart(args.ea)
-            print(f"{'✅' if ok else '❌'} 暫停 {args.ea} {'成功' if ok else '（圖表可能冇 EA）'}")
+            print(f"{'[OK]' if ok else '[FAIL]'} pause {args.ea} {'success' if ok else '（圖表可能冇 EA）'}")
         finally:
             try:
                 release()

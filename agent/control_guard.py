@@ -3,7 +3,7 @@
 Control Guard — AI 控制守衛
 當程式/AI 操控電腦（GUI 自動化）時：
 1. 彈警告視窗（topmost，顯示邊個程式控制緊）
-2. 「🚨 緊急停止」按鈕 → 寫 stop 標記
+2. 「[ALERT] 緊急停止」按鈕 → 寫 stop 標記
 3. 所有 GUI 自動化每步檢查 → 有標記即刻 abort
 
 用法：
@@ -14,12 +14,14 @@ Control Guard — AI 控制守衛
         do_gui_thing()          # GUI 操作...
         check_abort()           # 每步檢查（可選）
     except ControlAborted:
-        print("用戶撳咗緊急停止")
+        print("User pressed EMERGENCY STOP")
         sys.exit(130)
     finally:
         release()               # 完成/失敗都一定要 release
 """
 import os
+import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import sys
 import time
 import threading
@@ -50,7 +52,7 @@ def _write_status(active, program=''):
 
 
 class ControlAborted(Exception):
-    """用戶撳咗緊急停止 — GUI 自動化要即刻中止"""
+    """User pressed EMERGENCY STOP — GUI 自動化要即刻中止"""
     pass
 
 
@@ -75,7 +77,7 @@ def acquire(program_name='AI'):
                                  capture_output=True, text=True, timeout=5)
                     if old_pid not in _r.stdout:
                         os.remove(LOCK_FILE)  # stale — 清咗先
-                        print(f"🗑️ 已清 stale lock（舊 PID {old_pid} 已死）")
+                        print(f"[DEL] Cleared stale lock (old PID {old_pid} dead)")
                 except Exception:
                     pass
     except Exception:
@@ -93,13 +95,13 @@ def acquire(program_name='AI'):
         pass
     _show_window(program_name)
     _write_status(True, program_name)  # 網站 poll 到就彈警告視窗
-    print(f"🛡️  [CONTROL] {program_name} 開始控制電腦（警告視窗已彈出）")
+    print(f"[SHIELD]  [CONTROL] {program_name} started controlling PC (warning window shown)")
 
 
 def check_abort():
     """每個 GUI 動作前檢查 — 有 stop 標記就 raise"""
     if os.path.exists(STOP_FILE):
-        raise ControlAborted("用戶撳咗緊急停止")
+        raise ControlAborted("User pressed EMERGENCY STOP")
 
 
 def is_aborted():
@@ -116,7 +118,7 @@ def release():
             os.remove(LOCK_FILE)
     except Exception:
         pass
-    # 🚨 2026-08-12 FIX：即刻寫 active:false + 關視窗（唔等 5 秒 — 網頁 modal 靠確定撳先關，唔會「彈一下消失」）
+    # [ALERT] 2026-08-12 FIX：即刻寫 active:false + 關視窗（唔等 5 秒 — 網頁 modal 靠確定撳先關，唔會「彈一下消失」）
     # 之前等 MIN_SHOW(3s)+IDLE(2s) → 完成後網頁一直 active:true → modal「不停出現」→ 用戶 refresh 先消失（「冇確定就關閉」）
     try:
         _hide_window()
@@ -129,7 +131,7 @@ def release():
             os.remove(STOP_FILE)
     except Exception:
         pass
-    print("🛡️  [CONTROL] 控制結束，警告視窗已關閉")
+    print("[SHIELD]  [CONTROL] Control ended, warning window closed")
     # 清 steps 已經喺「下一個任務入口」做（compile/部署/剷除開始 — 自動清舊任務）
 
 
@@ -192,7 +194,7 @@ def _run_tk():
                  fg="#a1a1aa", bg="#18181b", pady=6).pack(padx=32)
 
         # 緊急停止按鈕（red-600，全寬 — 同網頁 ai-control-stop 一致）
-        tk.Button(root, text="🚨 緊急停止", font=("Microsoft JhengHei", 15, "bold"),
+        tk.Button(root, text="[ALERT] 緊急停止", font=("Microsoft JhengHei", 15, "bold"),
                   fg="white", bg="#dc2626", activebackground="#b91c1c", activeforeground="white",
                   relief="flat", bd=0, cursor="hand2", padx=40, pady=12,
                   command=_request_stop).pack(fill="x", padx=32, pady=12)
@@ -269,9 +271,9 @@ STEPS_FLAG = os.path.join(AGENT_DIR, '.ai_control.steps')
 
 
 def update_steps(steps):
-    """🚨 2026-08-10：更新操作步驟（警告視窗顯示 — 一排排）
+    """[ALERT] 2026-08-10：更新操作步驟（警告視窗顯示 — 一排排）
     steps: [{"text": "開新圖表", "status": "done"}, ...]
-    status: done=完成 ✅ / doing=操作中 ⏳ / pending=等待 ⬜"""
+    status: done=完成 [OK] / doing=操作中 [WAIT] / pending=等待 ⬜"""
     try:
         with open(STEPS_FLAG, 'w', encoding='utf-8') as f:
             json.dump(steps, f, ensure_ascii=False)
@@ -290,7 +292,7 @@ def clear_steps():
 
 def pause_window():
     """GUI 自動化操作前隱藏警告視窗（唔搶滑鼠 click）— 刪 flag
-    🚨 2026-08-10：改 no-op — 每次操作刪 flag → 視窗彈吓彈下（心跳咁 — 用戶投訴）
+    [ALERT] 2026-08-10：改 no-op — 每次操作刪 flag → 視窗彈吓彈下（心跳咁 — 用戶投訴）
     → 警告視窗喺右下角（唔遮 MT5 操作）— 唔需要 pause — 一直顯示"""
     pass
 
@@ -321,7 +323,7 @@ def _request_stop():
     try:
         with open(STOP_FILE, 'w', encoding='utf-8') as f:
             f.write(f"stop|{time.time()}")
-        print("🚨 [CONTROL] 用戶撳咗緊急停止！")
+        print("[ALERT] [CONTROL] User pressed EMERGENCY STOP！")
     except Exception:
         pass
 
@@ -337,15 +339,15 @@ if __name__ == '__main__':
 
     if args.acquire:
         acquire("測試程式")
-        print("已開始控制 — 警告視窗應該彈出，撳「緊急停止」測試")
+        print("Control started - warning window should show, press EMERGENCY STOP to test")
         # 模擬 GUI 操作 + 每步檢查
         for i in range(10):
             time.sleep(1)
             try:
                 check_abort()
-                print(f"  第 {i+1} 步：正常")
+                print(f"  Step {i+1}: OK")
             except ControlAborted:
-                print(f"  第 {i+1} 步：🚨 被緊急停止！")
+                print(f"  Step {i+1}: [ALERT] EMERGENCY STOPPED!")
                 release()
                 sys.exit(130)
         release()

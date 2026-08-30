@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys, os, time, traceback as _tb0
 
-# 🚨 2026-08-26：啟動即寫 log（證明 pyw 有被執行 — pythonw 靜默任何 error 都捕捉）
+# [ALERT] 2026-08-26：啟動即寫 log（證明 pyw 有被執行 — pythonw 靜默任何 error 都捕捉）
 try:
     _log_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd()
     with open(os.path.join(_log_dir, "agent_launcher.log"), "a", encoding="utf-8") as _lf:
@@ -15,7 +15,7 @@ try:
 except Exception as _e_tk:
     try:
         with open(os.path.join(_log_dir, "agent_launcher.log"), "a", encoding="utf-8") as _lf:
-            _lf.write(f"[{time.strftime('%H:%M:%S')}] ❌ tkinter import 失敗: {_e_tk}\n{_tb0.format_exc()}\n")
+            _lf.write(f"[{time.strftime('%H:%M:%S')}] [FAIL] tkinter import 失敗: {_e_tk}\n{_tb0.format_exc()}\n")
     except Exception:
         pass
     sys.exit(3)
@@ -48,7 +48,7 @@ from tkinter import messagebox, ttk
 
 APP_TITLE = "Tradotcom Agent"
 DEFAULT_URL = "https://tradotcom.com"
-# 🚨 2026-08-26：固定安裝位置（唔使估喺邊 — launcher 會放呢度）
+# [ALERT] 2026-08-26：固定安裝位置（唔使估喺邊 — launcher 會放呢度）
 _FIXED_DIR = os.path.join(os.environ.get("LOCALAPPDATA", ""), "TradotcomAgent")
 _my_dir = os.path.dirname(os.path.abspath(__file__))
 if os.path.normpath(_my_dir) != os.path.normpath(_FIXED_DIR):
@@ -123,7 +123,7 @@ class InstallWizard:
             "server_url": tk.StringVar(value=DEFAULT_URL),
             "agent_id": tk.StringVar(),
             "agent_token": tk.StringVar(),
-            "account": tk.StringVar(),  # 🔐 2026-08-31 指紋：account username
+            "account": tk.StringVar(),  # [FP] 2026-08-31 指紋：account username
             "tick": tk.BooleanVar(value=False),
         }
         self.build_welcome()
@@ -135,7 +135,7 @@ class InstallWizard:
     def build_welcome(self):
         self.clear()
         tk.Label(self.root, text="Tradotcom Agent Setup Wizard", font=("Segoe UI", 16, "bold")).pack(pady=20)
-        # 🚨 2026-08-26：Python 3.14 警告（純文字 — 唔會卡死）
+        # [ALERT] 2026-08-26：Python 3.14 警告（純文字 — 唔會卡死）
         if _check_py_version():
             tk.Label(self.root, text="Your Python 3.14 is very new - if Agent can't connect to MT5,\ninstall Python 3.11/3.12 (python.org)",
                      fg="#f0b90b", bg="#3d2f00", padx=10, pady=8, justify="left").pack(pady=6, padx=30)
@@ -181,9 +181,9 @@ class InstallWizard:
         tk.Label(self.root, text="Checking Required Software", font=("Segoe UI", 14, "bold")).pack(pady=12)
         mt5_ok = check_mt5()
         py_ok = check_python()
-        tk.Label(self.root, text="🔍 MetaTrader 5: " + ("Installed" if mt5_ok else "Not installed"),
+        tk.Label(self.root, text="[FIND] MetaTrader 5: " + ("Installed" if mt5_ok else "Not installed"),
                  font=("Segoe UI", 11)).pack(pady=6)
-        tk.Label(self.root, text="🔍 Python:       " + ("Installed" if py_ok else "Not installed"),
+        tk.Label(self.root, text="[FIND] Python:       " + ("Installed" if py_ok else "Not installed"),
                  font=("Segoe UI", 11)).pack(pady=6)
         if not mt5_ok:
             tk.Label(self.root, text="\n[WARNING] Install MetaTrader 5 first (download from your broker's website)",
@@ -212,7 +212,7 @@ class InstallWizard:
         tk.Entry(frm, textvariable=self.vars["agent_id"], width=35, font=("Segoe UI", 10)).grid(row=1, column=1, pady=5)
         tk.Label(frm, text="Agent Token:", font=("Segoe UI", 10)).grid(row=2, column=0, sticky="e", pady=5)
         tk.Entry(frm, textvariable=self.vars["agent_token"], width=35, show="*", font=("Segoe UI", 10)).grid(row=2, column=1, pady=5)
-        # 🔐 2026-08-31 指紋：Account Username（自動填 — 安裝後記錄邊個 account）
+        # [FP] 2026-08-31 指紋：Account Username（自動填 — 安裝後記錄邊個 account）
         tk.Label(frm, text="Account:", font=("Segoe UI", 10)).grid(row=3, column=0, sticky="e", pady=5)
         tk.Entry(frm, textvariable=self.vars["account"], width=35, font=("Segoe UI", 10)).grid(row=3, column=1, pady=5)
 
@@ -229,12 +229,12 @@ class InstallWizard:
         if not sid or not tok:
             messagebox.showwarning("Incomplete Data", "Please fill in Agent ID and Token (available in the website Agent card -> 'Agent Install')")
             return
-        # 儲存配置（🔐 2026-08-31：加 account 指紋）
+        # 儲存配置（[FP] 2026-08-31：加 account 指紋）
         save_config({
             "server_url": url,
             "agent_id": sid,
             "agent_token": tok,
-            "account": self.vars["account"].get().strip(),  # 🔐 指紋：account username
+            "account": self.vars["account"].get().strip(),  # [FP] 指紋：account username
             "fingerprint": f"account:{self.vars['account'].get().strip()}|agent:{sid}"
         })
         # 下載 agent.py
@@ -247,7 +247,7 @@ class InstallWizard:
         try:
             import urllib.request
             agent_py = os.path.join(BASE_DIR, "agent.py")
-            # 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（407/403）→ 帶正常瀏覽器 UA
+            # [ALERT] 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（407/403）→ 帶正常瀏覽器 UA
             _dl_url = url.rstrip("/") + "/api/agent-py"
             _dl_req = urllib.request.Request(_dl_url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0",
@@ -268,7 +268,7 @@ class InstallWizard:
         self._status.config(text="Installing Python packages...")
         self.root.update()
         try:
-            # 🚨 2026-08-26 FIX：用「執行 agent 嗰個 Python」（3.11/3.12）裝套件 — 唔用 pyw 自己（可能 3.14/uv — 唔一致）
+            # [ALERT] 2026-08-26 FIX：用「執行 agent 嗰個 Python」（3.11/3.12）裝套件 — 唔用 pyw 自己（可能 3.14/uv — 唔一致）
             _pip_py = _pick_good_python()
             subprocess.run([_pip_py, "-m", "pip", "install", "-q", "MetaTrader5", "python-socketio[client]", "requests", "pystray", "pillow"],
                            timeout=180)
@@ -278,7 +278,7 @@ class InstallWizard:
 
         self._status.config(text="Installation complete!")
         self.root.update()
-        # 🚨 建立桌面捷徑（double-click 開）
+        # [ALERT] 建立桌面捷徑（double-click 開）
         try:
             self.create_desktop_shortcut()
         except Exception:
@@ -292,9 +292,9 @@ class InstallWizard:
         """建立桌面捷徑（double-click 開 Tradotcom Agent — 指向 launcher 完整流程）"""
         try:
             desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-            # 🚨 2026-08-26 FIX：指向 launcher.bat（唔係 pyw）— launcher 會更新 pyw + agent.py + 啟動
+            # [ALERT] 2026-08-26 FIX：指向 launcher.bat（唔係 pyw）— launcher 會更新 pyw + agent.py + 啟動
             _lnk_bat = os.path.join(BASE_DIR, "tradotcom_launcher.bat")
-            # 🚨 FIX：launcher 可能唔喺固定 folder（用戶喺 Downloads 下載）→ 自動下載去固定位置
+            # [ALERT] FIX：launcher 可能唔喺固定 folder（用戶喺 Downloads 下載）→ 自動下載去固定位置
             if not os.path.isfile(_lnk_bat):
                 try:
                     _log("Downloading launcher.bat...")
@@ -342,11 +342,11 @@ class InstallWizard:
                                      "--server", url, "--agent", sid, "--token", tok],
                                     stdout=None, stderr=None,
                                     creationflags=subprocess.CREATE_NEW_CONSOLE if hasattr(subprocess, "CREATE_NEW_CONSOLE") else 0)
-            # 🚨 2026-08-27 FIX：CREATE_NEW_CONSOLE（agent 有自己 console 視窗 — 顯示 Tradotcom banner — 唔好全黑/冇視窗）
-            # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
+            # [ALERT] 2026-08-27 FIX：CREATE_NEW_CONSOLE（agent 有自己 console 視窗 — 顯示 Tradotcom banner — 唔好全黑/冇視窗）
+            # [ALERT] 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
             self._status.config(text=f"Agent started (PID {proc.pid})\n\nAgent runs in background\n(green popup = connected)")
             self.root.update()
-            # 🚨 2026-08-27 FIX：安裝完成後自動關閉精靈窗口（唔好留低「Starting...」視窗 — 用戶抱怨）
+            # [ALERT] 2026-08-27 FIX：安裝完成後自動關閉精靈窗口（唔好留低「Starting...」視窗 — 用戶抱怨）
             # 用 after 延遲（等 info 彈窗顯示先關 — 或者直接關）
             def _close_wizard():
                 try:
@@ -362,7 +362,7 @@ class InstallWizard:
 
 # ============ 已Install -> 直接啟動 ============
 def _pick_good_python():
-    """🚨 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
+    """[ALERT] 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
     Python 3.14 唔兼容（import 卡死）→ 唔好用。返回 python.exe 路徑。
     """
     cands = [
@@ -378,12 +378,12 @@ def _pick_good_python():
             return c
     # fallback 當前（唔理想 — 3.14 可能卡）
     if sys.version_info >= (3, 14):
-        _log("⚠️ 冇 3.11/3.12 — 用當前 Python（3.14 可能卡 MetaTrader5）")
+        _log("[WARN] 冇 3.11/3.12 — 用當前 Python（3.14 可能卡 MetaTrader5）")
     return sys.executable
 
 
 def _pick_good_python():
-    """🚨 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
+    """[ALERT] 2026-08-26：揀 Python 執行 agent.py — 3.11/3.12 優先（MetaTrader5 最穩）
     Python 3.14 唔兼容（import 卡死）→ 唔好用。返回 python.exe 路徑。
     """
     cands = [
@@ -398,7 +398,7 @@ def _pick_good_python():
             _log(f"用 Python: {c}")
             return c
     if sys.version_info >= (3, 14):
-        _log("⚠️ 冇 3.11/3.12 — 用當前 Python（3.14 可能卡 MetaTrader5）")
+        _log("[WARN] 冇 3.11/3.12 — 用當前 Python（3.14 可能卡 MetaTrader5）")
     return sys.executable
 
 
@@ -411,7 +411,7 @@ def direct_launch(cfg):
         return None
     try:
         agent_py = os.path.join(BASE_DIR, "agent.py")
-        # 🚨 2026-08-26 FIX：啟動前確保 agent.py 係最新（舊版靜默死冇 log → 診斷唔到）
+        # [ALERT] 2026-08-26 FIX：啟動前確保 agent.py 係最新（舊版靜默死冇 log → 診斷唔到）
         try:
             _log("更新 agent.py...")
             import urllib.request as _ur
@@ -423,7 +423,7 @@ def direct_launch(cfg):
             _log("agent.py 已更新")
         except Exception as _e_dl:
             _log(f"agent.py 更新失敗（用舊版）: {_e_dl}")
-        # 🚨 2026-08-26 FIX v2：依賴唔齊 → 唔喺背景 pip install（卡 240 秒用戶睇唔到）
+        # [ALERT] 2026-08-26 FIX v2：依賴唔齊 → 唔喺背景 pip install（卡 240 秒用戶睇唔到）
         # → 直接返回 None → main() 轉去安裝精靈（用戶睇到進度 + 有正式安裝流程）
         _log("檢查依賴...")
         _py_exe = _pick_good_python()
@@ -443,8 +443,8 @@ def direct_launch(cfg):
                                  "--server", url, "--agent", sid, "--token", tok],
                                 stdout=None, stderr=None,
                                 creationflags=subprocess.CREATE_NEW_CONSOLE if hasattr(subprocess, "CREATE_NEW_CONSOLE") else 0)
-        # 🚨 2026-08-27 FIX：CREATE_NEW_CONSOLE（agent 有自己 console 視窗 — 顯示 Tradotcom banner — 唔好全黑/冇視窗）
-        # 🚨 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
+        # [ALERT] 2026-08-27 FIX：CREATE_NEW_CONSOLE（agent 有自己 console 視窗 — 顯示 Tradotcom banner — 唔好全黑/冇視窗）
+        # [ALERT] 2026-08-27 FIX：agent.py 輸出 redirect 去 agent_run.log（唔用 DEVNULL — 睇到實際卡喺邊）
         return proc
     except Exception as e:
         try:
@@ -460,7 +460,7 @@ def _check_py_version():
     try:
         v = sys.version_info
         if v >= (3, 14):
-            _log(f"⚠️ Python {v.major}.{v.minor} 太新 — MetaTrader5 套件可能唔支援")
+            _log(f"[WARN] Python {v.major}.{v.minor} 太新 — MetaTrader5 套件可能唔支援")
             return True
     except Exception:
         pass
@@ -486,7 +486,7 @@ def _self_update():
                     _cur = _f0.read()
             except Exception:
                 _cur = b""
-            # 🚨 FIX：hash 一樣 = 已經係最新 → 唔重啟（防無限循環）
+            # [ALERT] FIX：hash 一樣 = 已經係最新 → 唔重啟（防無限循環）
             if _hl.md5(_cur).hexdigest() == _hl.md5(_new).hexdigest():
                 _log("pyw already latest (no restart)")
             else:
@@ -511,7 +511,7 @@ def main():
         pass
     root.geometry("520x520")
     root.configure(bg="#0b0e11")
-    # 🚨 2026-08-26：確保視窗彈到最前
+    # [ALERT] 2026-08-26：確保視窗彈到最前
     root.attributes("-topmost", True)
     root.lift()
     root.update()
@@ -541,7 +541,7 @@ def main():
         _log("發現 agent_id → 直接啟動模式")
         proc = direct_launch(cfg)
         _log(f"direct_launch 返回: {proc}")
-        # 🚨 FIX（2026-08-26）：agent.py 唔存在（安裝未完成）→ 唔好靜默關視窗 — 提示重裝
+        # [ALERT] FIX（2026-08-26）：agent.py 唔存在（安裝未完成）→ 唔好靜默關視窗 — 提示重裝
         if proc is None:
             _log("agent.py 唔存在 → 顯示問題提示")
             # FIX: don't call messagebox before mainloop (deadlock) - use after()
@@ -561,7 +561,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # 🚨 2026-08-26：加 debug log（pythonw 靜默 — error 唔顯示 → 寫 log 檔）
+    # [ALERT] 2026-08-26：加 debug log（pythonw 靜默 — error 唔顯示 → 寫 log 檔）
     try:
         main()
     except Exception as _e_main:

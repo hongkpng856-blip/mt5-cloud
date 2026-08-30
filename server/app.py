@@ -2,6 +2,8 @@
 # 公開網站，每人有自己的 EA 配對 + 分析 + Correlation
 
 import os
+import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import json
 import uuid
 import threading
@@ -18,16 +20,16 @@ from collections import defaultdict
 import math
 
 def _bounce_back_watchdog():
-    """🚨 2026-08-15：彈返定期監察（background thread — 每 30 秒）
-    用戶：配對庫彈出「F 字頭」等 EA（本機檔案彈返 — 環境層面 — 源頭未明）
-    → 定期 check Experts：非 config EA + ctime 新（<180 秒）→ 自動刪除（彈返即刻清 — 配對庫唔會見到）+ 記錄 bounce_back_log（追蹤源頭）"""
+    """[ALERT] 2026-08-15：彈返定期監察（background thread — 每 30 秒）
+    user：配對庫彈出「F 字頭」等 EA（localfile彈返 — 環境層面 — 源頭未明）
+    → 定期 check Experts：非 config EA + ctime 新（<180 秒）→ 自動delete（彈返immediately清 — 配對庫唔會見到）+ 記錄 bounce_back_log（追蹤源頭）"""
     import time as _tbb2, threading as _th2
     def _run():
         while True:
             try:
                 import sqlite3 as _sq2, json as _j2, os as _o2, glob as _g2
                 _tbb2.sleep(30)
-                # 搵 Experts + Scripts 根目錄（都監察 — script 類 EA 都會彈返）
+                # 搵 Experts + Scripts 根dir（都監察 — script 類 EA 都會彈返）
                 _tdir2 = _o2.path.join(_o2.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
                 _ea_dirs2 = []
                 for _d2 in _o2.listdir(_tdir2) if _o2.path.isdir(_tdir2) else []:
@@ -39,7 +41,7 @@ def _bounce_back_watchdog():
                         _ea_dirs2.append(_ps2)
                 if not _ea_dirs2:
                     continue
-                # 讀 config（EA 名集合）— 🚨 2026-08-27 FIX：全部 user 嘅 config（multi-user — agent 模式部署唔係 dev）
+                # 讀 config（EA 名集合）— [ALERT] 2026-08-27 FIX：全部 user 嘅 config（multi-user — agent 模式deploy唔係 dev）
                 _cfg2 = set()
                 try:
                     _db2 = _o2.path.join(_o2.path.dirname(_o2.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
@@ -56,7 +58,7 @@ def _bounce_back_watchdog():
                     _conn2.close()
                 except Exception:
                     pass
-                # check 檔案（.mq5/.ex5 — 非 config + ctime 新 → 刪除 + 記錄）
+                # check file（.mq5/.ex5 — 非 config + ctime 新 → delete + 記錄）
                 _now2 = _tbb2.time()
                 _bounced2 = []
                 for _ed2 in _ea_dirs2:
@@ -68,14 +70,14 @@ def _bounce_back_watchdog():
                             continue  # config 有（正常配對）
                         _fp2 = _o2.path.join(_ed2, _fn2)
                         _ctime2 = _o2.path.getctime(_fp2)
-                        # 🚨 保險：ctime < 10 秒（啱啱出現 — 可能 install-local 配對中 — config 未寫）→ 唔刪（下一個 tick 再睇）
+                        # [ALERT] 保險：ctime < 10 秒（啱啱出現 — 可能 install-local 配對中 — config 未寫）→ 唔刪（下一個 tick 再睇）
                         if _now2 - _ctime2 < 10:
                             continue
                         if _now2 - _ctime2 < 180:  # 3 分鐘內出現 = 彈返（config 冇）
                             try:
                                 _o2.remove(_fp2)
                                 _bounced2.append(_fn2)
-                                print(f"[彈返監察] 🗑️ 定期自癒刪除彈返: {_fn2} ({_o2.path.basename(_ed2)})", flush=True)
+                                print(f"[彈返監察] [DEL] 定期自癒delete彈返: {_fn2} ({_o2.path.basename(_ed2)})", flush=True)
                             except Exception:
                                 pass
                 if _bounced2:
@@ -93,20 +95,20 @@ def _bounce_back_watchdog():
             except Exception:
                 pass
     _th2.Thread(target=_run, daemon=True).start()
-    print("[彈返監察] 定期自癒已啟動（每 30 秒）", flush=True)
+    print("[彈返監察] 定期自癒已start（每 30 秒）", flush=True)
 
 
-# 🚨 2026-08-15：啟動彈返定期監察（background thread）
+# [ALERT] 2026-08-15：start彈返定期監察（background thread）
 try:
     _bounce_back_watchdog()
 except Exception as _ebw:
-    print(f"[彈返監察] ⚠️ 啟動失敗: {_ebw}", flush=True)
+    print(f"[彈返監察] [WARN] startfailed: {_ebw}", flush=True)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me')
-# 🚨 2026-08-29 FIX：SQLALCHEMY_DATABASE_URI 改絕對路徑（之前相對 sqlite:///mt5cloud.db →
-# resolve 去 server/instance/mt5cloud.db 舊 DB — ORM 寫入同 raw SQL 讀（repo/instance/mt5cloud.db）分家
-# → install-local config 寫入去錯 DB → 配對庫唔見新 EA；v0.9.67 修過但之後被 revert）
+# [ALERT] 2026-08-29 FIX：SQLALCHEMY_DATABASE_URI 改絕對path（before相對 sqlite:///mt5cloud.db →
+# resolve 去 server/instance/mt5cloud.db 舊 DB — ORM write同 raw SQL 讀（repo/instance/mt5cloud.db）分家
+# → install-local config write去錯 DB → 配對庫唔見新 EA；v0.9.67 修過但after被 revert）
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'mt5cloud.db').replace('\\', '/')
 db = SQLAlchemy(app)
@@ -122,7 +124,7 @@ _activity_lock = threading.Lock()
 def log_activity(action, message, ea='', source='server'):
     """append 一行 JSONL 去 activity_log.jsonl（thread-safe）"""
     try:
-        # 🚨 2026-08-26（multi-user）：加 user 欄（每帳戶獨立活動記錄 — 唔好全局共享）
+        # [ALERT] 2026-08-26（multi-user）：加 user 欄（每account獨立活動記錄 — 唔好全局共享）
         _u_n = ''
         try:
             if 'current_user' in globals() and current_user and not current_user.is_anonymous:
@@ -151,12 +153,12 @@ def log_activity(action, message, ea='', source='server'):
 
 
 def _write_ai_flags(sig, steps):
-    """🚨 2026-08-28 FIX（電腦版 + 網頁版警告視窗要一致）：雙寫 show/steps flag
-    開發目錄（server 讀 — 網頁 modal）+ TradotcomAgent（alert_worker 讀 — 電腦版視窗）
-    → 兩個位置都寫 → 電腦版 + 網頁版都見到 → 一致
+    """[ALERT] 2026-08-28 FIX（PC版 + 網頁版warning視窗要一致）：雙寫 show/steps flag
+    開發dir（server 讀 — 網頁 modal）+ TradotcomAgent（alert_worker 讀 — PC版視窗）
+    → 兩個位置都寫 → PC版 + 網頁版都見到 → 一致
     """
     _dirs = []
-    # 1. 開發目錄（agent/）
+    # 1. 開發dir（agent/）
     _adir_dev = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
     _dirs.append(_adir_dev)
     # 2. TradotcomAgent（alert_worker 讀）
@@ -179,16 +181,16 @@ def _write_ai_flags(sig, steps):
 @app.route('/api/control-steps', methods=['GET', 'POST'])
 @login_required
 def api_control_steps():
-    """🚨 2026-08-10：攞操作步驟（警告視窗顯示 — 一排排）
-    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔成功）"""
+    """[ALERT] 2026-08-10：攞操作步驟（warning視窗顯示 — 一排排）
+    POST（2026-08-12）：前端逐步更新 steps（重新整理流程 — 刷新邊一項 + 成唔success）"""
     if request.method == 'POST':
         try:
             import time as _tw
             data = request.json or {}
             steps_in = data.get('steps')
             sig = data.get('sig', '')
-            # 🚨 2026-08-29 FIX（電腦版警告視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
-            # 之前淨寫開發目錄（agent_dir）→ alert_worker（讀 TradotcomAgent）冇 flag → 電腦版唔彈
+            # [ALERT] 2026-08-29 FIX（PC版warning視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
+            # before淨寫開發dir（agent_dir）→ alert_worker（讀 TradotcomAgent）冇 flag → PC版唔彈
             _write_ai_flags(sig, steps_in)
             return jsonify({"success": True})
         except Exception as e:
@@ -203,9 +205,9 @@ def api_control_steps():
                 if not isinstance(steps_data, list):
                     steps_data = []
             except Exception:
-                # 🚨 2026-08-12：讀唔到（多個 process 同時寫 → 檔案損壞/空）→ 唔返回 []（網頁唔會空白 — 彈嚟彈去根治）
-                steps_data = [{'text': '等待操作開始…', 'status': 'pending'}]
-            # 🚨 2026-08-11：返回 steps + mtime（前端用嚟判斷「舊 steps 唔顯示」— 新任務開始唔會殘留上一個操作 — 用戶投訴）
+                # [ALERT] 2026-08-12：讀唔到（多個 process 同時寫 → file損壞/空）→ 唔返回 []（網頁唔會空白 — 彈嚟彈去根治）
+                steps_data = [{'text': 'wait操作start…', 'status': 'pending'}]
+            # [ALERT] 2026-08-11：返回 steps + mtime（前端用嚟判斷「舊 steps 唔顯示」— 新任務start唔會殘留上一個操作 — user投訴）
             import time as _tm
             return jsonify({"steps": steps_data, "mtime": os.path.getmtime(steps_file)})
     except Exception:
@@ -215,13 +217,13 @@ def api_control_steps():
 @app.route('/api/control-guard/stop', methods=['POST'])
 @login_required
 def api_control_guard_stop():
-    """網站版緊急停止：寫 .ai_control.stop 標記 → watcher/compile/auto_attach 偵測到就 abort"""
+    """網站版緊急stop：寫 .ai_control.stop 標記 → watcher/compile/auto_attach 偵測到就 abort"""
     try:
         agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         stop_file = os.path.join(agent_dir, '.ai_control.stop')
         with open(stop_file, 'w', encoding='utf-8') as f:
             f.write('stop|web')
-        # 強制寫 ai_control.json inactive → 網站警告視窗即刻關（Bug #68：唔可以卡死）
+        # 強制寫 ai_control.json inactive → 網站warning視窗immediately關（Bug #68：唔可以卡死）
         try:
             detector_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                         'server', 'static', 'detector')
@@ -231,15 +233,15 @@ def api_control_guard_stop():
                 json.dump({'active': False, 'program': '', 'time': time.time()}, f, ensure_ascii=False)
         except Exception:
             pass
-        log_activity('emergency_stop', '網站緊急停止已觸發（AI 操作會即刻中止）', ea='')
-        return jsonify({"success": True, "message": "緊急停止已觸發"})
+        log_activity('emergency_stop', '網站緊急stop已觸發（AI 操作會immediately中止）', ea='')
+        return jsonify({"success": True, "message": "緊急stop已觸發"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/api/activity')
 def api_activity():
-    """讀 activity log（倒序，全部）— refresh 後依然存在（持久檔案，唔會刪除）
+    """讀 activity log（倒序，全部）— refresh 後依然exists（持久file，唔會delete）
     ?include_db=1 → 連「已更新資料庫」恆常記錄一齊顯示（預設隱藏，因為太頻密阻礙其他資訊）
     """
     include_db = request.args.get('include_db', '0') == '1'
@@ -258,14 +260,14 @@ def api_activity():
     entries.reverse()  # 最新喺最前
     if not include_db:
         entries = [e for e in entries if e.get('action') != 'db_update']
-    # 🚨 2026-08-26（multi-user）：只顯示「自己帳戶」嘅活動（per-user 獨立）
+    # [ALERT] 2026-08-26（multi-user）：只顯示「自己account」嘅活動（per-user 獨立）
     # 舊條目（冇 user 欄）→ 只喺單機（dev）時顯示返（向後兼容）；新條目按 user 過濾
     try:
         _cur_u = current_user.username
         entries = [e for e in entries if not e.get('user') or e.get('user') == _cur_u]
     except Exception:
         pass
-    return jsonify({'activities': entries})  # 全部顯示 — log 唔會刪除
+    return jsonify({'activities': entries})  # 全部顯示 — log 唔會delete
 import os
 _async_mode = 'eventlet' if os.environ.get('RENDER', '') else 'threading'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=_async_mode, logger=False, engineio_logger=False)
@@ -292,10 +294,10 @@ class Agent(db.Model):
     deals = db.Column(db.Text, default='[]')
     deploy_queue = db.Column(db.Text, default='')
     ea_heartbeats = db.Column(db.Text, default='{}')
-    # 🚨 2026-08-26（multi-user Phase 1）：Agent 上報「本機 MT5 檔案快照」（heartbeats/trades_stats/log_last/hotkeys）
-    # → server 優先讀呢個（每機獨立）— 唔再直接讀本機檔案（支持第二部機接入）
+    # [ALERT] 2026-08-26（multi-user Phase 1）：Agent 上報「local MT5 file快照」（heartbeats/trades_stats/log_last/hotkeys）
+    # → server 優先讀呢個（每機獨立）— 唔再直接讀localfile（支持第二部機接入）
     files_snapshot = db.Column(db.Text, default='{}')
-    # 🚨 2026-08-26（multi-user Phase 4）：Agent token — 註冊時生成，上報/連線時驗證（防冒認）
+    # [ALERT] 2026-08-26（multi-user Phase 4）：Agent token — 註冊時生成，上報/connection時驗證（防冒認）
     agent_token = db.Column(db.String(64), default='')
 
 @login_manager.user_loader
@@ -304,7 +306,7 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
-    # 🚨 2026-08-26（multi-user Phase 1）：migration — agent 表加 files_snapshot 欄（create_all 唔會加去現有表）
+    # [ALERT] 2026-08-26（multi-user Phase 1）：migration — agent 表加 files_snapshot 欄（create_all 唔會加去現有表）
     try:
         import sqlite3 as _sq_m
         _dbm = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'mt5cloud.db')
@@ -313,15 +315,15 @@ with app.app_context():
         if 'files_snapshot' not in _agent_cols:
             _cm.execute("ALTER TABLE agent ADD COLUMN files_snapshot TEXT DEFAULT '{}'")
             _cm.commit()
-            print("✅ migration: agent.files_snapshot 欄加咗")
+            print("[OK] migration: agent.files_snapshot 欄加咗")
         if 'agent_token' not in _agent_cols:
             _cm.execute("ALTER TABLE agent ADD COLUMN agent_token TEXT DEFAULT ''")
             _cm.commit()
-            print("✅ migration: agent.agent_token 欄加咗")
+            print("[OK] migration: agent.agent_token 欄加咗")
         _cm.close()
     except Exception as _e_mig:
-        print(f"⚠️ migration files_snapshot 失敗（唔阻啟動）: {_e_mig}")
-    # 建立固定 Dev Account（如果未存在）
+        print(f"[WARN] migration files_snapshot failed（唔阻start）: {_e_mig}")
+    # create固定 Dev Account（如果未exists）
     if not User.query.filter_by(username='dev').first():
         dev_user = User(username='dev', email='dev@mt5cloud.com',
                         password=generate_password_hash('dev1234'))
@@ -330,7 +332,7 @@ with app.app_context():
         dev_agent = Agent(agent_id='DEV00001', user=dev_user, agent_token=_sec_d.token_hex(16))
         db.session.add(dev_agent)
         db.session.commit()
-        print("✅ Dev account created: dev / dev1234")
+        print("[OK] Dev account created: dev / dev1234")
 
 # 預設交易品種
 ALL_SYMBOLS = ['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','NZDUSD',
@@ -342,10 +344,10 @@ TIMEFRAMES = ['M1','M5','M15','M30','H1','H4','D1','W1','MN1']
 
 def get_account_symbols():
     """攞帳號實際可用 symbols
-    用戶要求（2026-08-21）：網頁 symbol picker 只顯示帳號實際有嘅 symbol（揀到冇嘅 → 部署 fail）
-    來源：bases/<帳戶>/History 目錄（帳戶伺服器實際支援過嘅 symbol — 比 symbols.sel 可靠）
-    ⚠️ symbols.sel 只係「市場報價顯示嘅 symbol」（用戶可以自己加/移除 — 唔係權威）
-    ⚠️ 揀帳戶：優先搵「有最多 History symbol」嗰個（而家登入帳戶通常係最新用嘅）"""
+    user要求（2026-08-21）：網頁 symbol picker 只顯示帳號實際有嘅 symbol（揀到冇嘅 → deploy fail）
+    來源：bases/<account>/History dir（account伺服器實際支援過嘅 symbol — 比 symbols.sel 可靠）
+    [WARN] symbols.sel 只係「市場報價顯示嘅 symbol」（user可以自己加/remove — 唔係權威）
+    [WARN] 揀account：優先搵「有最多 History symbol」嗰個（now登入account通常係最新用嘅）"""
     try:
         _mt5d = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         for _d_s in os.listdir(_mt5d):
@@ -366,7 +368,7 @@ def get_account_symbols():
                 print(f"[symbols] 帳號 {_best_acct} symbols ({len(_best_syms)}): {_best_syms}")
                 return _best_syms
     except Exception as _e_s:
-        print(f"[symbols] 讀帳號 symbols 失敗: {_e_s}")
+        print(f"[symbols] 讀帳號 symbols failed: {_e_s}")
     # fallback：symbols.sel（市場報價顯示）
     try:
         for _d_s2 in os.listdir(os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')):
@@ -392,19 +394,19 @@ def get_account_symbols():
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        # 🚨 2026-08-11：dashboard.html 唔 cache（前端 JS 一定攞最新 — 用戶硬刷新都唔夠時確保）
+        # [ALERT] 2026-08-11：dashboard.html 唔 cache（前端 JS 一定攞最新 — user硬刷新都唔夠時確保）
         resp = make_response(render_template('dashboard.html'))
         resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         resp.headers['Pragma'] = 'no-cache'
         return resp
-    # 🚨 2026-08-28：Landing page（介紹網站 — tradotcom.com 首頁）— 未登入顯示
+    # [ALERT] 2026-08-28：Landing page（介紹網站 — tradotcom.com 首頁）— 未登入顯示
     return render_template('landing.html')
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # 🚨 2026-08-11：dashboard.html 唔 cache
-    # 🚨 2026-08-28：傳當前登入用戶（sidebar 顯示「登入：username」）
+    # [ALERT] 2026-08-11：dashboard.html 唔 cache
+    # [ALERT] 2026-08-28：傳當前登入user（sidebar 顯示「登入：username」）
     resp = make_response(render_template('dashboard.html', user=current_user))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
@@ -412,7 +414,7 @@ def dashboard():
 
 @app.route('/home')
 def home():
-    # 🚨 2026-08-28：返回主頁（landing — 已登入都顯示 — 唔 redirect dashboard）
+    # [ALERT] 2026-08-28：返回主頁（landing — 已登入都顯示 — 唔 redirect dashboard）
     # 登入後想去返介紹頁（比較/特點）用 — 唔同 /（已登入 redirect dashboard）
     resp = make_response(render_template('landing.html'))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
@@ -421,23 +423,23 @@ def home():
 
 @app.route('/register', methods=['GET','POST'])
 def register():
-    # 🚨 2026-08-31（用戶要求：網上唔好俾人註冊 — 淨係內部帳戶做到嘢）：
+    # [ALERT] 2026-08-31（user要求：網上唔好俾人註冊 — 淨係內部account做到嘢）：
     # 關閉公開註冊 — 需要內部邀請碼先註冊到
-    _REGISTER_CLOSED = True  # 🔒 公開註冊已關閉（內部限定）
+    _REGISTER_CLOSED = True  # [LOCK] 公開註冊closed（內部限定）
     _INVITE_CODE = os.environ.get('TRADOTCOM_INVITE_CODE', '') or 'tradotcom-internal-2026'  # 內部邀請碼（可改環境變數）
     if _REGISTER_CLOSED:
         if request.method == 'POST':
             data = request.json if request.is_json else request.form
             invite = (data.get('invite_code') or '').strip()
             if invite != _INVITE_CODE:
-                return jsonify({"error": "註冊已關閉（內部限定）— 需要有效邀請碼", "register_closed": True}), 403
+                return jsonify({"error": "註冊closed（內部限定）— 需要有效邀請碼", "register_closed": True}), 403
             # 有邀請碼 → 繼續註冊
             if User.query.filter_by(username=data.get('username')).first():
                 return jsonify({"error":"Username taken"}),400
             user = User(username=data['username'], email=data.get('email',''),
                         password=generate_password_hash(data['password']))
             db.session.add(user)
-            # 🚨 2026-08-26（Phase 4）：Agent token — 註冊時生成（防冒認）
+            # [ALERT] 2026-08-26（Phase 4）：Agent token — 註冊時生成（防冒認）
             import secrets as _sec_r
             _tok_r = _sec_r.token_hex(16)
             agent = Agent(agent_id=str(uuid.uuid4())[:8], user=user, agent_token=_tok_r)
@@ -454,7 +456,7 @@ def register():
         user = User(username=data['username'], email=data.get('email',''),
                     password=generate_password_hash(data['password']))
         db.session.add(user)
-        # 🚨 2026-08-26（Phase 4）：Agent token — 註冊時生成（防冒認）
+        # [ALERT] 2026-08-26（Phase 4）：Agent token — 註冊時生成（防冒認）
         import secrets as _sec_r
         _tok_r = _sec_r.token_hex(16)
         agent = Agent(agent_id=str(uuid.uuid4())[:8], user=user, agent_token=_tok_r)
@@ -499,7 +501,7 @@ def login():
 
 @app.route('/api/test-account', methods=['POST'])
 def api_test_account():
-    """建立測試帳號（一鍵生成）"""
+    """create測試帳號（一鍵生成）"""
     import string, random
     # Generate random username
     suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
@@ -529,14 +531,14 @@ def logout():
 # === API: EA 配對表 ===
 
 def _market_closed_for_symbol(symbol):
-    """🚨 2026-08-21：偵測 symbol 係咪非交易時間（休市）
+    """[ALERT] 2026-08-21：偵測 symbol 係咪非交易時間（休市）
     - 用 MT5 symbol_info_tick 最後 tick 時間（tick.time 係 UTC+3 伺服器時間 — 正規化）
     - 最後 tick > 5 分鐘 = 冇報價 = 休市/非交易時間
     - 回傳 None（攞唔到資料）/ True（休市）/ False（開市）
     """
     try:
         import MetaTrader5 as _mt5
-        # 唔 initialize 新連線 — 用 agent 已有嘅？唔得，呢度獨立。輕量 initialize + shutdown
+        # 唔 initialize 新connection — 用 agent 已有嘅？唔得，呢度獨立。輕量 initialize + shutdown
         if not _mt5.initialize(timeout=4000):
             return None
         try:
@@ -547,7 +549,7 @@ def _market_closed_for_symbol(symbol):
             _tick_utc = _tick.time - 3 * 3600
             _age = time.time() - _tick_utc
             _mt5.shutdown()
-            return _age > 300  # > 5 分鐘冇 tick = 休市
+            return _age > 300  # > 5 分鐘no tick = 休市
         except Exception:
             try: _mt5.shutdown()
             except Exception: pass
@@ -556,8 +558,8 @@ def _market_closed_for_symbol(symbol):
         return None
 
 def _current_agent_snapshot():
-    """🚨 2026-08-26（multi-user Phase 1）：攞當前用戶 agent 上報嘅檔案快照（每機獨立）
-    有 snapshot（agent 上報過）→ 用佢（支持多機）; 冇 → None（server fallback 讀本機 — 單機向後兼容）
+    """[ALERT] 2026-08-26（multi-user Phase 1）：攞當前user agent 上報嘅file快照（每機獨立）
+    有 snapshot（agent 上報過）→ 用佢（支持多機）; 冇 → None（server fallback 讀local — 單機向後兼容）
     """
     try:
         agent = Agent.query.filter_by(user_id=current_user.id).first()
@@ -584,26 +586,26 @@ def api_ea_config():
             config = json.loads(_r2['ea_config'] or '{}') if _r2 else {}
         except Exception:
             config = json.loads(current_user.ea_config or '{}')
-        # ⚠️ 控制層心跳狀態（CONTROL_LAYER_DESIGN.md）：讀 Common/Files/state_<ea>.json
+        # [WARN] 控制層心跳狀態（CONTROL_LAYER_DESIGN.md）：讀 Common/Files/state_<ea>.json
         # running（ts 新鮮 <30 秒）/ stopped / unknown（冇檔或過期）
-        # ⚠️ 2026-08 修：config 冇 _status key（只有 ea_name/ea_lot/ea_magic/ea_tf）→ 唔可以靠 _status 尾
-        # 🚨 2026-08-26（multi-user Phase 1）：agent 上報 snapshot 優先（每機獨立 — 支持多機）
-        # → 有 agent 上報 → 用佢嘅 heartbeats/log_last/hotkeys；冇 → 讀本機（單機向後兼容）
+        # [WARN] 2026-08 修：config 冇 _status key（只有 ea_name/ea_lot/ea_magic/ea_tf）→ 唔可以靠 _status 尾
+        # [ALERT] 2026-08-26（multi-user Phase 1）：agent 上報 snapshot 優先（每機獨立 — 支持多機）
+        # → 有 agent 上報 → 用佢嘅 heartbeats/log_last/hotkeys；冇 → 讀local（單機向後兼容）
         _snap_s = _current_agent_snapshot()
         _use_snapshot = _snap_s is not None
         _snap_hb = (_snap_s or {}).get('heartbeats') or {}
         _snap_log = (_snap_s or {}).get('log_last') or {}
         _snap_hk = (_snap_s or {}).get('hotkeys') or []
         runtime = {}
-        # 🚨 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（已啟動/已停止/removed — 圖表實際狀態）
+        # [ALERT] 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（已start/已stop/removed — 圖表實際狀態）
         _log_last = dict(_snap_log) if _use_snapshot else {}
         try:
             import glob as _gl2
             _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             _latest2 = None
             for _d3 in os.listdir(_lg2):
-                # 🚨 2026-08-21 FIX：優先讀 terminal Logs（<hash>/Logs/ — 英文「loaded successfully/removed」）
-                # 之前讀 MQL5/Logs（MetaEditor 編譯日誌 — 中文「已启动/已停止」）→ 誤判 chart_removed（RSI_Over 掛住但顯示 removed）
+                # [ALERT] 2026-08-21 FIX：優先讀 terminal Logs（<hash>/Logs/ — 英文「loaded successfully/removed」）
+                # before讀 MQL5/Logs（MetaEditor 編譯日誌 — 中文「已启动/已stop」）→ 誤判 chart_removed（RSI_Over 掛住但顯示 removed）
                 _lgd3 = os.path.join(_lg2, _d3, 'Logs')
                 if os.path.isdir(_lgd3):
                     for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
@@ -628,15 +630,15 @@ def api_ea_config():
                 if _txt2:
                     import re as _re2
                     for _line2 in _txt2.splitlines():
-                        # 🚨 2026-08-21 FIX：加「loaded successfully」（英文 log — 之前淨 match 中文 已启动/已停止 + removed → 英文 log 嘅 loaded 唔 match → 淨係 match 到 removed → 誤判 chart_removed）
-                        _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已啟動|已停止|removed|loaded successfully)', _line2)
+                        # [ALERT] 2026-08-21 FIX：加「loaded successfully」（英文 log — before淨 match 中文 已启动/已stop + removed → 英文 log 嘅 loaded 唔 match → 淨係 match 到 removed → 誤判 chart_removed）
+                        _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已start|已stop|removed|loaded successfully)', _line2)
                         if _m2:
                             _log_last[_m2.group(1)] = _m2.group(2)
         except Exception:
             pass
         try:
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-            # 🚨 2026-08-13：讀熱鍵（hotkeys.ini — 部署記錄 — 判斷「啱啱部署等心跳」vs「冇心跳機制」）
+            # [ALERT] 2026-08-13：讀熱鍵（hotkeys.ini — deploy記錄 — 判斷「啱啱deploy等心跳」vs「冇心跳機制」）
             _hk_has = set()
             _hk_mtime = 0
             try:
@@ -659,7 +661,7 @@ def api_ea_config():
                     if key.endswith(suffix):
                         base = key[:-len(suffix)]
                         break
-                # 🚨 2026-08-13：過濾 `_` 開頭（_default_lot / _removed — 唔係 EA）
+                # [ALERT] 2026-08-13：過濾 `_` 開頭（_default_lot / _removed — 唔係 EA）
                 if base.startswith('_'):
                     continue
                 if base and base not in ('_lot', '_magic', '_tf', '_status'):
@@ -667,13 +669,13 @@ def api_ea_config():
             for ea in ea_names:
                 sf = os.path.join(common_files, f'state_{ea}.json')
                 hb_txt = os.path.join(common_files, f'hb_{ea}.txt')
-                # 🚨 2026-08-26（multi-user Phase 1）：snapshot 模式 — 心跳判斷用 agent 上報（每機獨立）
+                # [ALERT] 2026-08-26（multi-user Phase 1）：snapshot 模式 — 心跳判斷用 agent 上報（每機獨立）
                 _sn_hb_info = _snap_hb.get(ea) if _use_snapshot else None
                 _sn_hb_fresh = bool(_sn_hb_info and (_sn_hb_info.get('age_sec', 999) < 300))
                 _sn_hk_has = (ea in _snap_hk) if _use_snapshot else None
-                # 🚨 2026-08-13：冇任何心跳檔案（state/hb 都唔存在）
-                # 判斷：有熱鍵（部署過）→ 啱啱部署（hotkeys.ini 新 — <10 分鐘）→ 'starting'（等心跳）；部署好耐都冇心跳 → 'no_hb'（冇心跳設定 — Ichimoku 案例）
-                #       冇熱鍵（未部署）→ 'unpaired'（未配對 — 未部署唔知有冇心跳 — Seasonal 案例）
+                # [ALERT] 2026-08-13：冇任何心跳file（state/hb 都not exist）
+                # 判斷：有熱鍵（deploy過）→ 啱啱deploy（hotkeys.ini 新 — <10 分鐘）→ 'starting'（等心跳）；deploy好耐都冇心跳 → 'no_hb'（冇心跳設定 — Ichimoku 案例）
+                #       冇熱鍵（未deploy）→ 'unpaired'（未配對 — 未deploy唔知有冇心跳 — Seasonal 案例）
                 _has_hb_file = _sn_hb_info is not None if _use_snapshot else (os.path.isfile(sf) or os.path.isfile(hb_txt))
                 _in_hk = _sn_hk_has if _use_snapshot else (ea in _hk_has)
                 if not _has_hb_file:
@@ -682,11 +684,11 @@ def api_ea_config():
                     else:
                         runtime[ea] = 'unpaired'
                     continue
-                # 🚨 2026-08-14：有 state/hb 檔案但冇熱鍵（未部署 — 歷史殘留心跳檔案 — MACD_Cross 案例）→ unpaired（未配對）
-                # （之前只判斷「冇檔案」→ 有檔案 + 冇熱鍵 → unknown → 前端誤顯示 Magic/Symbol — 用戶質疑「冇配對嘅都有 magic」）
-                # 🚨 2026-08-26 FIX（問題 1：部署第二隻 EA 後第一隻心跳 check 唔到）— 熱鍵而家 Ctrl+1 重用
-                # （每次部署清空舊 mapping + 只寫新 EA）→ hotkeys.ini 只反映最後部署嗰隻 → 舊 EA 唔喺 _hk_has → 誤判 unpaired
-                # → 修正：有心跳檔 + 心跳新鮮（<300s）= 真係運行緊（唔理熱鍵）— 淨係「有檔但心跳舊」先當殘留
+                # [ALERT] 2026-08-14：有 state/hb file但冇熱鍵（未deploy — 歷史殘留心跳file — MACD_Cross 案例）→ unpaired（未配對）
+                # （before只判斷「冇file」→ 有file + 冇熱鍵 → unknown → 前端誤顯示 Magic/Symbol — user質疑「冇配對嘅都有 magic」）
+                # [ALERT] 2026-08-26 FIX（問題 1：deploy第二隻 EA 後第一隻心跳 check 唔到）— 熱鍵now Ctrl+1 重用
+                # （每次deploy清空舊 mapping + 只寫新 EA）→ hotkeys.ini 只反映最後deploy嗰隻 → 舊 EA 唔喺 _hk_has → 誤判 unpaired
+                # → 修正：有心跳檔 + 心跳新鮮（<300s）= 真係running緊（唔理熱鍵）— 淨係「有檔但心跳舊」先當殘留
                 _hb_fresh_ea = _sn_hb_fresh if _use_snapshot else False
                 if not _use_snapshot:
                     try:
@@ -712,15 +714,15 @@ def api_ea_config():
                 else:
                     if os.path.isfile(sf):
                         try:
-                            # ⚠️ MQL5 FileWrite 寫 UTF-16 LE（BOM \xff\xfe）— 要 fallback decode
+                            # [WARN] MQL5 FileWrite 寫 UTF-16 LE（BOM \xff\xfe）— 要 fallback decode
                             with open(sf, 'rb') as f:
                                 raw = f.read()
                             try:
                                 sd = json.loads(raw.decode('utf-8'))
                             except Exception:
                                 sd = json.loads(raw.decode('utf-16'))
-                            # 🚨 2026-08-13：心跳運行 = status=running + 心跳新鮮（mtime <300 秒 — EA 而家寫緊心跳（市場收市心跳疏 — 300 秒寬限 cover；關圖表後心跳停 >5 分鐘 → 「沒有心跳」））
-                            # （之前淨睇 status → 歷史殘留（EA 最後一次寫嘅 running — 之後停咗）→ 全部誤顯示「心跳運行」— 用戶質疑）
+                            # [ALERT] 2026-08-13：心跳running = status=running + 心跳新鮮（mtime <300 秒 — EA now寫緊心跳（market close心跳疏 — 300 秒寬限 cover；關圖表後心跳停 >5 分鐘 → 「沒有心跳」））
+                            # （before淨睇 status → 歷史殘留（EA 最後一次寫嘅 running — after停咗）→ 全部誤顯示「心跳running」— user質疑）
                             age = time.time() - os.path.getmtime(sf)
                             if sd.get('status') == 'running' and age < 30:
                                 st = 'running'
@@ -728,38 +730,38 @@ def api_ea_config():
                                 st = 'stopped'
                         except Exception:
                             st = 'unknown'
-                    # 🚨 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt（舊版 EA 格式）— state_*.json 揾唔到 → 檢查 hb_*.txt
+                    # [ALERT] 2026-08-13 FIX：AgentHelper 案例 — 心跳用 hb_<EA>.txt（舊版 EA 格式）— state_*.json 揾唔到 → 檢查 hb_*.txt
                     if st != 'running':
                         if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
                             st = 'running'
-                # 🚨 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表即刻「圖表移除」— 唔使等心跳停 30 秒）
-                # （log 最後「已停止/removed」= 圖表冇 EA — 心跳新鮮都只係 EA 停止前殘留 → chart_removed）
-                if _log_last.get(ea) in ('已停止', 'removed'):
+                # [ALERT] 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表immediately「圖表remove」— 唔使等心跳停 30 秒）
+                # （log 最後「已stop/removed」= 圖表冇 EA — 心跳新鮮都只係 EA stop前殘留 → chart_removed）
+                if _log_last.get(ea) in ('已stop', 'removed'):
                     st = 'chart_removed'
-                # 🚨 2026-08-14 定案：用戶要求「統一 — 冇暫停」— 取消「已暫停」狀態（paused 判斷移除 — 心跳停 → unknown「心跳暫停」）
+                # [ALERT] 2026-08-14 定案：user要求「統一 — 冇pause」— 取消「已pause」狀態（paused 判斷remove — 心跳停 → unknown「心跳pause」）
                 runtime[ea] = st
         except Exception:
             pass
-        # 🚨 2026-08-21：讀 EA 自寫統計（state_<ea>.json 入面 trades/wins/losses/profit — TestTrades 測試 EA 寫）
+        # [ALERT] 2026-08-21：讀 EA 自寫統計（state_<ea>.json 入面 trades/wins/losses/profit — TestTrades 測試 EA 寫）
         # 原因：MT5 Python history API 讀唔到新 deals（build 6120 caching）→ EA 自己 track 寫檔 → 呢度讀
         ea_stats = {}
         _snap_ts2 = (_snap_s or {}).get('trades_stats') or {}
         try:
             _cf2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             for _ea in ea_names:
-                # 🚨 2026-08-26 FIX（問題 3：未部署嘅 EA 顯示舊 trades stats — TestTrades 殘留 substituted 運行緊 EA）
-                # → 只有「運行緊/啱啱部署」先顯示 stats（runtime status = running/starting）— 未部署/已剷除 → 唔顯示
+                # [ALERT] 2026-08-26 FIX（問題 3：未deploy嘅 EA 顯示舊 trades stats — TestTrades 殘留 substituted running緊 EA）
+                # → 只有「running緊/啱啱deploy」先顯示 stats（runtime status = running/starting）— 未deploy/已remove → 唔顯示
                 try:
                     _ea_rt = runtime.get(_ea, '')
                 except Exception:
                     _ea_rt = ''
                 if _ea_rt not in ('running', 'starting'):
                     continue
-                # 🚨 2026-08-26（multi-user Phase 1）：snapshot 模式 — 直接用 agent 上報嘅 trades_stats（每機獨立）
+                # [ALERT] 2026-08-26（multi-user Phase 1）：snapshot 模式 — 直接用 agent 上報嘅 trades_stats（每機獨立）
                 if _use_snapshot and _ea in _snap_ts2:
                     ea_stats[_ea] = _snap_ts2[_ea]
                     continue
-                # 🚨 2026-08-21 FIX：優先讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫嘅逐單明細 — 完整歷史）
+                # [ALERT] 2026-08-21 FIX：優先讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫嘅逐單明細 — 完整歷史）
                 # state json 會被系統心跳覆寫（得 ea/status/ts — 冇 stats）→ 唔可靠
                 _tf2 = os.path.join(_cf2, f'trades_{_ea}.json')
                 _trade_stats = None
@@ -842,8 +844,8 @@ def api_ea_config():
                         pass
         except Exception:
             pass
-        # 🚨 2026-08-21：非交易時間偵測（休市）— 對每隻 EA 嘅 symbol 檢查最後 tick
-        # 心跳暫停 + market_closed → 前端顯示「休市」而唔係「心跳暫停」（唔係 EA 故障）
+        # [ALERT] 2026-08-21：非交易時間偵測（休市）— 對每隻 EA 嘅 symbol 檢查最後 tick
+        # 心跳pause + market_closed → 前端顯示「休市」而唔係「心跳pause」（唔係 EA 故障）
         market_closed = {}
         try:
             for _ea in ea_names:
@@ -855,21 +857,21 @@ def api_ea_config():
                     market_closed[_ea] = _mc
         except Exception:
             pass
-        # 🚨 2026-08-26（multi-user）：agent_eas — 各自 agent 上報嘅 EA（每機獨立 — 前端 localEA 用呢個唔再用全局 detector inventory）
+        # [ALERT] 2026-08-26（multi-user）：agent_eas — 各自 agent 上報嘅 EA（每機獨立 — 前端 localEA 用呢個唔再用全局 detector inventory）
         _agent_eas = []
         try:
             _snap_e = _current_agent_snapshot()
             if _snap_e:
-                # 🚨 2026-08-29 FIX：heartbeats 都要 alive 過濾（同 log_last 一致）
-                # 之前 _hb_e = heartbeats.keys() 冇過濾 → 死 agent 嘅舊 snapshot（殘留心跳檔上報）
-                # 包含已剷除 EA → 前端 agentEasCache 有殘留 → 配對庫顯示「已加入」（用戶：電腦冇 EA 但配對庫有）
+                # [ALERT] 2026-08-29 FIX：heartbeats 都要 alive 過濾（同 log_last 一致）
+                # before _hb_e = heartbeats.keys() 冇過濾 → 死 agent 嘅舊 snapshot（殘留心跳檔上報）
+                # 包含已remove EA → 前端 agentEasCache 有殘留 → 配對庫顯示「已加入」（user：PC冇 EA 但配對庫有）
                 _hb_alive = set(k for k, v in (_snap_e.get('heartbeats') or {}).items()
                                 if isinstance(v, dict) and v.get('status') == 'alive')
                 _hb_e = _hb_alive
                 _log_e = set((_snap_e.get('log_last') or {}).keys())
                 _hk_e = set(_snap_e.get('hotkeys') or [])
-                # 🚨 2026-08-28 FIX：log_last 包含殘留（MT5 log 舊「loaded successfully」記錄 — 新 account 安裝後顯示唔屬於佢嘅 EA）
-                # → log_last 只計「心跳 alive」嘅 EA（有新鮮心跳 = 真運行）；冇心跳 = 舊記錄殘留 — 唔上報
+                # [ALERT] 2026-08-28 FIX：log_last 包含殘留（MT5 log 舊「loaded successfully」記錄 — 新 account 安裝後顯示唔belongs to佢嘅 EA）
+                # → log_last 只計「心跳 alive」嘅 EA（有新鮮心跳 = 真running）；冇心跳 = 舊記錄殘留 — 唔上報
                 _log_e = _log_e & _hb_alive
                 _agent_eas = sorted(set(list(_hb_e) + list(_log_e) + list(_hk_e)))
             else:
@@ -887,22 +889,22 @@ def api_ea_config():
 @app.route('/api/ea-config/<ea_name>', methods=['DELETE'])
 @login_required
 def api_ea_config_delete(ea_name):
-    """刪除一個 EA 嘅配對
-    ⚠️ 用戶要求（2026-08）：刪除配對庫 EA = 連埋 MT5 圖表嘅 EA 一齊移除
-    → 寫 pause_cmd 俾 watcher（auto_attach --remove 移除圖表 EA）"""
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：刪除前檢查 UAC
+    """delete一個 EA 嘅配對
+    [WARN] user要求（2026-08）：delete配對庫 EA = 連埋 MT5 圖表嘅 EA 一齊remove
+    → 寫 pause_cmd 俾 watcher（auto_attach --remove remove圖表 EA）"""
+    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：delete前檢查 UAC
     try:
         _uac_del = _detect_uac_server()
         if _uac_del:
-            print(f"[ea-config-delete] ⚠️ 偵測到 UAC 授權窗口: {_uac_del[0]} — 刪除會等 auto_attach UAC Gate 處理")
+            print(f"[ea-config-delete] [WARN] 偵測到 UAC 授權窗口: {_uac_del[0]} — delete會等 auto_attach UAC Gate 處理")
     except Exception:
         pass
-    # ⚠️ 系統檔案保護（Controller — 唔可以刪除）
+    # [WARN] 系統file保護（Controller — 唔可以delete）
     if ea_name == 'Controller':
-        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以刪除"}), 403
-    # 確保 MT5 開住（移除圖表需要）
+        return jsonify({"success": False, "error": "系統file（Controller）唔可以delete"}), 403
+    # 確保 MT5 開住（remove圖表需要）
     ensure_mt5_running()
-    # 寫 pause_cmd（watcher 用現有 process_pause_cmd 移除圖表 EA — 重用機制）
+    # 寫 pause_cmd（watcher 用現有 process_pause_cmd remove圖表 EA — 重用機制）
     try:
         common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
         os.makedirs(common_files, exist_ok=True)
@@ -911,39 +913,39 @@ def api_ea_config_delete(ea_name):
             json.dump({
                 'ea_name': ea_name,
                 'action': 'delete',
-                # 🔐 指紋（2026-08-31）：pause_cmd 帶 account
+                # [FP] fingerprint（2026-08-31）：pause_cmd 帶 account
                 'fingerprint': {
                     'account': current_user.username if (current_user and not current_user.is_anonymous) else 'unknown',
                     'created_by': f"{current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'}/{ea_name}"
                 }
-            }, f, ensure_ascii=False)  # 🚨 2026-08-14：action=delete（watcher 顯示「刪除」文字）
-        print(f"[ea-config-delete] 圖表移除指令已排隊: {os.path.basename(cmd_path)}")
+            }, f, ensure_ascii=False)  # [ALERT] 2026-08-14：action=delete（watcher 顯示「delete」文字）
+        print(f"[ea-config-delete] 圖表remove指令已排隊: {os.path.basename(cmd_path)}")
     except Exception as e:
-        print(f"[ea-config-delete] pause_cmd 寫入失敗: {e}")
+        print(f"[ea-config-delete] pause_cmd writefailed: {e}")
     config = json.loads(current_user.ea_config or '{}')
     # 加去 _removed 列表
     removed = config.get('_removed', [])
     if ea_name not in removed:
         removed.append(ea_name)
     config['_removed'] = removed
-    # 刪除相關 key
+    # delete相關 key
     for key in list(config.keys()):
         if key == ea_name or key.startswith(ea_name + '_'):
             del config[key]
     current_user.ea_config = json.dumps(config)
     db.session.commit()
-    # 🎯 刪除 → 釋放快捷鍵（2026-08 用戶設計：刪除後快捷鍵一齊移除 + 位置放返）
+    # [TARGET] delete → 釋放快捷鍵（2026-08 user設計：delete後快捷鍵一齊remove + 位置放返）
     try:
         release_hotkey(ea_name)
     except Exception:
         pass
-    log_activity('ea_delete', f'{ea_name} 配對已刪除（圖表 EA 已排隊移除）', ea=ea_name)
+    log_activity('ea_delete', f'{ea_name} 配對已delete（圖表 EA 已排隊remove）', ea=ea_name)
     return jsonify({"success": True})
 
 
 @app.route('/api/ea-config/<ea_name>/purge', methods=['POST'])
 def api_ea_config_purge(ea_name):
-    """Watcher 專用：電腦（MT5）刪除 EA 後，自動移除配對 config（配對庫即刻消失）
+    """Watcher 專用：PC（MT5）delete EA 後，自動remove配對 config（配對庫immediately消失）
     認證：agent_id 參數（DEV00001）— watcher 用
     """
     import re as _re
@@ -965,13 +967,13 @@ def api_ea_config_purge(ea_name):
             del config[key]
     user.ea_config = json.dumps(config)
     db.session.commit()
-    log_activity('ea_delete', f'{ea_name} 已於電腦刪除（配對已自動移除）', ea=ea_name)
+    log_activity('ea_delete', f'{ea_name} 已於PCdelete（配對已自動remove）', ea=ea_name)
     return jsonify({"success": True, "removed": ea_name})
 
 @app.route('/api/ea-config/<ea_name>/status', methods=['POST'])
 @login_required
 def api_ea_config_status(ea_name):
-    """🚨 2026-08-14：設定 EA config 狀態（暫停失敗時前端還原 — 唔好誤導「已暫停」）"""
+    """[ALERT] 2026-08-14：設定 EA config 狀態（pausefailed時前端還原 — 唔好誤導「已pause」）"""
     try:
         config = json.loads(current_user.ea_config or '{}')
         new_status = (request.json or {}).get('status', 'running')
@@ -987,12 +989,12 @@ def api_ea_config_status(ea_name):
 @login_required
 def api_ea_config_toggle(ea_name):
     """Toggle EA status：running ↔ paused
-    暫停 = 真暫停（移除圖表 EA — 寫 pause_cmd 俾 watcher 處理）
-    恢復 = 重新部署（寫 deploy_cmd）"""
-    # ⚠️ 系統檔案保護（Controller — 唔可以暫停/恢復）
+    pause = 真pause（remove圖表 EA — 寫 pause_cmd 俾 watcher 處理）
+    恢復 = 重新deploy（寫 deploy_cmd）"""
+    # [WARN] 系統file保護（Controller — 唔可以pause/恢復）
     if ea_name == 'Controller':
-        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以暫停"}), 403
-    # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
+        return jsonify({"success": False, "error": "系統file（Controller）唔可以pause"}), 403
+    # [WARN] user要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
     config = json.loads(current_user.ea_config or '{}')
     current_status = config.get(ea_name + '_status', 'running')
@@ -1000,49 +1002,49 @@ def api_ea_config_toggle(ea_name):
     config[ea_name + '_status'] = new_status
     current_user.ea_config = json.dumps(config)
     db.session.commit()
-    log_activity('ea_toggle', f'{ea_name} {"暫停" if new_status == "paused" else "恢復運行"}', ea=ea_name)
+    log_activity('ea_toggle', f'{ea_name} {"pause" if new_status == "paused" else "恢復running"}', ea=ea_name)
 
-    # 真暫停/恢復：寫指令俾 watcher（watcher 有 desktop access 操作 MT5 GUI）
+    # 真pause/恢復：寫指令俾 watcher（watcher 有 desktop access 操作 MT5 GUI）
     try:
         import time as _ct
         common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
         os.makedirs(common_files, exist_ok=True)
-        # 🚨 2026-08-14 FIX：暫停/恢復都要彈警告視窗（之前冇 — 用戶投訴「網頁冇顯示警告視窗」）
+        # [ALERT] 2026-08-14 FIX：pause/恢復都要彈warning視窗（before冇 — user投訴「網頁冇顯示warning視窗」）
         try:
             import json as _jtg
             _adir_tg = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             with open(os.path.join(_adir_tg, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write(f'{"暫停" if new_status == "paused" else "恢復"} {ea_name}')
+                _f.write(f'{"pause" if new_status == "paused" else "恢復"} {ea_name}')
             with open(os.path.join(_adir_tg, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
                 if new_status == 'paused':
                     _jtg.dump([
-                        {'text': f'開始暫停 {ea_name}', 'status': 'doing'},
-                        {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
-                        {'text': '移除圖表 EA（停止交易）', 'status': 'pending'},
-                        {'text': '完成暫停（配置保留 — 可隨時恢復）', 'status': 'pending'},
+                        {'text': f'startpause {ea_name}', 'status': 'doing'},
+                        {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
+                        {'text': 'remove圖表 EA（stop交易）', 'status': 'pending'},
+                        {'text': 'donepause（配置保留 — 可隨時恢復）', 'status': 'pending'},
                     ], _f, ensure_ascii=False)
                 else:
                     _jtg.dump([
-                        {'text': f'開始恢復 {ea_name}', 'status': 'doing'},
-                        {'text': '建立新圖表', 'status': 'pending'},
-                        {'text': f'附加 {ea_name}', 'status': 'pending'},
-                        {'text': '驗證運行狀態', 'status': 'pending'},
+                        {'text': f'start恢復 {ea_name}', 'status': 'doing'},
+                        {'text': 'create新圖表', 'status': 'pending'},
+                        {'text': f'attach {ea_name}', 'status': 'pending'},
+                        {'text': '驗證running狀態', 'status': 'pending'},
                     ], _f, ensure_ascii=False)
         except Exception:
             pass
         if new_status == 'paused':
-            # ⚠️ 控制層方案（CONTROL_LAYER_DESIGN.md）：暫停 → 寫 ctrl_<ea>.json {"cmd":"stop"}
-            # EA（已注入控制層）讀到 → ExpertRemove() 自己移除 → 寫 stopped 心跳
-            # ✅ 唔使 watcher / GUI 操作（MT5 唔會死）
+            # [WARN] 控制層方案（CONTROL_LAYER_DESIGN.md）：pause → 寫 ctrl_<ea>.json {"cmd":"stop"}
+            # EA（已注入控制層）讀到 → ExpertRemove() 自己remove → 寫 stopped 心跳
+            # [OK] 唔使 watcher / GUI 操作（MT5 唔會死）
             cmd_path = os.path.join(common_files, f'ctrl_{ea_name}.json')
             with open(cmd_path, 'w', encoding='utf-8') as f:
                 json.dump({'cmd': 'stop'}, f, ensure_ascii=False)
-            # 保留 pause_cmd 做後備（如果 EA 冇控制層 — watcher GUI 移除）
+            # 保留 pause_cmd 做後備（如果 EA 冇控制層 — watcher GUI remove）
             pause_path = os.path.join(common_files, f'pause_cmd_{ea_name}_{int(_ct.time())}.json')
             with open(pause_path, 'w', encoding='utf-8') as f:
-                json.dump({'ea_name': ea_name, 'action': 'pause'}, f, ensure_ascii=False)  # 🚨 2026-08-14：action=pause（watcher 顯示「暫停」文字）
+                json.dump({'ea_name': ea_name, 'action': 'pause'}, f, ensure_ascii=False)  # [ALERT] 2026-08-14：action=pause（watcher 顯示「pause」文字）
         else:
-            # 恢復 → 重新部署（auto_attach 附加）
+            # 恢復 → 重新deploy（auto_attach attach）
             symbol = config.get(ea_name, 'EURUSD')
             tf = config.get(ea_name + '_tf', 'H1')
             magic = config.get(ea_name + '_magic', '240701')
@@ -1051,10 +1053,10 @@ def api_ea_config_toggle(ea_name):
             with open(cmd_path, 'w', encoding='utf-8') as f:
                 json.dump({'ea_name': ea_name, 'symbol': symbol, 'tf': tf, 'magic': magic, 'lot': lot}, f, ensure_ascii=False)
     except Exception as e:
-        print(f"[DEBUG] toggle cmd 寫入失敗: {e}")
+        print(f"[DEBUG] toggle cmd writefailed: {e}")
 
-    # 🚨 2026-08-14 FIX：暫停後確認 — EA 真係移除先話成功（心跳停 + log「已停止」= 移除）
-    # （之前只用心跳停判斷 — 市場收市心跳都停 → 誤判成功 — 用戶投訴「顯示暫停但 MT5 冇暫停」）
+    # [ALERT] 2026-08-14 FIX：pause後確認 — EA 真係remove先話success（心跳停 + log「已stop」= remove）
+    # （before只用心跳停判斷 — market close心跳都停 → 誤判success — user投訴「顯示pause但 MT5 冇pause」）
     if new_status == 'paused':
         try:
             import time as _tp
@@ -1066,7 +1068,7 @@ def api_ea_config_toggle(ea_name):
                 _hb_age = time.time() - os.path.getmtime(_sf_p)
             elif os.path.isfile(_hb_p):
                 _hb_age = time.time() - os.path.getmtime(_hb_p)
-            # log 確認（EA 移除 → log「已停止」）
+            # log 確認（EA remove → log「已stop」）
             _log_stopped = False
             try:
                 import glob as _glp
@@ -1090,23 +1092,23 @@ def api_ea_config_toggle(ea_name):
                             continue
                     if _txtp:
                         _log_stopped = any(
-                            _rep.search(rf'{re.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已停止|removed)', _ln)
+                            _rep.search(rf'{re.escape(ea_name)} \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已stop|removed)', _ln)
                             for _ln in _txtp.splitlines())
             except Exception:
                 pass
             _hb_stopped = _hb_age is not None and _hb_age >= 30
             if not _hb_stopped or not _log_stopped:
-                # 心跳仲新鮮 或 log 冇「已停止」（市場收市心跳停 — EA 可能仲運行）→ 暫停失敗
-                print(f"[toggle] ⚠️ 暫停 {ea_name} 確認失敗（心跳停={_hb_stopped} log已停止={_log_stopped}）", flush=True)
-                return jsonify({"success": False, "status": "paused_failed", "error": f"暫停失敗 — EA 仍在圖表（可能未更新暫停支援）。請重新部署 {ea_name} 後再試。"}), 409
-            print(f"[toggle] ✅ 暫停 {ea_name} 確認成功（心跳停 + log 已停止）", flush=True)
+                # 心跳仲新鮮 或 log 冇「已stop」（market close心跳停 — EA 可能仲running）→ pausefailed
+                print(f"[toggle] [WARN] pause {ea_name} 確認failed（心跳停={_hb_stopped} log已stop={_log_stopped}）", flush=True)
+                return jsonify({"success": False, "status": "paused_failed", "error": f"pausefailed — EA 仍在圖表（可能未更新pause支援）。請重新deploy {ea_name} 後再試。"}), 409
+            print(f"[toggle] [OK] pause {ea_name} 確認success（心跳停 + log 已stop）", flush=True)
         except Exception as _te:
-            print(f"[toggle] ⚠️ 暫停確認異常（照返回成功）: {_te}", flush=True)
+            print(f"[toggle] [WARN] pause確認exception（照返回success）: {_te}", flush=True)
 
     return jsonify({"success": True, "status": new_status})
 
 # === API: Dashboard ===
-# ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
+# [WARN] user要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
 MT5_EXE_PATH = r"C:\Program Files\MetaTrader 5\terminal64.exe"
 
 def ensure_mt5_running():
@@ -1114,15 +1116,15 @@ def ensure_mt5_running():
     所有會操作 MT5 嘅 API（install-local / deploy / toggle / remove-local / retry-compile）開頭 call"""
     import subprocess as _sp
     try:
-        # ⚠️ 用 bytes 檢查（唔好 text=True）— tasklist 輸出係 GBK/中文，MSYS UTF-8 locale decode 會炸
+        # [WARN] 用 bytes 檢查（唔好 text=True）— tasklist 輸出係 GBK/中文，MSYS UTF-8 locale decode 會炸
         r = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /NH', shell=True, capture_output=True, timeout=5)
         if b'terminal64' in r.stdout:
             return True
-        print("[ensure_mt5] MT5 未開啟 — 自動啟動...")
+        print("[ensure_mt5] MT5 未開啟 — 自動start...")
         try:
             _sp.Popen([MT5_EXE_PATH])
         except Exception as e:
-            print(f"[ensure_mt5] 啟動失敗: {e}")
+            print(f"[ensure_mt5] startfailed: {e}")
             return False
         # 等最多 30 秒 MT5 process 出現（登入由 MT5 自動處理）
         for _ in range(30):
@@ -1130,21 +1132,21 @@ def ensure_mt5_running():
             try:
                 r2 = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /NH', shell=True, capture_output=True, timeout=5)
                 if b'terminal64' in r2.stdout:
-                    print("[ensure_mt5] MT5 已啟動（登入中）")
+                    print("[ensure_mt5] MT5 已start（登入中）")
                     return True
             except Exception:
                 pass
-        print("[ensure_mt5] MT5 啟動等待超時（30 秒）")
+        print("[ensure_mt5] MT5 startwaittimeout（30 秒）")
         return False
     except Exception as e:
-        print(f"[ensure_mt5] 偵測失敗: {e}")
+        print(f"[ensure_mt5] 偵測failed: {e}")
         return False
 
 
 # Auto-trade status: background thread refresh so dashboard never blocks
 _auto_trade_cache = {"result": [], "timestamp": 0}
 _auto_trade_lock = threading.Lock()
-_last_deploy_time = {}  # 🚨 2026-08-12：防重複部署（同一 EA 30 秒內唔可以再 deploy）
+_last_deploy_time = {}  # [ALERT] 2026-08-12：防重複deploy（同一 EA 30 秒內唔可以再 deploy）
 
 def _refresh_auto_trade_cache(user):
     """background thread: update auto_trade_cache without blocking dashboard"""
@@ -1158,7 +1160,7 @@ def _refresh_auto_trade_cache(user):
         print(f"[DEBUG] compute_auto_trade_status failed: {e}")
         pass
     
-    # Also refresh account info（🚨 2026-08-12 修：唔直接 init MT5 — detector 已持連接 → read 佢嘅 auto_trade_status.json）
+    # Also refresh account info（[ALERT] 2026-08-12 修：唔直接 init MT5 — detector 已持connect → read 佢嘅 auto_trade_status.json）
     try:
         status_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                     'server', 'static', 'detector', 'auto_trade_status.json')
@@ -1169,17 +1171,17 @@ def _refresh_auto_trade_cache(user):
             if status_account:
                 with _auto_trade_lock:
                     _auto_trade_cache["account_info"] = status_data.get("account_info", {'login': status_account})
-                # 🚨 2026-08-26 FIX（多機污染）：唔好再寫 agent.account_info！
-                # 之前 save server 本機 account 落「觸發 refresh 嗰個 user」嘅 agent → 新帳戶被寫入 5053721681 → 顯示返舊機
+                # [ALERT] 2026-08-26 FIX（多機污染）：唔好再寫 agent.account_info！
+                # before save server local account 落「觸發 refresh 嗰個 user」嘅 agent → 新account被write 5053721681 → 顯示返舊機
                 # → agent.account_info 只可以由「自己部機嘅 agent 上報」（SocketIO agent_sync）寫 — 每機獨立
     except Exception as e:
         print(f"[DEBUG] auto_trade_status read failed: {e}")
         pass
 
 def _agent_live_status(agent):
-    """🚨 2026-08-27：Agent 真實狀態（last_seen 新鮮 = online — 唔淨係睇 status 欄）
+    """[ALERT] 2026-08-27：Agent 真實狀態（last_seen 新鮮 = online — 唔淨係睇 status 欄）
     agent 被 kill → socket 斷 → 冇 sync → last_seen 舊 → offline（防假綠燈）
-    🚨 FIX：last_seen 係 datetime.utcnow()（naive UTC）— timestamp() 會當本地時區 → 錯 8 小時
+    [ALERT] FIX：last_seen 係 datetime.utcnow()（naive UTC）— timestamp() 會當本地時區 → 錯 8 小時
     → 用 datetime.utcnow() 直接比較（都係 naive UTC — 無歧義）
     """
     try:
@@ -1203,7 +1205,7 @@ def _agent_live_status(agent):
 @login_required
 def api_dashboard():
     agent = Agent.query.filter_by(user_id=current_user.id).first()
-    # 🚨 2026-08-28 FIX：user 可能冇 agent（網站剷除咗）→ 唔 crash — 返回空資料（前端顯示「未安裝」）
+    # [ALERT] 2026-08-28 FIX：user 可能冇 agent（網站remove咗）→ 唔 crash — 返回空資料（前端顯示「未安裝」）
     if agent is None:
         return jsonify({
             "agent_id": None, "agent_token": None, "status": "offline",
@@ -1224,7 +1226,7 @@ def api_dashboard():
     now = _t.time()
     global _auto_trade_cache
     if now - _auto_trade_cache["timestamp"] > 30:
-        # 🚨 2026-08-12：first call → sync（background thread fails silently）
+        # [ALERT] 2026-08-12：first call → sync（background thread fails silently）
         if _auto_trade_cache["timestamp"] == 0:
             _refresh_auto_trade_cache(current_user)
         else:
@@ -1235,9 +1237,9 @@ def api_dashboard():
         cache_result = _auto_trade_cache["result"]
         _global_acc = _auto_trade_cache.get("account_info", {})
     
-    # 🚨 2026-08-26 FIX v2（用戶實測：新 account 依然見到 5053721681）：
-    # → 唔可以 fallback 全局 cache（_global_acc = server 本機 MT5 — 永遠係舊機帳號）
-    # → 只顯示「自己 agent 上報嘅 account_info」（每機獨立）— 未上報 → 空（前端顯示「未連接」）
+    # [ALERT] 2026-08-26 FIX v2（user實測：新 account 依然見到 5053721681）：
+    # → 唔可以 fallback 全局 cache（_global_acc = server local MT5 — 永遠係舊機帳號）
+    # → 只顯示「自己 agent 上報嘅 account_info」（每機獨立）— 未上報 → 空（前端顯示「未connect」）
     _acc_dis = account if account.get('login') else {}
     return jsonify({
         "status": _agent_live_status(agent),
@@ -1332,8 +1334,8 @@ def compute_auto_trade_status(user):
 
 # === API: Analysis ===
 def _agent_trades_raw():
-    """🚨 2026-08-26（multi-user Phase 3）：攞當前用戶 agent 上報嘅逐單交易（每機獨立）
-    有 snapshot → 用 trades_raw; 冇 → None（server fallback 讀本機）
+    """[ALERT] 2026-08-26（multi-user Phase 3）：攞當前user agent 上報嘅逐單交易（每機獨立）
+    有 snapshot → 用 trades_raw; 冇 → None（server fallback 讀local）
     """
     try:
         agent = Agent.query.filter_by(user_id=current_user.id).first()
@@ -1353,8 +1355,8 @@ def api_analysis():
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     deals_data = json.loads(agent.deals or '[]')
 
-    # 🚨 2026-08-26（multi-user Phase 3）：agent 上報 trades_raw 優先（每機獨立 — 支持多機）
-    # → 有 snapshot trades_raw → 直接用（唔讀本機 Common/Files）
+    # [ALERT] 2026-08-26（multi-user Phase 3）：agent 上報 trades_raw 優先（每機獨立 — 支持多機）
+    # → 有 snapshot trades_raw → 直接用（唔讀local Common/Files）
     _snap_trades = _agent_trades_raw()
     _use_snap_tr = _snap_trades is not None
     if _use_snap_tr:
@@ -1373,10 +1375,10 @@ def api_analysis():
         except Exception:
             pass
 
-    # 🚨 2026-08-21：合併 EA 自寫逐單明細（trades_<EA>.json — 完整歷史）
+    # [ALERT] 2026-08-21：合併 EA 自寫逐單明細（trades_<EA>.json — 完整歷史）
     # MT5 Python history API 讀唔到新 deals（build 6120 caching）→ agent.deals 得舊嘢
     # → 讀 trades_<EA>.json（EA AppendTrade/RebuildTradesFile 寫）合併做分析數據源
-    # 🚨 2026-08-26（Phase 3）：agent 已上報 trades_raw → 唔再讀本機（避免雙重）
+    # [ALERT] 2026-08-26（Phase 3）：agent 已上報 trades_raw → 唔再讀local（避免雙重）
     if not _use_snap_tr:
         try:
             import glob as _gl_a
@@ -1438,7 +1440,7 @@ def api_analysis():
     # Per-EA by (magic, symbol)
     per_ea = defaultdict(lambda: {"trades":0,"profit":0,"wins":0,"losses":0})
     for d in deals_data:
-        # 🚨 2026-08-21：過濾 magic 0（平台手動交易/存款 — 唔係 EA 交易，唔應該顯示喺 EA 統計）
+        # [ALERT] 2026-08-21：過濾 magic 0（平台手動交易/存款 — 唔係 EA 交易，唔應該顯示喺 EA 統計）
         if not d.get('magic') or d.get('magic') == 0:
             continue
         key = f"{d['magic']}_{d['symbol']}"
@@ -1484,8 +1486,8 @@ def api_analysis():
     # Collect unique magic numbers
     all_magics = sorted(set(str(d['magic']) for d in deals_data if d['magic'] != 0))
 
-    # 🚨 2026-08-21：EA 名對應（correlation matrix 顯示 EA 名 — 用戶易睇）
-    # 🚨 2026-08-26 FIX v3（用戶：「點解仲顯示 Magic#240701 而唔係 EA 名」）：
+    # [ALERT] 2026-08-21：EA 名對應（correlation matrix 顯示 EA 名 — user易睇）
+    # [ALERT] 2026-08-26 FIX v3（user：「點解仲顯示 Magic#240701 而唔係 EA 名」）：
     # v0.10.78 行內人做法 magic=EA 身份 → (magic,symbol) match 唔到（舊 symbol 記錄）都應該顯示 EA 名
     # → 雙層對應：①精確 (magic,symbol) ②fallback 淨 magic（搵 config 第一隻用呢個 magic 嘅 EA）
     ea_name_by_key = {}
@@ -1523,7 +1525,7 @@ def api_analysis():
     for d in deals_data:
         if not d.get('magic') or d.get('magic') == 0:
             continue
-        # 🚨 2026-08-21：trades json 嘅 time 係 epoch（數字）— 轉做 YYYY-MM-DD
+        # [ALERT] 2026-08-21：trades json 嘅 time 係 epoch（數字）— 轉做 YYYY-MM-DD
         _t_val = d.get('time', '')
         if isinstance(_t_val, (int, float)) and _t_val > 1000000000:
             try:
@@ -1546,8 +1548,8 @@ def api_analysis():
         d=math.sqrt((n*sxx-sx*sx)*(n*syy-sy*sy))
         return (n*sxy-sx*sy)/d if d!=0 else 0
 
-    # 🚨 2026-08-21：correlation keys 用 EA 名（前端顯示）
-    # 🚨 2026-08-26 FIX v2（用戶要求：「名 + Magic Number」— 方便 cross-check MT5）：EA 名 + (magic) 括號
+    # [ALERT] 2026-08-21：correlation keys 用 EA 名（前端顯示）
+    # [ALERT] 2026-08-26 FIX v2（user要求：「名 + Magic Number」— 方便 cross-check MT5）：EA 名 + (magic) 括號
     corr_keys_display = []
     for _ek in ea_keys:
         _ea_nm = _resolve_ea_name(_ek)
@@ -1555,7 +1557,7 @@ def api_analysis():
             _mag_part = _ek.split('_')[0]
             corr_keys_display.append(f"{_ea_nm} ({_mag_part})")
         else:
-            # 🚨 2026-08-26：冇 EA 名（歷史 trades 同 config 唔 match）→ 顯示 Magic#<magic> (<symbol>)
+            # [ALERT] 2026-08-26：冇 EA 名（歷史 trades 同 config 唔 match）→ 顯示 Magic#<magic> (<symbol>)
             _mk_part = _ek.split('_')[0] if '_' in _ek else _ek
             _sym_part = _ek.split('_', 1)[1] if '_' in _ek else ''
             corr_keys_display.append(f"Magic#{_mk_part} ({_sym_part})" if _sym_part else f"Magic#{_mk_part}")
@@ -1590,14 +1592,14 @@ def api_analysis():
 @app.route('/api/trade-report')
 @login_required
 def api_trade_report():
-    """交易歷史報告（帳戶層面 — 全部交易 + 統計）
-    🚨 2026-08-26 新增（用戶要求：下載 MT5 交易歷史報告 HTML / popup 睇）
+    """交易歷史報告（account層面 — 全部交易 + 統計）
+    [ALERT] 2026-08-26 新增（user要求：下載 MT5 交易歷史報告 HTML / popup 睇）
     — 數據源：agent.deals（MT5 API 收集）+ trades_<EA>.json（EA 逐單）合併
     """
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     deals_data = json.loads(agent.deals or '[]')
 
-    # 🚨 2026-08-26（multi-user Phase 3）：agent 上報 trades_raw 優先（每機獨立）
+    # [ALERT] 2026-08-26（multi-user Phase 3）：agent 上報 trades_raw 優先（每機獨立）
     try:
         _snap_tr2 = _agent_trades_raw()
         if _snap_tr2:
@@ -1729,7 +1731,7 @@ def api_trade_report():
 @login_required
 def api_ea_report():
     """EA 診斷報告：equity curve + 詳細 stats
-    🚨 2026-08-21：加 EA 自寫統計 fallback（MT5 Python history API 讀唔到新 deals → agent.deals 得舊嘢）
+    [ALERT] 2026-08-21：加 EA 自寫統計 fallback（MT5 Python history API 讀唔到新 deals → agent.deals 得舊嘢）
     → 讀 state_<EA>.json（TestTrades 自己 track 真實 trades/wins/losses/profit）
     """
     magic = request.args.get('magic', '')
@@ -1745,7 +1747,7 @@ def api_ea_report():
                 if str(d.get('magic', '')) == str(magic)
                 and d.get('profit', 0) != 0]
 
-    # 🚨 2026-08-21：讀 EA 自寫統計（state_<EA>.json — TestTrades 寫真實 trades/wins/losses/profit）
+    # [ALERT] 2026-08-21：讀 EA 自寫統計（state_<EA>.json — TestTrades 寫真實 trades/wins/losses/profit）
     # 因為 MT5 Python history API 讀唔到新 deals（build 6120 caching）→ agent.deals 冇最新數據
     ea_stats = {}
     try:
@@ -1785,12 +1787,12 @@ def api_ea_report():
         pass
 
     # 如果 agent.deals 冇數據 → 用 EA 自寫統計（真實數據）
-    # 🚨 2026-08-21 FIX：唔好靠 state json 嘅 stats（系統心跳注入覆寫咗 state json 格式 — 得 ea/status/ts）
+    # [ALERT] 2026-08-21 FIX：唔好靠 state json 嘅 stats（系統心跳注入覆寫咗 state json 格式 — 得 ea/status/ts）
     # → 用 trades_<EA>.json（AppendTrade 寫嘅逐單明細 — 冇衝突）計全部統計
     stat = ea_stats.get(ea_name) if ea_name else None
 
-    # 🚨 2026-08-21：讀 trades_<EA>.json（EA 寫嘅逐單明細 — JSONL）→ 畫 equity curve / distribution / monthly
-    # ⚠️ MQL5 FileWriteString 寫 UTF-16 LE（BOM）— 要 fallback decode
+    # [ALERT] 2026-08-21：讀 trades_<EA>.json（EA 寫嘅逐單明細 — JSONL）→ 畫 equity curve / distribution / monthly
+    # [WARN] MQL5 FileWriteString 寫 UTF-16 LE（BOM）— 要 fallback decode
     trade_list = []
     try:
         _tf = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'trades_{ea_name}.json')
@@ -1818,8 +1820,8 @@ def api_ea_report():
     except Exception:
         pass
 
-    # 🚨 2026-08-26 FIX v2（報告顯示舊數據問題）：優先 trades_<EA>.json（EA 逐單真實記錄 — 最準）
-    # → 之前 `if not ea_deals`（agent.deals 冇數據先行詳細計算）— 但 agent.deals 有舊記錄（舊 symbol/magic）→ 報告顯示舊嘢
+    # [ALERT] 2026-08-26 FIX v2（報告顯示舊數據問題）：優先 trades_<EA>.json（EA 逐單真實記錄 — 最準）
+    # → before `if not ea_deals`（agent.deals 冇數據先行詳細計算）— 但 agent.deals 有舊記錄（舊 symbol/magic）→ 報告顯示舊嘢
     # → 改：只要有 trade_list（trades_<EA>.json 有記錄）→ 一定用佢計（唔理 agent.deals）
     if trade_list or (not ea_deals and stat):
 
@@ -1828,7 +1830,7 @@ def api_ea_report():
         dist = {"bins": ["0-50", "50-100", "100-200", "200-500", "500+"], "wins": [0]*5, "losses": [0]*5}
         monthly_pnl = {}
         cum = 0.0
-        # 🚨 2026-08-21 FIX：trade_list 有數據 → 用逐單明細計全部統計（最準確）；冇 → fallback state stats
+        # [ALERT] 2026-08-21 FIX：trade_list 有數據 → 用逐單明細計全部統計（最準確）；冇 → fallback state stats
         if trade_list:
             trade_list.sort(key=lambda x: x.get('time', 0))
             for _t in trade_list:
@@ -1998,7 +2000,7 @@ def api_agent_poll_deploy():
 
 @app.route('/api/watcher-report', methods=['POST'])
 def api_watcher_report():
-    """部署監控器回報 deploy 結果"""
+    """deploy監控器回報 deploy 結果"""
     data = request.json
     agent_id = data.get('agent_id', '')
     ea_name = data.get('ea_name', '')
@@ -2022,17 +2024,17 @@ EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'static', 'user_ea')
 COMMUNITY_EA_DIR = os.path.join(os.path.dirname(__file__), 'static', 'community_ea')
 
-# 確保目錄存在
+# 確保direxists
 os.makedirs(EA_LIBRARY_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(COMMUNITY_EA_DIR, exist_ok=True)
 
 @app.route('/api/ea-library')
 def api_ea_library():
-    """返回 EA 庫列表（平台提供 + 社群提供 + 用戶上傳）+ 本機有冇 .ex5（即時判斷，唔靠 detector）"""
-    # 🚨 2026-08-19 FIX：加 local_has — server 直接 check 本機 MT5 Experts/ 有冇 <base>.ex5
-    # 之前前端靠 detector ea_inventory.json（延遲）→ 配對後「本機冇檔案」殘留，要 refresh 先啱
-    # 呢度直接 filesystem check → 配對完成後即時準確
+    """返回 EA 庫列表（平台提供 + 社群提供 + user上傳）+ local有冇 .ex5（即時判斷，唔靠 detector）"""
+    # [ALERT] 2026-08-19 FIX：加 local_has — server 直接 check local MT5 Experts/ 有冇 <base>.ex5
+    # before前端靠 detector ea_inventory.json（延遲）→ 配對後「local冇file」殘留，要 refresh 先啱
+    # 呢度直接 filesystem check → 配對done後即時準確
     local_bases = set()
     _mt5dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
     try:
@@ -2062,7 +2064,7 @@ def api_ea_library():
                 size = os.path.getsize(path)
                 base = os.path.splitext(f)[0]
                 files.append({"name": f, "size": f"{size/1024:.1f} KB", "type": "community", "author": "Dev", "local_has": base in local_bases})
-    # 用戶上傳嘅 EA（只有自己睇到）
+    # user上傳嘅 EA（只有自己睇到）
     if current_user.is_authenticated:
         user_dir = os.path.join(UPLOAD_DIR, current_user.username)
         if os.path.isdir(user_dir):
@@ -2078,12 +2080,12 @@ def api_ea_library():
 @app.route('/api/ea-library/refresh', methods=['POST'])
 @login_required
 def api_ea_library_refresh():
-    """🚨 2026-08-11：配對庫「重新整理」— 警告視窗流程（重新整理緊 → 成功確定 / 失敗紅色+原因+確定）
-    重新整理唔係危險操作 → 失敗都係「確定」（唔需要緊急停止）
-    用 control_guard acquire/release（寫 .ai_control.show + ai_control.json active — 網頁+電腦版都彈）"""
+    """[ALERT] 2026-08-11：配對庫「重新整理」— warning視窗流程（重新整理緊 → success確定 / failed紅色+原因+確定）
+    重新整理唔係危險操作 → failed都係「確定」（唔需要緊急stop）
+    用 control_guard acquire/release（寫 .ai_control.show + ai_control.json active — 網頁+PC版都彈）"""
     import json as _jrf
     _adir_rf = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-    # acquire（警告視窗彈 — 網頁 modal + 電腦版）
+    # acquire（warning視窗彈 — 網頁 modal + PC版）
     _cg = None
     try:
         sys.path.insert(0, _adir_rf)
@@ -2092,36 +2094,36 @@ def api_ea_library_refresh():
     except Exception:
         _cg = None
     try:
-        # 🚨 2026-08-29 FIX（電腦版警告視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
-        # 之前淨寫開發目錄（_adir_rf）→ alert_worker（讀 TradotcomAgent）冇 flag → 電腦版唔彈
+        # [ALERT] 2026-08-29 FIX（PC版warning視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
+        # before淨寫開發dir（_adir_rf）→ alert_worker（讀 TradotcomAgent）冇 flag → PC版唔彈
         _write_ai_flags('重新整理配對庫', [
-            {'text': '開始重新整理', 'status': 'doing'},
-            {'text': '掃描本機 EA 檔案', 'status': 'pending'},
+            {'text': 'start重新整理', 'status': 'doing'},
+            {'text': '掃描local EA file', 'status': 'pending'},
             {'text': '清理殘留配對設定', 'status': 'pending'},
             {'text': '同步配對設定', 'status': 'pending'},
-            {'text': '刷新本機運行狀態', 'status': 'pending'},
+            {'text': '刷新localrunning狀態', 'status': 'pending'},
             {'text': '刷新 EA 倉庫', 'status': 'pending'},
-            {'text': '完成重新整理', 'status': 'pending'},
+            {'text': 'done重新整理', 'status': 'pending'},
         ])
     except Exception:
         pass
-    # 🚨 2026-08-12：步驟 1 done + 步驟 2 doing（掃描本機 EA — 停留 0.8s 用戶見到）
+    # [ALERT] 2026-08-12：步驟 1 done + 步驟 2 doing（掃描local EA — 停留 0.8s user見到）
     try:
         import time as _tw2
         _tw2.sleep(0.8)
         _st2 = _jrf.load(open(os.path.join(_adir_rf, '.ai_control.steps'), 'r', encoding='utf-8'))
         for _s2 in _st2:
-            if _s2.get('text') == '開始重新整理':
+            if _s2.get('text') == 'start重新整理':
                 _s2['status'] = 'done'
-            elif _s2.get('text') == '掃描本機 EA 檔案':
+            elif _s2.get('text') == '掃描local EA file':
                 _s2['status'] = 'doing'
-        # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版一致）
+        # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版一致）
         _write_ai_flags(None, _st2)
     except Exception:
         pass
     try:
         files = []
-        # 🚨 2026-08-11：掃描本機 Experts 實際檔案（.mq5/.ex5 — base name 集合 — 用嚟對比網頁 config）
+        # [ALERT] 2026-08-11：掃描local Experts 實際file（.mq5/.ex5 — base name 集合 — 用嚟對比網頁 config）
         local_bases = set()
         try:
             data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -2135,10 +2137,10 @@ def api_ea_library_refresh():
                                     local_bases.add(os.path.splitext(fn)[0])
         except Exception:
             pass
-        # 🚨 自動清殘留 config：網頁已配對 + 本機完全冇檔案（冇 .mq5 冇 .ex5）→ 刪 config（電腦刪除後自動同步）
-        # 🚨 2026-08-11 修：清所有用戶（唔止 current_user — 殘留喺其它帳號）
+        # [ALERT] 自動清殘留 config：網頁已配對 + local完全冇file（冇 .mq5 冇 .ex5）→ 刪 config（PCdelete後自動同步）
+        # [ALERT] 2026-08-11 修：清所有user（唔止 current_user — 殘留喺其它帳號）
         try:
-            # 🚨 獨立 sqlite3 連接（SQLAlchemy session 喺 request 內有隔離問題 — 直接 sqlite3 最穩陣）
+            # [ALERT] 獨立 sqlite3 connect（SQLAlchemy session 喺 request 內有隔離問題 — 直接 sqlite3 最穩陣）
             import sqlite3 as _sq
             _db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'mt5cloud.db')
             if os.path.isfile(_db_path):
@@ -2166,10 +2168,10 @@ def api_ea_library_refresh():
                         cleaned_total += len(to_del)
                 if cleaned_total:
                     _conn.commit()
-                    print(f"[refresh] 自動清理 {cleaned_total} 個殘留 config key（本機已刪除）", flush=True)
+                    print(f"[refresh] 自動清理 {cleaned_total} 個殘留 config key（local已delete）", flush=True)
                 _conn.close()
         except Exception as _ce:
-            print(f"[refresh] 自動清理失敗: {_ce}", flush=True)
+            print(f"[refresh] 自動清理failed: {_ce}", flush=True)
             pass
         if os.path.isdir(EA_LIBRARY_DIR):
             for f in sorted(os.listdir(EA_LIBRARY_DIR)):
@@ -2188,14 +2190,14 @@ def api_ea_library_refresh():
                     if f.endswith(('.mq5', '.ex5')):
                         path = os.path.join(user_dir, f)
                         files.append({"name": f, "size": f"{os.path.getsize(path)/1024:.1f} KB", "type": "user", "author": current_user.username})
-        # 成功 → steps done（完成重新整理）
+        # success → steps done（done重新整理）
         try:
-            # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版一致）
+            # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版一致）
             _write_ai_flags(None, [
-                {'text': '重新整理配對庫 進行中…', 'status': 'done'},
-                {'text': '完成重新整理', 'status': 'done'},
+                {'text': '重新整理配對庫 in progress…', 'status': 'done'},
+                {'text': 'done重新整理', 'status': 'done'},
             ])
-            # 🚨 2026-08-29 FIX：雙刪 show flag（開發目錄 + TradotcomAgent）
+            # [ALERT] 2026-08-29 FIX：雙刪 show flag（開發dir + TradotcomAgent）
             for _sf_dir in [_adir_rf, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
                 _sf_show = os.path.join(_sf_dir, '.ai_control.show')
                 try:
@@ -2205,7 +2207,7 @@ def api_ea_library_refresh():
                     pass
         except Exception:
             pass
-        # release（完成 — 網頁 modal 唔自動關 — 確定撳先關）
+        # release（done — 網頁 modal 唔自動關 — 確定撳先關）
         try:
             if _cg is not None:
                 _cg.release()
@@ -2213,14 +2215,14 @@ def api_ea_library_refresh():
             pass
         return jsonify({"success": True, "files": files, "count": len(files)})
     except Exception as e:
-        # 失敗 → steps 顯示失敗原因（紅色）+ 確定（唔需要緊急停止）
+        # failed → steps 顯示failed原因（紅色）+ 確定（唔需要緊急stop）
         try:
-            # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版一致）
+            # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版一致）
             _write_ai_flags(None, [
-                {'text': '重新整理配對庫 進行中…', 'status': 'done'},
-                {'text': f'重新整理失敗（{str(e)[:80]}）', 'status': 'done'},
+                {'text': '重新整理配對庫 in progress…', 'status': 'done'},
+                {'text': f'重新整理failed（{str(e)[:80]}）', 'status': 'done'},
             ])
-            # 🚨 2026-08-29 FIX：雙刪 show flag（開發目錄 + TradotcomAgent）
+            # [ALERT] 2026-08-29 FIX：雙刪 show flag（開發dir + TradotcomAgent）
             for _sf_dir in [_adir_rf, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
                 _sf_show = os.path.join(_sf_dir, '.ai_control.show')
                 try:
@@ -2241,17 +2243,17 @@ def api_ea_library_refresh():
 @app.route('/api/refresh-status', methods=['POST'])
 @login_required
 def api_refresh_status():
-    """🚨 2026-08-14：重新整理按鈕 → 即時檢查電腦狀態（心跳/熱鍵/本機檔案）→ 返回網頁更新
-    唔等 detector 週期 — 撳「重新整理」即刻掃描（用戶要求：「向電腦發送訊息 check 而家所有狀態」）"""
+    """[ALERT] 2026-08-14：重新整理按鈕 → 即時檢查PC狀態（心跳/熱鍵/localfile）→ 返回網頁更新
+    唔等 detector 週期 — 撳「重新整理」immediately掃描（user要求：「向PC發送訊息 check now所有狀態」）"""
     import re as _rrs
     common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
-    # 1. 觸發 detector 即刻重掃（rescan.flag — detector 睇到即刻掃描 EA 檔案 — 唔等 5 秒週期）
+    # 1. 觸發 detector immediately重掃（rescan.flag — detector 睇到immediately掃描 EA file — 唔等 5 秒週期）
     try:
         with open(os.path.join(common_files, 'rescan.flag'), 'w', encoding='utf-8') as _f:
             _f.write(str(time.time()))
     except Exception:
         pass
-    # 2. 熱鍵（已部署集合）
+    # 2. 熱鍵（已deploy集合）
     _hk_has = set()
     _hk_mtime = 0
     try:
@@ -2268,15 +2270,15 @@ def api_refresh_status():
         pass
     # 3. 即時心跳掃描（state/hb — 30 秒新鮮 = running）
     runtime = {}
-    # 🚨 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（圖表實際狀態）
+    # [ALERT] 2026-08-14：讀 MT5 log — 每隻 EA 最後一條記錄（圖表實際狀態）
     _log_last = {}
     try:
         import glob as _gl2
         _lg2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         _latest2 = None
         for _d3 in os.listdir(_lg2):
-            # 🚨 2026-08-21 FIX：優先讀 terminal Logs（<hash>/Logs/ — 英文「loaded successfully/removed」）
-            # 之前讀 MQL5/Logs（MetaEditor 編譯日誌 — 中文「已启动/已停止」）→ 誤判 chart_removed（RSI_Over 掛住但顯示 removed）
+            # [ALERT] 2026-08-21 FIX：優先讀 terminal Logs（<hash>/Logs/ — 英文「loaded successfully/removed」）
+            # before讀 MQL5/Logs（MetaEditor 編譯日誌 — 中文「已启动/已stop」）→ 誤判 chart_removed（RSI_Over 掛住但顯示 removed）
             _lgd3 = os.path.join(_lg2, _d3, 'Logs')
             if os.path.isdir(_lgd3):
                 for _f3 in _gl2.glob(os.path.join(_lgd3, '2026*.log')):
@@ -2301,7 +2303,7 @@ def api_refresh_status():
             if _txt2:
                 import re as _re2
                 for _line2 in _txt2.splitlines():
-                    _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已啟動|已停止|removed)', _line2)
+                    _m2 = _re2.search(r'([A-Za-z_][A-Za-z0-9_]*) \([A-Za-z0-9._]+,[A-Z0-9]+\)\s+[^\n]*(已启动|已start|已stop|removed)', _line2)
                     if _m2:
                         _log_last[_m2.group(1)] = _m2.group(2)
     except Exception:
@@ -2348,9 +2350,9 @@ def api_refresh_status():
             if st != 'running':
                 if os.path.isfile(hb_txt) and time.time() - os.path.getmtime(hb_txt) < 30:
                     st = 'running'
-            # 🚨 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表即刻「圖表移除」）
-            # 🚨 2026-08-21 FIX：英文 log「loaded successfully」= EA 掛住 chart → running（之前淨 match removed → 誤判 chart_removed）
-            if _log_last.get(base) in ('已停止', 'removed'):
+            # [ALERT] 2026-08-14：log 圖表狀態（最優先 — 圖表實際有冇 EA — 關圖表immediately「圖表remove」）
+            # [ALERT] 2026-08-21 FIX：英文 log「loaded successfully」= EA 掛住 chart → running（before淨 match removed → 誤判 chart_removed）
+            if _log_last.get(base) in ('已stop', 'removed'):
                 st = 'chart_removed'
             elif _log_last.get(base) == 'loaded successfully':
                 st = 'running'
@@ -2359,9 +2361,9 @@ def api_refresh_status():
             runtime[base] = st
     except Exception:
         pass
-    # 4. 🚨 2026-08-14 自癒 + 2026-08-18 擴展：重新整理 → 自動清殘留
+    # 4. [ALERT] 2026-08-14 自癒 + 2026-08-18 擴展：重新整理 → 自動清殘留
     # （除 config EA 外，所有唔喺配對庫 + 唔係系統保留嘅 .mq5/.ex5 都當殘留清 — 根治累積/彈返）
-    _SYSTEM_KEEP = {'ApplyTemplate', 'BatchApplyTemplates', 'StartAgentHelper', 'AgentHelper', 'SMA_Cross', 'TestRunner', 'OpenChart', 'OpenChart_Helper'}  # 🚨 2026-08-18：OpenChart 系列係系統 Script tool — 唔喺配對庫都要保留（唔會被「清殘留」誤刪）
+    _SYSTEM_KEEP = {'ApplyTemplate', 'BatchApplyTemplates', 'StartAgentHelper', 'AgentHelper', 'SMA_Cross', 'TestRunner', 'OpenChart', 'OpenChart_Helper'}  # [ALERT] 2026-08-18：OpenChart 系列係系統 Script tool — 唔喺配對庫都要保留（唔會被「清殘留」誤刪）
     try:
         _data_dir_rs = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         _cfg_rs = json.loads(current_user.ea_config or '{}')
@@ -2390,7 +2392,7 @@ def api_refresh_status():
                     _fp_rs = os.path.join(_scan_dir_rs, _fn_rs)
                     try:
                         os.remove(_fp_rs)
-                        print(f"[API] 重新整理自癒: 已刪除殘留 {_fn_rs} ({_rel_rs.split(chr(92))[1]})", flush=True)
+                        print(f"[API] 重新整理自癒: 已delete殘留 {_fn_rs} ({_rel_rs.split(chr(92))[1]})", flush=True)
                     except Exception:
                         pass
     except Exception:
@@ -2427,57 +2429,57 @@ def api_ea_dev_upload():
 
 @app.route('/api/ea-library/<path:filename>')
 def api_ea_download(filename):
-    """下載 EA 檔案（先睇community→用戶→官方）"""
-    # 先睇社群目錄
+    """下載 EA file（先睇community→user→官方）"""
+    # 先睇社群dir
     community_path = os.path.join(COMMUNITY_EA_DIR, filename)
     if os.path.isfile(community_path):
         return send_from_directory(COMMUNITY_EA_DIR, filename)
-    # 再睇用戶上傳目錄
+    # 再睇user上傳dir
     if current_user.is_authenticated:
         user_dir = os.path.join(UPLOAD_DIR, current_user.username)
         user_path = os.path.join(user_dir, filename)
         if os.path.isfile(user_path):
             return send_from_directory(user_dir, filename)
-    # 最後睇官方目錄
+    # 最後睇官方dir
     return send_from_directory(EA_LIBRARY_DIR, filename)
 
 @app.route('/api/ea-library/remove-local/<filename>', methods=['POST'])
 @login_required
 def api_ea_remove_local(filename):
-    """刪除本機 MT5 已安裝嘅 EA 檔案（MQL5/Experts/*.ex5 + *.mq5）"""
-    # ⚠️ 系統檔案保護（Controller — 唔可以刪除）
+    """deletelocal MT5 已安裝嘅 EA file（MQL5/Experts/*.ex5 + *.mq5）"""
+    # [WARN] 系統file保護（Controller — 唔可以delete）
     base_only = filename.split('.')[0]
     if base_only == 'Controller':
-        return jsonify({"success": False, "error": "系統檔案（Controller）唔可以刪除"}), 403
-    # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
+        return jsonify({"success": False, "error": "系統file（Controller）唔可以delete"}), 403
+    # [WARN] user要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
-    # 🚨 2026-08-10：網頁 delete 唔經 watcher → 要喺呢度寫 steps（唔會殘留上一個操作字眼 — 用戶投訴）
+    # [ALERT] 2026-08-10：網頁 delete 唔經 watcher → 要喺呢度寫 steps（唔會殘留上一個操作字眼 — user投訴）
     try:
         import json as _jdel
         _adir_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         with open(os.path.join(_adir_del, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-            _f.write(f'刪除 {base_only}')
+            _f.write(f'delete {base_only}')
         with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
-            # 🚨 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
+            # [ALERT] 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
             _jdel.dump([
-                {'text': f'開始刪除 {base_only}', 'status': 'doing'},
-                {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
-                {'text': '移除圖表 EA', 'status': 'pending'},
-                {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
+                {'text': f'startdelete {base_only}', 'status': 'doing'},
+                {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
+                {'text': 'remove圖表 EA', 'status': 'pending'},
+                {'text': 'deletelocalfile（.mq5/.ex5）', 'status': 'pending'},
                 {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
-                {'text': '完成刪除', 'status': 'pending'},
+                {'text': 'donedelete', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
-            # 🚨 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → 檔案消失 → 網頁閃）
+            # [ALERT] 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → file消失 → 網頁閃）
     except Exception as e_del:
         print(f"[DEBUG] remove-local steps write failed: {e_del}")
-    # 🚨 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + 用戶見到「開始刪除進行中」先開始刪除 — 步驟唔會瞬間完成）
+    # [ALERT] 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + user見到「startdeletein progress」先startdelete — 步驟唔會瞬間done）
     try:
         import time as _tdel
         _tdel.sleep(1.5)
     except Exception:
         pass
     # 安全檢查：檔名只可以係字母數字底線（防 path traversal）
-    # 🚨 2026-08-08：接受帶 .mq5/.ex5 副檔名（前端可能傳帶副檔名嘅名）
+    # [ALERT] 2026-08-08：接受帶 .mq5/.ex5 副檔名（前端可能傳帶副檔名嘅名）
     import re as _re
     if not _re.fullmatch(r'[A-Za-z0-9_]+(\.[A-Za-z0-9]+)?', filename):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
@@ -2491,8 +2493,8 @@ def api_ea_remove_local(filename):
                 experts_dirs.append(exp)
 
     removed = []
-    # 🚨 2026-08-18 FIX：剷除要完整 — 除咗 Experts 根，仲要刪 Scripts 根
-    # （OpenChart 呢類 script 放 Scripts 根 — 之前冇刪 → 殘留 → 之後彈返）
+    # [ALERT] 2026-08-18 FIX：remove要完整 — 除咗 Experts 根，仲要刪 Scripts 根
+    # （OpenChart 呢類 script 放 Scripts 根 — before冇刪 → 殘留 → after彈返）
     # scripts_dirs: 搵返 MQL5/Scripts 根
     scripts_dirs = []
     for d in os.listdir(data_dir) if os.path.isdir(data_dir) else []:
@@ -2501,11 +2503,11 @@ def api_ea_remove_local(filename):
             scripts_dirs.append(scr)
 
     for exp_dir in experts_dirs:
-        # ⚠️ 2026-08：EA 喺 Experts 根目錄
+        # [WARN] 2026-08：EA 喺 Experts 根dir
         search_dirs = [exp_dir]
         for search_dir in search_dirs:
             for ext in ('.ex5', '.mq5'):
-                # 🚨 2026-08-08：用 base_only（filename 可能帶 .mq5 — 唔可以 filename+ext）
+                # [ALERT] 2026-08-08：用 base_only（filename 可能帶 .mq5 — 唔可以 filename+ext）
                 target = os.path.join(search_dir, base_only + ext)
                 if os.path.isfile(target):
                     try:
@@ -2523,10 +2525,10 @@ def api_ea_remove_local(filename):
                     removed.append(target)
                     print(f"[remove-local] 刪 Scripts: {target}", flush=True)
                 except Exception as e:
-                    print(f"[remove-local] ⚠️ 刪 Scripts 失敗: {target} ({e})", flush=True)
+                    print(f"[remove-local] [WARN] 刪 Scripts failed: {target} ({e})", flush=True)
 
-    # 🚨 2026-08-14 FIX（用戶案例：刪除後本機檔案「彈返」）：刪除後 Double-check — 確認檔案真係刪除
-    # （之前淨係刪完就話成功 — 用戶發現「安裝 Fibonacci → 全部 EA 彈返」— 加確認 + 記錄）
+    # [ALERT] 2026-08-14 FIX（user案例：delete後localfile「彈返」）：delete後 Double-check — 確認file真係delete
+    # （before淨係刪完就話success — user發現「安裝 Fibonacci → 全部 EA 彈返」— 加確認 + 記錄）
     _residual = []
     for exp_dir in experts_dirs:
         for search_dir in (exp_dir,):
@@ -2541,20 +2543,20 @@ def api_ea_remove_local(filename):
             if os.path.isfile(target):
                 _residual.append(target)
     if _residual:
-        print(f"[remove-local] ⚠️ 刪除後偵測到殘留檔案（可能被鎖/自動恢復）: {_residual}", flush=True)
+        print(f"[remove-local] [WARN] delete後偵測到殘留file（可能被鎖/自動恢復）: {_residual}", flush=True)
         # 再試一次（MT5 可能鎖住 — 稍等再刪）
         import time as _rtry
         _rtry.sleep(1.5)
         for t2 in _residual:
             try:
                 os.remove(t2)
-                print(f"[remove-local] 重試刪除成功: {os.path.basename(t2)}", flush=True)
+                print(f"[remove-local] 重試deletesuccess: {os.path.basename(t2)}", flush=True)
             except Exception as e2:
-                print(f"[remove-local] ❌ 重試刪除失敗（檔案仍存在 — 用戶要手動刪或重啟 MT5）: {t2} ({e2})", flush=True)
+                print(f"[remove-local] [FAIL] 重試deletefailed（file仍exists — user要手動刪或重啟 MT5）: {t2} ({e2})", flush=True)
 
     if removed:
-        # 🚨 2026-08-10：網頁 delete 完成 → steps 全部 done（警告視窗顯示「完成刪除」+ 確定）
-        # 🚨 2026-08-12：讀現有 steps（6 步）→ 全部 done（唔覆蓋 2 行 — 活動記錄式保持）
+        # [ALERT] 2026-08-10：網頁 delete done → steps 全部 done（warning視窗顯示「donedelete」+ 確定）
+        # [ALERT] 2026-08-12：讀現有 steps（6 步）→ 全部 done（唔覆蓋 2 行 — 活動記錄式保持）
         try:
             import json as _jdel2
             _sf_del = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent', '.ai_control.steps')
@@ -2566,20 +2568,20 @@ def api_ea_remove_local(filename):
                         _del_steps = []
             except Exception:
                 _del_steps = []
-            # 🚨 2026-08-12 修：唔寫 done（DELETE config 會寫 pause_cmd → watcher 接手逐步 — 雙重寫 steps → 覆蓋 → 網頁彈嚟彈去）
-            # 只係確保 steps 有內容（等 watcher 接手逐步完成）
+            # [ALERT] 2026-08-12 修：唔寫 done（DELETE config 會寫 pause_cmd → watcher 接手逐步 — 雙重寫 steps → 覆蓋 → 網頁彈嚟彈去）
+            # 只係確保 steps 有內容（等 watcher 接手逐步done）
             if not _del_steps:
-                _del_steps = [{'text': f'開始刪除 {base_only}', 'status': 'doing'},
-                              {'text': '檢查圖表（是否有 EA 運行）', 'status': 'pending'},
-                              {'text': '移除圖表 EA', 'status': 'pending'},
-                              {'text': '刪除本機檔案（.mq5/.ex5）', 'status': 'pending'},
+                _del_steps = [{'text': f'startdelete {base_only}', 'status': 'doing'},
+                              {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
+                              {'text': 'remove圖表 EA', 'status': 'pending'},
+                              {'text': 'deletelocalfile（.mq5/.ex5）', 'status': 'pending'},
                               {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
-                              {'text': '完成刪除', 'status': 'pending'}]
+                              {'text': 'donedelete', 'status': 'pending'}]
             with open(_sf_del, 'w', encoding='utf-8') as _f:
                 _jdel2.dump(_del_steps, _f, ensure_ascii=False)
         except Exception:
             pass
-        # 寫「網頁刪除」標記 → watcher 偵測到刪除時知道來源（唔會誤判做電腦刪除）
+        # 寫「網頁delete」標記 → watcher 偵測到delete時知道來源（唔會誤判做PCdelete）
         try:
             common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
             os.makedirs(common_files, exist_ok=True)
@@ -2588,17 +2590,17 @@ def api_ea_remove_local(filename):
                 f.write('1')
         except Exception:
             pass
-        # 🚨 2026-08-28 FIX（用戶實錘：配對庫「刪除」只刪檔案+config — 唔移除 chart EA → EA 仲行緊 + 心跳仲寫）：
-        # remove-local 加寫 pause_cmd（action=delete）→ watcher process_pause_cmd → auto_attach --remove（移除圖表 EA — 同 ea-config/delete 一樣）
+        # [ALERT] 2026-08-28 FIX（user實錘：配對庫「delete」只刪file+config — 唔remove chart EA → EA 仲行緊 + 心跳仲寫）：
+        # remove-local 加寫 pause_cmd（action=delete）→ watcher process_pause_cmd → auto_attach --remove（remove圖表 EA — 同 ea-config/delete 一樣）
         try:
             _pcmd_path = os.path.join(common_files, f'pause_cmd_{base_only}_{int(__import__("time").time())}.json')
             with open(_pcmd_path, 'w', encoding='utf-8') as _fpc:
                 json.dump({'ea_name': base_only, 'action': 'delete'}, _fpc, ensure_ascii=False)
-            print(f"[remove-local] pause_cmd 已寫（移除圖表 EA）: {os.path.basename(_pcmd_path)}", flush=True)
+            print(f"[remove-local] pause_cmd 已寫（remove圖表 EA）: {os.path.basename(_pcmd_path)}", flush=True)
         except Exception as _epc:
-            print(f"[remove-local] ⚠️ 寫 pause_cmd 失敗: {_epc}", flush=True)
-        # 🚨 2026-08-15 FIX（用戶：Magic/Symbol 剸除後再配對返嚟）：remove-local 都要刪 config + 釋放快捷鍵
-        # （之前只刪本機檔案 — config 殘留 → 重新配對 setdefault 舊值返嚟）
+            print(f"[remove-local] [WARN] 寫 pause_cmd failed: {_epc}", flush=True)
+        # [ALERT] 2026-08-15 FIX（user：Magic/Symbol 剸除後再配對返嚟）：remove-local 都要刪 config + 釋放快捷鍵
+        # （before只刪localfile — config 殘留 → 重新配對 setdefault 舊值返嚟）
         try:
             config_del = json.loads(current_user.ea_config or '{}')
             removed_del = config_del.get('_removed', [])
@@ -2610,16 +2612,16 @@ def api_ea_remove_local(filename):
                     del config_del[key]
             current_user.ea_config = json.dumps(config_del)
             db.session.commit()
-            print(f"[remove-local] ✅ 已刪 config: {base_only}（Magic/Symbol 清除）", flush=True)
+            print(f"[remove-local] [OK] 已刪 config: {base_only}（Magic/Symbol 清除）", flush=True)
         except Exception as _ecfg:
-            print(f"[remove-local] ⚠️ 刪 config 失敗: {_ecfg}", flush=True)
+            print(f"[remove-local] [WARN] 刪 config failed: {_ecfg}", flush=True)
         # 釋放快捷鍵（hotkeys.ini — 唔殘留）
         try:
             release_hotkey(base_only)
-            print(f"[remove-local] ✅ 已釋放快捷鍵: {base_only}", flush=True)
+            print(f"[remove-local] [OK] 已釋放快捷鍵: {base_only}", flush=True)
         except Exception:
             pass
-        # 🚨 2026-08-15 FIX（用戶：剸除 EA 後 MT5 彈「導航熱鍵」視窗殘留）：自動關閉「導航熱鍵」dialog
+        # [ALERT] 2026-08-15 FIX（user：剸除 EA 後 MT5 彈「導航熱鍵」視窗殘留）：自動關閉「導航熱鍵」dialog
         # （熱鍵 reload / MT5 重啟後 MT5 會彈「導航熱鍵」視窗 — 自動偵測 + 關閉）
         try:
             import time as _tclose
@@ -2661,21 +2663,21 @@ def api_ea_remove_local(filename):
                                         _t2 = _b2.window_text()
                                         if '關閉' in _t2 or 'Close' in _t2 or '取消' in _t2 or 'Cancel' in _t2:
                                             _b2.click()
-                                            print(f"[remove-local] ✅ 已關閉「導航熱鍵」視窗", flush=True)
+                                            print(f"[remove-local] [OK] closed「導航熱鍵」視窗", flush=True)
                                             break
                                     except Exception:
                                         pass
                 return True
             _uclose.EnumWindows(_ctclose.WINFUNCTYPE(_ctclose.c_bool, _ctclose.c_void_p, _ctclose.c_void_p)(_cb_close), None)
         except Exception as _eclose:
-            print(f"[remove-local] ⚠️ 關閉導航熱鍵視窗失敗: {_eclose}", flush=True)
-        log_activity('ea_delete', f'{filename} 已於網頁刪除（本機檔案已刪除）', ea=filename)
+            print(f"[remove-local] [WARN] 關閉導航熱鍵視窗failed: {_eclose}", flush=True)
+        log_activity('ea_delete', f'{filename} 已於網頁delete（localfile已delete）', ea=filename)
         return jsonify({"success": True, "removed": removed})
     return jsonify({"success": False, "error": "EA not found in local Experts dir"}), 404
 
 def _log_bounce_back(filenames, ea_dir):
-    """🚨 2026-08-15：彈返監察日誌 — 記錄彈返事件（時間/檔案/內容特徵 — 追蹤源頭）
-    用戶要求：彈返 EA 要搵核心原因（唔可以由得佢出現）— 呢個日誌下次彈返時記錄線索"""
+    """[ALERT] 2026-08-15：彈返監察日誌 — 記錄彈返事件（時間/file/內容特徵 — 追蹤源頭）
+    user要求：彈返 EA 要搵核心原因（唔可以由得佢出現）— 呢個日誌下次彈返時記錄線索"""
     try:
         import time as _tbb
         entry = {
@@ -2702,20 +2704,20 @@ def _log_bounce_back(filenames, ea_dir):
             f.write(json.dumps(entry, ensure_ascii=False) + '\n')
         print(f"[彈返監察] 已記錄: {entry['time']} {filenames}", flush=True)
     except Exception as e:
-        print(f"[彈返監察] ⚠️ 記錄失敗: {e}")
+        print(f"[彈返監察] [WARN] 記錄failed: {e}")
 
 
 @app.route('/api/ea-library/install-local/<filename>', methods=['POST'])
 @login_required
 def api_ea_install_local(filename):
-    """將 EA 倉庫（官方/社群/用戶）嘅 EA 複製去本機 MT5 Experts 目錄 — 配對庫即刻見到
-    聯動：EA 倉庫「移去配對」/ 上傳自己 EA 之後自動安裝落本機
+    """將 EA 倉庫（官方/社群/user）嘅 EA 複製去local MT5 Experts dir — 配對庫immediately見到
+    聯動：EA 倉庫「移去配對」/ 上傳自己 EA after自動安裝落local
     """
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：配對前檢查 UAC
+    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：配對前檢查 UAC
     try:
         _uac_inst = _detect_uac_server()
         if _uac_inst:
-            print(f"[install-local] ⚠️ 偵測到 UAC 授權窗口: {_uac_inst[0]} — 配對/編譯可能被擋")
+            print(f"[install-local] [WARN] 偵測到 UAC 授權窗口: {_uac_inst[0]} — 配對/編譯可能被擋")
     except Exception:
         pass
     import shutil as _sh
@@ -2723,22 +2725,22 @@ def api_ea_install_local(filename):
     if not _re.fullmatch(r'[A-Za-z0-9_.]+', filename):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
 
-    # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
+    # [WARN] user要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
 
-    # 0. 寫「處理中」log — 用戶想知系統有冇處理緊
+    # 0. 寫「處理中」log — user想知系統有冇處理緊
     _base0 = os.path.splitext(filename)[0]
     log_activity('ea_install', f'{_base0} 配對處理中...', ea=_base0)
-    # 🚨 2026-08-10：配對（install-local）警告視窗流程（同部署/刪除一致 — MODULE_INDEX 規範）
+    # [ALERT] 2026-08-10：配對（install-local）warning視窗流程（同deploy/delete一致 — MODULE_INDEX 規範）
     try:
         import json as _jin
         _adir_in = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-        # 🚨 2026-08-28 FIX（電腦版警告視窗冇彈）：雙寫 show + steps（開發目錄 + TradotcomAgent — alert_worker 讀自己目錄）
+        # [ALERT] 2026-08-28 FIX（PC版warning視窗冇彈）：雙寫 show + steps（開發dir + TradotcomAgent — alert_worker 讀自己dir）
         _steps_new = [
-            {'text': f'開始配對 {_base0}', 'status': 'doing'},
-            {'text': '複製檔案至本機（Experts 根）', 'status': 'pending'},
+            {'text': f'start配對 {_base0}', 'status': 'doing'},
+            {'text': '複製file至local（Experts 根）', 'status': 'pending'},
             {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
-            {'text': '完成配對', 'status': 'pending'},
+            {'text': 'done配對', 'status': 'pending'},
         ]
         for _wdir in [_adir_in, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
             try:
@@ -2747,7 +2749,7 @@ def api_ea_install_local(filename):
                     _f.write(f'配對 {_base0}')
                 with open(os.path.join(_wdir, '.ai_control.steps') + '.tmp', 'w', encoding='utf-8') as _f2:
                     _jin.dump(_steps_new, _f2, ensure_ascii=False)
-                # 🚨 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
+                # [ALERT] 2026-08-12 FIX：os.replace 移出 with block（WinError 32 — source 被自己開住）
                 os.replace(os.path.join(_wdir, '.ai_control.steps') + '.tmp',
                            os.path.join(_wdir, '.ai_control.steps'))
             except Exception:
@@ -2755,15 +2757,15 @@ def api_ea_install_local(filename):
     except Exception as _ein_err:
         print(f"[DEBUG] install-local steps write failed: {_ein_err}", flush=True)
 
-    # 🚨 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + 用戶見到「開始配對進行中」先開始複製 — 步驟唔會瞬間完成）
+    # [ALERT] 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + user見到「start配對in progress」先start複製 — 步驟唔會瞬間done）
     try:
         import time as _td
         _td.sleep(1.5)
     except Exception:
         pass
 
-    # 1. 搵檔案喺邊個目錄（社群 → 用戶 → 官方）
-    # ⚠️ filename 可能冇副檔名（前端傳 baseName）→ 自動試 .mq5 / .ex5
+    # 1. 搵file喺邊個dir（社群 → user → 官方）
+    # [WARN] filename 可能冇副檔名（前端傳 baseName）→ 自動試 .mq5 / .ex5
     src_path = None
     for d in (COMMUNITY_EA_DIR,
               os.path.join(UPLOAD_DIR, current_user.username),
@@ -2778,7 +2780,7 @@ def api_ea_install_local(filename):
     if not src_path:
         return jsonify({"success": False, "error": f"{filename} 唔喺 EA 倉庫"}), 404
 
-    # 2. 搵本機 MT5 Experts 目錄
+    # 2. 搵local MT5 Experts dir
     experts_dirs = []
     data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
     if os.path.isdir(data_dir):
@@ -2788,15 +2790,15 @@ def api_ea_install_local(filename):
                 experts_dirs.append(exp)
 
     if not experts_dirs:
-        return jsonify({"success": False, "error": "搵唔到本機 MT5 Experts 目錄"}), 500
+        return jsonify({"success": False, "error": "not foundlocal MT5 Experts dir"}), 500
 
-    # 3. 複製去 Experts 根目錄（用戶要求：取消 MT5Cloud_EA folder）
+    # 3. 複製去 Experts 根dir（user要求：取消 MT5Cloud_EA folder）
     installed = []
     compiled = False
-    # ⚠️ 用 src_path 嘅 basename（保留副檔名）— filename 可能冇 .mq5（前端傳 baseName）
+    # [WARN] 用 src_path 嘅 basename（保留副檔名）— filename 可能冇 .mq5（前端傳 baseName）
     # 唔可以淨用 filename — 會複製錯名 + 唔會寫 compile_cmd（endswith('.mq5') False）
     dest_name = os.path.basename(src_path)
-    # 🚨 2026-08-18 FIX（用戶要求：Script 類型 EA 配對）：偵測 .mq5 係 Script 定 EA
+    # [ALERT] 2026-08-18 FIX（user要求：Script 類型 EA 配對）：偵測 .mq5 係 Script 定 EA
     # Script（#property script_show_inputs / 有 void OnStart() 無 OnInit）→ 放 MQL5/Scripts/ + 唔注入心跳
     # EA（有 OnInit/OnTick）→ 放 MQL5/Experts/ + 注入心跳
     _is_script = False
@@ -2807,7 +2809,7 @@ def api_ea_install_local(filename):
                          ('void OnStart()' in _src_c and 'int OnInit()' not in _src_c)
         except Exception:
             _is_script = False
-    # 選擇目標目錄（Script → Scripts/，EA → Experts/）
+    # 選擇目標dir（Script → Scripts/，EA → Experts/）
     _target_dirs = []
     for _td_d in os.listdir(data_dir) if os.path.isdir(data_dir) else []:  # data_dir = APPDATA\MetaQuotes\Terminal（上面已定義）
         _rel = 'MQL5\\Scripts' if _is_script else 'MQL5\\Experts'
@@ -2822,16 +2824,16 @@ def api_ea_install_local(filename):
             continue  # 已經喺度
         try:
             _sh.copy2(src_path, target)
-            # 🚨 2026-08-14：核心模板 — 複製後自動注入心跳 code（1 秒心跳 — 新 EA 自動有 — 唔使手動加）
-            # （EA 庫版本冇心跳 code → 部署後永遠「沒有心跳設定」— 自動注入解決）
-            if dest_name.endswith('.mq5') and not _is_script:  # 🚨 2026-08-18：心跳只注入 EA（Script 唔適用 — script 一嚟就跑）
+            # [ALERT] 2026-08-14：核心模板 — 複製後自動注入心跳 code（1 秒心跳 — 新 EA 自動有 — 唔使手動加）
+            # （EA 庫版本冇心跳 code → deploy後永遠「沒有心跳設定」— 自動注入解決）
+            if dest_name.endswith('.mq5') and not _is_script:  # [ALERT] 2026-08-18：心跳只注入 EA（Script 唔適用 — script 一嚟就跑）
                 try:
                     import re as _re_hb
                     _c_hb = open(target, encoding='utf-8', errors='ignore').read()
                     if '__mt5c_process' not in _c_hb and 'EventSetTimer' not in _c_hb:
                         _hb_mod = '''
-// ---- Tradotcom 心跳（自動注入 2026-08-14 — 每秒寫心跳 + 暫停指令檢查）----
-// 🚨 2026-08-15：交易品種參數（部署時自動寫入揀好嘅 symbol — EA 用呢個 symbol 交易/開圖表 — 唔理圖表本身）
+// ---- Tradotcom 心跳（自動注入 2026-08-14 — 每秒寫心跳 + pause指令檢查）----
+// [ALERT] 2026-08-15：交易品種參數（deploy時自動write揀好嘅 symbol — EA 用呢個 symbol 交易/開圖表 — 唔理圖表本身）
 input string InpSymbol = "";
 string __mt5c_ctrl_file = "";
 string __mt5c_state_file = "";
@@ -2840,13 +2842,13 @@ void __mt5c_process() {
       __mt5c_ctrl_file = "ctrl_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
       __mt5c_state_file = "state_" + MQLInfoString(MQL_PROGRAM_NAME) + ".json";
    }
-   // 🚨 2026-08-15 FIX：開目標圖表（只開一次 — static flag — 唔可以每次心跳都開！）
+   // [ALERT] 2026-08-15 FIX：開目標圖表（只開一次 — static flag — 唔可以每次心跳都開！）
    static bool __mt5c_chart_done = false;
    if(!__mt5c_chart_done) {
       __mt5c_chart_done = true;
       if(InpSymbol != "" && Symbol() != InpSymbol) {
          long _cid = ChartOpen(InpSymbol, PERIOD_CURRENT);
-         if(_cid > 0) { ChartSetInteger(_cid, CHART_BRING_TO_TOP, 0, true); Print("📈 已開目標圖表: ", InpSymbol); }
+         if(_cid > 0) { ChartSetInteger(_cid, CHART_BRING_TO_TOP, 0, true); Print("[UPCHART] 已開目標圖表: ", InpSymbol); }
       }
    }
    if(FileIsExist(__mt5c_ctrl_file, FILE_COMMON)) {
@@ -2869,8 +2871,8 @@ void __mt5c_process() {
       FileClose(h);
    }
 }
-// 🚨 2026-08-21：逐單記錄（trades_<EA>.json — 報告/correlation 真實數據）
-// 部署時用戶可選注入（default 注入）— 每次平倉記錄一單（ticket/time/profit）
+// [ALERT] 2026-08-21：逐單記錄（trades_<EA>.json — 報告/correlation 真實數據）
+// deploy時user可選注入（default 注入）— 每次平倉記錄一單（ticket/time/profit）
 string __mt5c_trades_file = "";
 void __mt5c_append_trade() {
    if(__mt5c_trades_file == "")
@@ -2885,7 +2887,7 @@ void __mt5c_append_trade() {
          if(HistoryDealGetInteger(_t, DEAL_ENTRY) != DEAL_ENTRY_OUT) continue;
          double _p = HistoryDealGetDouble(_t, DEAL_PROFIT);
          if(_p == 0) continue;
-         // 寫入（append — FILE_READ|FILE_WRITE + SEEK_END）
+         // write（append — FILE_READ|FILE_WRITE + SEEK_END）
          int _fh = FileOpen(__mt5c_trades_file, FILE_READ|FILE_WRITE|FILE_TXT|FILE_COMMON);
          if(_fh != INVALID_HANDLE) {
             FileSeek(_fh, 0, SEEK_END);
@@ -2896,32 +2898,32 @@ void __mt5c_append_trade() {
       }
    }
 }
-// ---- 心跳結束 ----
+// ---- 心跳end ----
 '''
                         _c_hb = _c_hb.rstrip() + '\n' + _hb_mod + '\n'
                         # OnInit 掛鉤（EventSetTimer — return(INIT_SUCCEEDED) 前）
                         _c_hb2 = _re_hb.sub(r'(\s*)return\s*\(\s*INIT_SUCCEEDED\s*\)\s*;', r'\1   EventSetTimer(1);\n\1   return(INIT_SUCCEEDED);', _c_hb, count=1)
                         # OnTimer 掛鉤（調用 __mt5c_process — OnDeinit 前）
                         _c_hb2 = _c_hb2.replace('void OnDeinit(const int reason)', 'void OnTimer()\n{\n   __mt5c_process();\n}\n\nvoid OnDeinit(const int reason)', 1)
-                        # 🚨 2026-08-21：OnTradeTransaction 掛鉤（逐單記錄 — 平倉時 append trades json）
+                        # [ALERT] 2026-08-21：OnTradeTransaction 掛鉤（逐單記錄 — 平倉時 append trades json）
                         # 冇 OnTradeTransaction 就加；有就喺入面加 call
                         if 'OnTradeTransaction' not in _c_hb2:
                             _c_hb2 = _c_hb2.replace('void OnDeinit(const int reason)',
                                 'void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest &request, const MqlTradeResult &result)\n{\n   __mt5c_append_trade();\n}\n\nvoid OnDeinit(const int reason)', 1)
-                        # OnDeinit EventKillTimer（Print 已停止 前）
-                        _c_hb2 = _re_hb.sub(r'(\s*)if\(EnableLog\) Print\("🛑', r'\1   EventKillTimer();\n\1   if(EnableLog) Print("🛑', _c_hb2, count=1)
+                        # OnDeinit EventKillTimer（Print 已stop 前）
+                        _c_hb2 = _re_hb.sub(r'(\s*)if\(EnableLog\) Print\("[STOP]', r'\1   EventKillTimer();\n\1   if(EnableLog) Print("[STOP]', _c_hb2, count=1)
                         if _c_hb2 != _c_hb:
                             open(target, 'w', encoding='utf-8').write(_c_hb2)
-                            print(f"[API] ⚡ 已注入 1 秒心跳 code: {dest_name}", flush=True)
+                            print(f"[API] [PWR] 已注入 1 秒心跳 code: {dest_name}", flush=True)
                 except Exception as _ehb:
-                    print(f"[API] ⚠️ 心跳注入失敗（唔影響配對）: {_ehb}", flush=True)
+                    print(f"[API] [WARN] 心跳注入failed（唔影響配對）: {_ehb}", flush=True)
             installed.append(target)
-            # 🚨 2026-08-12 FIX：複製完成 → 更新 steps（開始配對 done + 複製檔案 done — 活動記錄式）
+            # [ALERT] 2026-08-12 FIX：複製done → 更新 steps（start配對 done + 複製file done — 活動記錄式）
             try:
                 import json as _jc3
                 _adir_ic = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
                 _sf_ic = os.path.join(_adir_ic, '.ai_control.steps')
-                # 🚨 2026-08-12 FIX：複製完成前停留 1 秒（「複製進行中」顯示耐啲 — 用戶睇到工作過程 — 唔會瞬間完成）
+                # [ALERT] 2026-08-12 FIX：複製done前停留 1 秒（「複製in progress」顯示耐啲 — user睇到工作過程 — 唔會瞬間done）
                 try:
                     import time as _td2
                     _td2.sleep(1)
@@ -2936,9 +2938,9 @@ void __mt5c_append_trade() {
                 except Exception:
                     _cur_ic = []
                 for _s in _cur_ic:
-                    if isinstance(_s, dict) and _s.get('text') in (f'開始配對 {_base0}', '複製檔案至本機（Experts 根）'):
+                    if isinstance(_s, dict) and _s.get('text') in (f'start配對 {_base0}', '複製file至local（Experts 根）'):
                         _s['status'] = 'done'
-                # 🚨 2026-08-12 FIX：如果唔使編譯（.ex5 已存在且新過 .mq5）→ 即刻完成「編譯」+「完成配對」（唔停留 pending — 「兩步就停」根治）
+                # [ALERT] 2026-08-12 FIX：如果唔使編譯（.ex5 已exists且新過 .mq5）→ immediatelydone「編譯」+「done配對」（唔停留 pending — 「兩步就停」根治）
                 try:
                     _ex5_ic = os.path.join(target_dir, os.path.splitext(dest_name)[0] + '.ex5')
                     _mq5_ic = target
@@ -2946,11 +2948,11 @@ void __mt5c_append_trade() {
                         not os.path.exists(_ex5_ic) or os.path.getmtime(_ex5_ic) < os.path.getmtime(_mq5_ic))
                     if not _need_compile:
                         for _s2 in _cur_ic:
-                            if isinstance(_s2, dict) and _s2.get('text') in (f'編譯 {os.path.splitext(dest_name)[0]}.mq5 → .ex5', '完成配對'):
+                            if isinstance(_s2, dict) and _s2.get('text') in (f'編譯 {os.path.splitext(dest_name)[0]}.mq5 → .ex5', 'done配對'):
                                 _s2['status'] = 'done'
                 except Exception:
                     pass
-                # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版警告視窗一致）
+                # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版warning視窗一致）
                 _write_ai_flags(None, _cur_ic)
             except Exception:
                 pass
@@ -2968,7 +2970,7 @@ void __mt5c_append_trade() {
                     import time as _ct
                     common_files = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
                     os.makedirs(common_files, exist_ok=True)
-                    # 🚨 2026-08-12 FIX：寫前刪已有嘅同 EA compile_cmd（唔好排隊多個 → watcher 逐個處理 → 「自動再撈」）
+                    # [ALERT] 2026-08-12 FIX：寫前刪已有嘅同 EA compile_cmd（唔好排隊多個 → watcher 逐個處理 → 「自動再撈」）
                     try:
                         for _cfn in os.listdir(common_files):
                             if _cfn.startswith(f'compile_cmd_{base}_') and _cfn.endswith('.json'):
@@ -2995,30 +2997,30 @@ void __mt5c_append_trade() {
                 except Exception:
                     pass
             except Exception as e:
-                print(f"[install-local] compile 指令寫入失敗: {e}")
-        break  # 只複製去第一個 Experts 目錄
+                print(f"[install-local] compile 指令writefailed: {e}")
+        break  # 只複製去第一個 Experts dir
 
-    # 🚨 2026-08-14 FIX（用戶案例：安裝 Fibonacci → 全部 EA「彈返」）：複製監察
-    # 偵測「install-local 之後有冇非預期 EA 檔案出現」（ctime 08:19:55 批量複製 — 源頭未明 — 加監察下次捉到）
+    # [ALERT] 2026-08-14 FIX（user案例：安裝 Fibonacci → 全部 EA「彈返」）：複製監察
+    # 偵測「install-local after有冇非預期 EA file出現」（ctime 08:19:55 批量複製 — 源頭未明 — 加監察下次捉到）
     try:
         import time as _tmon
         _mon_ea_dir = experts_dirs[0] if experts_dirs else None
         if _mon_ea_dir and os.path.isdir(_mon_ea_dir):
             _before = set(os.listdir(_mon_ea_dir))
-            # 等 3 秒（watcher 可能即刻處理 compile — 期間有冇額外複製）
+            # 等 3 秒（watcher 可能immediately處理 compile — 期間有冇額外複製）
             _tmon.sleep(3)
             _after = set(os.listdir(_mon_ea_dir))
             _unexpected = sorted(_after - _before - {dest_name, os.path.splitext(dest_name)[0] + '.ex5'})
             if _unexpected:
-                print(f"[install-local] ⚠️ 複製監察: 安裝 {dest_name} 後偵測到非預期 EA 出現: {_unexpected}", flush=True)
+                print(f"[install-local] [WARN] 複製監察: 安裝 {dest_name} 後偵測到非預期 EA 出現: {_unexpected}", flush=True)
                 _log_bounce_back(_unexpected, _mon_ea_dir)
             else:
                 print(f"[install-local] 複製監察: 安裝 {dest_name} 後冇額外 EA（正常）", flush=True)
     except Exception as _eme:
-        print(f"[install-local] ⚠️ 複製監察失敗: {_eme}", flush=True)
+        print(f"[install-local] [WARN] 複製監察failed: {_eme}", flush=True)
 
-    # 🚨 2026-08-14 自癒：偵測「彈返」— ctime 新（120 秒內出現）+ config 冇（已刪除）→ 自動刪除
-    # （用戶案例：刪除晒 EA → 安裝 Fibonacci → 全部「彈返」— 源頭未明（環境層面）— 自癒自動清理彈返檔案）
+    # [ALERT] 2026-08-14 自癒：偵測「彈返」— ctime 新（120 秒內出現）+ config 冇（已delete）→ 自動delete
+    # （user案例：delete晒 EA → 安裝 Fibonacci → 全部「彈返」— 源頭未明（環境層面）— 自癒自動清理彈返file）
     try:
         import time as _thb
         _cfg_hb = json.loads(current_user.ea_config or '{}')
@@ -3028,7 +3030,7 @@ void __mt5c_append_trade() {
             for _fn_hb in sorted(os.listdir(_ea_dir_hb)):
                 if not _fn_hb.endswith(('.mq5', '.ex5')):
                     continue
-                # 🚨 2026-08-14 FIX：排除「今次安裝嘅 EA」（自癒喺 config 寫入前執行 — 誤刪啱啱安裝嘅 → compile「找不到檔案」→ 用戶見 Windows 錯誤）
+                # [ALERT] 2026-08-14 FIX：排除「今次安裝嘅 EA」（自癒喺 config write前執行 — 誤刪啱啱安裝嘅 → compile「找不到file」→ user見 Windows error）
                 if _fn_hb == dest_name or _fn_hb == os.path.splitext(dest_name)[0] + '.ex5':
                     continue
                 _b_hb = os.path.splitext(_fn_hb)[0]
@@ -3038,11 +3040,11 @@ void __mt5c_append_trade() {
                 if time.time() - os.path.getctime(_fp_hb) < 120:  # 2 分鐘內出現 = 彈返
                     try:
                         os.remove(_fp_hb)
-                        print(f"[install-local] 自癒: 已刪除彈返嘅 {_fn_hb}（config 冇 + 啱啱出現）", flush=True)
+                        print(f"[install-local] 自癒: 已delete彈返嘅 {_fn_hb}（config 冇 + 啱啱出現）", flush=True)
                     except Exception as _ehb2:
-                        print(f"[install-local] ⚠️ 自癒刪除失敗: {_fn_hb} ({_ehb2})", flush=True)
+                        print(f"[install-local] [WARN] 自癒deletefailed: {_fn_hb} ({_ehb2})", flush=True)
     except Exception as _ehb3:
-        print(f"[install-local] ⚠️ 自癒檢查失敗: {_ehb3}", flush=True)
+        print(f"[install-local] [WARN] 自癒檢查failed: {_ehb3}", flush=True)
 
     # 4. 寫 config（預設值 — 前端會覆蓋）
     try:
@@ -3052,7 +3054,7 @@ void __mt5c_append_trade() {
         config.setdefault(base + '_tf', 'H1')
         config.setdefault(base + '_magic', '240701')
         config.setdefault(base + '_lot', 1.00)
-        # 重新配對 → 由 _removed 移除（Bug #64：之前刪除過嘅 EA 重新配對後唔顯示）
+        # 重新配對 → 由 _removed remove（Bug #64：beforedelete過嘅 EA 重新配對後唔顯示）
         removed = config.get('_removed', [])
         if base in removed:
             removed.remove(base)
@@ -3060,16 +3062,16 @@ void __mt5c_append_trade() {
         current_user.ea_config = json.dumps(config)
         db.session.commit()
     except Exception as e:
-        print(f"[install-local] config 寫入失敗: {e}")
+        print(f"[install-local] config writefailed: {e}")
 
-    # 5. Double-check：等 compile 完成（最多 45 秒）— 唔可以假成功
+    # 5. Double-check：等 compile done（最多 45 秒）— 唔可以假success
     #    .mq5 需要 watcher compile → poll .ex5 出現
-    compile_ok = None  # None=唔需要 compile, True=成功, False=失敗
+    compile_ok = None  # None=唔需要 compile, True=success, False=failed
     if filename.lower().endswith('.mq5'):
         compile_ok = False
         exp_dir = experts_dirs[0] if experts_dirs else None
         if exp_dir:
-            # ⚠️ 2026-08：EA 喺 Experts 根目錄
+            # [WARN] 2026-08：EA 喺 Experts 根dir
             ex5_target = None
             for _d in (exp_dir,):
                 _p = os.path.join(_d, os.path.splitext(filename)[0] + '.ex5')
@@ -3089,33 +3091,33 @@ void __mt5c_append_trade() {
                     compile_ok = True
                     break
                 if not cmd_left and not os.path.exists(ex5_target):
-                    # compile cmd 已處理但 .ex5 未生成 → 失敗
+                    # compile cmd 已處理但 .ex5 未生成 → failed
                     compile_ok = False
                     break
                 time.sleep(1.5)
 
-    log_activity('ea_install', f'{os.path.splitext(filename)[0]} 已安裝到本機 MT5' + (
-        '（compile 成功）' if compile_ok else '（compile 失敗）' if compile_ok is False and filename.lower().endswith('.mq5') else ''), ea=os.path.splitext(filename)[0])
-    # 🎯 配對 → 分配快捷鍵（2026-08 用戶設計：添加時 set 快捷鍵 — 唔重複）
+    log_activity('ea_install', f'{os.path.splitext(filename)[0]} 已安裝到local MT5' + (
+        '（compile success）' if compile_ok else '（compile failed）' if compile_ok is False and filename.lower().endswith('.mq5') else ''), ea=os.path.splitext(filename)[0])
+    # [TARGET] 配對 → 分配快捷鍵（2026-08 user設計：添加時 set 快捷鍵 — 唔重複）
     try:
         _hk = assign_hotkey(os.path.splitext(filename)[0])
         if _hk:
             print(f"[install-local] {os.path.splitext(filename)[0]} 快捷鍵: {_hk}")
     except Exception:
         pass
-    # 🚨 2026-08-10：配對完成 → steps（檢查 compile_ok — 失敗唔好話成功 — 用戶投訴）
-    # 🚨 2026-08-10 修：compile_ok null（compile_cmd 已寫 — watcher 處理緊）→ 唔即刻寫「完成」— 等 watcher（唔好「假完成」→ 網頁兩個按鈕）
+    # [ALERT] 2026-08-10：配對done → steps（檢查 compile_ok — failed唔好話success — user投訴）
+    # [ALERT] 2026-08-10 修：compile_ok null（compile_cmd 已寫 — watcher 處理緊）→ 唔immediately寫「done」— 等 watcher（唔好「假done」→ 網頁兩個按鈕）
     if compile_ok is False:
         try:
             import json as _jin2
             _adir_in2 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
-            # 🚨 2026-08-29 FIX：雙寫（開發目錄 + TradotcomAgent — 電腦版警告視窗一致）
+            # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版warning視窗一致）
             _write_ai_flags(None, [
-                {'text': f'配對 {os.path.splitext(filename)[0]} 進行中…', 'status': 'done'},
-                {'text': '配對失敗（compile 失敗）', 'status': 'done'},
+                {'text': f'配對 {os.path.splitext(filename)[0]} in progress…', 'status': 'done'},
+                {'text': '配對failed（compile failed）', 'status': 'done'},
             ])
-            # 🚨 清 show flag（完成 → 唔會再「不停彈」— 視窗保持顯示（確定 — 用戶撳先關））
+            # [ALERT] 清 show flag（done → 唔會再「不停彈」— 視窗保持顯示（確定 — user撳先關））
             for _sf_dir2 in [_adir_in2, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
                 _sf_show2 = os.path.join(_sf_dir2, '.ai_control.show')
                 try:
@@ -3133,12 +3135,12 @@ void __mt5c_append_trade() {
         "compiled": bool(compile_ok),
         "compile_queued": filename.lower().endswith('.mq5'),
         "compile_ok": compile_ok,
-        "message": f"{filename} 已安裝到本機 MT5" + (
-            '（已編譯 ✅）' if compile_ok else '（⚠️ compile 失敗，MT5 可能未顯示 — 檢查 MetaEditor）' if compile_ok is False and filename.lower().endswith('.mq5') else '')
+        "message": f"{filename} 已安裝到local MT5" + (
+            '（已編譯 [OK]）' if compile_ok else '（[WARN] compile failed，MT5 可能未顯示 — 檢查 MetaEditor）' if compile_ok is False and filename.lower().endswith('.mq5') else '')
     })
 
 def _mt5_hotkeys_ini():
-    """搵 hotkeys.ini 路徑"""
+    """搵 hotkeys.ini path"""
     data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
     if os.path.isdir(data_dir):
         for d in os.listdir(data_dir):
@@ -3169,7 +3171,7 @@ def _read_hotkeys_ini():
     lines = text.splitlines()
     for line in lines:
         ls = line.strip().replace(chr(13), '')
-        # ⚠️ hotkeys.ini 用尖括號 <experts>（唔係方括號）— 2026-08-06 bug 修復
+        # [WARN] hotkeys.ini 用尖括號 <experts>（唔係方括號）— 2026-08-06 bug 修復
         if (ls.startswith('[') and ls.endswith(']')) or (ls.startswith('<') and ls.endswith('>')):
             section = ls[1:-1]
         elif '=' in ls and section:
@@ -3182,7 +3184,7 @@ def _read_hotkeys_ini():
 
 
 def _write_hotkeys_ini(experts, indicators):
-    """寫回 hotkeys.ini（UTF-16 LE — 用戶實測格式 2026-08-06：
+    """寫回 hotkeys.ini（UTF-16 LE — user實測格式 2026-08-06：
     只有 <experts> section（冇 <indicators>）+ 乾淨 CRLF — MT5 先 load）"""
     p = _mt5_hotkeys_ini()
     if not p:
@@ -3202,18 +3204,18 @@ def _write_hotkeys_ini(experts, indicators):
     try:
         with open(p, 'wb') as f:
             f.write(text.encode('utf-16'))
-        print(f"[hotkeys] 已寫入 {p}")
+        print(f"[hotkeys] 已write {p}")
         return True
     except Exception as e:
-        print(f"[hotkeys] 寫入失敗: {e}")
+        print(f"[hotkeys] writefailed: {e}")
         return False
 
 
 def _alloc_hotkey(experts):
     """分配下一個可用快捷鍵（Ctrl+1..9, Ctrl+0, Ctrl+Alt+1..9, Ctrl+Alt+0 — 唔重複）
-    🚨 2026-08-17：Ctrl+9 預留俾 OpenChart script（一體化部署用）— EA 唔可以攞 Ctrl+9"""
+    [ALERT] 2026-08-17：Ctrl+9 預留俾 OpenChart script（一體化deploy用）— EA 唔可以攞 Ctrl+9"""
     used = set(experts.values())
-    used.add('Ctrl+9')  # 🚨 預留 Ctrl+9（OpenChart script 一體化）
+    used.add('Ctrl+9')  # [ALERT] 預留 Ctrl+9（OpenChart script 一體化）
     # candidates 排除 Ctrl+9（EA 用其它數字）
     candidates = [f'Ctrl+{i}' for i in range(1, 10) if i != 9] + ['Ctrl+0'] + \
                  [f'Ctrl+Alt+{i}' for i in range(1, 10)] + ['Ctrl+Alt+0']
@@ -3224,10 +3226,10 @@ def _alloc_hotkey(experts):
 
 
 def assign_hotkey(ea_name):
-    """配對時分配快捷鍵 + 寫入 hotkeys.ini（MT5 立即認得 — 唔使 GUI）"""
+    """配對時分配快捷鍵 + write hotkeys.ini（MT5 立即認得 — 唔使 GUI）"""
     try:
         experts, indicators, _ = _read_hotkeys_ini()
-        # 已存在就保留（唔重複分配）
+        # 已exists就保留（唔重複分配）
         for k, v in experts.items():
             if ea_name in k:
                 return v
@@ -3235,19 +3237,19 @@ def assign_hotkey(ea_name):
         if not combo:
             print(f"[hotkeys] 冇可用快捷鍵（太多 EA）")
             return None
-        # 路徑：Experts\<EA>.ex5
+        # path：Experts\<EA>.ex5
         experts[f'Experts\\{ea_name}.ex5'] = combo
         if _write_hotkeys_ini(experts, indicators):
             print(f"[hotkeys] {ea_name} → {combo}")
             return combo
         return None
     except Exception as e:
-        print(f"[hotkeys] assign 失敗: {e}")
+        print(f"[hotkeys] assign failed: {e}")
         return None
 
 
 def release_hotkey(ea_name):
-    """刪除時移除快捷鍵（釋放位置）"""
+    """delete時remove快捷鍵（釋放位置）"""
     try:
         experts, indicators, _ = _read_hotkeys_ini()
         removed = False
@@ -3257,10 +3259,10 @@ def release_hotkey(ea_name):
                 removed = True
         if removed:
             _write_hotkeys_ini(experts, indicators)
-            print(f"[hotkeys] {ea_name} 快捷鍵已移除（位置釋放）")
+            print(f"[hotkeys] {ea_name} 快捷鍵已remove（位置釋放）")
         return removed
     except Exception as e:
-        print(f"[hotkeys] release 失敗: {e}")
+        print(f"[hotkeys] release failed: {e}")
         return False
 
 
@@ -3277,7 +3279,7 @@ def get_hotkey(ea_name):
 
 
 def _mt5_start_time():
-    """MT5 進程啟動時間（epoch）— 用 wmic"""
+    """MT5 進程start時間（epoch）— 用 wmic"""
     import subprocess as _sp
     try:
         out = _sp.run('wmic process where "name=terminal64.exe" get CreationDate /value',
@@ -3294,7 +3296,7 @@ def _mt5_start_time():
 
 
 def _hotkeys_need_reload():
-    """hotkeys.ini 有冇新過 MT5 啟動（有 = 快捷鍵未 load — 要重啟 MT5）"""
+    """hotkeys.ini 有冇新過 MT5 start（有 = 快捷鍵未 load — 要重啟 MT5）"""
     try:
         p = _mt5_hotkeys_ini()
         if not p or not os.path.isfile(p):
@@ -3310,16 +3312,16 @@ def _hotkeys_need_reload():
 
 
 def _restart_mt5():
-    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 用戶實測：快捷鍵要重啟先 load
-    🚨 2026-08-10：重啟期間顯示警告視窗（MT5 關閉都有 — 用戶要知道操作緊）"""
+    """重啟 MT5（關 → 開 — reload hotkeys.ini）— 2026-08 user實測：快捷鍵要重啟先 load
+    [ALERT] 2026-08-10：重啟期間顯示warning視窗（MT5 關閉都有 — user要知道操作緊）"""
     try:
         import subprocess as _sp
         import json as _j
-        # 警告視窗（電腦版 — 寫 flag）— 🚨 2026-08-12 FIX：累積模式（唔覆蓋現有 steps — 部署前重啟 MT5 唔會洗走部署流程）+ 完成後唔刪 steps（spec：steps 永不刪除）
+        # warning視窗（PC版 — 寫 flag）— [ALERT] 2026-08-12 FIX：累積模式（唔覆蓋現有 steps — deploy前重啟 MT5 唔會洗走deploy流程）+ done後唔刪 steps（spec：steps 永不delete）
         try:
             _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             with open(os.path.join(_ad, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write('🔄 重啟 MT5 中（載入快捷鍵）— 請稍候約 1 分鐘')
+                _f.write('[RETRY] 重啟 MT5 中（載入快捷鍵）— 請稍候約 1 分鐘')
             _sf_rt = os.path.join(_ad, '.ai_control.steps')
             _cur_rt = []
             try:
@@ -3329,11 +3331,11 @@ def _restart_mt5():
                         _cur_rt = []
             except Exception:
                 _cur_rt = []
-            _cur_rt = [s for s in _cur_rt if isinstance(s, dict) and s.get('text') != '等待操作開始…']
+            _cur_rt = [s for s in _cur_rt if isinstance(s, dict) and s.get('text') != 'wait操作start…']
             # append 重啟 MT5 3 步（同名更新）
             for _rstep in [{"text": "關閉 MT5", "status": "doing"},
                            {"text": "載入快捷鍵設定", "status": "pending"},
-                           {"text": "重新啟動 MT5", "status": "pending"}]:
+                           {"text": "重新start MT5", "status": "pending"}]:
                 _found = False
                 for _s in _cur_rt:
                     if _s.get('text') == _rstep['text']:
@@ -3351,7 +3353,7 @@ def _restart_mt5():
         mt5_exe = os.environ.get('MT5_EXE_PATH', r'C:\Program Files\MetaTrader 5\terminal64.exe')
         _sp.Popen([mt5_exe])
         time.sleep(55)
-        # 🚨 2026-08-12 FIX：完成 → 唔刪除 steps（spec：steps 永不刪除 — 刪除 → 網頁空白/彈）— 只更新 3 步全部 done
+        # [ALERT] 2026-08-12 FIX：done → 唔delete steps（spec：steps 永不delete — delete → 網頁空白/彈）— 只更新 3 步全部 done
         try:
             _ad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             _sf_rt2 = os.path.join(_ad, '.ai_control.steps')
@@ -3364,7 +3366,7 @@ def _restart_mt5():
             except Exception:
                 _cur_rt2 = []
             for _s in _cur_rt2:
-                if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入快捷鍵設定', '重新啟動 MT5'):
+                if isinstance(_s, dict) and _s.get('text') in ('關閉 MT5', '載入快捷鍵設定', '重新start MT5'):
                     _s['status'] = 'done'
             if _cur_rt2:
                 with open(_sf_rt2, 'w', encoding='utf-8') as _f:
@@ -3374,7 +3376,7 @@ def _restart_mt5():
         print("[hotkeys] MT5 已重啟（reload 快捷鍵）")
         return True
     except Exception as e:
-        print(f"[hotkeys] 重啟 MT5 失敗: {e}")
+        print(f"[hotkeys] 重啟 MT5 failed: {e}")
         return False
 
 
@@ -3382,7 +3384,7 @@ def _restart_mt5():
 @login_required
 
 def ensure_hotkey_for_ea(ea_name):
-    """部署前確保 EA 有快捷鍵（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 設定嘅新 EA 快捷鍵會冇）
+    """deploy前確保 EA 有快捷鍵（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 設定嘅新 EA 快捷鍵會冇）
     冇快捷鍵 → 分配 + 關 MT5 → 寫 → 開（reload）→ 返回 True（已就緒）"""
     try:
         experts, indicators, _ = _read_hotkeys_ini()
@@ -3390,35 +3392,35 @@ def ensure_hotkey_for_ea(ea_name):
         for k, v in experts.items():
             if ea_name in k:
                 return True
-        # 冇 → 分配（🚨 2026-08-10 優化：唔同步 reload — 改「部署前一次過 reload」（watcher/auto_attach 檢查 mtime — 唔好每次部署卡 105 秒））
+        # 冇 → 分配（[ALERT] 2026-08-10 優化：唔同步 reload — 改「deploy前一次過 reload」（watcher/auto_attach 檢查 mtime — 唔好每次deploy卡 105 秒））
         combo = _alloc_hotkey(experts)
         if not combo:
             return False
         experts[f'Experts\\{ea_name}.ex5'] = combo
         if _write_hotkeys_ini(experts, indicators):
-            print(f"[hotkeys] {ea_name} → {combo}（已分配 — 部署時 reload）")
+            print(f"[hotkeys] {ea_name} → {combo}（已分配 — deploy時 reload）")
             return True
         return False
     except Exception as e:
-        print(f"[hotkeys] ensure 失敗: {e}")
+        print(f"[hotkeys] ensure failed: {e}")
         return False
 
 
 
 def api_ea_retry_compile(name):
     """重試編譯（MetaEditor GUI compile — watcher 有 desktop access）
-    手動重試 compile：檢查 .mq5 喺本機 → 重新寫 compile_cmd → 等 compile 完成（double-check）
-    用喺：之前 compile 失敗（假成功）之後，用戶撳「重試」再觸發
+    手動重試 compile：檢查 .mq5 喺local → 重新寫 compile_cmd → 等 compile done（double-check）
+    用喺：before compile failed（假success）after，user撳「重試」再觸發
     """
     import re as _re
     import time as _ct
     if not _re.fullmatch(r'[A-Za-z0-9_]+', name):
         return jsonify({"success": False, "error": "Invalid name"}), 400
 
-    # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
+    # [WARN] user要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
 
-    # 1. 搵本機 .mq5
+    # 1. 搵local .mq5
     data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
     mq5_path = None
     exp_dir = None
@@ -3433,7 +3435,7 @@ def api_ea_retry_compile(name):
                     break
 
     if not mq5_path:
-        return jsonify({"success": False, "error": f"{name}.mq5 唔喺本機 MT5 Experts 目錄"}), 404
+        return jsonify({"success": False, "error": f"{name}.mq5 唔喺local MT5 Experts dir"}), 404
 
     ex5_path = os.path.join(exp_dir, name + '.ex5')
     if os.path.exists(ex5_path) and os.path.getmtime(ex5_path) > os.path.getmtime(mq5_path):
@@ -3452,7 +3454,7 @@ def api_ea_retry_compile(name):
         }, f)
     print(f"[retry-compile] compile 指令已重新排隊: {os.path.basename(cmd_path)}")
 
-    # 3. Double-check：等 compile 完成（最多 45 秒）
+    # 3. Double-check：等 compile done（最多 45 秒）
     compile_ok = False
     deadline = time.time() + 45
     while time.time() < deadline:
@@ -3461,22 +3463,22 @@ def api_ea_retry_compile(name):
             compile_ok = True
             break
         if not cmd_left:
-            compile_ok = False  # compile cmd 已處理但 .ex5 未生成 → 失敗
+            compile_ok = False  # compile cmd 已處理但 .ex5 未生成 → failed
             break
         time.sleep(1.5)
 
-    log_activity('ea_retry_compile', f'{name} 重試 compile ' + ('成功' if compile_ok else '失敗'), ea=name)
+    log_activity('ea_retry_compile', f'{name} 重試 compile ' + ('success' if compile_ok else 'failed'), ea=name)
     return jsonify({
         "success": True,
         "compile_ok": compile_ok,
-        "message": f"{name} 重試 compile " + ('成功 ✅' if compile_ok else '失敗 — 檢查源碼或 MetaEditor')
+        "message": f"{name} 重試 compile " + ('success [OK]' if compile_ok else 'failed — 檢查源碼或 MetaEditor')
     })
 
 
 @app.route('/api/ea-library/upload', methods=['POST'])
 @login_required
 def api_ea_upload():
-    """用戶上傳自己嘅 EA（只有自己睇到）+ 自動安裝落本機 MT5（聯動配對庫）"""
+    """user上傳自己嘅 EA（只有自己睇到）+ 自動安裝落local MT5（聯動配對庫）"""
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
     file = request.files['file']
@@ -3485,18 +3487,18 @@ def api_ea_upload():
     if not file.filename.endswith(('.mq5', '.ex5')):
         return jsonify({"error": "Only .mq5 and .ex5 files allowed"}), 400
 
-    # 寫「處理中」log — 用戶想知系統有冇處理緊
+    # 寫「處理中」log — user想知系統有冇處理緊
     _ubase = os.path.splitext(file.filename)[0]
     log_activity('ea_upload', f'{_ubase} 上傳處理中...', ea=_ubase)
 
-    # 儲存去用戶專屬目錄
+    # 儲存去user專屬dir
     user_dir = os.path.join(UPLOAD_DIR, current_user.username)
     os.makedirs(user_dir, exist_ok=True)
     filename = secure_filename(file.filename)
     filepath = os.path.join(user_dir, filename)
     file.save(filepath)
 
-    # 聯動：自動安裝落本機 MT5 Experts 目錄（配對庫即刻見到）
+    # 聯動：自動安裝落local MT5 Experts dir（配對庫immediately見到）
     import shutil as _sh
     import re as _re
     install_result = None
@@ -3549,7 +3551,7 @@ def api_ea_upload():
         config.setdefault(base + '_tf', 'H1')
         config.setdefault(base + '_magic', '240701')
         config.setdefault(base + '_lot', 1.00)
-        # 重新配對 → 由 _removed 移除（Bug #64）
+        # 重新配對 → 由 _removed remove（Bug #64）
         removed = config.get('_removed', [])
         if base in removed:
             removed.remove(base)
@@ -3557,9 +3559,9 @@ def api_ea_upload():
         current_user.ea_config = json.dumps(config)
         db.session.commit()
     except Exception as e:
-        print(f"[upload] config 寫入失敗: {e}")
+        print(f"[upload] config writefailed: {e}")
 
-    # Double-check：等 compile 完成（最多 45 秒）— 唔可以假成功
+    # Double-check：等 compile done（最多 45 秒）— 唔可以假success
     compile_ok = None
     if filename.lower().endswith('.mq5'):
         compile_ok = False
@@ -3581,12 +3583,12 @@ def api_ea_upload():
                     compile_ok = True
                     break
                 if not cmd_left:
-                    compile_ok = False  # compile cmd 已處理但 .ex5 未生成 → 失敗
+                    compile_ok = False  # compile cmd 已處理但 .ex5 未生成 → failed
                     break
                 time.sleep(1.5)
 
-    log_activity('ea_upload', f'{base} 上傳 + 安裝到本機 MT5' + (
-        '（compile 成功）' if compile_ok else '（compile 失敗）' if compile_ok is False and filename.lower().endswith('.mq5') else ''), ea=base)
+    log_activity('ea_upload', f'{base} 上傳 + 安裝到local MT5' + (
+        '（compile success）' if compile_ok else '（compile failed）' if compile_ok is False and filename.lower().endswith('.mq5') else ''), ea=base)
     return jsonify({
         "success": True,
         "filename": filename,
@@ -3594,16 +3596,16 @@ def api_ea_upload():
         "installed_local": bool(install_result),
         "compiled": bool(compile_ok),
         "compile_ok": compile_ok,
-        "message": f"{base} 已上傳 + 安裝到本機 MT5" + (
-            '（已編譯 ✅）' if compile_ok else '（⚠️ compile 失敗，MT5 可能未顯示）' if compile_ok is False and filename.lower().endswith('.mq5') else '')
+        "message": f"{base} 已上傳 + 安裝到local MT5" + (
+            '（已編譯 [OK]）' if compile_ok else '（[WARN] compile failed，MT5 可能未顯示）' if compile_ok is False and filename.lower().endswith('.mq5') else '')
     })
 
 
 @app.route('/api/agent-download')
 def api_agent_download():
-    """下載 Windows Agent 啟動器（.bat — double-click 一定開到）— 自動下載 + 執行桌面版安裝程式"""
+    """下載 Windows Agent start器（.bat — double-click 一定開到）— 自動下載 + 執行桌面版安裝程式"""
     agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
-    # 🚨 2026-08-26 v2：.bat 啟動器（.pyw double-click 冇關聯唔開）→ bat 自動搵 pythonw + 下載 pyw + 執行
+    # [ALERT] 2026-08-26 v2：.bat start器（.pyw double-click 冇關聯唔開）→ bat 自動搵 pythonw + 下載 pyw + 執行
     _bat = os.path.join(agent_dir, 'tradotcom_launcher.bat')
     if os.path.isfile(_bat):
         return send_from_directory(agent_dir, 'tradotcom_launcher.bat', as_attachment=True, download_name='Tradotcom-Agent-Setup.bat')
@@ -3628,8 +3630,8 @@ def api_agent_py():
 
 @app.route('/api/agent-service/<name>')
 def api_agent_service(name):
-    """🚨 2026-08-28（用戶要求：安裝 = 全部裝返）：下載平台服務腳本（deploy_watcher/alert_worker/auto_trade_detector）
-    agent 啟動時缺檔案 → 從 server 下載 → 開返
+    """[ALERT] 2026-08-28（user要求：安裝 = 全部裝返）：下載平台服務腳本（deploy_watcher/alert_worker/auto_trade_detector）
+    agent start時缺file → 從 server 下載 → 開返
     """
     _allowed = {'deploy_watcher.py', 'alert_worker.py', 'auto_trade_detector.py', 'deploy_notify.py',
                 'auto_attach.py', 'refresh_navigator.py', 'control_guard.py'}
@@ -3654,11 +3656,11 @@ _last_config_send = {}
 def handle_register(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
-        # 🚨 2026-08-26（Phase 4）：Token 驗證 — 防冒認（agent 有 token 先驗證；DEV00001 舊版冇 token → 放行向後兼容）
+        # [ALERT] 2026-08-26（Phase 4）：Token 驗證 — 防冒認（agent 有 token 先驗證；DEV00001 舊版冇 token → 放行向後兼容）
         _tk_in = str(data.get('token') or '')
         _tk_real = str(agent.agent_token or '')
         if _tk_real and _tk_in != _tk_real:
-            print(f"[WS] ⚠️ Agent {agent.agent_id} token 唔啱（拒絕連線）")
+            print(f"[WS] [WARN] Agent {agent.agent_id} token 唔啱（refusedconnection）")
             emit('registered', {"status": "error", "msg": "invalid token"})
             return
         join_room(agent.agent_id)
@@ -3666,9 +3668,9 @@ def handle_register(data):
         agent.last_seen = datetime.utcnow()
         db.session.commit()
         emit('registered', {"status":"ok"})
-        # 🚨 2026-08-26（安裝驗證）：Agent 連上 → 通知前端（toast「✅ Agent 已連線」）
+        # [ALERT] 2026-08-26（安裝驗證）：Agent 連上 → 通知前端（toast「[OK] Agent 已connection」）
         try:
-            socketio.emit('agent_connected', {"agent_id": agent.agent_id, "msg": f"✅ Agent {agent.agent_id} 已連線"}, room=agent.agent_id)
+            socketio.emit('agent_connected', {"agent_id": agent.agent_id, "msg": f"[OK] Agent {agent.agent_id} 已connection"}, room=agent.agent_id)
         except Exception:
             pass
         # 自動推送 EA 配置俾 Agent（debounce: 每 60 秒最多一次）
@@ -3700,12 +3702,12 @@ def handle_register(data):
 def handle_sync(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
-        # 🚨 2026-08-26（Phase 4）：sync 都驗證 token（防冒名上報）
+        # [ALERT] 2026-08-26（Phase 4）：sync 都驗證 token（防冒名上報）
         try:
             _tk_s = str(data.get('token') or '')
             _tk_sr = str(agent.agent_token or '')
             if _tk_sr and _tk_s != _tk_sr:
-                print(f"[WS] ⚠️ Agent {agent.agent_id} sync token 唔啱（忽略）")
+                print(f"[WS] [WARN] Agent {agent.agent_id} sync token 唔啱（忽略）")
                 return
         except Exception:
             pass
@@ -3713,10 +3715,10 @@ def handle_sync(data):
         agent.positions = json.dumps(data.get('positions',[]))
         agent.deals = json.dumps(data.get('deals',[]))
         agent.ea_heartbeats = json.dumps(data.get('heartbeats', {}))
-        # 🚨 2026-08-26（multi-user Phase 1）：儲存 agent 上報嘅檔案快照（每機獨立 — server 唔再直接讀本機）
+        # [ALERT] 2026-08-26（multi-user Phase 1）：儲存 agent 上報嘅file快照（每機獨立 — server 唔再直接讀local）
         if data.get('files_snapshot'):
             agent.files_snapshot = json.dumps(data.get('files_snapshot'))
-            # 🚨 2026-08-27 FIX：agent 心跳實際喺 files_snapshot.heartbeats（build_files_snapshot 收集）
+            # [ALERT] 2026-08-27 FIX：agent 心跳實際喺 files_snapshot.heartbeats（build_files_snapshot 收集）
             # → 合併入 ea_heartbeats（網頁心跳顯示用）— 唔好得 files_snapshot 有
             _snap_hb = data.get('files_snapshot', {}).get('heartbeats') or {}
             if _snap_hb:
@@ -3731,7 +3733,7 @@ def handle_sync(data):
 
 @socketio.on('agent_install_ea')
 def handle_install_ea(data):
-    """用戶㩒 Install EA，通知 Agent 去下載同安裝"""
+    """user㩒 Install EA，通知 Agent 去下載同安裝"""
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
     if agent:
         ea_name = data.get('ea_name')
@@ -3763,7 +3765,7 @@ def handle_deploy_ea(data):
         # 直接 Socket.IO 發俾 Agent（更快更可靠）
         print(f"[WS] Forwarding deploy to {agent.agent_id}: {data.get('ea_name')} -> {data.get('symbol')}")
         socketio.emit('deploy_ea', data, room=agent.agent_id)
-        # 亦寫入 DB（fallback）
+        # 亦write DB（fallback）
         agent.deploy_queue = json.dumps({
             "ea_name": data.get('ea_name'),
             "symbol": data.get('symbol'),
@@ -3775,8 +3777,8 @@ def handle_deploy_ea(data):
         emit('install_result', {"status": "sent", "ea": data.get('ea_name')})
 
 def _detect_uac_server():
-    """🚨 2026-08-22（用戶要求：UAC 檢測機制）：server 端偵測 UAC/授權窗口
-    部署/刪除/配對前檢查 — 有 UAC → 返回 True（前端可顯示警告）
+    """[ALERT] 2026-08-22（user要求：UAC 檢測機制）：server 端偵測 UAC/授權窗口
+    deploy/delete/配對前檢查 — 有 UAC → 返回 True（前端可顯示warning）
     用 ctypes EnumWindows 掃「授權/Client Terminal/要求」窗口"""
     try:
         import ctypes as _ct_u
@@ -3803,56 +3805,56 @@ def _detect_uac_server():
         return []
 
 def _cleanup_local_agent():
-    """🚨 2026-08-28（用戶要求：剷除 Agent = 清晒而家電腦運行緊嘅 agent 嘢）：
-    殺平台服務（watcher/detector/alert — 本機 agent 目錄）+ 刪 lock + 刪安裝目錄
+    """[ALERT] 2026-08-28（user要求：remove Agent = 清晒nowPCrunning緊嘅 agent 嘢）：
+    殺平台服務（watcher/detector/alert — local agent dir）+ 刪 lock + 刪安裝dir
     """
     import subprocess, shutil
-    print("[API] 🧹 清理本機 Agent（平台服務 + lock + 安裝目錄）...")
-    # 1. 殺平台服務（agent 目錄嘅 python process — 唔好殺自己/server/hermes）
+    print("[API] [CLEAN] 清理local Agent（平台服務 + lock + 安裝dir）...")
+    # 1. 殺平台服務（agent dir嘅 python process — 唔好殺自己/server/hermes）
     try:
         _ps = subprocess.run(
             'powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq \'python.exe\' -and ($_.CommandLine -match \'TradotcomAgent|agent/(deploy_watcher|auto_trade_detector|alert_worker|auto_attach|deploy_notify|control_guard)\') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"',
             shell=True, capture_output=True, timeout=30)
-        print(f"   ✅ 平台服務已殺（{_ps.returncode}）")
+        print(f"   [OK] 平台服務已殺（{_ps.returncode}）")
     except Exception as e:
-        print(f"   ⚠️ 殺平台服務失敗: {e}")
+        print(f"   [WARN] 殺平台服務failed: {e}")
     time.sleep(2)
-    # 2. 刪 lock + 安裝目錄
+    # 2. 刪 lock + 安裝dir
     _agent_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
     try:
         if os.path.isdir(_agent_dir):
             shutil.rmtree(_agent_dir, ignore_errors=True)
-            print(f"   ✅ 安裝目錄已刪: {_agent_dir}")
+            print(f"   [OK] 安裝dir已刪: {_agent_dir}")
         else:
-            print(f"   ℹ️ 安裝目錄唔存在: {_agent_dir}")
+            print(f"   ℹ️ 安裝dirnot exist: {_agent_dir}")
     except Exception as e:
-        print(f"   ⚠️ 刪安裝目錄失敗: {e}")
+        print(f"   [WARN] 刪安裝dirfailed: {e}")
     # 3. 刪桌面捷徑
     try:
         _desktop = os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop')
         for _f in os.listdir(_desktop):
             if 'Tradotcom' in _f or '交易點' in _f:
                 os.remove(os.path.join(_desktop, _f))
-                print(f"   ✅ 桌面捷徑已刪: {_f}")
+                print(f"   [OK] 桌面捷徑已刪: {_f}")
     except Exception:
         pass
-    print("[API] 🧹 本機清理完成")
+    print("[API] [CLEAN] local清理done")
 
 @app.route('/api/agent/remove', methods=['POST'])
 @login_required
 def api_agent_remove():
-    """🚨 2026-08-28（用戶要求：網站可以剷除本機 agent）：
+    """[ALERT] 2026-08-28（user要求：網站可以removelocal agent）：
     發 shutdown 指令俾 agent → agent 自己清理（lock/config/捷徑）+ 退出
     """
     agent = Agent.query.filter_by(user_id=current_user.id).first()
     if not agent:
         return jsonify({"success": False, "error": "no agent"}), 404
     try:
-        print(f"[API] 🚫 剷除 Agent {agent.agent_id}（網站操作）")
+        print(f"[API] 🚫 remove Agent {agent.agent_id}（網站操作）")
         # 發 shutdown 指令俾 agent（SocketIO room=agent_id）
         socketio.emit('shutdown', {'reason': 'web_remove'}, room=agent.agent_id)
-        # 🚨 2026-08-28 FIX：寫剷除標記落 DB（agent 斷線收唔到 emit → poll /api/agent-poll-deploy 時檢查）
-        # （同 deploy_queue 一樣機制 — tunnel 斷線窗口 fallback）
+        # [ALERT] 2026-08-28 FIX：寫remove標記落 DB（agent disconnect收唔到 emit → poll /api/agent-poll-deploy 時檢查）
+        # （同 deploy_queue 一樣機制 — tunnel disconnect窗口 fallback）
         try:
             _rm_flag = json.loads(agent.deploy_queue) if agent.deploy_queue else {}
         except Exception:
@@ -3860,30 +3862,30 @@ def api_agent_remove():
         _rm_flag['_remove_agent'] = True
         _rm_flag['_remove_ts'] = time.time()
         agent.deploy_queue = json.dumps(_rm_flag)
-        # 🚨 2026-08-28 FIX：agent offline（斷線/冇行）→ 唔刪 DB（用戶要求：剷除 = 清本機 agent — DB 記錄保留 — 之後可重新安裝連接返）
-        # 只清本機（平台服務 + lock + 安裝目錄）
+        # [ALERT] 2026-08-28 FIX：agent offline（disconnect/冇行）→ 唔刪 DB（user要求：remove = 清local agent — DB 記錄保留 — after可重新安裝connect返）
+        # 只清local（平台服務 + lock + 安裝dir）
         if agent.status != 'connected':
-            print(f"[API] ⚠️ Agent {agent.agent_id} 已 offline — 清理本機（保留 DB 記錄）")
+            print(f"[API] [WARN] Agent {agent.agent_id} 已 offline — 清理local（保留 DB 記錄）")
             _cleanup_local_agent()
-            return jsonify({"success": True, "message": f"Agent {agent.agent_id}（offline）本機已清理（DB 記錄保留）"})
-        # 標記 agent 已剷除（status=offline — 等 agent 回報 remove-complete 再刪）
+            return jsonify({"success": True, "message": f"Agent {agent.agent_id}（offline）local已清理（DB 記錄保留）"})
+        # 標記 agent 已remove（status=offline — 等 agent 回報 remove-complete 再刪）
         agent.status = 'offline'
         db.session.commit()
-        return jsonify({"success": True, "message": f"剷除指令已發俾 Agent {agent.agent_id}"})
+        return jsonify({"success": True, "message": f"remove指令已發俾 Agent {agent.agent_id}"})
     except Exception as e:
-        print(f"[API] ⚠️ 剷除 Agent 失敗: {e}")
+        print(f"[API] [WARN] remove Agent failed: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/api/agent/remove-complete', methods=['POST'])
 def api_agent_remove_complete():
-    """Agent 剷除完成回報（agent 自己清理完 call）— 🚨 2026-08-28 FIX：唔刪 DB（用戶要求：剷除 = 清本機 — DB 記錄保留 — 之後可重新安裝連接返）— 只標記 offline"""
+    """Agent removedone回報（agent 自己清理完 call）— [ALERT] 2026-08-28 FIX：唔刪 DB（user要求：remove = 清local — DB 記錄保留 — after可重新安裝connect返）— 只標記 offline"""
     agent_id = request.args.get('agent_id') or (request.get_json(silent=True) or {}).get('agent_id')
     if not agent_id:
         return jsonify({"success": False, "error": "no agent_id"}), 400
     agent = Agent.query.filter_by(agent_id=agent_id).first()
     if agent:
-        print(f"[API] ✅ Agent {agent_id} 已剷除（agent 回報）— 標記 offline（DB 記錄保留）")
+        print(f"[API] [OK] Agent {agent_id} 已remove（agent 回報）— 標記 offline（DB 記錄保留）")
         agent.status = 'offline'
         db.session.commit()
     return jsonify({"success": True})
@@ -3893,60 +3895,60 @@ def api_agent_remove_complete():
 @login_required
 def api_deploy():
     """HTTP deploy (唔靠 Socket.IO，更可靠)"""
-    # 🚨 2026-08-22（用戶要求：UAC 檢測機制）：部署前檢查 UAC — 有授權窗口 → 警告（唔阻部署 — 等 auto_attach 處理）
+    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：deploy前檢查 UAC — 有授權窗口 → warning（唔阻deploy — 等 auto_attach 處理）
     try:
         _uac_now = _detect_uac_server()
         if _uac_now:
-            print(f"[deploy] ⚠️ 偵測到 UAC 授權窗口: {_uac_now[0]} — 部署會等 auto_attach UAC Gate 處理")
-            log_activity('deploy', f'⚠️ MT5 需要授權（{_uac_now[0][:40]}）— 請確認', ea='MT5')
+            print(f"[deploy] [WARN] 偵測到 UAC 授權窗口: {_uac_now[0]} — deploy會等 auto_attach UAC Gate 處理")
+            log_activity('deploy', f'[WARN] MT5 需要授權（{_uac_now[0][:40]}）— 請確認', ea='MT5')
     except Exception:
         pass
-    # 🚨 2026-08-12 FIX：防重複部署（同一 EA 30 秒內唔可以再 deploy — 前端 double-click / 重複觸發 → 兩個 deploy_cmd → 「完成又彈又執行」）
+    # [ALERT] 2026-08-12 FIX：防重複deploy（同一 EA 30 秒內唔可以再 deploy — 前端 double-click / 重複觸發 → 兩個 deploy_cmd → 「done又彈又執行」）
     global _last_deploy_time
     try:
         _now_dp = time.time()
         if _last_deploy_time.get(ea_name_cached := request.json.get('ea_name', ''), 0) and _now_dp - _last_deploy_time.get(ea_name_cached, 0) < 30:
-            return jsonify({"success": False, "error": f"{ea_name_cached} 30 秒內已部署過（防重複）"}), 429
+            return jsonify({"success": False, "error": f"{ea_name_cached} 30 秒內已deploy過（防重複）"}), 429
     except Exception:
         pass
-    # ⚠️ 用戶要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
+    # [WARN] user要求（2026-08）：每次操作 MT5 相關嘢，先偵測 MT5 有冇開 — 冇就開返
     ensure_mt5_running()
     data = request.json
     ea_name = data.get('ea_name', '')
     symbol = data.get('symbol', 'EURUSD')
     tf = data.get('tf', 'H1')
-    # 🚨 2026-08-21 FIX（用戶要求：揀咗冇嘅 symbol → 偵測 → 警告 — 唔可以部署）：
-    # 部署前驗證 symbol 存在（帳戶實際 symbols — get_account_symbols）
+    # [ALERT] 2026-08-21 FIX（user要求：揀咗冇嘅 symbol → 偵測 → warning — 唔可以deploy）：
+    # deploy前驗證 symbol exists（account實際 symbols — get_account_symbols）
     try:
         _avail_syms = get_account_symbols()
         if symbol.upper() not in [s.upper() for s in _avail_syms]:
-            print(f"[deploy] ⚠️ {ea_name} → {symbol}：symbol 唔喺帳戶（可用: {_avail_syms[:10]}...）")
-            return jsonify({"success": False, "error": f"symbol {symbol} 唔存在（帳戶可用: {', '.join(_avail_syms[:8])}）"}), 400
+            print(f"[deploy] [WARN] {ea_name} → {symbol}：symbol 唔喺account（可用: {_avail_syms[:10]}...）")
+            return jsonify({"success": False, "error": f"symbol {symbol} not exist（account可用: {', '.join(_avail_syms[:8])}）"}), 400
     except Exception as _e_sym:
-        print(f"[deploy] symbol 驗證失敗（唔阻部署）: {_e_sym}")
-    # 🚨 2026-08-20 FIX：magic 空 string（前端未 alive EA 傳 ''）→ fallback default（否則 auto_attach --magic 空 → argparse 失敗 → 假成功）
+        print(f"[deploy] symbol verify failed（唔阻deploy）: {_e_sym}")
+    # [ALERT] 2026-08-20 FIX：magic 空 string（前端未 alive EA 傳 ''）→ fallback default（否則 auto_attach --magic 空 → argparse failed → 假success）
     magic = data.get('magic') or '240701'
-    # 🚨 2026-08-26 FIX v2（行內人做法 — 用戶要求）：Magic = EA 固定身份 — 一生唔變
-    # ① 每個 EA 首次部署分配固定 magic（存 config['_magic_assignments'] — _開頭 DELETE 唔會清）
-    # ② 剷除後再部署 → 沿用返舊 magic（歷史連貫 — Correlation/統計完整）
-    # ③ 用戶指定特別 magic（777/888 等）→ 尊重用戶（唔覆寫）
-    # ④ 只有「首次部署 + 有用戶冇指定」先自動分配
+    # [ALERT] 2026-08-26 FIX v2（行內人做法 — user要求）：Magic = EA 固定身份 — 一生唔變
+    # ① 每個 EA 首次deploy分配固定 magic（存 config['_magic_assignments'] — _開頭 DELETE 唔會清）
+    # ② remove後再deploy → 沿用返舊 magic（歷史連貫 — Correlation/統計完整）
+    # ③ user指定特別 magic（777/888 等）→ 尊重user（唔覆寫）
+    # ④ 只有「首次deploy + 有user冇指定」先自動分配
     try:
         _cfg_m = json.loads(current_user.ea_config or '{}')
         _assign_tbl = _cfg_m.get('_magic_assignments') or {}
         if not isinstance(_assign_tbl, dict):
             _assign_tbl = {}
         _req_magic = str(data.get('magic') or '').strip()
-        # ① EA 已有分配 → 沿用（行內人：歷史連貫 — 就算剷除再部署都用返同一個）
+        # ① EA 已有分配 → 沿用（行內人：歷史連貫 — 就算remove再deploy都用返同一個）
         if ea_name in _assign_tbl:
             magic = _assign_tbl[ea_name]
-            print(f"[deploy] 🔑 {ea_name} 沿用固定 Magic {magic}（歷史連貫）")
-        # ② 用戶明確指定（唔係 240701 default）→ 尊重 + 記錄
+            print(f"[deploy] [KEY] {ea_name} 沿用固定 Magic {magic}（歷史連貫）")
+        # ② user明確指定（唔係 240701 default）→ 尊重 + 記錄
         elif _req_magic and _req_magic != '240701':
             magic = _req_magic
             _assign_tbl[ea_name] = magic
-            print(f"[deploy] 🔑 {ea_name} 用戶指定 Magic {magic}")
-        # ③ 首次部署 + 用 default → 自動分配未用嘅固定 magic
+            print(f"[deploy] [KEY] {ea_name} user指定 Magic {magic}")
+        # ③ 首次deploy + 用 default → 自動分配未用嘅固定 magic
         else:
             _used_all = set()
             for _k_m2, _v_m2 in _cfg_m.items():
@@ -3959,7 +3961,7 @@ def api_deploy():
                 _new_m += 1
             magic = str(_new_m)
             _assign_tbl[ea_name] = magic
-            print(f"[deploy] 🔑 {ea_name} 首次分配固定 Magic {magic}")
+            print(f"[deploy] [KEY] {ea_name} 首次分配固定 Magic {magic}")
         # 同步分配表返 config（_開頭 — DELETE 唔會清 — 持久保留）
         try:
             _cfg_m['_magic_assignments'] = _assign_tbl
@@ -3970,21 +3972,21 @@ def api_deploy():
     except Exception:
         pass
     lot = data.get('lot', '1.00')
-    # 🚨 2026-08-21：數據注入選擇（用戶部署時揀 — 注入逐單記錄 / 唔注入）
+    # [ALERT] 2026-08-21：數據注入選擇（userdeploy時揀 — 注入逐單記錄 / 唔注入）
     # 預設 true（注入）— 前端 modal 可選「唔注入」+「不再顯示」
     inject_trades = data.get('inject_trades', True)
     _last_deploy_time[ea_name] = time.time()
     
     # Save EA config first
     config = json.loads(current_user.ea_config or '{}')
-    # 🚨 2026-08-22 FIX（配對庫消失 bug）：重新部署 = 唔再係「已刪除」→ 由 _removed 移除
-    # （之前刪除加 _removed，但重新部署冇清 → 前端過濾走晒 → 配對庫空）
+    # [ALERT] 2026-08-22 FIX（配對庫消失 bug）：重新deploy = 唔再係「已delete」→ 由 _removed remove
+    # （beforedelete加 _removed，但重新deploy冇清 → 前端過濾走晒 → 配對庫空）
     try:
         _rm_dp = config.get('_removed', [])
         if ea_name in _rm_dp:
             _rm_dp.remove(ea_name)
             config['_removed'] = _rm_dp
-            print(f"[deploy] ✅ {ea_name} 已由 _removed 移除（重新配對）")
+            print(f"[deploy] [OK] {ea_name} 已由 _removed remove（重新配對）")
     except Exception:
         pass
     config[ea_name] = symbol
@@ -3993,7 +3995,7 @@ def api_deploy():
     config[f'{ea_name}_lot'] = float(lot)
     current_user.ea_config = json.dumps(config)
 
-    # 🚨 2026-08-19：Script 類型暫時唔支援部署（唔嘗試 deploy — 直接話「不支援」）
+    # [ALERT] 2026-08-19：Script 類型暫時唔支援deploy（唔嘗試 deploy — 直接話「不支援」）
     try:
         _is_scr = False
         for _d_sc_dir in (EA_LIBRARY_DIR, os.path.join(UPLOAD_DIR, current_user.username), COMMUNITY_EA_DIR):
@@ -4003,7 +4005,7 @@ def api_deploy():
                 _is_scr = ('#property script_show_inputs' in _sc_c) or ('void OnStart()' in _sc_c and 'int OnInit()' not in _sc_c)
             if _is_scr:
                 break
-        # 本機已 install 嗰個做 backup 判斷
+        # local已 install 嗰個做 backup 判斷
         if not _is_scr:
             _ml5t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
             for _td in os.listdir(_ml5t) if os.path.isdir(_ml5t) else []:
@@ -4016,10 +4018,10 @@ def api_deploy():
                 if _is_scr:
                     break
         if _is_scr:
-            return jsonify({"success": False, "error": f"{ea_name} 係 Script 類型，暫不支援部署（只支援長駐EA）"}), 400
+            return jsonify({"success": False, "error": f"{ea_name} 係 Script 類型，暫不支援deploy（只支援長駐EA）"}), 400
     except Exception:
         pass
-    # ⚠️ Controller 部署（今日版本功能）：心跳 running → 已運行；否則手動提示（+ 標記 → watcher 自動確定）
+    # [WARN] Controller deploy（今日版本功能）：心跳 running → 已running；否則手動提示（+ 標記 → watcher 自動確定）
     if ea_name == 'Controller':
         try:
             sf = os.path.join(common_files, 'state_controller.json')
@@ -4027,10 +4029,10 @@ def api_deploy():
                 with open(sf, 'r', encoding='utf-8') as _f:
                     _sd = json.load(_f)
                 if _sd.get('status') == 'running' and int(time.time()) - int(_sd.get('ts', 0)) < 30:
-                    return jsonify({"success": True, "message": "✅ Controller 已運行中（系統中樞正常）"})
+                    return jsonify({"success": True, "message": "[OK] Controller 已running中（系統中樞正常）"})
         except Exception:
             pass
-        log_activity('deploy', f'Controller 首次部署：請手動 double-click（MT5Cloud folder）', ea='Controller')
+        log_activity('deploy', f'Controller 首次deploy：請手動 double-click（MT5Cloud folder）', ea='Controller')
         try:
             agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
             with open(os.path.join(agent_dir, '.manual_deploy_pending'), 'w', encoding='utf-8') as _f:
@@ -4040,37 +4042,37 @@ def api_deploy():
         return jsonify({
             "success": True,
             "manual_action": True,
-            "message": "請手動完成首次部署（1 秒）：MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！"
+            "message": "請手動done首次deploy（1 秒）：MT5 導航 → EA交易 → MT5Cloud → 雙擊 Controller。確定會自動撳！"
         })
 
-    # 🎯 快捷鍵確保（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 嘅快捷鍵會冇）
-    # 部署前檢查 EA 有冇快捷鍵 — 冇就分配 + 重啟 MT5 reload
+    # [TARGET] 快捷鍵確保（2026-08：MT5 重啟會覆寫 hotkeys.ini — 未經 GUI 嘅快捷鍵會冇）
+    # deploy前檢查 EA 有冇快捷鍵 — 冇就分配 + 重啟 MT5 reload
     try:
         ensure_hotkey_for_ea(ea_name)
     except Exception:
         pass
 
-    # 🚨 2026-08-12 FIX：即刻寫 SHOW_FLAG + steps（部署 XXX doing）— 唔好等 auto_attach（watcher poll 3 秒 + 啟動）
-    # （否則視窗顯示舊任務殘留 steps → 1 秒後先變新 — 用戶投訴「一開始顯示舊步驟」）
+    # [ALERT] 2026-08-12 FIX：immediately寫 SHOW_FLAG + steps（deploy XXX doing）— 唔好等 auto_attach（watcher poll 3 秒 + start）
+    # （否則視窗顯示舊任務殘留 steps → 1 秒後先變新 — user投訴「一start顯示舊步驟」）
     try:
         import json as _jdp
         _adir_dp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         os.makedirs(_adir_dp, exist_ok=True)
-        # 🚨 2026-08-28 FIX（電腦版警告視窗冇彈）：雙寫 show + steps（開發目錄 + TradotcomAgent）
-        _write_ai_flags(f'部署 {ea_name}', [
-            {'text': f'部署 {ea_name}（{symbol.upper()}）', 'status': 'doing'},
-            {'text': f'建立新圖表（{symbol.upper()}）', 'status': 'pending'},
-            {'text': f'附加 {ea_name}', 'status': 'pending'},
-            {'text': '驗證運行狀態', 'status': 'pending'},
+        # [ALERT] 2026-08-28 FIX（PC版warning視窗冇彈）：雙寫 show + steps（開發dir + TradotcomAgent）
+        _write_ai_flags(f'deploy {ea_name}', [
+            {'text': f'deploy {ea_name}（{symbol.upper()}）', 'status': 'doing'},
+            {'text': f'create新圖表（{symbol.upper()}）', 'status': 'pending'},
+            {'text': f'attach {ea_name}', 'status': 'pending'},
+            {'text': '驗證running狀態', 'status': 'pending'},
         ])
     except Exception:
         pass
 
-    # 🚨 2026-08-26（multi-user Phase 2）：部署指令路由 — 優先經「用戶嘅 agent」（SocketIO room）
+    # [ALERT] 2026-08-26（multi-user Phase 2）：deploy指令路由 — 優先經「user嘅 agent」（SocketIO room）
     # → agent 收到 deploy_ea → 喺自己部機寫 deploy_cmd → watcher 執行（每機獨立）
-    # → 冇 agent 連線（offline）→ fallback 直接寫本機（單機向後兼容）
+    # → 冇 agent connection（offline）→ fallback 直接寫local（單機向後兼容）
     _agent_dp = Agent.query.filter_by(user_id=current_user.id).first()
-    # 🚨 2026-08-27 FIX：agent online 判斷用「真係上報緊」（last_seen 新鮮）— 唔係 status 欄（舊 status 會誤判 → emit 去冇人接嘅 room → 部署卡死）
+    # [ALERT] 2026-08-27 FIX：agent online 判斷用「真係上報緊」（last_seen 新鮮）— 唔係 status 欄（舊 status 會誤判 → emit 去冇人接嘅 room → deploy卡死）
     _agent_online = bool(_agent_dp and _agent_live_status(_agent_dp) == 'connected')
     if _agent_online:
         try:
@@ -4086,19 +4088,19 @@ def api_deploy():
             }
             socketio.emit('deploy_ea', _dp_payload, room=_agent_dp.agent_id)
             print(f"[API] 📡 Deploy 指令已路由俾 Agent {_agent_dp.agent_id}: {ea_name} -> {symbol} {tf}")
-            # 亦寫入 deploy_queue（fallback — agent 可能 reconnect 後 poll）
+            # 亦write deploy_queue（fallback — agent 可能 reconnect 後 poll）
             _agent_dp.deploy_queue = json.dumps(_dp_payload)
             db.session.commit()
         except Exception as _e_dp:
-            print(f"[API] ⚠️ Agent 路由失敗（fallback 本機）: {_e_dp}")
+            print(f"[API] [WARN] Agent 路由failed（fallback local）: {_e_dp}")
             _agent_online = False
 
-    # 🚨 2026-08-26（multi-user Phase 2）：已路由俾 agent → 唔寫本機（避免雙重執行）
+    # [ALERT] 2026-08-26（multi-user Phase 2）：已路由俾 agent → 唔寫local（避免雙重執行）
     if _agent_online:
         db.session.commit()
         print(f"[API] Deploy routed via Agent: {ea_name} -> {symbol} {tf}")
-        log_activity('deploy', f'{ea_name} 部署 → {symbol} {tf}（經 Agent）', ea=ea_name)
-        return jsonify({"success": True, "message": f"🚀 Deploying {ea_name} -> {symbol} {tf}"})
+        log_activity('deploy', f'{ea_name} deploy → {symbol} {tf}（經 Agent）', ea=ea_name)
+        return jsonify({"success": True, "message": f"[GO] Deploying {ea_name} -> {symbol} {tf}"})
 
     # Write deploy command file (watcher will pick it up)
     import time as _wt
@@ -4106,12 +4108,12 @@ def api_deploy():
                                  'MetaQuotes', 'Terminal', 'Common', 'Files')
     os.makedirs(common_files, exist_ok=True)
 
-    # 🚨 2026-08-28 FIX：刪除舊 Controller fallback（generate_template + ctrl_controller.json — stable 前概念 — Controller EA 已冇行 → 死 code）
-    # 部署統一經：Agent 路由（online）→ watcher deploy_cmd（fallback 本機）— Controller 模式已淘汰
+    # [ALERT] 2026-08-28 FIX：delete舊 Controller fallback（generate_template + ctrl_controller.json — stable 前概念 — Controller EA 已冇行 → 死 code）
+    # deploy統一經：Agent 路由（online）→ watcher deploy_cmd（fallback local）— Controller 模式已淘汰
     # 寫 deploy command file（watcher will pick it up）
     import time as _wt
     cmd_path = os.path.join(common_files, f'deploy_cmd_{ea_name}_{int(_wt.time())}.json')
-    # 🔐 2026-08-31 指紋：deploy_cmd 帶 account + agent 指紋（方便追蹤邊個 account 建立）
+    # [FP] 2026-08-31 fingerprint：deploy_cmd 帶 account + agent fingerprint（方便追蹤邊個 account create）
     _fp_account = current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'
     _fp_agent = _agent_dp.agent_id if '_agent_dp' in dir() and _agent_dp else ''
     with open(cmd_path, 'w') as f:
@@ -4121,10 +4123,10 @@ def api_deploy():
             'tf': tf,
             'magic': str(magic),
             'lot': str(lot),
-            'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
+            'inject_trades': inject_trades,  # [ALERT] 2026-08-21：數據注入選擇
             'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
             'source': 'api_deploy',
-            # 🔐 指紋（2026-08-31）
+            # [FP] fingerprint（2026-08-31）
             'fingerprint': {
                 'account': _fp_account,
                 'agent_id': _fp_agent,
@@ -4134,10 +4136,10 @@ def api_deploy():
 
     db.session.commit()
     print(f"[API] Deploy: {ea_name} -> {symbol} {tf} (command file written)")
-    log_activity('deploy', f'{ea_name} 部署 → {symbol} {tf}', ea=ea_name)
+    log_activity('deploy', f'{ea_name} deploy → {symbol} {tf}', ea=ea_name)
 
-    # 🚨 2026-08-14 自癒（部署後）：部署都可能觸發「其他 EA 彈返」（用戶案例：部署 Hedge → 其他 EA 彈返）
-    # 部署後清「彈返」—— ctime 新（120 秒內）+ config 冇（已刪除）→ 自動刪除（排除今次部署嘅 EA）
+    # [ALERT] 2026-08-14 自癒（deploy後）：deploy都可能觸發「其他 EA 彈返」（user案例：deploy Hedge → 其他 EA 彈返）
+    # deploy後清「彈返」—— ctime 新（120 秒內）+ config 冇（已delete）→ 自動delete（排除今次deploy嘅 EA）
     try:
         import time as _tdh
         _data_dir_h = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -4151,7 +4153,7 @@ def api_deploy():
                 if not _fn_h.endswith(('.mq5', '.ex5')):
                     continue
                 if _fn_h == ea_name + '.mq5' or _fn_h == ea_name + '.ex5':
-                    continue  # 今次部署嘅 EA — 唔好刪
+                    continue  # 今次deploy嘅 EA — 唔好刪
                 _b_h = os.path.splitext(_fn_h)[0]
                 if _b_h in _cfg_h_eas:
                     continue  # config 有（正常 — 唔好亂刪）
@@ -4159,18 +4161,18 @@ def api_deploy():
                 if time.time() - os.path.getctime(_fp_h) < 120:  # 2 分鐘內出現 = 彈返
                     try:
                         os.remove(_fp_h)
-                        print(f"[API] 部署後自癒: 已刪除彈返嘅 {_fn_h}", flush=True)
+                        print(f"[API] deploy後自癒: 已delete彈返嘅 {_fn_h}", flush=True)
                     except Exception:
                         pass
     except Exception as _edh:
-        print(f"[API] ⚠️ 部署後自癒失敗: {_edh}", flush=True)
+        print(f"[API] [WARN] deploy後自癒failed: {_edh}", flush=True)
 
-    return jsonify({"success": True, "message": f"🚀 Deploying {ea_name} -> {symbol} {tf}"})
+    return jsonify({"success": True, "message": f"[GO] Deploying {ea_name} -> {symbol} {tf}"})
 
 @app.route('/api/bind-account', methods=['POST'])
 @login_required
 def api_bind_account():
-    """綁定當前 MT5 account 到用戶"""
+    """綁定當前 MT5 account 到user"""
     data = request.json
     action = data.get('action', 'bind')
     
@@ -4180,7 +4182,7 @@ def api_bind_account():
             acc = _auto_trade_cache.get("account_info", {})
         login = acc.get('login', '')
         if not login:
-            return jsonify({"success": False, "error": "MT5 未登入或無法獲取 account info"})
+            return jsonify({"success": False, "error": "MT5 未登入或cannot獲取 account info"})
         current_user.bound_account = login
         db.session.commit()
         return jsonify({"success": True, "bound_account": login})
@@ -4194,7 +4196,7 @@ def api_bind_account():
 
 @app.route('/health')
 def health():
-    """健康檢查 — 單實例守衛 + 監控用"""
+    """健康檢查 — single-instance guard + 監控用"""
     return jsonify({"ok": True, "port": int(os.environ.get('PORT', 5000))})
 
 @app.route('/api/verify-mt5', methods=['POST'])
@@ -4219,7 +4221,7 @@ def api_verify_mt5():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
 
-    # ─── 單實例守衛：如果 :port 已經有 healthy server，退出唔重複啟動 ───
+    # ─── single-instance guard：如果 :port 已經有 healthy server，退出唔重複start ───
     # 解決 Hermes auto-restart 造成多個 server duplicates 搶 port 嘅問題
     import socket as _sock
     import urllib.request as _urllib
@@ -4231,17 +4233,17 @@ if __name__ == '__main__':
             return False
 
     if _port_has_healthy_server(port):
-        print(f"⚠️  :{port} 已經有 healthy server 運行緊，呢個 instance 退出（單實例守衛）")
+        print(f"[WARN]  :{port} 已經有 healthy server running緊，this instance exits（single-instance guard）")
         sys.exit(0)
 
     # Bind 測試：確保我哋先霸到 port（防止 race condition）
-    # ⚠️ 唔可以用 SO_REUSEADDR — Windows 上呢個 flag 允許兩個 process bind 同一 port（之前 duplicates 根源）
+    # [WARN] 唔可以用 SO_REUSEADDR — Windows 上呢個 flag 允許兩個 process bind 同一 port（before duplicates 根源）
     try:
         _probe = _sock.socket(_sock.AF_INET, _sock.SOCK_STREAM)
         _probe.bind(('0.0.0.0', port))
         _probe.close()
     except OSError:
-        print(f"⚠️  :{port} 被佔用，呢個 instance 退出")
+        print(f"[WARN]  :{port} 被佔用，this instance exits")
         sys.exit(0)
 
     print(f"☁️  Tradotcom Server :{port}")

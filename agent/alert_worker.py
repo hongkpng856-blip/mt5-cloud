@@ -9,6 +9,8 @@
 # ============================================================
 import os
 import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+import sys
 import json
 import time
 import socket
@@ -18,7 +20,7 @@ AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 SHOW_FLAG = os.path.join(AGENT_DIR, '.ai_control.show')
 STEPS_FLAG = os.path.join(AGENT_DIR, '.ai_control.steps')
 
-# 🚨 2026-08-12：單實例守衛（防雙視窗 — 用戶投訴「兩個相同嘅嘢」）
+# [ALERT] 2026-08-12：單實例守衛（防雙視窗 — 用戶投訴「兩個相同嘅嘢」）
 # 用 bind port 5004（同 detector 5003 模式一致 — process 死咗 port 自動釋放）
 _SINGLE_PORT = 5004
 try:
@@ -26,7 +28,7 @@ try:
     _sock.bind(('127.0.0.1', _SINGLE_PORT))
     _sock.listen(1)
 except OSError:
-    print(f'⚠️ :{_SINGLE_PORT} 已有 alert_worker 運行緊，呢個 instance 退出（單實例守衛）')
+    print(f'[WARN] :{_SINGLE_PORT} alert_worker already running, this instance exits (single-instance guard)')
     sys.exit(0)
 
 # 窗口狀態
@@ -38,7 +40,7 @@ _last_sig = None
 def build_window(root):
     """建立警告視窗（右下角固定位置 — 唔遮 MT5 操作區）
     2026-08-12 UI 專業化：統一間距（16px 網格）+ 自訂警告 icon（唔用 default tkinter）"""
-    # 🔐 2026-08-31 指紋：讀 agent_config.json 攞 account — title 顯示「邊個 account 嘅 AI 控制」
+    # [FP] 2026-08-31 指紋：讀 agent_config.json 攞 account — title 顯示「邊個 account 嘅 AI 控制」
     _fp_acc = ''
     try:
         _cfg_fp = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent', 'agent_config.json')
@@ -59,7 +61,7 @@ def build_window(root):
     except Exception:
         root.geometry(f'{W}x{H}+1200+560')
     root.resizable(False, False)
-    # 🚨 2026-08-11：鎖死最小+最大（內容驅動自動 resize 根治 — 用戶話視窗大細抖動仲有）
+    # [ALERT] 2026-08-11：鎖死最小+最大（內容驅動自動 resize 根治 — 用戶話視窗大細抖動仲有）
     root.minsize(W, H)
     root.maxsize(W, H)
     root.overrideredirect(False)
@@ -67,7 +69,7 @@ def build_window(root):
     # 背景
     root.configure(bg='#1e1e2e')
 
-    # 自訂 icon（⚠️ 2026-08-12 專業化：綠色圓形 + 白色「!」警告符號 — 唔用 default tkinter 羽毛 / 像素圖案）
+    # 自訂 icon（[WARN] 2026-08-12 專業化：綠色圓形 + 白色「!」警告符號 — 唔用 default tkinter 羽毛 / 像素圖案）
     try:
         from PIL import Image, ImageDraw, ImageTk
         _img = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
@@ -123,8 +125,8 @@ def build_window(root):
     root._done_btn = tk.Button(root._btn_frame, text='確定', font=('Microsoft JhengHei', 12, 'bold'),
                                fg='#fff', bg='#34d399', activebackground='#10b981', activeforeground='#fff',
                                relief='flat', bd=0, cursor='hand2', width=10, pady=6)
-    # 🚨 2026-08-12 FIX：確定撳咗 → withdraw + reset shown（否則下次 flag 寫 → if not shown False → 唔 deiconify → 視窗永遠隱藏 →「冇出現警告視窗」）
-    # 🚨 2026-08-13 FIX：確定 → 刪 SHOW_FLAG（.ai_control.show — 唔刪 → 下一 round poll has_flag=True → 又彈出嚟！「確定完又彈」根源）
+    # [ALERT] 2026-08-12 FIX：確定撳咗 → withdraw + reset shown（否則下次 flag 寫 → if not shown False → 唔 deiconify → 視窗永遠隱藏 →「冇出現警告視窗」）
+    # [ALERT] 2026-08-13 FIX：確定 → 刪 SHOW_FLAG（.ai_control.show — 唔刪 → 下一 round poll has_flag=True → 又彈出嚟！「確定完又彈」根源）
     def _done_close():
         global shown
         root.withdraw()
@@ -147,12 +149,12 @@ def emergency_stop(root):
     try:
         with open(os.path.join(AGENT_DIR, '.ai_control.abort'), 'w', encoding='utf-8') as f:
             f.write('1')
-        print('[alert_worker] 緊急停止已觸發', flush=True)
+        print('[alert_worker] EMERGENCY STOP triggered', flush=True)
     except Exception:
         pass
     root.withdraw()
-    shown = False  # 🚨 2026-08-12 FIX：reset shown（下次 flag 可以再顯示）
-    # 🚨 2026-08-13 FIX：緊急停止都刪 SHOW_FLAG（唔刪 → 下一 round poll has_flag=True → 又彈出嚟）
+    shown = False  # [ALERT] 2026-08-12 FIX：reset shown（下次 flag 可以再顯示）
+    # [ALERT] 2026-08-13 FIX：緊急停止都刪 SHOW_FLAG（唔刪 → 下一 round poll has_flag=True → 又彈出嚟）
     try:
         if os.path.isfile(SHOW_FLAG):
             os.remove(SHOW_FLAG)
@@ -178,7 +180,7 @@ _last_render_key = None
 
 def render_steps(root, data):
     """渲染步驟（累積 — 唔消失）
-    🚨 2026-08-11 修：① 內容一樣 → skip ② 增量更新 ③ 預留固定行數（步驟加/減 — 空行填補 — 內容位置唔跳 — 用戶投訴抖動）"""
+    [ALERT] 2026-08-11 修：① 內容一樣 → skip ② 增量更新 ③ 預留固定行數（步驟加/減 — 空行填補 — 內容位置唔跳 — 用戶投訴抖動）"""
     global _last_render_key
     key = json.dumps(data, ensure_ascii=False)
     if key == _last_render_key:
@@ -224,7 +226,7 @@ def main():
         try:
             root.update_idletasks()
             root.update()
-            # 🚨 2026-08-11 修：只喺「偏離」先修正（唔係每 round set — 之前每 round set 觸發 re-layout 抖動；唔 set 又會內容少時縮細）
+            # [ALERT] 2026-08-11 修：只喺「偏離」先修正（唔係每 round set — 之前每 round set 觸發 re-layout 抖動；唔 set 又會內容少時縮細）
             # 2026-08-12 UI 專業化：新尺寸 380×410
             try:
                 _w = root.winfo_width()
@@ -251,7 +253,7 @@ def main():
             has_fail = any('失敗' in (s.get('text', '') if isinstance(s, dict) else '') for s in steps)
 
             if has_flag:
-                # 🚨 新任務偵測（flag 內容變咗 / 有 doing 步驟）→ 重置按鈕狀態
+                # [ALERT] 新任務偵測（flag 內容變咗 / 有 doing 步驟）→ 重置按鈕狀態
                 if sig != _last_sig or has_doing:
                     _last_sig = sig
                     _all_done_shown = False
@@ -274,7 +276,7 @@ def main():
                         else:
                             root._status_label.config(text='已完成', fg='#34d399')
             else:
-                # flag 冇 — 視窗唔自動關（用戶撳確定先關）— 🚨 2026-08-12 FIX：都要 render（steps 完成後顯示「已完成」+ 確定 — 唔停留舊內容）
+                # flag 冇 — 視窗唔自動關（用戶撳確定先關）— [ALERT] 2026-08-12 FIX：都要 render（steps 完成後顯示「已完成」+ 確定 — 唔停留舊內容）
                 if shown:
                     render_steps(root, steps)
                     if all_done and not _all_done_shown:
@@ -286,7 +288,7 @@ def main():
                         else:
                             root._status_label.config(text='已完成', fg='#34d399')
         except tk.TclError:
-            # 🚨 2026-08-29 FIX：TclError 唔好 break（之前 break → process 死 → 警告視窗永遠冇 → 用戶投訴「警告視窗冇彈」）
+            # [ALERT] 2026-08-29 FIX：TclError 唔好 break（之前 break → process 死 → 警告視窗永遠冇 → 用戶投訴「警告視窗冇彈」）
             # WM_CLOSE / 視窗被銷毀 → root.update() 拋 TclError → 之前 break 成個 loop → alert_worker 死
             # 修復：記錄 + 重建視窗（保持 process 生存 — 下次 flag 再彈）
             try:
@@ -316,7 +318,7 @@ def main():
                 time.sleep(2.0)
                 continue
         except Exception as _e:
-            # 🚨 2026-08-12 FIX：唔好食晒 exception — 記錄（診斷「可視化步驟停咗」）
+            # [ALERT] 2026-08-12 FIX：唔好食晒 exception — 記錄（診斷「可視化步驟停咗」）
             try:
                 import traceback as _tb2
                 print(f'[alert_worker] loop error: {_e}', flush=True)
@@ -329,7 +331,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # 🚨 crash log（死因記錄）
+    # [ALERT] crash log（死因記錄）
     try:
         main()
     except Exception as _e:

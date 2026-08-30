@@ -7,11 +7,13 @@
 """
 import json
 import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+import sys
 import time
 import threading
 import sqlite3
 import os
-import re  # 🚨 2026-08-13：熱鍵掃描用（deployed 判斷）
+import re  # [ALERT] 2026-08-13：熱鍵掃描用（deployed 判斷）
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
@@ -31,7 +33,7 @@ status_cache = {
 
 
 def load_ea_config():
-    """直接讀 SQLite DB 攞 EA config（🚨 2026-08-12 修：合併所有用戶 config — 之前 hardcode 'dev' 得 0 keys）"""
+    """直接讀 SQLite DB 攞 EA config（[ALERT] 2026-08-12 修：合併所有用戶 config — 之前 hardcode 'dev' 得 0 keys）"""
     cfg = {}
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -79,7 +81,7 @@ def compute_signals():
         status_cache["timestamp"] = time.time()
         return
 
-    # 🚨 2026-08-12：initialize 完即刻攞 account info（EA 計算後可能 disconnect — account_info 返回 None）
+    # [ALERT] 2026-08-12：initialize 完即刻攞 account info（EA 計算後可能 disconnect — account_info 返回 None）
     account = ""
     account_info_full = {}
     try:
@@ -154,7 +156,7 @@ def compute_signals():
             results.append({'ea': ea, 'symbol': cfg.get(ea, ''), 'tf': cfg.get(ea + '_tf', 'H1'),
                             'sma10': 0, 'sma30': 0, 'signal': 'ERROR', 'alive': False, 'error': str(e)})
 
-    # 🚨 2026-08-12：account_info 已喺 initialize 後攞（上面）— 唔使再攞
+    # [ALERT] 2026-08-12：account_info 已喺 initialize 後攞（上面）— 唔使再攞
     mt5.shutdown()
 
     status_cache["results"] = results
@@ -178,7 +180,7 @@ def scan_ea_inventory():
             exp = os.path.join(data_dir, d, 'MQL5', 'Experts')
             if os.path.isdir(exp):
                 experts_dirs.append(exp)
-            scr = os.path.join(data_dir, d, 'MQL5', 'Scripts')  # 🚨 2026-08-18：Script 類型 EA（如 OpenChart）都掃
+            scr = os.path.join(data_dir, d, 'MQL5', 'Scripts')  # [ALERT] 2026-08-18：Script 類型 EA（如 OpenChart）都掃
             if os.path.isdir(scr):
                 experts_dirs.append(scr)
 
@@ -186,7 +188,7 @@ def scan_ea_inventory():
     # （Free Robots/Examples/Advisors — 樣本 EA 唔應該顯示）
     eas = {}
     for exp_dir in experts_dirs:
-        # 🚨 2026-08-21 FIX（用戶要求「我的配對庫唔顯示 script — 只顯示 EA」）：標記 Scripts 目錄 = script
+        # [ALERT] 2026-08-21 FIX（用戶要求「我的配對庫唔顯示 script — 只顯示 EA」）：標記 Scripts 目錄 = script
         _is_scr_dir = 'Scripts' in exp_dir
         scan_dirs = [exp_dir]
         for scan_dir in scan_dirs:
@@ -205,10 +207,10 @@ def scan_ea_inventory():
                         'size': stat.st_size,
                         'modified': time.strftime('%Y-%m-%d %H:%M', time.localtime(stat.st_mtime)),
                         'path': path,
-                        'is_script': _is_scr_dir  # 🚨 Scripts 目錄 = script（前端配對庫過濾用）
+                        'is_script': _is_scr_dir  # [ALERT] Scripts 目錄 = script（前端配對庫過濾用）
                     }
 
-    # 🚨 2026-08-13 改：deployed 判斷用熱鍵（hotkeys.ini — 實際部署配置 — 唔靠歷史 log）
+    # [ALERT] 2026-08-13 改：deployed 判斷用熱鍵（hotkeys.ini — 實際部署配置 — 唔靠歷史 log）
     # （歷史 log 永遠有舊記錄 → 刪除咗/未部署嘅 EA 都話已部署 — 用戶質疑「點解偵測到 EURUSD」）
     # 熱鍵有 = 部署過（配對時分配 — 刪除時 release）— 比 log 準確
     attached = {}
@@ -271,7 +273,7 @@ def scan_ea_inventory():
             'tf': cfg_st.get('tf', attached.get(name, {}).get('tf', '')),
             'lot': cfg_st.get('lot', 1),
             'magic': cfg_st.get('magic', ''),
-            'is_script': info.get('is_script', False),  # 🚨 Scripts 目錄標記（前端配對庫過濾用）
+            'is_script': info.get('is_script', False),  # [ALERT] Scripts 目錄標記（前端配對庫過濾用）
         })
 
     return {
@@ -326,7 +328,7 @@ class DetectorHandler(BaseHTTPRequestHandler):
 # （避開 HTTPS tunnel fetch HTTP localhost 嘅混合內容封鎖）
 # ============================================================
 STATIC_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server', 'static', 'detector'))
-# 🚨 2026-08-28 FIX（配對庫冇更新 — detector 寫錯位置）：detector 喺 TradotcomAgent → STATIC_DIR = AppData/Local/server/static/detector（錯！）
+# [ALERT] 2026-08-28 FIX（配對庫冇更新 — detector 寫錯位置）：detector 喺 TradotcomAgent → STATIC_DIR = AppData/Local/server/static/detector（錯！）
 # → server 讀 Desktop/mt5-cloud/server/static/detector（開發目錄）→ 兩個位置唔同步 → 配對庫永遠讀舊檔
 # → 修正：如果 detector 喺 TradotcomAgent（安裝位置 — %LOCALAPPDATA%）→ 強制用開發目錄
 #   （唔可以用「目錄唔存在」判斷 — AppData/Local/server/static/detector 之前寫過 — 目錄已存在 → 唔觸發 fallback）
@@ -391,7 +393,7 @@ def loop():
     loop_count = 0
     while True:
         try:
-            # 🚨 2026-08-14：rescan.flag（網頁「重新整理」寫入）→ 即刻掃描 — 唔等 5 秒週期
+            # [ALERT] 2026-08-14：rescan.flag（網頁「重新整理」寫入）→ 即刻掃描 — 唔等 5 秒週期
             try:
                 _rs_flag = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', 'rescan.flag')
                 if os.path.isfile(_rs_flag):
@@ -423,7 +425,7 @@ if __name__ == '__main__':
         _probe.bind(('0.0.0.0', 5003))
         _probe.close()
     except OSError:
-        print("⚠️  :5003 已有 detector 運行緊，呢個 instance 退出（單實例守衛）")
+        print("[WARN]  :5003 detector already running, this instance exits (single-instance guard)")
         sys.exit(0)
 
     print("📡 Auto-Trade Detector :5003")

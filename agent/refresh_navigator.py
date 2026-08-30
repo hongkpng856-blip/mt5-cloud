@@ -10,6 +10,8 @@ MT5 Navigator Auto-Refresh — 檔案目錄變化後自動 refresh Navigator pan
 3. 關閉（交叉咗）— 嘗試用 Ctrl+N / Alt+V+N / WM_COMMAND 開返
 """
 import sys
+import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import time
 import ctypes
 import ctypes.wintypes
@@ -107,7 +109,7 @@ def refresh_navigator(max_retries=3):
 
     mt5_pid = find_mt5_pid()
     if not mt5_pid:
-        print("❌ MT5 唔係運行緊")
+        print("[FAIL] MT5 is not running")
         return False
 
     # 安全防護 helper（用戶要求 2026-08：避免撳到電腦其他嘢）
@@ -127,7 +129,7 @@ def refresh_navigator(max_retries=3):
         for _h in _pt_found:
             ctypes.windll.user32.SetWindowPos(ctypes.c_void_p(_h), 0, _sw - 520, 0, 500, 400, 0x0004 | 0x0040)
         if _pt_found:
-            print("📌 DeskIn 已移去右上角（唔遮 MT5）")
+            print("[PIN] DeskIn moved to top-right (does not block MT5)")
             time.sleep(0.5)
     except Exception:
         pass
@@ -146,23 +148,23 @@ def refresh_navigator(max_retries=3):
 
     def _safe_click(x, y, button='left'):
         if not _is_mt5_window(x, y):
-            print(f"⚠️ [安全防護] ({x},{y}) 目標唔係 MT5 — 跳過")
+            print(f"[WARN] [SAFETY] ({x},{y}) target is not MT5 - skipped")
             return False
         _pg.click(x, y, button=button)
         return True
 
     for attempt in range(max_retries):
         try:
-            # 🚨 2026-08-10 修：唔用 acquire/release（背景 Navigator refresh 每次彈視窗 → 完成後都彈 → 抽搐 — 用戶投訴）
+            # [ALERT] 2026-08-10 修：唔用 acquire/release（背景 Navigator refresh 每次彈視窗 → 完成後都彈 → 抽搐 — 用戶投訴）
             # 淨保留 check_abort（緊急停止支援）
             from control_guard import check_abort, ControlAborted
             try:
                 return _do_refresh(mt5_pid, attempt)
             except ControlAborted:
-                print("🚨 Navigator refresh 被用戶緊急停止！")
+                print("[ALERT] Navigator refresh EMERGENCY STOPPED by user!")
                 return False
         except Exception as e:
-            print(f"⚠️ refresh attempt {attempt+1} failed: {e}")
+            print(f"[WARN] refresh attempt {attempt+1} failed: {e}")
             try:
                 import pyautogui as _pg
                 _pg.press('esc')
@@ -175,7 +177,7 @@ def refresh_navigator(max_retries=3):
 def _do_refresh(mt5_pid, attempt):
     """實際 refresh 邏輯（被 control_guard 包住）"""
     import pyautogui as _pg
-    # ⚠️ 統一 Navigator 位置（2026-08 用戶要求：操作前 Navigator 最大 + 固定位置）
+    # [WARN] 統一 Navigator 位置（2026-08 用戶要求：操作前 Navigator 最大 + 固定位置）
     try:
         import auto_attach as _aa
         _aa.ensure_navigator_unified(mt5_pid)
@@ -192,13 +194,13 @@ def _do_refresh(mt5_pid, attempt):
         # Step 1: 搵 Navigator tree（docked 或 floating）
         trees = _find_tree_views()
         if not trees:
-            print("⚠️ 搵唔到 Navigator tree（可能閂咗），嘗試開啟...")
+            print("[WARN] Navigator tree not found (maybe closed), trying to open...")
             _open_navigator(user32)
             time.sleep(3)
             check_abort()
             trees = _find_tree_views()
             if not trees:
-                print("⚠️ 開唔到 Navigator panel")
+                print("[WARN] Cannot open Navigator panel")
                 time.sleep(2)
                 return False
 
@@ -246,10 +248,10 @@ def _do_refresh(mt5_pid, attempt):
             pass
 
         if not popup_hwnd[0]:
-            print("⚠️ 搵唔到 popup menu — 改用「關閉再開 Navigator」fallback")
+            print("[WARN] Popup menu not found - using close-reopen Navigator fallback")
             _pg.press('esc')
             time.sleep(2)
-            # 🚨 2026-08-28（用戶要求：right-click refresh 唔可靠 → 用更可靠動作）：
+            # [ALERT] 2026-08-28（用戶要求：right-click refresh 唔可靠 → 用更可靠動作）：
             # fallback = 關閉 Navigator 再重新開啟（menu toggle）→ Navigator 重新載入 → 新 EA 顯示
             return _toggle_navigator_refresh(mt5_pid)
         check_abort()
@@ -262,14 +264,14 @@ def _do_refresh(mt5_pid, attempt):
         _pg.click(click_x, click_y)
         time.sleep(3)
 
-        print(f"🔄 Navigator refreshed (right-click → 刷新) at ({click_x},{click_y})")
+        print(f"[RETRY] Navigator refreshed (right-click → 刷新) at ({click_x},{click_y})")
         return True
     finally:
         pass  # 警告視窗全程顯示 — 由 acquire/release 控制（Bug #72）
 
 
 def _toggle_navigator_refresh(mt5_pid):
-    """🚨 2026-08-28（用戶要求：right-click refresh 唔可靠）：
+    """[ALERT] 2026-08-28（用戶要求：right-click refresh 唔可靠）：
     用「關閉再開 Navigator」代替 right-click refresh — menu toggle（查看 → 導航）兩次
     → Navigator 重新載入 → 新 EA 顯示（比 right-click 刷新可靠 — 唔依賴 popup menu 位置/內容）
     """
@@ -294,12 +296,12 @@ def _toggle_navigator_refresh(mt5_pid):
         # 驗證 Navigator 開返
         _trees = _find_tree_views()
         if _trees:
-            print(f"🔄 Navigator 已重開（menu toggle — 重新載入，{len(_trees)} 個 tree）")
+            print(f"[RETRY] Navigator 已重開（menu toggle — 重新載入，{len(_trees)} 個 tree）")
             return True
-        print("⚠️ Navigator 重開後搵唔到 tree — 可能關閉咗（用戶手動閂咗？）")
+        print("[WARN] Navigator 重開後搵唔到 tree — 可能關閉咗（用戶手動閂咗？）")
         return False
     except Exception as _e_tg:
-        print(f"⚠️ 關閉再開 Navigator 失敗: {_e_tg}")
+        print(f"[WARN] 關閉再開 Navigator 失敗: {_e_tg}")
         return False
 
 

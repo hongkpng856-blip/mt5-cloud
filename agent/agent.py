@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tradotcom Agent — 可靠嘅 EA 部署 + Auto-Attach
+Tradotcom Agent — 可靠嘅 EA deploy + Auto-Attach
 
 核心改進：
 - auto_attach_ea(): 開 chart + Navigator double-click + AutoTrading check
@@ -10,6 +10,8 @@ Tradotcom Agent — 可靠嘅 EA 部署 + Auto-Attach
 """
 import os
 import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+import sys
 import time
 import struct
 import subprocess
@@ -18,18 +20,18 @@ import json
 
 # === Config ===
 import sys as _sys0, os as _os0, traceback as _tb0
-# 🚨 2026-08-27 FIX：強制 stdout/stderr UTF-8（pyw 啟動時 cp950 唔支持 emoji → UnicodeEncodeError crash）
+# [ALERT] 2026-08-27 FIX：強制 stdout/stderr UTF-8（pyw start時 cp950 唔支持 emoji → UnicodeEncodeError crash）
 try:
     _sys0.stdout.reconfigure(encoding='utf-8', errors='replace')
     _sys0.stderr.reconfigure(encoding='utf-8', errors='replace')
 except Exception:
     pass
 
-# 🚨 2026-08-27（方案 A 防雙開）：一部機一個 agent
-# lock 檔（%LOCALAPPDATA%\TradotcomAgent\agent.lock）記錄本機 agent_id + PID
-# 啟動時：如果有其他 agent 行緊 → 阻止（唔啟動）→ 彈窗話用戶
+# [ALERT] 2026-08-27（方案 A 防雙開）：一部機一個 agent
+# lock 檔（%LOCALAPPDATA%\TradotcomAgent\agent.lock）記錄local agent_id + PID
+# start時：如果有其他 agent 行緊 → 阻止（唔start）→ 彈窗話user
 def _check_machine_lock(_my_agent_id):
-    """本機防雙開：檢查有冇其他 agent 行緊（lock 檔 + PID 驗證）"""
+    """local防雙開：檢查有冇其他 agent 行緊（lock 檔 + PID 驗證）"""
     try:
         _lock_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
         _lock_f = os.path.join(_lock_dir, 'agent.lock')
@@ -44,12 +46,12 @@ def _check_machine_lock(_my_agent_id):
             # 如果 lock 係自己 → 允許（重啟場景）
             if _other_id == _my_agent_id:
                 return True
-            # 檢查其他 agent 仲行緊（PID 存在）
+            # 檢查其他 agent 仲行緊（PID exists）
             if _other_pid:
                 try:
                     import psutil
                     if psutil.pid_exists(_other_pid):
-                        print(f"🚫 本機已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止啟動")
+                        print(f"🚫 local已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止start")
                         print(f"   （一部機一個 Agent — 如需更換請先停現有 Agent）")
                         # 寫 log + 彈窗
                         try:
@@ -63,7 +65,7 @@ def _check_machine_lock(_my_agent_id):
                     try:
                         _out = subprocess.check_output(['tasklist', '/FI', f'PID eq {_other_pid}'], creationflags=0x08000000 if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0).decode('utf-8', 'ignore')
                         if str(_other_pid) in _out and 'python' in _out.lower():
-                            print(f"🚫 本機已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止啟動")
+                            print(f"🚫 local已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止start")
                             return False
                     except Exception:
                         pass
@@ -73,14 +75,14 @@ def _check_machine_lock(_my_agent_id):
                 os.makedirs(_lock_dir, exist_ok=True)
             with open(_lock_f, 'w', encoding='utf-8') as _lf:
                 _lf.write(json.dumps({"agent_id": _my_agent_id, "pid": os.getpid(), "ts": time.time(),
-                                      # 🔐 2026-08-31 指紋：lock 帶 account
+                                      # [FP] 2026-08-31 fingerprint：lock 帶 account
                                       "account": os.environ.get('MT5_CLOUD_ACCOUNT', 'unknown')}))
         except Exception:
             pass
         return True
     except Exception:
-        return True  # 檢查失敗 → 放行（保守）
-# 🚨 2026-08-26（安裝診斷）：agent.py 啟動即寫 log — pythonw 靜默任何 error 都記低
+        return True  # 檢查failed → 放行（保守）
+# [ALERT] 2026-08-26（安裝診斷）：agent.py start即寫 log — pythonw 靜默任何 error 都記低
 try:
     _alog = os.path.join(os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd(), "agent_launcher.log")
     with open(_alog, "a", encoding="utf-8") as _lf:
@@ -102,7 +104,7 @@ try:
 except Exception as _e_mt5:
     try:
         with open(_alog, "a", encoding="utf-8") as _lf:
-            _lf.write(f"[{time.strftime('%H:%M:%S')}] ❌ MetaTrader5 import 失敗: {_e_mt5}\n{_tb0.format_exc()}\n")
+            _lf.write(f"[{time.strftime('%H:%M:%S')}] [FAIL] MetaTrader5 import failed: {_e_mt5}\n{_tb0.format_exc()}\n")
     except Exception:
         pass
     _sys0.exit(2)
@@ -119,8 +121,8 @@ MT5_COMMON_FILES = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Te
 # === Check MT5 availability ===
 mt5_available = False
 try:
-    # 🚨 2026-08-27 FIX：MT5_DATA 唔可以 hardcode（第二部機 hash 唔同）
-    # → 動態搵 Terminal 目錄（APPDATA/MetaQuotes/Terminal/<hash> 有 MQL5/Experts 嗰個）
+    # [ALERT] 2026-08-27 FIX：MT5_DATA 唔可以 hardcode（第二部機 hash 唔同）
+    # → 動態搵 Terminal dir（APPDATA/MetaQuotes/Terminal/<hash> 有 MQL5/Experts 嗰個）
     _found_mt5_dir = None
     try:
         _tbase = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -153,28 +155,28 @@ args, _ = parser.parse_known_args()
 SERVER_URL = args.server
 AGENT_ID = args.agent
 AGENT_TOKEN = args.token
-ACCOUNT_NAME = args.account  # 🔐 指紋：account username
+ACCOUNT_NAME = args.account  # [FP] fingerprint：account username
 _alog_write(f"args: server={SERVER_URL} agent={AGENT_ID} account={ACCOUNT_NAME or '?'}")
 if ACCOUNT_NAME:
-    _alog_write(f"🔐 [FINGERPRINT] 呢個係「{ACCOUNT_NAME}」account 嘅 Agent（agent_id={AGENT_ID}）")
-    print(f"🔐 [FINGERPRINT] Agent 屬於 account: {ACCOUNT_NAME}（{AGENT_ID}）")
+    _alog_write(f"[FP] [FINGERPRINT] 呢個係「{ACCOUNT_NAME}」account 嘅 Agent（agent_id={AGENT_ID}）")
+    print(f"[FP] [FINGERPRINT] Agent belongs to account: {ACCOUNT_NAME}（{AGENT_ID}）")
 
-# 🚨 2026-08-27（方案 A 防雙開）：本機已有其他 agent → 阻止啟動
+# [ALERT] 2026-08-27（方案 A 防雙開）：local已有其他 agent → 阻止start
 if not _check_machine_lock(AGENT_ID):
-    print(f"🚫 本機已有其他 Agent 行緊 — 拒絕啟動（一部機一個 Agent）")
-    _alog_write(f"🚫 防雙開阻止：本機已有其他 Agent 行緊")
-    # 彈窗話用戶
+    print(f"🚫 local已有其他 Agent 行緊 — refusedstart（一部機一個 Agent）")
+    _alog_write(f"🚫 防雙開阻止：local已有其他 Agent 行緊")
+    # 彈窗話user
     try:
-        _show_status_popup("🚫 Agent 已存在", f"本機已有另一個 Agent 行緊！\n\n一部機只可以一個 Agent。\n請先停止現有 Agent 再試。", False)
+        _show_status_popup("🚫 Agent 已exists", f"local已有另一個 Agent 行緊！\n\n一部機只可以一個 Agent。\n請先stop現有 Agent 再試。", False)
     except Exception:
         pass
     _sys0.exit(3)
 
 # === SocketIO client ===
 import socketio
-# 🚨 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）
+# [ALERT] 2026-08-26 FIX：Cloudflare Tunnel 擋「冇 User-Agent」請求（403）
 # → SocketIO client 帶瀏覽器 UA（tunnel WAF 唔俾冇 UA 嘅 polling）
-# 🚨 2026-08-27 FIX：http_session 唔係所有 socketio 版本支援 → try/except fallback
+# [ALERT] 2026-08-27 FIX：http_session 唔係所有 socketio 版本支援 → try/except fallback
 import requests as _req_ua
 _sess_ua = _req_ua.Session()
 _sess_ua.headers.update({"User-Agent": "Mozilla/5.0 TradotcomAgent/1.0"})
@@ -182,18 +184,18 @@ try:
     sio = socketio.Client(logger=False, engineio_logger=False, http_session=_sess_ua)
     _alog_write("socketio.Client OK (with http_session)")
 except Exception as _e_sio:
-    _alog_write(f"socketio.Client http_session 失敗: {_e_sio} → fallback 無 session")
+    _alog_write(f"socketio.Client http_session failed: {_e_sio} → fallback 無 session")
     sio = socketio.Client(logger=False, engineio_logger=False)
 ea_config_cache = {}
 ea_heartbeats = {}
-_popup_shown = False  # 🚨 2026-08-27：成功彈窗只彈一次
-_deals_cache = None  # 🚨 2026-08-27：deals 攞取 cache（60 秒）— 唔好每次 sync 攞全部（卡 → 斷線）
+_popup_shown = False  # [ALERT] 2026-08-27：success彈窗只彈一次
+_deals_cache = None  # [ALERT] 2026-08-27：deals 攞取 cache（60 秒）— 唔好每次 sync 攞全部（卡 → disconnect）
 _deals_cache_ts = 0
-_last_deals_sent = 0  # 🚨 2026-08-27：deals 傳送間隔（60 秒）— 減輕 sync payload
+_last_deals_sent = 0  # [ALERT] 2026-08-27：deals 傳送間隔（60 秒）— 減輕 sync payload
 
 def _show_status_popup(title, msg, ok):
-    """🚨 2026-08-26（安裝驗證）：tkinter 彈窗 — Agent 啟動連線成功/失敗顯示
-    成功 → 綠色「✅ Agent 已連接」；失敗 → 紅色「❌ 連線失敗」
+    """[ALERT] 2026-08-26（安裝驗證）：tkinter 彈窗 — Agent startconnectionsuccess/failed顯示
+    success → 綠色「[OK] Agent 已connect」；failed → 紅色「[FAIL] connectionfailed」
     background thread 唔可以整 tkinter — 要喺 main thread（用 threading queue 或者直接喺 main call）
     """
     try:
@@ -204,23 +206,23 @@ def _show_status_popup(title, msg, ok):
         root.attributes('-topmost', True)
         root.update()
         if ok:
-            messagebox.showinfo("✅ Agent 已連接", msg)
+            messagebox.showinfo("[OK] Agent 已connect", msg)
         else:
-            messagebox.showerror("❌ Agent 連線失敗", msg)
+            messagebox.showerror("[FAIL] Agent connectionfailed", msg)
         root.destroy()
     except Exception:
         pass
 
 
 def connect():
-    print(f"✅ Connected to {SERVER_URL}")
+    print(f"[OK] Connected to {SERVER_URL}")
     _alog_write(f"Connected to {SERVER_URL}")
     # Register with server → join agent room for deploy commands
     sio.emit('agent_register', {'agent_id': AGENT_ID, 'token': AGENT_TOKEN})
     print(f"   Registering as {AGENT_ID}...")
     _alog_write(f"Registering as {AGENT_ID}...")
-    # 🚨 2026-08-26（安裝驗證）：啟動成功 → 綠色彈窗（等 registered 確認先彈 — 用 thread 延遲）
-    # 🚨 2026-08-27 FIX：只彈一次（斷線重連唔再彈 — 每次 connect 都彈 = 「成日彈」）
+    # [ALERT] 2026-08-26（安裝驗證）：startsuccess → 綠色彈窗（等 registered 確認先彈 — 用 thread 延遲）
+    # [ALERT] 2026-08-27 FIX：只彈一次（disconnectreconnect唔再彈 — 每次 connect 都彈 = 「成日彈」）
     global _popup_shown
     if _popup_shown:
         return
@@ -229,18 +231,18 @@ def connect():
     def _pop_ok():
         time.sleep(1.5)
         if sio.connected:
-            _show_status_popup("✅ Agent 已連接", f"Tradotcom Agent 已成功連接伺服器\n\nAgent ID: {AGENT_ID}\n伺服器: {SERVER_URL}", True)
+            _show_status_popup("[OK] Agent 已connect", f"Tradotcom Agent 已successconnect伺服器\n\nAgent ID: {AGENT_ID}\n伺服器: {SERVER_URL}", True)
     _th_p.Thread(target=_pop_ok, daemon=True).start()
 
 def disconnect():
-    print("❌ Disconnected")
+    print("[FAIL] Disconnected")
 
 def on_registered(data):
-    print(f"🆔 Registered: {data}")
+    print(f"ID Registered: {data}")
     _alog_write(f"Registered: {str(data)[:100]}")
-    # 🚨 2026-08-26（安裝驗證）：註冊失敗（token 錯等）→ 紅色彈窗
+    # [ALERT] 2026-08-26（安裝驗證）：註冊failed（token 錯等）→ 紅色彈窗
     if isinstance(data, dict) and data.get('status') == 'error':
-        _show_status_popup("❌ Agent 連線失敗", f"伺服器拒絕註冊：{data.get('msg', 'token 可能唔啱')}\n\n請檢查 Agent ID 同 Token 是否正確", False)
+        _show_status_popup("[FAIL] Agent connectionfailed", f"伺服器refused註冊：{data.get('msg', 'token 可能唔啱')}\n\n請檢查 Agent ID 同 Token 是否正確", False)
     # Server auto-pushes install_ea_command on register
 
 sio.on('connect', connect)
@@ -249,7 +251,7 @@ sio.on('registered', on_registered)
 
 
 # ================================================================
-#  MT5 Bridge — 重啟 + 等待
+#  MT5 Bridge — 重啟 + wait
 # ================================================================
 
 def find_mt5_pid():
@@ -261,7 +263,7 @@ def find_mt5_pid():
     return None
 
 def wait_for_mt5(timeout=90):
-    """等 MT5 啟動完成"""
+    """等 MT5 startdone"""
     start = time.time()
     while time.time() - start < timeout:
         pid = find_mt5_pid()
@@ -295,10 +297,10 @@ def do_restart_mt5():
     if pid:
         # Extra wait for Navigator to fully load + refresh
         time.sleep(10)
-        print(f"✅ MT5 restarted, PID={pid}")
+        print(f"[OK] MT5 restarted, PID={pid}")
         return pid
     else:
-        print("❌ MT5 failed to restart")
+        print("[FAIL] MT5 failed to restart")
         # Try launching manually
         mt5_path = r"C:\Program Files\MetaTrader 5\terminal64.exe"
         if os.path.exists(mt5_path):
@@ -306,7 +308,7 @@ def do_restart_mt5():
             pid = wait_for_mt5(timeout=60)
             if pid:
                 time.sleep(10)
-                print(f"✅ MT5 launched manually, PID={pid}")
+                print(f"[OK] MT5 launched manually, PID={pid}")
                 return pid
         return None
 
@@ -329,12 +331,12 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
     from pywinauto.keyboard import send_keys
     
     print(f"\n{'='*50}")
-    print(f"  🚀 Auto-Attach: {ea_name} → {symbol} {timeframe}")
+    print(f"  [GO] Auto-Attach: {ea_name} → {symbol} {timeframe}")
     print(f"{'='*50}")
     
     # Step 1: Generate .tpl template
     tpl_path = generate_template(ea_name, symbol, timeframe, inputs)
-    print(f"📋 Template: {tpl_path} ({os.path.getsize(tpl_path)} bytes)")
+    print(f"[CLIP] Template: {tpl_path} ({os.path.getsize(tpl_path)} bytes)")
     
     # Step 2: Get or restart MT5
     if do_restart:
@@ -344,7 +346,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
     else:
         mt5_pid = find_mt5_pid()
         if not mt5_pid:
-            print("❌ MT5 not running")
+            print("[FAIL] MT5 not running")
             mt5_pid = do_restart_mt5()
             if not mt5_pid:
                 return False
@@ -353,35 +355,35 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
     # auto_attach.py runs as a separate process with full desktop access
     auto_attach_path = os.path.join(os.path.dirname(__file__), 'auto_attach.py')
     cmd = ['python', auto_attach_path, '--ea', ea_name, '--symbol', symbol, '--tf', 'H1']
-    print(f"🚀 Running auto_attach subprocess: {' '.join(cmd)}")
+    print(f"[GO] Running auto_attach subprocess: {' '.join(cmd)}")
     try:
         result = subprocess.run(cmd, timeout=300, capture_output=True, text=True, cwd=os.path.dirname(auto_attach_path), creationflags=subprocess.CREATE_NEW_CONSOLE)
         print(f"   Exit code: {result.returncode}")
         for line in result.stdout.split('\n'):
-            if any(kw in line for kw in ['🎉', '✅', '❌', '🟢', '🔴', '⚠️', '💓', '📋']):
+            if any(kw in line for kw in ['[DONE]', '[OK]', '[FAIL]', '[GREEN]', '[RED]', '[WARN]', '[HB]', '[CLIP]']):
                 print(f"   {line}")
         if result.returncode != 0:
             if result.stderr:
                 print(f"   Stderr: {result.stderr[-500:]}")
     except subprocess.TimeoutExpired:
-        print(f"⚠️ auto_attach.py timed out")
+        print(f"[WARN] auto_attach.py timed out")
         attached = False
     except Exception as e:
-        print(f"⚠️ auto_attach error: {e}")
+        print(f"[WARN] auto_attach error: {e}")
         attached = False
     else:
         attached = result.returncode == 0
     
     if not attached:
-        print("⚠️ Navigator attach failed (no MT5 restart — keeping existing charts alive)")
+        print("[WARN] Navigator attach failed (no MT5 restart — keeping existing charts alive)")
     
     if not attached:
-        print("❌ Failed to attach EA")
+        print("[FAIL] Failed to attach EA")
         return False
     
     # Step 4: Verify heartbeat
     hb_path = os.path.join(MT5_COMMON_FILES, f'hb_{ea_name}.txt')
-    print(f"⏳ Waiting for heartbeat...")
+    print(f"[WAIT] Waiting for heartbeat...")
     
     start = time.time()
     old_mtime = os.path.getmtime(hb_path) if os.path.exists(hb_path) else 0
@@ -395,7 +397,7 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
                     raw = f.read()
                 content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
                 age = time.time() - new_mtime
-                print(f"💓 {ea_name}: {content} ({round(age)}s ago) → 🟢 ALIVE")
+                print(f"[HB] {ea_name}: {content} ({round(age)}s ago) → [GREEN] ALIVE")
                 
                 # Verify EA log
                 mql5_log = os.path.join(MT5_DATA, 'MQL5', 'Logs', time.strftime('%Y%m%d') + '.log')
@@ -403,13 +405,13 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None, do_res
                     with open(mql5_log, 'r', encoding='utf-16-le', errors='replace') as f:
                         lines = f.readlines()
                     for line in reversed(lines[-20:]):
-                        if ea_name in line and ('啟動' in line or 'start' in line.lower()):
-                            print(f"📋 EA log: {line.strip()}")
+                        if ea_name in line and ('start' in line or 'start' in line.lower()):
+                            print(f"[CLIP] EA log: {line.strip()}")
                             break
                 
                 return True
     
-    print(f"❌ No heartbeat after {round(time.time()-start)}s")
+    print(f"[FAIL] No heartbeat after {round(time.time()-start)}s")
     return False
 
 
@@ -526,7 +528,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                 pass  # No active desktop (background process)
             time.sleep(0.5)
         except Exception as e:
-            print(f"⚠️ win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")
             time.sleep(5)
             continue
         
@@ -539,13 +541,13 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         has_charts = mdi and len(mdi.children()) > 0
         
         if not has_charts:
-            print("📋 No chart open, opening new one...")
+            print("[CLIP] No chart open, opening new one...")
             send_keys('^n')
             time.sleep(1)
             send_keys('{ENTER}')
             time.sleep(3)
         else:
-            print(f"📋 Chart already open, skipping Ctrl+N...")
+            print(f"[CLIP] Chart already open, skipping Ctrl+N...")
         
         # Step 2: Open Navigator panel DIRECTLY via ShowWindow
         # Much more reliable than menu clicks or keyboard shortcuts
@@ -568,10 +570,10 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             hwnd = nav_panel.element_info.handle
             user32.ShowWindow(hwnd, 5)  # SW_SHOW
             time.sleep(1)
-            print(f"📋 Navigator panel shown via ShowWindow")
+            print(f"[CLIP] Navigator panel shown via ShowWindow")
         else:
             # Fallback: WM_COMMAND 32808 (Navigator toggle command ID)
-            print(f"📋 Navigator panel not found, trying WM_COMMAND...")
+            print(f"[CLIP] Navigator panel not found, trying WM_COMMAND...")
             result = user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
             time.sleep(1.5)
         
@@ -583,13 +585,13 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                 break
         
         if not tree_view:
-            print(f"⚠️ No TreeView found (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] No TreeView found (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
         
         if not tree_view.is_visible():
-            print(f"⚠️ TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
             # Try WM_COMMAND as fallback
             user32.SendMessageW(win.element_info.handle, 0x0111, 32808, 0)
             time.sleep(1.5)
@@ -599,13 +601,13 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                     tree_view = d
                     break
             if not tree_view or not tree_view.is_visible():
-                print(f"⚠️ TreeView still not visible")
+                print(f"[WARN] TreeView still not visible")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
         
         tv_rect = tree_view.rectangle()
-        print(f"📋 TreeView visible={tree_view.is_visible()} rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
+        print(f"[CLIP] TreeView visible={tree_view.is_visible()} rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
         
         # Step 4: Navigate tree → Expand EA交易 → Select + ensure_visible
         try:
@@ -617,7 +619,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             children = root.children()
             if len(children) > 2:
                 ea_trading_node = children[2]  # Always 3rd child = Expert Advisors
-                print(f"📋 EA node by position: '{ea_trading_node.text()}'")
+                print(f"[CLIP] EA node by position: '{ea_trading_node.text()}'")
             if not ea_trading_node:
                 # Fallback: text match for common languages
                 for child in children:
@@ -627,7 +629,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                         break
             
             if not ea_trading_node:
-                print(f"⚠️ EA交易 node not found (attempt {attempt+1}/{max_retries})")
+                print(f"[WARN] EA交易 node not found (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
@@ -642,19 +644,19 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                     break
             
             if not ea_node:
-                print(f"⚠️ {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
+                print(f"[WARN] {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
                 if attempt < max_retries - 1:
                     time.sleep(5)
                 continue
             
-            print(f"🎯 Found {ea_name}, attaching via pyautogui double-click...")
+            print(f"[TARGET] Found {ea_name}, attaching via pyautogui double-click...")
             ea_node.select()
             time.sleep(0.3)
             ea_node.ensure_visible()
             time.sleep(0.5)
             
         except Exception as e:
-            print(f"⚠️ Tree navigation error: {e} (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] Tree navigation error: {e} (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
@@ -663,7 +665,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         # Use SendMessage (not SendInput) — works without window focus!
         found_dialog = False
         
-        print(f"🖱️ SendMessage WM_LBUTTONDBLCLK for {ea_name}...")
+        print(f"[MOUSE] SendMessage WM_LBUTTONDBLCLK for {ea_name}...")
         
         # Get TreeView client area for coordinate calculation
         tv_hwnd = tree_view.element_info.handle
@@ -710,7 +712,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
         
         dialogs = find_ea_dialog(ea_name)
         if dialogs:
-            print(f"🎉 {ea_name} Properties dialog found!")
+            print(f"[DONE] {ea_name} Properties dialog found!")
             found_dialog = True
             
             # Step 6: Confirm dialog (Enter)
@@ -732,12 +734,12 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
             if not auto_trading_on:
                 send_keys('^e')
                 time.sleep(2)
-                print("🔴 AutoTrading OFF → toggled ON")
+                print("[RED] AutoTrading OFF → toggled ON")
             else:
-                print("🟢 AutoTrading is ON")
+                print("[GREEN] AutoTrading is ON")
         else:
             # Fallback: scan more positions if first click missed
-            print(f"⚠️ First click didn't find {ea_name} dialog, scanning...")
+            print(f"[WARN] First click didn't find {ea_name} dialog, scanning...")
             # Close any wrong dialog
             send_keys('{ESC}')
             time.sleep(0.3)
@@ -751,7 +753,7 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                 time.sleep(0.5)
                 dialogs = find_ea_dialog(ea_name)
                 if dialogs:
-                    print(f"🎉 {ea_name} dialog found at client_y={client_y}!")
+                    print(f"[DONE] {ea_name} dialog found at client_y={client_y}!")
                     found_dialog = True
                     send_keys('{ENTER}')
                     time.sleep(2)
@@ -762,12 +764,12 @@ def attach_ea_navigator(ea_name, symbol, mt5_pid, max_retries=3):
                 time.sleep(0.3)
         
         if not found_dialog:
-            print(f"⚠️ {ea_name} dialog not found after full scan (attempt {attempt+1}/{max_retries})")
+            print(f"[WARN] {ea_name} dialog not found after full scan (attempt {attempt+1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(5)
             continue
     
-    print(f"❌ {ea_name} attach failed after {max_retries} attempts")
+    print(f"[FAIL] {ea_name} attach failed after {max_retries} attempts")
     return False
 
 
@@ -787,7 +789,7 @@ def on_install_ea(data):
         ea_config_cache.update(ea_config)
 
     if ea_name == 'all' and ea_list:
-        print(f"📥 Bulk install: {len(ea_list)} EAs (background)")
+        print(f"[IN] Bulk install: {len(ea_list)} EAs (background)")
         sys.stdout.flush()
         import threading
         def _do_install():
@@ -797,7 +799,7 @@ def on_install_ea(data):
         t.start()
         return
 
-    print(f"📥 Installing EA: {ea_name}")
+    print(f"[IN] Installing EA: {ea_name}")
     sys.stdout.flush()
     download_and_install(ea_name + '.mq5', url + ea_name + '.mq5', ea_config)
 
@@ -808,7 +810,7 @@ def on_install_ea(data):
 
 def download_and_install(ea_name, url, ea_config=None):
     """完整安裝流程：download → heartbeat inject → compile → preset → auto-attach"""
-    print(f"📥 Installing EA: {ea_name}")
+    print(f"[IN] Installing EA: {ea_name}")
     print(f"   Downloading from: {url}")
     try:
         import requests
@@ -857,7 +859,7 @@ def download_and_install(ea_name, url, ea_config=None):
                 if m and hb_var not in content:
                     idx = m.end()
                     content = content[:idx] + '\r\n' + oninit_inject + content[idx:]
-                    print(f"   💉 Heartbeat injected (OnInit)")
+                    print(f"   [INJECT] Heartbeat injected (OnInit)")
                 
                 # Find OnTick { and inject after it
                 m2 = re.search(r'(void\s+OnTick\s*\(\s*\)\s*\{)', content)
@@ -866,18 +868,18 @@ def download_and_install(ea_name, url, ea_config=None):
                     if content.count(f'GlobalVariableSet("{hb_var}"') < 2:
                         idx2 = m2.end()
                         content = content[:idx2] + '\r\n' + ontick_inject + content[idx2:]
-                        print(f"   💉 Heartbeat injected (OnTick)")
+                        print(f"   [INJECT] Heartbeat injected (OnTick)")
                 
                 with open(mq5_path, 'w', encoding='utf-8', newline='\r\n') as f:
                     f.write(content)
-                print(f"   💾 Saved: {mq5_path}")
+                print(f"   [SAVE] Saved: {mq5_path}")
                 
                 # === Compile (skip if .ex5 already exists) ===
-                # 🚨 2026-08-28 FIX：之前「.ex5 mtime > .mq5 先 skip」— 但心跳注入令 .mq5 永遠新過 .ex5 → 每次 Auto-sent 都 compile → MetaEditor 周不時彈出
-                # → 改為「.ex5 存在就 skip」（心跳注入只改 .mq5 內容 — .ex5 功能一樣 — 唔需要重新 compile）
+                # [ALERT] 2026-08-28 FIX：before「.ex5 mtime > .mq5 先 skip」— 但心跳注入令 .mq5 永遠新過 .ex5 → 每次 Auto-sent 都 compile → MetaEditor 周不時彈出
+                # → 改為「.ex5 exists就 skip」（心跳注入只改 .mq5 內容 — .ex5 功能一樣 — 唔需要重新 compile）
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
                 if os.path.exists(ex5_path):
-                    print(f"   ⏩ Skip compile: {base_name}.ex5 already exists")
+                    print(f"   [FFWD] Skip compile: {base_name}.ex5 already exists")
                 else:
                     import subprocess
                     metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
@@ -888,15 +890,15 @@ def download_and_install(ea_name, url, ea_config=None):
                             metaeditor, '/compile', mq5_path,
                             f'/log:{log_file}'
                         ], capture_output=True, timeout=120)
-                        # 🚨 2026-08-28 FIX：compile 完即刻關 MetaEditor（CLI /compile 都用 metaeditor64.exe — 留低會監察 Experts → 彈「外部修改」dialog）
+                        # [ALERT] 2026-08-28 FIX：compile 完immediately關 MetaEditor（CLI /compile 都用 metaeditor64.exe — 留低會監察 Experts → 彈「外部修改」dialog）
                         try:
                             subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
                         except Exception:
                             pass
                     except subprocess.TimeoutExpired:
-                        print(f"   ⚠️ Compile timeout (120s), but .ex5 may exist")
+                        print(f"   [WARN] Compile timeout (120s), but .ex5 may exist")
                         if os.path.exists(ex5_path):
-                            print(f"   ✅ .ex5 found despite timeout: {os.path.getsize(ex5_path)} bytes")
+                            print(f"   [OK] .ex5 found despite timeout: {os.path.getsize(ex5_path)} bytes")
                         # timeout 都關 MetaEditor
                         try:
                             subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
@@ -906,9 +908,9 @@ def download_and_install(ea_name, url, ea_config=None):
                 # Check .ex5
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
                 if os.path.exists(ex5_path):
-                    print(f"   ✅ Compiled: {base_name}.ex5 ({os.path.getsize(ex5_path)} bytes)")
+                    print(f"   [OK] Compiled: {base_name}.ex5 ({os.path.getsize(ex5_path)} bytes)")
                 else:
-                    print(f"   ❌ Compile failed (no .ex5)")
+                    print(f"   [FAIL] Compile failed (no .ex5)")
                     # Try reading compile log for errors
                     if os.path.exists(log_file):
                         try:
@@ -943,21 +945,21 @@ def download_and_install(ea_name, url, ea_config=None):
                     set_path = os.path.join(presets_dir, base_name + '.set')
                     with open(set_path, 'w') as f:
                         f.write(set_content)
-                    print(f"   📋 Preset: {set_path}")
+                    print(f"   [CLIP] Preset: {set_path}")
                     
-                    # === Skip deploy command for auto-sync (only 🚀 Deploy button writes it) ===
-                    # Auto-sync just compiles & registers EA. User 🚀 Deploy will trigger attach.
-                    print(f"   ✅ {base_name} compiled & registered. User 🚀 Deploy to attach.")
+                    # === Skip deploy command for auto-sync (only [GO] Deploy button writes it) ===
+                    # Auto-sync just compiles & registers EA. User [GO] Deploy will trigger attach.
+                    print(f"   [OK] {base_name} compiled & registered. User [GO] Deploy to attach.")
 
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
-                print("❌ Cannot find MT5 Experts folder")
+                print("[FAIL] Cannot find MT5 Experts folder")
                 sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": "MT5 not found"})
         else:
-            print(f"❌ Download failed: {resp.status_code}")
+            print(f"[FAIL] Download failed: {resp.status_code}")
             sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": f"HTTP {resp.status_code}"})
     except Exception as e:
-        print(f"❌ Install error: {e}")
+        print(f"[FAIL] Install error: {e}")
         sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
 
 
@@ -967,13 +969,13 @@ def download_and_install(ea_name, url, ea_config=None):
 
 @sio.on('deploy_ea')
 def on_deploy_ea(data):
-    print(f"🚀 [WS] Deploy: {data}")
+    print(f"[GO] [WS] Deploy: {data}")
     sys.stdout.flush()
     try:
         _alog_write(f"[WS] 收到 deploy_ea: {data.get('ea_name')} -> {data.get('symbol')}")
     except Exception:
         pass
-    # 🚨 2026-08-27 FIX：emit 收到 = 已經執行 — 即刻清 server deploy_queue（唔好俾 poll 又讀到 → 重複執行）
+    # [ALERT] 2026-08-27 FIX：emit 收到 = 已經執行 — immediately清 server deploy_queue（唔好俾 poll 又讀到 → 重複執行）
     try:
         import urllib.request as _ur_clr
         _poll_url_clr = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
@@ -984,29 +986,29 @@ def on_deploy_ea(data):
         pass
     try:
         execute_deploy(data)
-        _alog_write(f"[WS] execute_deploy 完成（冇 crash）")
+        _alog_write(f"[WS] execute_deploy done（冇 crash）")
     except Exception as _e_dep:
         _alog_write(f"[WS] execute_deploy crash: {str(_e_dep)[:150]}")
         import traceback
         traceback.print_exc()
 
 
-# 🚨 2026-08-28（用戶要求：網站可以剷除本機 agent）：收 server 'shutdown' 指令 → 清理 + 退出
-_shutdown_done = False  # 🚨 防重複執行（emit + poll 雙重觸發 → 第二次 crash → 通知 server 冇行）
+# [ALERT] 2026-08-28（user要求：網站可以removelocal agent）：收 server 'shutdown' 指令 → 清理 + 退出
+_shutdown_done = False  # [ALERT] 防重複執行（emit + poll 雙重觸發 → 第二次 crash → 通知 server 冇行）
 
 
 @sio.on('shutdown')
 def on_shutdown(data):
-    """Server 要求剷除本機 agent：清 lock/config/捷徑 → 通知 server → 退出"""
+    """Server 要求removelocal agent：清 lock/config/捷徑 → 通知 server → 退出"""
     global _shutdown_done
     if _shutdown_done:
-        print("⏭️ [WS] shutdown 已執行過 — skip（防重複）")
+        print("[NEXT] [WS] shutdown 已執行過 — skip（防重複）")
         return
     _shutdown_done = True
-    print("🚫 [WS] 收到 shutdown 指令 — 剷除本機 agent...")
+    print("🚫 [WS] 收到 shutdown 指令 — removelocal agent...")
     sys.stdout.flush()
     try:
-        _alog_write("[WS] 收到 shutdown（網站剷除 agent）")
+        _alog_write("[WS] 收到 shutdown（網站remove agent）")
     except Exception:
         pass
     try:
@@ -1015,22 +1017,22 @@ def on_shutdown(data):
         _lock_f = os.path.join(_agent_dir, 'agent.lock')
         if os.path.isfile(_lock_f):
             os.remove(_lock_f)
-            print("   ✅ agent.lock 已刪")
+            print("   [OK] agent.lock 已刪")
         # 刪 config
         _cfg_f = os.path.join(_agent_dir, 'agent_config.json')
         if os.path.isfile(_cfg_f):
             os.remove(_cfg_f)
-            print("   ✅ agent_config.json 已刪")
+            print("   [OK] agent_config.json 已刪")
         # 刪桌面捷徑
         try:
             import glob as _gl_sh
             for _lnk in _gl_sh.glob(os.path.join(os.path.expanduser('~'), 'Desktop', '*Tradotcom*Agent*.lnk')):
                 os.remove(_lnk)
-                print(f"   ✅ 捷徑已刪: {os.path.basename(_lnk)}")
+                print(f"   [OK] 捷徑已刪: {os.path.basename(_lnk)}")
         except Exception:
             pass
-        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：停平台服務（watcher/alert_worker/auto_trade_detector）
-        # ⚠️ 順序重要：先停服務（唔需要 agent.py）→ 最後先刪資料夾（rmtree 刪自己 — 之後 code 唔可以再行）
+        # [ALERT] 2026-08-28（user要求：remove = 全部清晒）：停平台服務（watcher/alert_worker/auto_trade_detector）
+        # [WARN] 順序重要：先停服務（唔需要 agent.py）→ 最後先刪資料夾（rmtree 刪自己 — after code 唔可以再行）
         try:
             import subprocess as _sp_sh
             for _pat_sh in ('deploy_watcher', 'alert_worker', 'auto_trade_detector'):
@@ -1038,11 +1040,11 @@ def on_shutdown(data):
                 _kill_sh = (f"Get-CimInstance Win32_Process | Where-Object {{$_.Name -match 'python' -and "
                             f"$_.CommandLine -match '{_pat_sh}'}} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }}")
                 _sp_sh.run(['powershell', '-NoProfile', '-Command', _kill_sh], capture_output=True, timeout=15)
-            print("   ✅ 平台服務已停（watcher/alert_worker/auto_trade_detector）")
+            print("   [OK] 平台服務已停（watcher/alert_worker/auto_trade_detector）")
         except Exception as _e_sp:
-            print(f"   ⚠️ 停平台服務失敗: {_e_sp}")
-        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：清測試殘留（pystray/Test tray + 其他 Tradotcom 相關 python）
-        # ⚠️ 唔可以 match 'TradotcomAgent' 路徑（自己都喺嗰度 → kill 自己 → 之後嘅嘢冇行）
+            print(f"   [WARN] 停平台服務failed: {_e_sp}")
+        # [ALERT] 2026-08-28（user要求：remove = 全部清晒）：清測試殘留（pystray/Test tray + 其他 Tradotcom 相關 python）
+        # [WARN] 唔可以 match 'TradotcomAgent' path（自己都喺嗰度 → kill 自己 → after嘅嘢冇行）
         # → 只清 pystray tray（唔係自己）— 其他 Tradotcom 相關由「刪資料夾」處理
         try:
             import subprocess as _sp_tr
@@ -1050,14 +1052,14 @@ def on_shutdown(data):
                          "$_.CommandLine -match 'pystray' -and $_.ProcessId -ne $PID} | "
                          "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }")
             _sp_tr.run(['powershell', '-NoProfile', '-Command', _kill_tr1], capture_output=True, timeout=15)
-            print("   ✅ 測試殘留已清（pystray tray）")
+            print("   [OK] 測試殘留已清（pystray tray）")
         except Exception as _e_tr:
-            print(f"   ⚠️ 清測試殘留失敗: {_e_tr}")
-        # 🚨 2026-08-28（用戶要求：剷除 = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾（最後先做 — 刪自己）
+            print(f"   [WARN] 清測試殘留failed: {_e_tr}")
+        # [ALERT] 2026-08-28（user要求：remove = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾（最後先做 — 刪自己）
         try:
             import shutil as _sh_sh
             if os.path.isdir(_agent_dir):
-                # ⚠️ rmtree 刪唔到自己（agent.py 仲 load 緊 — 佔用）→ 逐個刪（跳過自己）+ 最後再 rmtree
+                # [WARN] rmtree 刪唔到自己（agent.py 仲 load 緊 — 佔用）→ 逐個刪（跳過自己）+ 最後再 rmtree
                 try:
                     for _f_del in os.listdir(_agent_dir):
                         _p_del = os.path.join(_agent_dir, _f_del)
@@ -1069,22 +1071,22 @@ def on_shutdown(data):
                                     os.remove(_p_del)
                         except Exception:
                             pass
-                    print(f"   ✅ 安裝資料夾內容已刪（除咗自己 agent.py）: {_agent_dir}")
+                    print(f"   [OK] 安裝資料夾內容已刪（除咗自己 agent.py）: {_agent_dir}")
                 except Exception as _e_del2:
-                    print(f"   ⚠️ 逐個刪失敗: {_e_del2}")
+                    print(f"   [WARN] 逐個刪failed: {_e_del2}")
         except Exception as _e_dir:
-            print(f"   ⚠️ 刪安裝資料夾失敗: {_e_dir}")
-        # 通知 server 完成（清理完先話成功）
+            print(f"   [WARN] 刪安裝資料夾failed: {_e_dir}")
+        # 通知 server done（清理完先話success）
         try:
             import urllib.request as _ur_sh
             _url_sh = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
             _req_sh = _ur_sh.Request(f"{_url_sh}/api/agent/remove-complete?agent_id={AGENT_ID}", method='POST')
             _ur_sh.urlopen(_req_sh, timeout=5)
-            print("   ✅ 已通知 server 剷除完成")
+            print("   [OK] 已通知 server removedone")
         except Exception as _e_sh2:
-            print(f"   ⚠️ 通知 server 失敗: {_e_sh2}")
+            print(f"   [WARN] 通知 server failed: {_e_sh2}")
     except Exception as _e_sh:
-        print(f"   ⚠️ 清理失敗: {_e_sh}")
+        print(f"   [WARN] 清理failed: {_e_sh}")
     # 退出 agent
     try:
         import threading as _th_sh
@@ -1206,11 +1208,11 @@ def run_ea_strategies(ea_config, lot_size):
             
             result = mt5.order_send(request)
             if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-                print(f"📈 {ea_name}: {signal.upper()} {symbol} @ {price}")
+                print(f"[UPCHART] {ea_name}: {signal.upper()} {symbol} @ {price}")
             elif result:
-                print(f"⚠️ {ea_name}: retcode={result.retcode}")
+                print(f"[WARN] {ea_name}: retcode={result.retcode}")
             else:
-                print(f"⚠️ {ea_name}: order failed")
+                print(f"[WARN] {ea_name}: order failed")
     
     mt5.shutdown()
 
@@ -1286,7 +1288,7 @@ def execute_deploy(data):
     }
     mt5_symbol = SYMBOL_MAP.get(symbol, symbol)
 
-    print(f"🚀 [EXEC] Deploying {ea_name} -> {symbol} ({mt5_symbol}) {tf}")
+    print(f"[GO] [EXEC] Deploying {ea_name} -> {symbol} ({mt5_symbol}) {tf}")
 
     def report(msg, status='info'):
         print(f"   {msg}")
@@ -1307,7 +1309,7 @@ def execute_deploy(data):
         common_files = os.path.join(os.environ.get('APPDATA', ''),
                                      'MetaQuotes', 'Terminal', 'Common', 'Files')
         os.makedirs(common_files, exist_ok=True)
-        # 🚨 2026-08-27 FIX：寫 web_add flag（等 watcher 知道係網頁操作 — 唔會誤判「電腦刪除」→ 移除配對）
+        # [ALERT] 2026-08-27 FIX：寫 web_add flag（等 watcher 知道係網頁操作 — 唔會誤判「PCdelete」→ remove配對）
         try:
             with open(os.path.join(common_files, f'web_add_{ea_name}.flag'), 'w') as _f_flg:
                 _f_flg.write('agent_deploy')
@@ -1318,15 +1320,15 @@ def execute_deploy(data):
         with open(cmd_path, 'w') as f:
             json.dump(cmd_data, f)
         
-        print(f"   📝 Watcher command written: {cmd_path}")
-        print(f"   ⏳ deploy_watcher.py 會自動 attach {ea_name} → {symbol} {tf}")
+        print(f"   [NOTE] Watcher command written: {cmd_path}")
+        print(f"   [WAIT] deploy_watcher.py 會自動 attach {ea_name} → {symbol} {tf}")
         sys.stdout.flush()
         
         # Report as sent (deploy_watcher will do the actual attach)
         report(f'📡 Deploy 指令已交給 watcher: {ea_name} → {symbol} {tf}', 'sent')
 
     except Exception as e:
-        report(f'❌ Failed to write deploy command: {str(e)[:80]}', 'error')
+        report(f'[FAIL] Failed to write deploy command: {str(e)[:80]}', 'error')
 
 
 # ================================================================
@@ -1334,8 +1336,8 @@ def execute_deploy(data):
 # ================================================================
 
 def build_files_snapshot():
-    """🚨 2026-08-26（multi-user Phase 1）：收集本機 MT5 檔案快照（heartbeats/trades/log_last/hotkeys）
-    → 每 10 秒上報俾 server — server 讀呢個（每機獨立）而唔係直接讀本機
+    """[ALERT] 2026-08-26（multi-user Phase 1）：收集local MT5 file快照（heartbeats/trades/log_last/hotkeys）
+    → 每 10 秒上報俾 server — server 讀呢個（每機獨立）而唔係直接讀local
     格式: {"heartbeats": {ea: {last_check, age_sec, status}}, "trades_stats": {ea: {trades,wins,losses,profit,...}},
            "log_last": {ea: "loaded successfully"/"removed"}, "hotkeys": [ea, ...], "ts": epoch}
     """
@@ -1480,7 +1482,7 @@ def build_files_snapshot():
                         snap['log_last'][_m_l.group(1)] = _m_l.group(2)
     except Exception:
         pass
-    # 4. hotkeys（config/hotkeys.ini — 有部署過嘅 EA）
+    # 4. hotkeys（config/hotkeys.ini — 有deploy過嘅 EA）
     try:
         if os.path.isdir(terminal_dir):
             import re as _re_h
@@ -1498,8 +1500,8 @@ def build_files_snapshot():
 
 
 def _start_tray_icon():
-    """🚨 2026-08-26（用戶要求：成功明顯啲）：Windows 系統匣圖示
-    綠色 = Agent 連住 server；紅色 = 斷線。hover 顯示狀態。
+    """[ALERT] 2026-08-26（user要求：success明顯啲）：Windows 系統匣圖示
+    綠色 = Agent 連住 server；紅色 = disconnect。hover 顯示狀態。
     """
     try:
         import pystray
@@ -1541,19 +1543,19 @@ def _start_tray_icon():
                              menu=pystray.Menu(pystray.MenuItem("Exit", _on_click)))
         threading.Thread(target=_tray_update_loop, daemon=True).start()
         _tray.run_detached()
-        print("🟢 Tray icon started (green = online)")
+        print("[GREEN] Tray icon started (green = online)")
         return True
     except Exception as e:
-        print(f"⚠️ Tray icon unavailable (no pystray?): {e}")
+        print(f"[WARN] Tray icon unavailable (no pystray?): {e}")
         return False
 
 
 def _ensure_connected():
-    """🚨 2026-08-26（multi-user Phase 1）：確保 SocketIO 連線（connect() 失敗但背景未連 → 重試）"""
+    """[ALERT] 2026-08-26（multi-user Phase 1）：確保 SocketIO connection（connect() failed但背景未連 → 重試）"""
     if sio.connected:
         return True
     try:
-        # 🚨 2026-08-27 FIX：改 websocket（polling 喺 threading async_mode 下唔穩定 — 成日斷線/BadNamespace）
+        # [ALERT] 2026-08-27 FIX：改 websocket（polling 喺 threading async_mode 下唔穩定 — 成日disconnect/BadNamespace）
         sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
         return True
     except Exception:
@@ -1568,14 +1570,14 @@ def sync_loop():
     last_poll_dq = 0
     while True:
         try:
-            # 🚨 2026-08-27 FIX（部署收唔到 — tunnel 斷線窗口）：poll server deploy_queue（fallback）
-            # 🚨 2026-08-28 FIX（部署卡住 — 根據 stable 版本結構）：poll 唔依賴 sio.connected（agent 每分鐘重連 → sio.connected False → poll 唔行 → deploy_queue 冇被讀 → 部署卡死）
-            # → 斷線都照 poll（deploy_queue 係 fallback — 斷線時更需要 poll）
+            # [ALERT] 2026-08-27 FIX（deploy收唔到 — tunnel disconnect窗口）：poll server deploy_queue（fallback）
+            # [ALERT] 2026-08-28 FIX（deploy卡住 — 根據 stable 版本結構）：poll 唔依賴 sio.connected（agent 每分鐘reconnect → sio.connected False → poll 唔行 → deploy_queue 冇被讀 → deploy卡死）
+            # → disconnect都照 poll（deploy_queue 係 fallback — disconnect時更需要 poll）
             if time.time() - last_poll_dq >= 5:
                 last_poll_dq = time.time()
                 try:
                     import urllib.request as _ur_dq
-                    # 🚨 2026-08-27 FIX：poll 用 localhost（agent 喺本機 — 直接連 server 快 — 唔經 tunnel 慢/超時）
+                    # [ALERT] 2026-08-27 FIX：poll 用 localhost（agent 喺local — 直接連 server 快 — 唔經 tunnel 慢/timeout）
                     _poll_url = SERVER_URL
                     if 'mt5cloud.esgov.org' in _poll_url or 'http' in _poll_url and 'localhost' not in _poll_url:
                         try:
@@ -1585,22 +1587,22 @@ def sync_loop():
                     _req_dq = _ur_dq.Request(f"{_poll_url}/api/agent-poll-deploy?agent_id={AGENT_ID}")
                     with _ur_dq.urlopen(_req_dq, timeout=10) as _r_dq:
                         _dq = json.loads(_r_dq.read().decode('utf-8'))
-                    # 🚨 2026-08-28 FIX：poll 讀到「剷除 agent」標記（server 寫 — emit 收唔到時 fallback）
+                    # [ALERT] 2026-08-28 FIX：poll 讀到「remove agent」標記（server 寫 — emit 收唔到時 fallback）
                     if _dq.get('_remove_agent'):
-                        print(f"🚫 [POLL] 讀到剷除標記 — 執行剷除（emit 收唔到 fallback）")
+                        print(f"🚫 [POLL] 讀到remove標記 — 執行remove（emit 收唔到 fallback）")
                         sys.stdout.flush()
-                        _alog_write("[POLL] 剷除 agent（server 標記 fallback）")
+                        _alog_write("[POLL] remove agent（server 標記 fallback）")
                         on_shutdown({'reason': 'web_remove_poll'})
                         break
                     if _dq.get('ea_name'):
                         _ddq = _dq
-                        print(f"📥 [POLL] 讀到 deploy_queue: {_ddq.get('ea_name')} -> {_ddq.get('symbol')}（emit 收唔到 fallback）")
+                        print(f"[IN] [POLL] 讀到 deploy_queue: {_ddq.get('ea_name')} -> {_ddq.get('symbol')}（emit 收唔到 fallback）")
                         sys.stdout.flush()
                         _alog_write(f"[POLL] deploy_queue fallback: {_ddq.get('ea_name')}")
                         execute_deploy(_ddq)
                 except Exception as _e_dq:
                     pass
-            # 🚨 2026-08-26：未連線 → 每 5 秒嘗試重連（唔好永遠斷）
+            # [ALERT] 2026-08-26：未connection → 每 5 秒嘗試reconnect（唔好永遠斷）
             if not sio.connected:
                 if time.time() - last_reconn >= 5:
                     _ensure_connected()
@@ -1611,7 +1613,7 @@ def sync_loop():
                 data = get_mt5_status()
                 data['agent_id'] = AGENT_ID
                 data['token'] = AGENT_TOKEN
-                # 🚨 2026-08-26 FIX：server handle_sync 讀 data['account']（login/balance 等）— 唔係 status 散 key
+                # [ALERT] 2026-08-26 FIX：server handle_sync 讀 data['account']（login/balance 等）— 唔係 status 散 key
                 data['account'] = {k: data.get(k) for k in ('login','balance','equity','margin','server','currency','leverage','name') if k in data}
                 data['heartbeats'] = dict(ea_heartbeats)
                 try:
@@ -1623,20 +1625,20 @@ def sync_loop():
                         if ea not in data['heartbeats']:
                             data['heartbeats'][ea] = info
                     if hb_files:
-                        print(f"💓 Heartbeats: {hb_files}")
+                        print(f"[HB] Heartbeats: {hb_files}")
                         sys.stdout.flush()
                 except Exception as e:
                     print(f'   [HB] Error: {e}')
                     import traceback
                     traceback.print_exc()
-                # 🚨 2026-08-26（multi-user Phase 1）：上報「本機 MT5 檔案快照」
-                # → server 讀呢個（每機獨立）— 唔再直接讀本機檔案
+                # [ALERT] 2026-08-26（multi-user Phase 1）：上報「local MT5 file快照」
+                # → server 讀呢個（每機獨立）— 唔再直接讀localfile
                 try:
                     data['files_snapshot'] = build_files_snapshot()
                 except Exception as _e_snap:
                     print(f'   [SNAP] Error: {_e_snap}')
-                # 🚨 2026-08-27 FIX：payload 太大（1.2MB deals）→ socket 斷線
-                # → deals 只每 60 秒傳一次（減輕 sync payload — 避免斷線）
+                # [ALERT] 2026-08-27 FIX：payload 太大（1.2MB deals）→ socket disconnect
+                # → deals 只每 60 秒傳一次（減輕 sync payload — 避免disconnect）
                 global _last_deals_sent
                 if _deals_cache is not None and time.time() - _last_deals_sent > 60:
                     data['deals'] = _deals_cache
@@ -1694,10 +1696,10 @@ def get_mt5_status():
         "server": account.server if account else "",
         "positions": len(mt5.positions_get() or []),
     }
-    # 🚨 2026-08-21：收集 history deals（Trades/Win/P&L 真實數據）
-    # 之前冇收集 → agent.deals 永遠空 → /api/analysis「No data yet」→ 前端 Trades/Win/P&L 全部「—」
-    # 🚨 2026-08-21 FIX：history_deals_get(since, now) 有 caching 問題 — 用 (0, now) 攞全部（實測攞到全部 deals）
-    # 🚨 2026-08-27 FIX：deals 攞取好重（每次 sync 攞全部 → 卡 >25s → socketio timeout 斷線）
+    # [ALERT] 2026-08-21：收集 history deals（Trades/Win/P&L 真實數據）
+    # before冇收集 → agent.deals 永遠空 → /api/analysis「No data yet」→ 前端 Trades/Win/P&L 全部「—」
+    # [ALERT] 2026-08-21 FIX：history_deals_get(since, now) 有 caching 問題 — 用 (0, now) 攞全部（實測攞到全部 deals）
+    # [ALERT] 2026-08-27 FIX：deals 攞取好重（每次 sync 攞全部 → 卡 >25s → socketio timeout disconnect）
     # → 加 cache（60 秒內唔重攞 — 輕量 sync 唔卡）
     global _deals_cache, _deals_cache_ts
     try:
@@ -1727,7 +1729,7 @@ def get_mt5_status():
         status["deals"] = _deals_cache if _deals_cache is not None else []
         status["deals_count"] = len(status["deals"])
         if status["deals"]:
-            print(f"📊 Synced {len(status['deals'])} deals to server")
+            print(f"[STATS] Synced {len(status['deals'])} deals to server")
             sys.stdout.flush()
     except Exception as e:
         print(f"   [DEALS] Error: {e}")
@@ -1740,7 +1742,7 @@ def get_mt5_status():
 #  Startup
 # ================================================================
 
-# 🚨 2026-08-27 FIX：console 視窗標題改做「Tradotcom Agent」（唔好顯示 python.exe 路徑 — 全黑冇品牌）
+# [ALERT] 2026-08-27 FIX：console 視窗標題改做「Tradotcom Agent」（唔好顯示 python.exe path — 全黑冇品牌）
 try:
     import ctypes as _ct
     _ct.windll.kernel32.SetConsoleTitleW("Tradotcom Agent")
@@ -1756,38 +1758,38 @@ print("  ☁️  Tradotcom Agent")
 print("  ══════════════════")
 print(f"  Server:   {SERVER_URL}")
 print(f"  Agent ID: {AGENT_ID}")
-print(f"  MT5:      {'✅ Available' if mt5_available else '❌ Not installed'}")
+print(f"  MT5:      {'[OK] Available' if mt5_available else '[FAIL] Not installed'}")
 print("=" * 56)
 print("  Connecting...\n")
 _alog_write(f"Connecting to {SERVER_URL}...")
 
 try:
-    # 🚨 2026-08-27 FIX：wait=False（非阻塞 — 唔會掛死）+ 短 timeout
-    # 之前 blocking connect 連唔到 → 永遠卡住 → 冇 log → 用戶「冇綠燈」
+    # [ALERT] 2026-08-27 FIX：wait=False（非阻塞 — 唔會掛死）+ 短 timeout
+    # before blocking connect 連唔到 → 永遠卡住 → 冇 log → user「冇綠燈」
     sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False, retry=False)
 except Exception as e:
-    # 🚨 2026-08-26 FIX（multi-user Phase 1）：python-socketio 5.x connect() 有時 raise
-    # 「One or more namespaces failed to connect」— 但背景 namespace 已連接（polling ack 時序）
-    # → 唔好 exit — 繼續跑（sync_loop 會 check sio.connected + 自動重連）
-    print(f"⚠️ connect() 警告（可能已連 — 背景再接）: {e}")
-    _alog_write(f"⚠️ connect() 警告: {str(e)[:120]}")
+    # [ALERT] 2026-08-26 FIX（multi-user Phase 1）：python-socketio 5.x connect() 有時 raise
+    # 「One or more namespaces failed to connect」— 但背景 namespace 已connect（polling ack 時序）
+    # → 唔好 exit — 繼續跑（sync_loop 會 check sio.connected + 自動reconnect）
+    print(f"[WARN] connect() warning（可能已連 — 背景再接）: {e}")
+    _alog_write(f"[WARN] connect() warning: {str(e)[:120]}")
     try:
         sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], retry=True)
     except Exception as e2:
-        print(f"⚠️ retry connect 都警告: {e2}")
-        _alog_write(f"⚠️ retry connect 都警告: {str(e2)[:120]}")
+        print(f"[WARN] retry connect 都warning: {e2}")
+        _alog_write(f"[WARN] retry connect 都warning: {str(e2)[:120]}")
 
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()
 
 
-# 🚨 2026-08-28（用戶要求：安裝 = 全部裝返）：agent 啟動時自動開平台服務（watcher/alert_worker/auto_trade_detector）
-# 剷除 agent 時會停晒呢啲 → 重新安裝 agent 啟動 → 自動開返（完整 cycle）
+# [ALERT] 2026-08-28（user要求：安裝 = 全部裝返）：agent start時自動開平台服務（watcher/alert_worker/auto_trade_detector）
+# remove agent 時會停晒呢啲 → 重新安裝 agent start → 自動開返（完整 cycle）
 def _ensure_platform_services():
-    """檢查 + 啟動平台服務（如果未行）— 用 agent 同目錄嘅 deploy_watcher.py 等"""
+    """檢查 + start平台服務（如果未行）— 用 agent 同dir嘅 deploy_watcher.py 等"""
     try:
         _base = os.path.dirname(os.path.abspath(__file__))
-        # 平台服務目錄（agent 安裝位置 — 同 agent.py 一齊）
+        # 平台服務dir（agent 安裝位置 — 同 agent.py 一齊）
         _svc_dir = _base
         _py_exe = sys.executable
         _svcs = {
@@ -1795,7 +1797,7 @@ def _ensure_platform_services():
             'alert_worker': [os.path.join(_svc_dir, 'alert_worker.py')],
             'auto_trade_detector': [os.path.join(_svc_dir, 'auto_trade_detector.py')],
         }
-        # 🚨 2026-08-28 FIX：額外依賴（auto_attach/refresh_navigator/control_guard — watcher 部署/refresh 要 — 全新環境實測漏咗）
+        # [ALERT] 2026-08-28 FIX：額外依賴（auto_attach/refresh_navigator/control_guard — watcher deploy/refresh 要 — 全新環境實測漏咗）
         _extra_deps = [
             os.path.join(_svc_dir, 'auto_attach.py'),
             os.path.join(_svc_dir, 'refresh_navigator.py'),
@@ -1813,19 +1815,19 @@ def _ensure_platform_services():
                     os.makedirs(os.path.dirname(_dep), exist_ok=True)
                     with open(_dep, 'wb') as _f_dep:
                         _f_dep.write(_data_dep)
-                    print(f"   ✅ [SVC] 額外依賴已下載: {os.path.basename(_dep)}")
+                    print(f"   [OK] [SVC] 額外依賴已下載: {os.path.basename(_dep)}")
                 except Exception as _e_dep:
-                    print(f"   ⚠️ [SVC] 額外依賴下載失敗（{os.path.basename(_dep)}）: {_e_dep}")
+                    print(f"   [WARN] [SVC] 額外依賴下載failed（{os.path.basename(_dep)}）: {_e_dep}")
         import subprocess as _sp_svc
         for _name, _args in _svcs.items():
             _script = _args[0]
-            # 🚨 2026-08-28：缺檔案 → 從 server 下載（安裝 = 全部裝返 — 剷除刪咗 → 重新安裝自動下載返）
-            # 🚨 2026-08-28 FIX：下載全部依賴（_args 可能有多個 — 如 deploy_watcher + deploy_notify）— 但只 Popen 第一個（script）
+            # [ALERT] 2026-08-28：缺file → 從 server 下載（安裝 = 全部裝返 — remove刪咗 → 重新安裝自動下載返）
+            # [ALERT] 2026-08-28 FIX：下載全部依賴（_args 可能有多個 — 如 deploy_watcher + deploy_notify）— 但只 Popen 第一個（script）
             for _dl_script in _args:
                 if not os.path.isfile(_dl_script):
                     try:
                         import urllib.request as _ur_svc
-                        # 🚨 用 localhost（本機 agent 直接連 server 快 — tunnel 可能 407/慢）
+                        # [ALERT] 用 localhost（local agent 直接連 server 快 — tunnel 可能 407/慢）
                         _dl_url_svc = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
                         _dl_url_svc = f"{_dl_url_svc}/api/agent-service/{os.path.basename(_dl_script)}"
                         _req_svc = _ur_svc.Request(_dl_url_svc, headers={'User-Agent': 'TradotcomAgent/1.0'})
@@ -1834,14 +1836,14 @@ def _ensure_platform_services():
                         os.makedirs(os.path.dirname(_dl_script), exist_ok=True)
                         with open(_dl_script, 'wb') as _f_svc:
                             _f_svc.write(_data_svc)
-                        print(f"   ✅ [SVC] {_name} 已下載（{os.path.basename(_dl_script)}）")
+                        print(f"   [OK] [SVC] {_name} 已下載（{os.path.basename(_dl_script)}）")
                     except Exception as _e_dl:
-                        print(f"   ⚠️ [SVC] {_name} 下載失敗（{os.path.basename(_dl_script)}）: {_e_dl}")
+                        print(f"   [WARN] [SVC] {_name} 下載failed（{os.path.basename(_dl_script)}）: {_e_dl}")
             if not os.path.isfile(_script):
-                print(f"   ⚠️ [SVC] {_name} 腳本唔存在: {_script}（skip）")
+                print(f"   [WARN] [SVC] {_name} 腳本not exist: {_script}（skip）")
                 continue
             # 檢查係咪已經行緊（command line 含 script 名）
-            # 🚨 2026-08-28 FIX：加 $_.Name -eq 'python.exe' 過濾（之前淨 CommandLine -match 會 match 到自己 session 嘅 bash/powershell → count>0 → 誤判「已行緊」→ 永遠唔開真服務）
+            # [ALERT] 2026-08-28 FIX：加 $_.Name -eq 'python.exe' 過濾（before淨 CommandLine -match 會 match 到自己 session 嘅 bash/powershell → count>0 → 誤判「已行緊」→ 永遠唔開真服務）
             _chk = _sp_svc.run(
                 ['powershell', '-NoProfile', '-Command',
                  f"Get-CimInstance Win32_Process | Where-Object {{$_.Name -eq 'python.exe' -and $_.CommandLine -match '{_name}'}} | Measure-Object | Select-Object -ExpandProperty Count"],
@@ -1852,18 +1854,18 @@ def _ensure_platform_services():
             except Exception:
                 pass
             if _count > 0:
-                print(f"   ✅ [SVC] {_name} 已行緊（skip）")
+                print(f"   [OK] [SVC] {_name} 已行緊（skip）")
                 continue
             # 開（python.exe + redirect log — 唔好 pythonw 冇 console）
             try:
                 _log_f = open(os.path.join(_svc_dir, f'{_name}.log'), 'a', encoding='utf-8')
                 _sp_svc.Popen([_py_exe, '-u', _script], stdout=_log_f, stderr=_log_f,
                               creationflags=0x00000008 if hasattr(_sp_svc, 'CREATE_NO_WINDOW') else 0)
-                print(f"   ✅ [SVC] {_name} 已啟動")
+                print(f"   [OK] [SVC] {_name} 已start")
             except Exception as _e_svc:
-                print(f"   ⚠️ [SVC] {_name} 啟動失敗: {_e_svc}")
+                print(f"   [WARN] [SVC] {_name} startfailed: {_e_svc}")
     except Exception as _e_all:
-        print(f"   ⚠️ [SVC] 平台服務檢查失敗: {_e_all}")
+        print(f"   [WARN] [SVC] 平台服務檢查failed: {_e_all}")
 
 
 try:
@@ -1871,7 +1873,7 @@ try:
 except Exception:
     pass
 
-# 🚨 2026-08-26（用戶要求：成功明顯啲）：系統匣圖示（綠色=online 紅色=offline）
+# [ALERT] 2026-08-26（user要求：success明顯啲）：系統匣圖示（綠色=online 紅色=offline）
 try:
     _start_tray_icon()
 except Exception:
@@ -1881,5 +1883,5 @@ try:
     while True:
         time.sleep(1)
 except KeyboardInterrupt:
-    print("\n🛑 Agent stopped")
+    print("\n[STOP] Agent stopped")
     sio.disconnect()
