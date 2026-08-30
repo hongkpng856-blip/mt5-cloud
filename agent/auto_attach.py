@@ -3328,25 +3328,64 @@ def _clean_blank_charts(mt5_pid, keep_symbol=''):
             except Exception:
                 pass
 
-        # 關閉空白 chart（冇 EA 運行中 + 唔係 target symbol）
-        # [ALERT] 2026-08-31：如果冇任何 EA 心跳（淨係空白殘留 chart）→ 關閉非 target 全部
-        # 如果有 EA 運行中（心跳存在）→ 全部保留（避免誤關有 EA 嘅 chart — 唔知掛喺邊個 chart）
-        _has_running_ea = len(_ea_running_cc) > 0
+        # [ALERT] 2026-08-31 FIX2：有 EA 心跳 → 讀 MT5 log 搵「EA (SYM,H1) loaded」對應
+        # → 知道邊啲 chart 有 EA 掛住（保留）— 其他空白 chart 關閉（唔使保守保留全部）
+        _keep_syms_cc = set()
+        if _ea_running_cc:
+            try:
+                import glob as _g2_cc
+                _lg2_cc = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                _latest2_cc = None
+                for _d3_cc in os.listdir(_lg2_cc):
+                    _lgd2_cc = os.path.join(_lg2_cc, _d3_cc, 'logs')
+                    if os.path.isdir(_lgd2_cc):
+                        for _f5_cc in _g2_cc.glob(os.path.join(_lgd2_cc, '*.log')):
+                            if _latest2_cc is None or os.path.getmtime(_f5_cc) > os.path.getmtime(_latest2_cc):
+                                _latest2_cc = _f5_cc
+                if _latest2_cc:
+                    _raw2_cc = open(_latest2_cc, 'rb').read()
+                    _txt2_cc = None
+                    for _enc2_cc in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
+                        try:
+                            _txt2_cc = _raw2_cc.decode(_enc2_cc); break
+                        except Exception:
+                            continue
+                    if _txt2_cc:
+                        import re as _re_cc
+                        # [ALERT] 2026-08-31 FIX3：只保留「心跳 EA 最新一次 loaded」嘅 symbol
+                        # （唔可以全部 loaded 記錄 — 舊記錄（EA 之前掛過其他 symbol）會誤保留空白 chart）
+                        _ea_latest_sym_cc = {}
+                        for _line2_cc in _txt2_cc.splitlines():
+                            # expert XXX (SYM,H1) loaded successfully
+                            _m2_cc = _re_cc.search(r'expert\s+(\w+)\s+\(([A-Z0-9_]+),', _line2_cc)
+                            if _m2_cc and 'loaded successfully' in _line2_cc:
+                                _ea_l2 = _m2_cc.group(1)
+                                _sym_l2 = _m2_cc.group(2).upper()
+                                if _ea_l2 in _ea_running_cc:
+                                    # 最新記錄覆蓋舊記錄（log 順序 = 時間順序）
+                                    _ea_latest_sym_cc[_ea_l2] = _sym_l2
+                        for _ea_n2, _sym_n2 in _ea_latest_sym_cc.items():
+                            _keep_syms_cc.add(_sym_n2)
+                            print(f"[CLEAN] 保留 {_sym_n2}（{_ea_n2} 最新 loaded）")
+            except Exception:
+                pass
+        # 加埋 target symbol
+        if keep_symbol:
+            _keep_syms_cc.add(keep_symbol)
+
+        # 關閉空白 chart（唔係「有 EA 掛住嘅 symbol」→ 關閉）
         _closed_cc = 0
         for _h_cc, _title_cc in _charts_cc:
             _sym_part_cc = _title_cc.split(',')[0].upper()
-            if keep_symbol and _sym_part_cc == keep_symbol:
+            if _sym_part_cc in _keep_syms_cc:
                 continue
-            if _has_running_ea:
-                # 有 EA 運行中 — 保留所有 chart（保守 — 避免誤關有 EA 嘅 chart）
-                continue
-            # 空白 chart（冇 EA 運行中）→ 關閉
+            # 空白 chart → 關閉
             _u_cc.PostMessageW(_h_cc, 0x0010, 0, 0)  # WM_CLOSE
             _closed_cc += 1
             print(f"[CLEAN] 關閉空白 chart: {_title_cc[:40]}")
             _t_cc.sleep(0.5)
 
-        print(f"[CLEAN] 清空白 chart 完成 — 關閉 {_closed_cc} 個（保留 target {keep_symbol}{' + 運行中 EA' if _has_running_ea else ''}）")
+        print(f"[CLEAN] 清空白 chart 完成 — 關閉 {_closed_cc} 個（保留 symbols: {sorted(_keep_syms_cc) or '無'}）")
     except Exception as _e_cc:
         print(f"[CLEAN] 清空白 chart failed: {_e_cc}")
 
