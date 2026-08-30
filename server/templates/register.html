@@ -286,6 +286,14 @@
                     </div>
                 </div>
 
+                <div class="field">
+                    <label for="inviteCode">Invite Code {% if register_closed %}<span style="color:#f0b90b;font-size:11px">(Internal Only)</span>{% endif %}</label>
+                    <div class="input-wrapper">
+                        <i class="icon-key"></i>
+                        <input type="text" id="inviteCode" placeholder="Internal invite code" required>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="registerBtn">
                     <i class="icon-user-plus"></i>
                     Create Account
@@ -317,7 +325,8 @@
                 body: JSON.stringify({
                     username: document.getElementById('username').value,
                     email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
+                    password: document.getElementById('password').value,
+                    invite_code: document.getElementById('inviteCode').value
                 })
             });
             const data = await res.json();

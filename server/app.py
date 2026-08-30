@@ -421,6 +421,32 @@ def home():
 
 @app.route('/register', methods=['GET','POST'])
 def register():
+    # 🚨 2026-08-31（用戶要求：網上唔好俾人註冊 — 淨係內部帳戶做到嘢）：
+    # 關閉公開註冊 — 需要內部邀請碼先註冊到
+    _REGISTER_CLOSED = True  # 🔒 公開註冊已關閉（內部限定）
+    _INVITE_CODE = os.environ.get('TRADOTCOM_INVITE_CODE', '') or 'tradotcom-internal-2026'  # 內部邀請碼（可改環境變數）
+    if _REGISTER_CLOSED:
+        if request.method == 'POST':
+            data = request.json if request.is_json else request.form
+            invite = (data.get('invite_code') or '').strip()
+            if invite != _INVITE_CODE:
+                return jsonify({"error": "註冊已關閉（內部限定）— 需要有效邀請碼", "register_closed": True}), 403
+            # 有邀請碼 → 繼續註冊
+            if User.query.filter_by(username=data.get('username')).first():
+                return jsonify({"error":"Username taken"}),400
+            user = User(username=data['username'], email=data.get('email',''),
+                        password=generate_password_hash(data['password']))
+            db.session.add(user)
+            # 🚨 2026-08-26（Phase 4）：Agent token — 註冊時生成（防冒認）
+            import secrets as _sec_r
+            _tok_r = _sec_r.token_hex(16)
+            agent = Agent(agent_id=str(uuid.uuid4())[:8], user=user, agent_token=_tok_r)
+            db.session.add(agent)
+            db.session.commit()
+            login_user(user)
+            return jsonify({"success":True,"agent_id":agent.agent_id,"agent_token":_tok_r})
+        # GET → render register 頁（顯示「內部限定」+ 邀請碼欄位）
+        return render_template('register.html', register_closed=True)
     if request.method == 'POST':
         data = request.json if request.is_json else request.form
         if User.query.filter_by(username=data.get('username')).first():
