@@ -3107,6 +3107,7 @@ void __mt5c_append_trade() {
         pass
     # [ALERT] 2026-08-10：配對done → steps（檢查 compile_ok — failed唔好話success — user投訴）
     # [ALERT] 2026-08-10 修：compile_ok null（compile_cmd 已寫 — watcher 處理緊）→ 唔immediately寫「done」— 等 watcher（唔好「假done」→ 網頁兩個按鈕）
+    # [ALERT] 2026-08-31 FIX：compile_ok True/None → 都寫「完成配對 done」（之前淨係 False 先寫 steps — True/None 永遠 pending — user 投訴「等待完成配對冇完成」）
     if compile_ok is False:
         try:
             import json as _jin2
@@ -3123,6 +3124,26 @@ void __mt5c_append_trade() {
                 try:
                     if os.path.exists(_sf_show2):
                         os.remove(_sf_show2)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    else:
+        # ✅ 2026-08-31 FIX：compile success（或唔使 compile）→ 寫「完成配對 done」— 唔再卡 pending
+        try:
+            _adir_ok = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            _write_ai_flags(None, [
+                {'text': f'配對 {os.path.splitext(filename)[0]} in progress…', 'status': 'done'},
+                {'text': '複製檔案至本機（Experts 根）', 'status': 'done'},
+                {'text': f'編譯 {filename} → .ex5', 'status': 'done'},
+                {'text': '完成配對', 'status': 'done'},
+            ])
+            # 清 show flag（配對完成 → 唔會再「不停彈」）
+            for _sf_dir_ok in [_adir_ok, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
+                _sf_show_ok = os.path.join(_sf_dir_ok, '.ai_control.show')
+                try:
+                    if os.path.exists(_sf_show_ok):
+                        os.remove(_sf_show_ok)
                 except Exception:
                     pass
         except Exception:
