@@ -2915,19 +2915,29 @@ def _clean_blank_charts(mt5_pid, keep_symbol=''):
         if keep_symbol:
             _keep_syms_cc.add(keep_symbol)
 
-        # 關閉空白 chart（唔係「有 EA 掛住嘅 symbol」→ 關閉）
+        # 關閉空白 chart（每個 symbol 保留「心跳 EA 數量」咁多個 — 其餘關閉）
+        # [ALERT] 2026-08-31 FIX4：唔可以「symbol 喺 keep set 就全部保留」— 會留低重複 chart（4 個 GBPUSD）
+        # → 每個 symbol 保留「心跳 EA 掛喺嗰個 symbol 嘅數量」— 其他重複 chart 關閉
+        #   （例如 2 個 EA 掛 GBPUSD → 保留 2 個 GBPUSD chart — 每個 EA 一個）
+        _keep_count_cc = {}
+        for _sym_kc in _keep_syms_cc:
+            # 數心跳 EA 最新 loaded 喺呢個 symbol 嘅數量
+            _cnt_kc = sum(1 for _ea_kc, _sym_kc2 in _ea_latest_sym_cc.items() if _sym_kc2 == _sym_kc)
+            _keep_count_cc[_sym_kc] = max(_cnt_kc, 1)  # 最少 1（target）
+        _kept_cc = {}
         _closed_cc = 0
         for _h_cc, _title_cc in _charts_cc:
             _sym_part_cc = _title_cc.split(',')[0].upper()
-            if _sym_part_cc in _keep_syms_cc:
+            if _sym_part_cc in _keep_count_cc and _kept_cc.get(_sym_part_cc, 0) < _keep_count_cc[_sym_part_cc]:
+                _kept_cc[_sym_part_cc] = _kept_cc.get(_sym_part_cc, 0) + 1
                 continue
-            # 空白 chart → 關閉
+            # 重複/空白 chart → 關閉
             _u_cc.PostMessageW(_h_cc, 0x0010, 0, 0)  # WM_CLOSE
             _closed_cc += 1
             print(f"[CLEAN] 關閉空白 chart: {_title_cc[:40]}")
             _t_cc.sleep(0.5)
 
-        print(f"[CLEAN] 清空白 chart 完成 — 關閉 {_closed_cc} 個（保留 symbols: {sorted(_keep_syms_cc) or '無'}）")
+        print(f"[CLEAN] 清空白 chart 完成 — 關閉 {_closed_cc} 個（保留: {_keep_count_cc}）")
     except Exception as _e_cc:
         print(f"[CLEAN] 清空白 chart failed: {_e_cc}")
 
