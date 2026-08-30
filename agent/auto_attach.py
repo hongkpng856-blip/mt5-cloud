@@ -352,545 +352,6 @@ def generate_template(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
     
     print(f"[CLIP] Template saved: {tpl_path} ({os.path.getsize(tpl_path)} bytes)")
     return tpl_path
-
-
-def _open_chart_keyboard():
-    """用鍵盤快捷鍵開新 chart（唔依賴 UI Automation）"""
-    from pywinauto.keyboard import send_keys
-    send_keys('^n')  # Ctrl+N = New Chart
-    time.sleep(1)
-    send_keys('{ENTER}')  # 接受默認品種
-    time.sleep(2)
-
-
-def attach_ea_navigator(ea_name, mt5_pid, max_retries=3):
-    """用 win32 backend + pyautogui double-click attach EA
-    
-    關鍵發現：
-    - MT5 Navigator TreeView 的 select() + Enter 不等同 double-click
-    - Enter 只 expand/collapse 節點，不會 attach EA 到 chart
-    - 開新 chart 後 Navigator panel 會自動收埋
-    - 必須先開 chart，再開 Navigator，再 pyautogui double-click
-    
-    流程：
-    1. win32 connect → set focus
-    2. 開新 chart (Ctrl+N → Enter)
-    3. 開 Navigator panel (Alt+V → n → Enter)
-    4. Expand EA交易 → select EA → EnsureVisible
-    5. pyautogui double-click 掃描 TreeView 找到 EA
-    6. 確認 Properties dialog → Enter 關閉
-    7. 確保 AutoTrading ON
-    """
-    import pyautogui
-    import ctypes
-    user32 = ctypes.windll.user32
-    from pywinauto import Application
-    from pywinauto.keyboard import send_keys
-
-    # [ALERT] 2026-08-22（user要求：UAC 檢測機制）：Navigator attach前檢查 UAC/授權窗口
-    try:
-        if not _detect_and_handle_uac(f'Navigator attach {ea_name} UAC 檢查', max_wait=20):
-            print(f"[WARN] Navigator attach {ea_name}：UAC 授權窗口未處理")
-    except Exception:
-        pass
-
-    for attempt in range(max_retries):
-        try:
-            app = Application(backend='win32').connect(process=mt5_pid)
-            win = app.window(class_name='MetaQuotes::MetaTrader::5.00')
-            try:
-                win.set_focus()
-            except:
-                pass  # No active desktop (background process)
-            time.sleep(0.5)
-        except Exception as e:
-            print(f"[WARN] win32 connect failed: {e} (attempt {attempt+1}/{max_retries})")
-            time.sleep(5)
-            continue
-        
-        # Step 1: Open chart only if none exists
-        mdi = None
-        for d in win.descendants():
-            if d.element_info.class_name == 'MDIClient':
-                mdi = d
-                break
-        has_charts = mdi and len(mdi.children()) > 0
-        
-        if not has_charts:
-            print("[CLIP] No chart open, opening new one...")
-            send_keys('^n')
-            time.sleep(1)
-            send_keys('{ENTER}')
-            time.sleep(3)
-        else:
-            print(f"[CLIP] Chart already open, skipping Ctrl+N...")
-        
-        # Step 2: Open Navigator panel DIRECTLY via ShowWindow
-        # Much more reliable than menu clicks or keyboard shortcuts
-        import ctypes as _ctypes
-        user32 = _ctypes.windll.user32
-        
-        # 搵 Navigator panel（包括浮動 MiniFrame「導航」— Bug: 浮動視窗係 top-level，
-        # 唔喺主視窗 descendants → 要掃 MT5 process 所有 top-level（同 refresh_navigator Bug #47 一樣）
-        # [WARN] 一定要用 app.windows()（只限 MT5 process）— 唔可以用 Desktop 掃全部 process（會掃到 MetaEditor/其他嘅 tree）
-        nav_panel = None
-        _all_windows = []
-        try:
-            _all_windows = list(app.windows())
-        except Exception:
-            pass
-        _all_windows += list(win.descendants())
-        for d in _all_windows:
-            c = d.element_info.class_name
-            if 'Afx:ControlBar' in c or 'Afx:MiniFrame' in c:
-                tv_child = None
-                try:
-                    for child in d.descendants():
-                        if child.element_info.class_name == 'SysTreeView32':
-                            tv_child = child
-                            break
-                except Exception:
-                    pass
-                if tv_child:
-                    nav_panel = d
-                    break
-        
-        if nav_panel:
-            hwnd = nav_panel.element_info.handle
-            user32.ShowWindow(ctypes.c_void_p(hwnd), 5)  # SW_SHOW
-            time.sleep(1)
-            print(f"[CLIP] Navigator panel shown via ShowWindow")
-            # Refresh Navigator: toggle hidden→shown 強制重新掃描 Experts dir
-            user32.ShowWindow(ctypes.c_void_p(hwnd), 0)  # SW_HIDE
-            time.sleep(0.5)
-            user32.ShowWindow(ctypes.c_void_p(hwnd), 5)  # SW_SHOW
-            time.sleep(1.5)
-            print(f"[RETRY] Navigator refreshed (toggle)")
-        else:
-            # Fallback: WM_COMMAND 32808 (Navigator toggle command ID)
-            print(f"[CLIP] Navigator panel not found, trying WM_COMMAND...")
-            user32.SendMessageW(ctypes.c_void_p(win.element_info.handle), 0x0111, 32808, 0)
-            time.sleep(1.5)
-        
-        # Step 3: Find SysTreeView32 and verify it's visible
-        # [WARN] 要掃所有 top-level（浮動 Navigator MiniFrame）— 唔可以淨掃主視窗 descendants
-        # [WARN] 2026-08 驗證 rect：before揀到錯 tree（rect (8,131) 但實際 Navigator 喺 (201,139)）
-        # → scan click 全部落桌面（double-click 開咗 TestAItest 記事本 ×3！）+ MT5 crash
-        # [WARN] 2026-08-06 修：MT5 有兩個 tree（docked 細 + 浮動大）— 揀「最大」嗰個（浮動/主要 Navigator）
-        tree_view = None
-        _best_tree = None
-        _best_area = 0
-        for d in _all_windows:
-            try:
-                for child in d.descendants():
-                    if child.element_info.class_name == 'SysTreeView32':
-                        try:
-                            _tr = child.rectangle()
-                            # 驗證：tree 夠大 + 中心位置belongs to MT5（WindowFromPoint — 唔係就係錯 tree/隱藏 tree）
-                            if _tr.width() > 50 and _tr.height() > 50:
-                                _cx = _tr.left + _tr.width() // 2
-                                _cy = _tr.top + _tr.height() // 2
-                                if _window_pid_at(_cx, _cy) == mt5_pid:
-                                    _area = _tr.width() * _tr.height()
-                                    if _area > _best_area:
-                                        _best_area = _area
-                                        _best_tree = child
-                        except Exception:
-                            pass
-            except Exception:
-                pass
-        tree_view = _best_tree  # 揀最大嗰個（浮動 Navigator）
-        
-        if not tree_view:
-            print(f"[WARN] not found有效 TreeView（rect verify failed — 可能 MT5 唔係最前）(attempt {attempt+1}/{max_retries})")
-            if attempt < max_retries - 1:
-                time.sleep(5)
-            continue
-        
-        # 固定 Navigator 視窗（浮動 MiniFrame「導航」— user移動過都要鎖定返左邊固定位置）
-        try:
-            nav_hwnd = None
-            for w in app.windows():
-                try:
-                    if 'Afx:MiniFrame' in w.class_name() and ('導航' in w.window_text() or 'Navigator' in w.window_text()):
-                        nav_hwnd = int(w.element_info.handle)
-                        break
-                except Exception:
-                    pass
-            if nav_hwnd:
-                pin_window(nav_hwnd, 0, 100, 340, 820)
-                time.sleep(0.5)
-        except Exception:
-            pass
-        
-        # [WARN] MT5 用 custom draw — is_visible() 唔可靠（tree 有正常 rect 但 WS_VISIBLE 唔 set）
-        # → 用 rect 判斷（有尺寸 + 喺螢幕內 = 當 visible）
-        def _tree_visible(t):
-            try:
-                r = t.rectangle()
-                return r.width() > 50 and r.height() > 50 and r.left > -500 and r.top > -500
-            except Exception:
-                return False
-
-        if not _tree_visible(tree_view):
-            print(f"[WARN] TreeView not visible after ShowWindow (attempt {attempt+1}/{max_retries})")
-            # Try WM_COMMAND as fallback
-            user32.SendMessageW(ctypes.c_void_p(win.element_info.handle), 0x0111, 32808, 0)
-            time.sleep(1.5)
-            
-            for d in _all_windows:
-                try:
-                    for child in d.descendants():
-                        if child.element_info.class_name == 'SysTreeView32':
-                            tree_view = child
-                            break
-                except Exception:
-                    pass
-                if tree_view:
-                    break
-            if not tree_view or not _tree_visible(tree_view):
-                print(f"[WARN] TreeView still not visible")
-                if attempt < max_retries - 1:
-                    time.sleep(5)
-                continue
-        
-        tv_rect = tree_view.rectangle()
-        print(f"[CLIP] TreeView rect=({tv_rect.left},{tv_rect.top})-({tv_rect.right},{tv_rect.bottom})")
-        
-        # Step 4: Navigate tree → Expand EA交易 → Select + EnsureVisible
-        try:
-            root = tree_view.roots()[0]
-            
-            ea_trading_node = None
-            # MT5 Navigator language varies: 'EA交易', 'المستشارون المختصون', 'Expert Advisors', etc.
-            # Use position (3rd child = index 2) as primary, text match as fallback
-            children = root.children()
-            # [WARN] 先 text match（語言唔同都found）— MT5 新版加咗「訂閱」folder，
-            # EA交易 由 index 2 變 index 3 → 唔可以硬性用 index！
-            for child in children:
-                try:
-                    t = child.text()
-                    if any(kw in t for kw in ['EA交易', 'Expert Advisors', 'المستشارون المختصون', 'Experts', 'EA']):
-                        ea_trading_node = child
-                        break
-                except Exception:
-                    pass
-            # fallback: 3rd child（舊版 MT5）
-            if not ea_trading_node and len(children) > 2:
-                ea_trading_node = children[2]
-            
-            if not ea_trading_node:
-                print(f"[WARN] EA交易 node not found (attempt {attempt+1}/{max_retries})")
-                if attempt < max_retries - 1:
-                    time.sleep(5)
-                continue
-            
-            ea_trading_node.expand()
-            time.sleep(2)
-            
-            ea_node = None
-            for ea in ea_trading_node.children():
-                if ea.text() == ea_name:
-                    ea_node = ea
-                    break
-            
-            # [WARN] 2026-08：web 配對嘅 EA 喺根 Experts 節點
-            if not ea_node:
-                for sub in ea_trading_node.children():
-                    try:
-                        st = sub.text()
-                        if 'MT5Cloud' in st or 'Cloud' in st:
-                            sub.expand()
-                            time.sleep(1)
-                            for ea in sub.children():
-                                if ea.text() == ea_name:
-                                    ea_node = ea
-                                    break
-                            break
-                    except Exception:
-                        pass
-            
-            if not ea_node:
-                print(f"[WARN] {ea_name} not found under EA交易 (attempt {attempt+1}/{max_retries})")
-                if attempt < max_retries - 1:
-                    time.sleep(5)
-                continue
-            
-            print(f"[TARGET] Found {ea_name}, attaching via pyautogui double-click...")
-            ea_node.select()
-            time.sleep(0.3)
-            ea_node.ensure_visible()
-            time.sleep(0.5)
-            
-        except Exception as e:
-            print(f"[WARN] Tree navigation error: {e} (attempt {attempt+1}/{max_retries})")
-            if attempt < max_retries - 1:
-                time.sleep(5)
-            continue
-        
-        # Step 5: 精確 double-click EA item（唔使掃描成個 tree — 唔會「亂點」）
-        found_dialog = False
-        click_x = tv_rect.left + 50  # EA item text area
-        click_y = None
-        try:
-            # [WARN] 方法：ea_node.select()（pywinauto 揀中 item）→ TVM_GETNEXTITEM(CARET) 攞 hItem
-            # → TVM_GETITEMRECT 攞屏幕位置（唔使讀文字 — MT5 owner-draw tree 讀唔到文字）
-            ea_node.select()
-            time.sleep(0.5)
-            import ctypes as _ct
-            from ctypes import wintypes as _wt
-            # [WARN] 64-bit handle 溢出問題：SendMessageW 返回 32-bit c_int → 負數 → 要 set restype c_size_t
-            _ct.windll.user32.SendMessageW.restype = _ct.c_size_t
-            _tree_hwnd = _ct.c_void_p(int(tree_view.element_info.handle))
-            _caret = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x110A, 0x0009, 0)  # TVGN_CARET
-            if _caret:
-                _rect = _wt.RECT()
-                _res = _ct.windll.user32.SendMessageW(_tree_hwnd, 0x1104, 1, _ct.byref(_rect))  # TVM_GETITEMRECT
-                if _res:
-                    _pt = _wt.POINT(0, 0)
-                    _ct.windll.user32.ClientToScreen(_tree_hwnd, _ct.byref(_pt))
-                    click_x = _rect.left + _pt.x + 30
-                    click_y = _rect.top + _pt.y + ((_rect.bottom - _rect.top) // 2)
-                    print(f"[TARGET] 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
-                else:
-                    print(f"[WARN] GETITEMRECT fail (caret={_caret})")
-            else:
-                print("[WARN] CARET 攞唔到（select 可能冇生效）")
-        except Exception as e:
-            print(f"[WARN] 精確定位 exception: {type(e).__name__} {e}")
-            click_y = None
-        if not click_y:
-            try:
-                # fallback：pywinauto TreeItem rectangle
-                ea_rect = ea_node.rectangle()
-                if ea_rect.width() > 0 and ea_rect.height() > 0:
-                    click_x = ea_rect.left + 30
-                    click_y = ea_rect.top + (ea_rect.height() // 2)
-                    print(f"[TARGET] 精確定位 {ea_name} at ({click_x},{click_y}) — 直接 double-click")
-            except Exception:
-                click_y = None  # fallback 掃描
-        
-        # [WARN] 確保 AutoTrading ON — EA attach時 OnInit immediately執行（TestRunner 會immediately開單）！
-        # 一定要喺 double-click before開 — Properties after先開太遲（OnInit 已跑，開單failed retcode 10027）
-        try:
-            log_path2 = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
-            at_on = False
-            if os.path.exists(log_path2):
-                with open(log_path2, 'r', encoding='utf-16-le', errors='replace') as f:
-                    log_lines2 = f.readlines()
-                for line in reversed(log_lines2[-20:]):
-                    if 'automated trading' in line.lower():
-                        if 'enabled' in line.lower():
-                            at_on = True
-                        break
-            if not at_on:
-                # [WARN] warning視窗（AI 控制中）會搶 focus → send ^e 落錯視窗！
-                # 方法：短暫隱藏warning視窗 → set_focus(MT5) → send ^e → 恢復warning視窗
-                try:
-                    from control_guard import pause_window, resume_window
-                    pause_window()
-                    time.sleep(0.3)
-                except Exception:
-                    pass
-                try:
-                    win.set_focus()
-                    time.sleep(0.8)
-                except Exception:
-                    pass
-                send_keys('^e')
-                time.sleep(2)
-                try:
-                    resume_window()
-                except Exception:
-                    pass
-                # [WARN] 等 MT5 log 確認 enabled 先繼續（OnInit immediately開單 — ^e 效果可能延遲 2-3 秒）
-                for _attempt in range(10):
-                    try:
-                        _lp = os.path.join(MT5_DATA, 'Logs', time.strftime('%Y%m%d') + '.log')
-                        if os.path.exists(_lp):
-                            with open(_lp, 'r', encoding='utf-16-le', errors='replace') as _f:
-                                _ll = _f.readlines()
-                            for _line in reversed(_ll[-15:]):
-                                if 'automated trading' in _line.lower():
-                                    if 'enabled' in _line.lower():
-                                        at_on = True
-                                    break
-                        if at_on:
-                            break
-                    except Exception:
-                        pass
-                    time.sleep(1)
-                print("[RED] AutoTrading OFF → toggled ON（double-click 前）" + (" [OK] 已確認" if at_on else " [WARN] 未確認"))
-            else:
-                print("[GREEN] AutoTrading is ON（double-click 前）")
-        except Exception:
-            pass
-        
-        if click_y:
-            # 精確模式：一次 double-click（還原穩定版 — 直接 click）
-            pyautogui.doubleClick(x=click_x, y=click_y)
-            time.sleep(2)
-            dialogs = find_ea_dialog(ea_name)
-            if not dialogs:
-                # 可能彈咗「代替」dialog — 檢查
-                replace_dialog = None
-                try:
-                    for w in app.windows():
-                        if w.class_name() == '#32770':
-                            for s in w.children(class_name='Static'):
-                                try:
-                                    t = s.window_text()
-                                    # 多語言（大眾化）：中文「代替」/ 英文 "replace"
-                                    if '代替' in t or 'replace' in t.lower() or 'Replace' in t:
-                                        replace_dialog = w
-                                        break
-                                except Exception:
-                                    pass
-                            if replace_dialog:
-                                break
-                except Exception:
-                    pass
-                if replace_dialog:
-                    print("[RETRY] 偵測到「代替」確認 dialog — 自動撳「是」（接受取代）")
-                    for b in replace_dialog.children(class_name='Button'):
-                        try:
-                            bt = b.window_text()
-                            if '是' in bt or 'Yes' in bt or '&Y' in bt:
-                                b.click()
-                                time.sleep(2)
-                                break
-                        except Exception:
-                            pass
-                    dialogs = find_ea_dialog(ea_name)
-            if dialogs:
-                print(f"[DONE] {ea_name} Properties dialog found at ({click_x}, {click_y})!")
-                found_dialog = True
-        else:
-            # fallback：掃描模式（精確定位failed先用）
-            # [WARN] 改善：由 EA 區域start（tree_top + 80 — 避開 account/訂閱/指標 folders）+ 文字區域 click_x
-            row_height = 18
-            # [WARN] 還原穩定版：由 tree 頂start掃（今日下午改 scan_start=80 after crash — 還原）
-            click_x = tv_rect.left + 50  # 還原穩定版 click_x
-            for y_step in range(0, tv_rect.bottom - tv_rect.top, row_height):
-                click_y2 = tv_rect.top + y_step + 9
-                pyautogui.doubleClick(x=click_x, y=click_y2)
-                time.sleep(2)
-            
-            # Check for EA Properties dialog (#32770 class with EA name)
-            def find_ea_dialog(target_name):
-                results = []
-                pid_buf = ctypes.c_ulong()
-                def cb(hwnd, _):
-                    user32.GetWindowThreadProcessId(ctypes.c_void_p(hwnd), ctypes.byref(pid_buf))
-                    if pid_buf.value == mt5_pid:
-                        cls = ctypes.create_unicode_buffer(256)
-                        user32.GetClassNameW(ctypes.c_void_p(hwnd), cls, 256)
-                        if cls.value == '#32770':
-                            title = ctypes.create_unicode_buffer(256)
-                            user32.GetWindowTextW(ctypes.c_void_p(hwnd), title, 256)
-                            if target_name in title.value:
-                                results.append(title.value)
-                    return True
-                # Use c_size_t for 64-bit hwnd in callback
-                CB = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_size_t, ctypes.c_size_t)
-                user32.EnumWindows(CB(cb), 0)
-                return results
-            
-            dialogs = find_ea_dialog(ea_name)
-            
-            # [WARN] 掃描模式：遇到任何唔係 target 嘅 dialog → 直接 ESC 關閉（唔好撳「是」！
-            # before bug：double-click 咗其他 EA → 彈「代替」dialog → 撳「是」→ 其他 EA attach咗落圖表！）
-            if not dialogs:
-                # 有冇其他 dialog 彈出？（任何 #32770 — 可能係其他 EA 嘅 Properties/代替）
-                other_dlg = None
-                try:
-                    for w in app.windows():
-                        if w.class_name() == '#32770':
-                            other_dlg = w
-                            break
-                except Exception:
-                    pass
-                if other_dlg:
-                    # 唔係 target → ESC 關閉（唔接受代替）
-                    try:
-                        send_keys('{ESC}')
-                        time.sleep(0.5)
-                    except Exception:
-                        pass
-                    continue  # 繼續 scan 下一行
-            
-            if dialogs:
-                print(f"[DONE] {ea_name} Properties dialog found at ({click_x}, {click_y2})!")
-                found_dialog = True
-                
-                # 固定 Properties dialog 位置（彈出後鎖定 — 唔會漂移）
-                try:
-                    for w in app.windows():
-                        if w.class_name() == '#32770':
-                            pin_window(int(w.element_info.handle), 500, 250, 700, 500)
-                            time.sleep(0.5)
-                            break
-                except Exception:
-                    pass
-                
-                # Step 6: Confirm dialog (Enter)
-                send_keys('{ENTER}')
-                time.sleep(2)
-                
-                # Step 7 已remove — AutoTrading 喺 double-click 前已確保 ON（唔可以再 toggle —
-                # 兩次 ^e = ON→OFF → OnInit 開單failed retcode 10027）
-                
-                return True
-            
-            # Close any wrong dialog
-            send_keys('{ESC}')
-            time.sleep(0.3)
-        
-        if not found_dialog:
-            print(f"[WARN] {ea_name} dialog not found after scan (attempt {attempt+1}/{max_retries})")
-            if attempt < max_retries - 1:
-                time.sleep(5)
-            continue
-    
-    # 最後保險：清理任何殘留 dialog（「代替」/其他確認視窗 — 唔可以留低）
-    try:
-        for w in app.windows():
-            if w.class_name() == '#32770':
-                try:
-                    for b in w.children(class_name='Button'):
-                        bt = b.window_text()
-                        if '否' in bt or '取消' in bt or 'Cancel' in bt:
-                            b.click()
-                            time.sleep(1)
-                            break
-                except Exception:
-                    pass
-    except Exception:
-        pass
-    
-    print(f"[FAIL] {ea_name} attach failed after {max_retries} attempts")
-    # [ALERT] 2026-08-12 FIX：failed → 寫「attach failed」steps（唔係「wait操作start」— user要知道failed + 確定/緊急stop）
-    try:
-        import json as _jfl
-        _sf_fl = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
-        _cur_fl = []
-        try:
-            if os.path.isfile(_sf_fl):
-                _cur_fl = _jfl.load(open(_sf_fl, 'r', encoding='utf-8'))
-                if not isinstance(_cur_fl, list):
-                    _cur_fl = []
-        except Exception:
-            _cur_fl = []
-        _cur_fl = [s for s in _cur_fl if isinstance(s, dict) and s.get('text') != 'wait操作start…']
-        if not any('failed' in (s.get('text', '') if isinstance(s, dict) else '') for s in _cur_fl):
-            _cur_fl.append({'text': f'attach {ea_name} failed', 'status': 'done'})
-        with open(_sf_fl, 'w', encoding='utf-8') as _f:
-            _jfl.dump(_cur_fl, _f, ensure_ascii=False)
-    except Exception:
-        pass
-    return False
-
-
 def ensure_auto_trading_on(mt5_pid):
     """確保 AutoTrading 係開啟狀態"""
     from pywinauto import Application
@@ -1367,8 +828,8 @@ def _clear_steps():
 def _ensure_hotkey_loaded(ea_name, mt5_pid):
     """[ALERT] 2026-08-20（user實測success流程）：確保 EA 熱鍵write hotkeys.ini 且 MT5 load
     流程：① 檢查 hotkeys.ini 有冇 ea_name 熱鍵（冇先做）
-          ② 冇 → 分配未用 Ctrl+N → 關 MT5（WM_CLOSE 正常關閉 save profile）
-          ③ 寫 hotkeys.ini（<experts>Experts\\<EA>.ex5=Ctrl+N</experts> — UTF-16）
+          ② 冇 → 分配 Ctrl+1（2026-08-22 起統一重用 Ctrl+1 — 唔再 Ctrl+1~9 批次分配）→ 關 MT5（WM_CLOSE 正常關閉 save profile）
+          ③ 寫 hotkeys.ini（<experts>Experts\\<EA>.ex5=Ctrl+1</experts> — UTF-16）+ 清走舊 mapping
           ④ 開 MT5 → 熱鍵 load → 返新 PID
     破綻注意：EA 必須local有 .ex5（冇 → 熱鍵指向not exist EA → 失效）
     """
@@ -1479,18 +940,20 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                 print(f"[WARN] {ea_name} 熱鍵（{_combo_exist}）測試冇彈 Properties — 可能要 restart 重寫")
                 _combo_n = _combo_exist  # 保留原本 combo（重寫用返）
                 break  # 唔 return — 繼續落去 restart（關→寫→開）
-        # 3. 分配未用 Ctrl+N（如果 break 落嚟已有 _combo_n — skip）
+        # 3. 分配 Ctrl+1（2026-08-31 改：統一淨用 Ctrl+1 — 唔再 Ctrl+1-9 亂分配 — 同 line 1560 重用邏輯一致）
         _used = set()
         for _k, _v in experts.items():
             if _v and _v.startswith('Ctrl+'):
                 try: _used.add(int(_v.replace('Ctrl+', '')))
                 except: pass
         if _combo_n is None:
-            _combo_n = None
-            for _i_n in range(1, 10):
-                if _i_n not in _used:
-                    _combo_n = f'Ctrl+{_i_n}'
-                    break
+            _combo_n = 'Ctrl+1' if 1 not in _used else None
+            # [ALERT] 2026-08-31：Ctrl+1 已被用（其他 EA 用緊）→ 唔好搶 — 用下一個可用數字
+            if _combo_n is None:
+                for _i_n in range(2, 10):
+                    if _i_n not in _used:
+                        _combo_n = f'Ctrl+{_i_n}'
+                        break
         if not _combo_n:
             print(f"[WARN] 冇可用熱鍵 — 唔做預載")
             return mt5_pid
@@ -1633,6 +1096,47 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                         # [ALERT] 2026-08-25 FIX（連環deploy偶發failed — Breakout 案例）：主視窗 ready 唔等於熱鍵 load 完
             # → 等 MT5 完全穩定（10 秒）先 send 測試 — MT5 初始化順序：UI → 數據 → 設定 → 熱鍵
             time.sleep(10)
+            # [ALERT] 2026-08-31 FIX（Bug #150 根治 — user要求「restart 唔好殘留空白 chart」）：
+            # MT5 restart 後 restore profile chart（舊 chart）+ 開機預設 → 出現空白 chart（冇 EA）
+            # → 等 MT5 穩定後即刻清走「冇 EA 掛住」嘅空白 chart（保留 1 個做熱鍵測試 + target）
+            #    （熱鍵測試需要 active chart — 所以保留最少 1 個）
+            try:
+                import ctypes as _ct_cl
+                from ctypes import wintypes as _wt_cl
+                _u_cl = _ct_cl.windll.user32
+                _main_cl = None
+                def _cb_main_cl(h, _):
+                    nonlocal _main_cl
+                    _cls_cl = _ct_cl.create_unicode_buffer(64)
+                    _u_cl.GetClassNameW(h, _cls_cl, 64)
+                    if 'MetaTrad' in _cls_cl.value:
+                        _main_cl = h
+                    return True
+                _WNDENUMPROC_CL = _ct_cl.WINFUNCTYPE(_wt_cl.BOOL, _wt_cl.HWND, _wt_cl.LPARAM)
+                _u_cl.EnumWindows(_WNDENUMPROC_CL(_cb_main_cl), 0)
+                if _main_cl:
+                    _charts_cl = []
+                    def _cb_chart_cl(h, _):
+                        _cls_cl = _ct_cl.create_unicode_buffer(64)
+                        _u_cl.GetClassNameW(h, _cls_cl, 64)
+                        _t_cl = _ct_cl.create_unicode_buffer(256)
+                        _u_cl.GetWindowTextW(h, _t_cl, 256)
+                        if _t_cl.value.strip() and ',' in _t_cl.value:
+                            _charts_cl.append((h, _t_cl.value.strip()))
+                        return True
+                    _u_cl.EnumChildWindows(_main_cl, _WNDENUMPROC_CL(_cb_chart_cl), 0)
+                    # 清走多餘 chart（restart 後冇 EA 掛住 — 全空白）— 保留 1 個（熱鍵測試需要 active chart）
+                    # [ALERT] 熱鍵測試（Ctrl+N 彈 Properties）需要 active chart → 保留 1 個
+                    for _idx_cl, (_h_cl, _t_cl) in enumerate(_charts_cl):
+                        if _idx_cl == 0:
+                            continue  # 保留第一個（熱鍵測試用）
+                        _u_cl.PostMessageW(_h_cl, 0x0010, 0, 0)  # WM_CLOSE
+                        print(f"[CLEAN] restart 後清空白 chart: {_t_cl[:40]}")
+                        time.sleep(0.5)
+                    if len(_charts_cl) > 1:
+                        print(f"[CLEAN] restart 後清 {len(_charts_cl)-1} 個空白 chart（保留 1 個做熱鍵測試）")
+            except Exception as _e_cl:
+                print(f"[CLEAN] restart 後清 chart failed: {_e_cl}")
             _hk_loaded_ok = False
             for _hk_try in range(3):
                 try:
