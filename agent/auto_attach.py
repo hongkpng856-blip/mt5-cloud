@@ -997,11 +997,13 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
         # [ALERT] 2026-08-31 FIX（Bug #150 真正根治 — user要求「restart 唔好 restore 一堆 chart」）：
         # 關 MT5 之前 — 清走「空白 chart」（冇 EA 心跳）→ MT5 save profile 時只有「有 EA 嘅 chart」
         # → restart 後只 restore 有 EA 嘅（唔會開一堆空白 chart — 之前 restore 咗 6-7 個 chart）
+        # [ALERT] 2026-08-31 FIX2：改用 .chr 檔方法（user 實測有效 — 關 MT5 前刪空白 .chr →
+        # MT5 開機唔會 restore 嗰個 chart）— double check 內容（有 EA 先保留）— 只刪真正空白
         try:
-            _clean_blank_charts(mt5_pid or 0, keep_symbol='')
-            print("[CLEAN] restart 前已清空白 chart（只保留有 EA 嘅）— MT5 save 乾淨 profile")
+            _clean_blank_charts_via_chr()
+            print("[CLEAN] restart 前已清空白 .chr（double check — 只刪冇 EA 嘅 chart 設定）")
         except Exception as _e_clr:
-            print(f"[WARN] restart 前清空白 chart failed: {_e_clr}")
+            print(f"[WARN] restart 前清空白 .chr failed: {_e_clr}")
         # 4. 關 MT5（WM_CLOSE 正常關閉）
         try:
             _out_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
@@ -2979,6 +2981,85 @@ def _clean_blank_charts(mt5_pid, keep_symbol=''):
         print(f"[CLEAN] 清空白 chart 完成 — 關閉 {_closed_cc} 個（保留: {_keep_count_cc}）")
     except Exception as _e_cc:
         print(f"[CLEAN] 清空白 chart failed: {_e_cc}")
+
+
+def _clean_blank_charts_via_chr():
+    """[ALERT] 2026-08-31（user實測方法 — 根治空白 chart）：
+    用 .chr 檔方法清空白 chart（唔靠 EnumWindows）：
+    1. 讀 MQL5/Profiles/Charts/<profile>/*.chr（MT5 save chart 嘅檔案 — UTF-16 text）
+    2. Double check：開每個 .chr 睇內容（symbol + path=Experts\\<EA>.ex5）
+    3. 冇 EA 嘅空白 .chr → 移去 _deleted backup（唔直接刪 — 可復原）
+    4. MT5 關閉時刪 .chr → 開機唔會 restore 嗰個 chart（user 實測有效）
+    適用時機：auto_attach restart MT5 前（關 MT5 前清）— 令 MT5 save 乾淨 profile
+    [ALERT] 2026-08-31 FIX：只掃描「最近修改」嘅 profile（active — MT5 save chart 嗰個）
+    — 唔好掃全部 profile（British Pound/Market Overview 係 MT5 預設 — 刪咗會壞預設 chart 集）
+    """
+    try:
+        import glob as _g_chr
+        # 搵 MT5 data 目錄
+        _data_root_chr = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        if not os.path.isdir(_data_root_chr):
+            print("[CHR] 搵唔到 MT5 data 目錄 — skip")
+            return 0
+        _total_deleted = 0
+        for _d_chr in os.listdir(_data_root_chr):
+            _charts_root = os.path.join(_data_root_chr, _d_chr, 'MQL5', 'Profiles', 'Charts')
+            if not os.path.isdir(_charts_root):
+                continue
+            # 揀 active profile（最近修改嗰個 — MT5 save chart 去嗰度）
+            _best_prof = None
+            _best_mtime = 0
+            for _prof_chr in os.listdir(_charts_root):
+                _prof_dir = os.path.join(_charts_root, _prof_chr)
+                if not os.path.isdir(_prof_dir):
+                    continue
+                _chr_files = _g_chr.glob(os.path.join(_prof_dir, '*.chr'))
+                for _cf_chr in _chr_files:
+                    try:
+                        _mt = os.path.getmtime(_cf_chr)
+                        if _mt > _best_mtime:
+                            _best_mtime = _mt
+                            _best_prof = _prof_dir
+                    except Exception:
+                        pass
+            if not _best_prof:
+                continue
+            _chr_files = sorted(_g_chr.glob(os.path.join(_best_prof, '*.chr')))
+            if not _chr_files:
+                continue
+            _blank_chr = []
+            for _cf_chr in _chr_files:
+                try:
+                    with open(_cf_chr, 'rb') as _fh_chr:
+                        _data_chr = _fh_chr.read()
+                    _txt_chr = _data_chr.decode('utf-16', errors='replace')
+                    # Double check：有冇 EA（path=Experts\XXX.ex5）
+                    _has_ea_chr = 'path=Experts' in _txt_chr and '.ex5' in _txt_chr
+                    if not _has_ea_chr:
+                        _blank_chr.append(_cf_chr)
+                except Exception:
+                    pass
+            if _blank_chr:
+                # 刪除（移去 _deleted backup — 可復原）
+                _bk_dir_chr = os.path.join(_best_prof, '_deleted')
+                os.makedirs(_bk_dir_chr, exist_ok=True)
+                for _cf2_chr in _blank_chr:
+                    try:
+                        _dst_chr = os.path.join(_bk_dir_chr, os.path.basename(_cf2_chr))
+                        # 如果 backup 已有同名 → 加時間戳
+                        if os.path.exists(_dst_chr):
+                            _dst_chr = os.path.join(_bk_dir_chr, f"{time.time():.0f}_{os.path.basename(_cf2_chr)}")
+                        os.rename(_cf2_chr, _dst_chr)
+                        print(f"[CHR] 刪除空白 chart 設定: {os.path.basename(_cf2_chr)}（{os.path.basename(_best_prof)} profile）")
+                        _total_deleted += 1
+                    except Exception as _e_chr2:
+                        print(f"[CHR] 刪除 {os.path.basename(_cf2_chr)} failed: {_e_chr2}")
+        if _total_deleted:
+            print(f"[CHR] 完成 — 刪除 {_total_deleted} 個空白 .chr（MT5 開機唔會 restore 佢哋）")
+        return _total_deleted
+    except Exception as _e_chr:
+        print(f"[CHR] 清空白 .chr failed: {_e_chr}")
+        return 0
 
 
 def _exec_open_chart_script():
