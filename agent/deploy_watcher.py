@@ -302,15 +302,24 @@ def process_deploy(filepath):
     cmd_data = read_command(filepath)
     if not cmd_data:
         return
-    # 🚨 2026-08-10：讀完即刻刪 deploy_cmd（防 watcher 中斷殘留 — 重複處理 — 排隊永遠等唔到）
+    ea_name = cmd_data.get('ea_name', 'unknown')
+    
+    # 🚨 2026-08-31 FIX（#152）：auto_attach running 檢查**喺刪 deploy_cmd 之前**
+    # 之前：讀完即刻刪 cmd → 偵測到 running → return → cmd 冇咗 + 冇人排隊 → 部署卡死（Mean_Reversion 案例）
+    # 而家：running → 唔刪 cmd（留返）→ return → watcher 下次 poll 再試（deploy_cmd 仲喺度）
+    if is_auto_attach_running():
+        print(f"   ⚠️ auto_attach.py already running — 保留 deploy_cmd 等下次 poll（唔刪 — #152 FIX）")
+        deploy_notify.hide()
+        sys.stdout.flush()
+        return  # deploy_cmd 保留 — watcher 下次 poll 會再處理
+
+    # 🚨 2026-08-10：確認冇 auto_attach running 先刪 deploy_cmd（防中斷殘留 — 重複處理）
     try:
         if os.path.exists(filepath):
             os.remove(filepath)
             print(f"   🗑️ 已刪 command file（處理前 — 防中斷殘留）: {os.path.basename(filepath)}")
     except Exception:
         pass
-    
-    ea_name = cmd_data.get('ea_name', 'unknown')
     
     # === 通知：Web log + 本地視窗 ===
     print(f"🤖 AI 正在部署 {ea_name} 到 MT5，請勿使用滑鼠及鍵盤...")
@@ -1128,12 +1137,32 @@ _deploy_queue = queue.Queue(maxsize=50)  # deploy 指令 queue（single worker �
 
 def _deploy_worker_loop():
     """永遠行緊嘅 deploy worker：攞指令 → process_deploy（唔 block 主 loop）"""
+    _last_ea_time = {}  # 🚨 2026-08-31 FIX（#152 雙保險重複）：同一 EA 60 秒內只處理一次（emit+poll 雙 cmd → 兩個 file → 雙重部署）
     while True:
         try:
             fp = _deploy_queue.get()
         except Exception:
             break
         try:
+            # 讀 cmd 攞 ea_name（dedupe 用）
+            try:
+                with open(fp, 'r', encoding='utf-8') as f:
+                    _dd_fp = json.load(f)
+                _ea_fp = _dd_fp.get('ea_name', '')
+                _now_fp = time.time()
+                if _ea_fp and _now_fp - _last_ea_time.get(_ea_fp, 0) < 60:
+                    print(f"   ⏭️ [WATCHER] {_ea_fp} 60 秒內已部署過（#152 dedupe）— 跳過重複 cmd: {os.path.basename(fp)}")
+                    sys.stdout.flush()
+                    # 刪重複 cmd（唔留殘留）
+                    try:
+                        if os.path.exists(fp):
+                            os.remove(fp)
+                    except Exception:
+                        pass
+                    continue
+                _last_ea_time[_ea_fp] = _now_fp
+            except Exception:
+                pass
             print(f"\n📥 [WATCHER] Deploy worker: {os.path.basename(fp)}")
             sys.stdout.flush()
             # 🚨 2026-08-10：處理前檢查 .ex5 存在（唔存在 skip + 刪 — 唔好 auto_attach 失敗循環）

@@ -123,6 +123,7 @@ class InstallWizard:
             "server_url": tk.StringVar(value=DEFAULT_URL),
             "agent_id": tk.StringVar(),
             "agent_token": tk.StringVar(),
+            "account": tk.StringVar(),  # 🔐 2026-08-31 指紋：account username
             "tick": tk.BooleanVar(value=False),
         }
         self.build_welcome()
@@ -211,6 +212,9 @@ class InstallWizard:
         tk.Entry(frm, textvariable=self.vars["agent_id"], width=35, font=("Segoe UI", 10)).grid(row=1, column=1, pady=5)
         tk.Label(frm, text="Agent Token:", font=("Segoe UI", 10)).grid(row=2, column=0, sticky="e", pady=5)
         tk.Entry(frm, textvariable=self.vars["agent_token"], width=35, show="*", font=("Segoe UI", 10)).grid(row=2, column=1, pady=5)
+        # 🔐 2026-08-31 指紋：Account Username（自動填 — 安裝後記錄邊個 account）
+        tk.Label(frm, text="Account:", font=("Segoe UI", 10)).grid(row=3, column=0, sticky="e", pady=5)
+        tk.Entry(frm, textvariable=self.vars["account"], width=35, font=("Segoe UI", 10)).grid(row=3, column=1, pady=5)
 
         btns = tk.Frame(self.root)
         btns.pack(pady=15)
@@ -225,8 +229,14 @@ class InstallWizard:
         if not sid or not tok:
             messagebox.showwarning("Incomplete Data", "Please fill in Agent ID and Token (available in the website Agent card -> 'Agent Install')")
             return
-        # 儲存配置
-        save_config({"server_url": url, "agent_id": sid, "agent_token": tok})
+        # 儲存配置（🔐 2026-08-31：加 account 指紋）
+        save_config({
+            "server_url": url,
+            "agent_id": sid,
+            "agent_token": tok,
+            "account": self.vars["account"].get().strip(),  # 🔐 指紋：account username
+            "fingerprint": f"account:{self.vars['account'].get().strip()}|agent:{sid}"
+        })
         # 下載 agent.py
         self.clear()
         tk.Label(self.root, text="Installing...", font=("Segoe UI", 14, "bold")).pack(pady=20)

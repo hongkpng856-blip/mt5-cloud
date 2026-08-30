@@ -3815,7 +3815,18 @@ if __name__ == '__main__':
     parser.add_argument('--magic', type=int, default=240701, help='Magic number')
     parser.add_argument('--restart', action='store_true', help='Restart MT5 first')
     parser.add_argument('--remove', action='store_true', help='Remove EA from chart (真暫停)')
+    parser.add_argument('--account', default='', help='Account username (fingerprint — 2026-08-31)')
     args = parser.parse_args()
+    # 🔐 2026-08-31 指紋：所有 log 加 account 前綴
+    _FP = f"[{args.account or 'unknown'}] " if args.account else ''
+    if args.account:
+        print(f"🔐 [FINGERPRINT] auto_attach 屬於 account: {args.account}（EA={args.ea}）")
+        try:
+            _alog = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aa_debug.log')
+            with open(_alog, 'a', encoding='utf-8') as _f:
+                _f.write(f"\n🔐 [FINGERPRINT] auto_attach account={args.account} ea={args.ea} symbol={args.symbol} tf={args.tf} action={'remove' if args.remove else 'deploy'}\n")
+        except Exception:
+            pass
     
     if args.remove:
         # 真暫停模式：移除圖表 EA

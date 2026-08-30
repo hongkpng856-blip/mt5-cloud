@@ -908,7 +908,15 @@ def api_ea_config_delete(ea_name):
         os.makedirs(common_files, exist_ok=True)
         cmd_path = os.path.join(common_files, f'pause_cmd_{ea_name}_{int(time.time())}.json')
         with open(cmd_path, 'w', encoding='utf-8') as f:
-            json.dump({'ea_name': ea_name, 'action': 'delete'}, f, ensure_ascii=False)  # 🚨 2026-08-14：action=delete（watcher 顯示「刪除」文字）
+            json.dump({
+                'ea_name': ea_name,
+                'action': 'delete',
+                # 🔐 指紋（2026-08-31）：pause_cmd 帶 account
+                'fingerprint': {
+                    'account': current_user.username if (current_user and not current_user.is_anonymous) else 'unknown',
+                    'created_by': f"{current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'}/{ea_name}"
+                }
+            }, f, ensure_ascii=False)  # 🚨 2026-08-14：action=delete（watcher 顯示「刪除」文字）
         print(f"[ea-config-delete] 圖表移除指令已排隊: {os.path.basename(cmd_path)}")
     except Exception as e:
         print(f"[ea-config-delete] pause_cmd 寫入失敗: {e}")
@@ -4103,6 +4111,9 @@ def api_deploy():
     # 寫 deploy command file（watcher will pick it up）
     import time as _wt
     cmd_path = os.path.join(common_files, f'deploy_cmd_{ea_name}_{int(_wt.time())}.json')
+    # 🔐 2026-08-31 指紋：deploy_cmd 帶 account + agent 指紋（方便追蹤邊個 account 建立）
+    _fp_account = current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'
+    _fp_agent = _agent_dp.agent_id if '_agent_dp' in dir() and _agent_dp else ''
     with open(cmd_path, 'w') as f:
         json.dump({
             'ea_name': ea_name,
@@ -4112,7 +4123,13 @@ def api_deploy():
             'lot': str(lot),
             'inject_trades': inject_trades,  # 🚨 2026-08-21：數據注入選擇
             'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
-            'source': 'api_deploy'
+            'source': 'api_deploy',
+            # 🔐 指紋（2026-08-31）
+            'fingerprint': {
+                'account': _fp_account,
+                'agent_id': _fp_agent,
+                'created_by': f"{_fp_account}/{_fp_agent}"
+            }
         }, f)
 
     db.session.commit()

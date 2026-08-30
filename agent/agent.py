@@ -72,7 +72,9 @@ def _check_machine_lock(_my_agent_id):
             if not os.path.isdir(_lock_dir):
                 os.makedirs(_lock_dir, exist_ok=True)
             with open(_lock_f, 'w', encoding='utf-8') as _lf:
-                _lf.write(json.dumps({"agent_id": _my_agent_id, "pid": os.getpid(), "ts": time.time()}))
+                _lf.write(json.dumps({"agent_id": _my_agent_id, "pid": os.getpid(), "ts": time.time(),
+                                      # 🔐 2026-08-31 指紋：lock 帶 account
+                                      "account": os.environ.get('MT5_CLOUD_ACCOUNT', 'unknown')}))
         except Exception:
             pass
         return True
@@ -146,11 +148,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--server', default=SERVER_URL, help='Server URL')
 parser.add_argument('--agent', default=AGENT_ID, help='Agent ID')
 parser.add_argument('--token', default=AGENT_TOKEN, help='Agent token')
+parser.add_argument('--account', default='', help='Account username (fingerprint — 2026-08-31)')
 args, _ = parser.parse_known_args()
 SERVER_URL = args.server
 AGENT_ID = args.agent
 AGENT_TOKEN = args.token
-_alog_write(f"args: server={SERVER_URL} agent={AGENT_ID}")
+ACCOUNT_NAME = args.account  # 🔐 指紋：account username
+_alog_write(f"args: server={SERVER_URL} agent={AGENT_ID} account={ACCOUNT_NAME or '?'}")
+if ACCOUNT_NAME:
+    _alog_write(f"🔐 [FINGERPRINT] 呢個係「{ACCOUNT_NAME}」account 嘅 Agent（agent_id={AGENT_ID}）")
+    print(f"🔐 [FINGERPRINT] Agent 屬於 account: {ACCOUNT_NAME}（{AGENT_ID}）")
 
 # 🚨 2026-08-27（方案 A 防雙開）：本機已有其他 agent → 阻止啟動
 if not _check_machine_lock(AGENT_ID):

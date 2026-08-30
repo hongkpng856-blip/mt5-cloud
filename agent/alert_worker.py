@@ -38,7 +38,17 @@ _last_sig = None
 def build_window(root):
     """建立警告視窗（右下角固定位置 — 唔遮 MT5 操作區）
     2026-08-12 UI 專業化：統一間距（16px 網格）+ 自訂警告 icon（唔用 default tkinter）"""
-    root.title('AI 遠端控制')
+    # 🔐 2026-08-31 指紋：讀 agent_config.json 攞 account — title 顯示「邊個 account 嘅 AI 控制」
+    _fp_acc = ''
+    try:
+        _cfg_fp = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent', 'agent_config.json')
+        if os.path.isfile(_cfg_fp):
+            import json as _j_fp
+            _cfg_fp_d = _j_fp.load(open(_cfg_fp, encoding='utf-8'))
+            _fp_acc = _cfg_fp_d.get('account', '') or _cfg_fp_d.get('fingerprint', '')
+    except Exception:
+        pass
+    root.title(f'AI 遠端控制{(" - " + _fp_acc) if _fp_acc else ""}')
     root.attributes('-topmost', True)
     # 固定大小（專業 UI — 步驟區夠空間；2026-08-12：410 — 用戶「唔好留咁多空白」）
     W, H = 380, 410
