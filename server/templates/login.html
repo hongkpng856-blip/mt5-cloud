@@ -364,10 +364,8 @@
         </div>
 
         <div class="card-footer">
-            <button class="btn btn-secondary" onclick="devLogin()">
-                <i class="icon-sparkles"></i>
-                Quick Dev Access
-            </button>
+            <!-- 🚨 2026-08-31（用戶要求：唔可以隨便俾人哋用 developer account 登入）:
+                 移除 Quick Dev Access 一鍵登入（devLogin 硬編碼 dev 密碼喺前端 — 安全漏洞）-->
             <div style="margin-top:16px">
                 <!-- 🚨 2026-08-31（用戶要求：公開註冊關閉 — 內部限定）: 隱藏註冊 link -->
                 <a href="/register" class="link" style="display:none">Create an account</a>
@@ -410,13 +408,6 @@
             }
         }
 
-        async function devLogin() {
-            document.getElementById('username').value = 'dev';
-            document.getElementById('password').value = 'dev1234';
-            document.getElementById('mt5Account').value = '5053721681';
-            document.getElementById('mt5Password').value = 'eip5ai0n';
-            await login({ preventDefault: () => {} });
-        }
     </script>
 </body>
 </html>
