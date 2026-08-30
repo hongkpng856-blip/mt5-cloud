@@ -994,6 +994,14 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
             print(f"[CLIP] restart 前 chart: {_charts_before_hk}")
         except Exception as _e_cb:
             print(f"[WARN] restart 前記錄 chart failed: {_e_cb}")
+        # [ALERT] 2026-08-31 FIX（Bug #150 真正根治 — user要求「restart 唔好 restore 一堆 chart」）：
+        # 關 MT5 之前 — 清走「空白 chart」（冇 EA 心跳）→ MT5 save profile 時只有「有 EA 嘅 chart」
+        # → restart 後只 restore 有 EA 嘅（唔會開一堆空白 chart — 之前 restore 咗 6-7 個 chart）
+        try:
+            _clean_blank_charts(mt5_pid or 0, keep_symbol='')
+            print("[CLEAN] restart 前已清空白 chart（只保留有 EA 嘅）— MT5 save 乾淨 profile")
+        except Exception as _e_clr:
+            print(f"[WARN] restart 前清空白 chart failed: {_e_clr}")
         # 4. 關 MT5（WM_CLOSE 正常關閉）
         try:
             _out_hk = _sp_hk.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
@@ -1129,9 +1137,10 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     # [ALERT] 2026-08-31 FIX5：唔好「淨保留 1 個」— 會清走 restore 嘅有 EA chart（MACD_Cross 等自動 restore）
                     # → 用 _clean_blank_charts 邏輯（保留心跳 EA 掛嘅 symbol + target）— 只清空白 chart
                     try:
-                        _clean_blank_charts(pid, keep_symbol='')
-                    except Exception:
-                        pass
+                        _clean_blank_charts(mt5_pid or 0, keep_symbol='')
+                        print("[CLEAN] restart 後已清空白 chart（保留有 EA 嘅）")
+                    except Exception as _e_clr2:
+                        print(f"[WARN] restart 後清空白 chart failed: {_e_clr2}")
                     # [ALERT] 確保至少有 1 個 chart（熱鍵測試需要 active chart — Ctrl+N 彈 Properties）
                     _chk_charts_after = []
                     def _cb_chart_aft(h, _):
@@ -1253,6 +1262,12 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                         time.sleep(3)
                     if _ready2:
                         print("[OK] 熱鍵預載：第二次 restart done（reload 熱鍵）")
+                        # [ALERT] 2026-08-31 FIX：第二次 restart 後都即刻清空白 chart（MT5 又開返一堆）
+                        try:
+                            _clean_blank_charts(_p2 or 0, keep_symbol='')
+                            print("[CLEAN] 第二次 restart 後已清空白 chart（保留有 EA 嘅）")
+                        except Exception as _e_clr3:
+                            print(f"[WARN] 第二次 restart 後清空白 chart failed: {_e_clr3}")
                         # 再測熱鍵
                         for _hk_try2 in range(3):
                             try:
