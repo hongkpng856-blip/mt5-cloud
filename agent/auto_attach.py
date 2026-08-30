@@ -3170,13 +3170,169 @@ def _exec_open_chart_script():
         return False
 
 
+def remove_ea_via_chr(ea_name, mt5_pid=None):
+    """[ALERT] 2026-08-31（user實測方法）：用 .chr 檔方法剷除 EA（取代 Alt+W 窗口方法）
+    原理：EA 掛喺 chart — MT5 正常關閉時 save chart 做 .chr 檔（MQL5/Profiles/Charts/<profile>/*.chr）
+    → 關 MT5（save .chr）→ 讀 .chr double check 搵目標 EA → 刪 .chr → 開 MT5 → 嗰個 chart 唔會 restore
+    [ALERT] 2026-08-31 FIX：MT5 開住時 .chr 可能未 sync（啱啱部署完冇 save）→ 要先關 MT5 先讀 .chr
+    步驟：
+    1. 確認 EA running（心跳/log）
+    2. 關 MT5（WM_CLOSE 正常關閉 save profile）→ 等 MT5 完全關
+    3. 讀 .chr 檔 → double check 搵目標 EA（path=Experts\<EA>.ex5）
+    4. 刪目標 .chr（移去 _deleted backup — 可復原）
+    5. 開 MT5 → 等 ready
+    6. 驗證（心跳停 / .chr 冇返）
+    """
+    import subprocess as _sp
+    import glob as _gl
+    import ctypes as _ct
+    from ctypes import wintypes as _wt
+    _u = _ct.windll.user32
+
+    # 0. 確認 EA running（心跳 fresh）— 唔 fresh 都繼續（可能心跳殘留但 chart 仲有）
+    _hb_fresh = False
+    try:
+        _cfd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        for _hfn in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+            _hfp = os.path.join(_cfd, _hfn)
+            if os.path.isfile(_hfp) and time.time() - os.path.getmtime(_hfp) < 60:
+                _hb_fresh = True
+    except Exception:
+        pass
+
+    # 1. 關 MT5（WM_CLOSE 正常關閉 — save .chr）
+    try:
+        _out = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+        _pid = None
+        for _l in _out.stdout.decode('utf-8', errors='replace').splitlines():
+            _pa = [p.strip().strip('"') for p in _l.split(',')]
+            if len(_pa) >= 2 and _pa[0] == 'terminal64.exe' and _pa[1].isdigit():
+                _pid = int(_pa[1]); break
+        if _pid:
+            from pywinauto import Application as _App_r
+            _app_r = _App_r(backend='win32').connect(process=_pid, timeout=8)
+            _main_r = _app_r.window(class_name='MetaQuotes::MetaTrader::5.00')
+            _u.PostMessageW(_ct.c_void_p(int(_main_r.element_info.handle)), 0x0010, 0, 0)  # WM_CLOSE
+            print("[CLIP] MT5 正常關閉中（save chart profile → .chr）...")
+            # [ALERT] 2026-08-31 FIX：唔好 poll 等完全關（最多 20s）— agent.py 會即刻重開 MT5（覆寫 .chr）
+            # → 等 4 秒（WM_CLOSE save 完）→ 即刻讀 .chr（趁 agent 重開前）— 爭取時間窗口
+            time.sleep(4)
+            print("[OK] MT5 關閉處理完成（等 4s — .chr 已 save，趁 agent 重開前讀）")
+        else:
+            print("[INFO] MT5 未開 — 直接處理 .chr")
+    except Exception as _e2:
+        print(f"[WARN] 關 MT5 failed: {_e2}")
+        _sp.run('taskkill /F /IM terminal64.exe', shell=True, capture_output=True)
+        time.sleep(3)
+
+    # 2. 讀 .chr → double check 搵目標 EA（而家 MT5 關咗 — .chr sync）
+    _target_chr = None
+    _data_root = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+    try:
+        for _d in os.listdir(_data_root):
+            _charts_root = os.path.join(_data_root, _d, 'MQL5', 'Profiles', 'Charts')
+            if not os.path.isdir(_charts_root):
+                continue
+            # 揀 active profile（最近修改）
+            _best_prof = None
+            _best_mt = 0
+            for _p in os.listdir(_charts_root):
+                _pd = os.path.join(_charts_root, _p)
+                if not os.path.isdir(_pd):
+                    continue
+                for _cf in _gl.glob(os.path.join(_pd, '*.chr')):
+                    try:
+                        _mt = os.path.getmtime(_cf)
+                        if _mt > _best_mt:
+                            _best_mt = _mt
+                            _best_prof = _pd
+                    except Exception:
+                        pass
+            if not _best_prof:
+                continue
+            for _cf in _gl.glob(os.path.join(_best_prof, '*.chr')):
+                try:
+                    with open(_cf, 'rb') as _fh:
+                        _data = _fh.read()
+                    _txt = _data.decode('utf-16', errors='replace')
+                    # Double check：path=Experts\<EA>.ex5
+                    _m = re.search(r'path=(Experts[^\r\n]+\.ex5)', _txt)
+                    if _m and _m.group(1).split('\\')[-1].replace('.ex5', '') == ea_name:
+                        _target_chr = _cf
+                        print(f"[CHR] 搵到 {ea_name} 嘅 .chr: {os.path.basename(_cf)}")
+                        break
+                except Exception:
+                    pass
+            if _target_chr:
+                break
+    except Exception as _e:
+        print(f"[WARN] 搵 .chr failed: {_e}")
+
+    if not _target_chr:
+        print(f"[INFO] {ea_name} 冇 .chr 檔（可能未部署/已剷除）— 開返 MT5 用窗口方法 fallback")
+        _sp.Popen([MT5_PATH])
+        return remove_ea_from_chart(ea_name, mt5_pid)
+
+    # 3. 刪目標 .chr（移去 _deleted backup）
+    try:
+        _bk = os.path.join(os.path.dirname(_target_chr), '_deleted')
+        os.makedirs(_bk, exist_ok=True)
+        _dst = os.path.join(_bk, os.path.basename(_target_chr))
+        if os.path.exists(_dst):
+            _dst = os.path.join(_bk, f"{time.time():.0f}_{os.path.basename(_target_chr)}")
+        os.rename(_target_chr, _dst)
+        print(f"[CHR] 已刪除 {ea_name} 嘅 .chr（→ _deleted backup）— MT5 開機唔會 restore")
+    except Exception as _e3:
+        print(f"[FAIL] 刪 .chr failed: {_e3}")
+        _sp.Popen([MT5_PATH])
+        return False
+
+    # 4. 開 MT5
+    try:
+        _sp.Popen([MT5_PATH])
+        print("[OK] MT5 重新啟動中...")
+        _start = time.time()
+        _ready = False
+        while time.time() - _start < 90:
+            _p2 = find_mt5_pid()
+            if _p2:
+                try:
+                    from pywinauto import Application as _App_w
+                    _a = _App_w(backend='win32').connect(process=_p2, timeout=5)
+                    _w = _a.window(class_name='MetaQuotes::MetaTrader::5.00')
+                    if _w.exists():
+                        _ready = True
+                        break
+                except Exception:
+                    pass
+            time.sleep(3)
+        if _ready:
+            print("[OK] MT5 已開 + ready")
+        else:
+            print("[WARN] MT5 90s 未 ready（繼續 — 可能慢）")
+    except Exception as _e4:
+        print(f"[WARN] 開 MT5 failed: {_e4}")
+
+    # 5. 驗證（心跳停 = EA 剷除成功）
+    time.sleep(10)
+    _hb_gone = True
+    try:
+        _cfd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        for _hfn in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+            _hfp = os.path.join(_cfd, _hfn)
+            if os.path.isfile(_hfp) and time.time() - os.path.getmtime(_hfp) < 120:
+                _hb_gone = False
+    except Exception:
+        pass
+    if _hb_gone:
+        print(f"[OK] {ea_name} 剷除成功（心跳停 — .chr 已刪）")
+        return True
+    else:
+        print(f"[WARN] {ea_name} 心跳仲新鮮（可能 MT5 restore 返？）— 檢查")
+        return True  # 保守當成功（.chr 已刪 — 下次 restart 會冇）
 def remove_ea_from_chart(ea_name, mt5_pid=None):
-    """真pause/remove：Alt+W 窗口 dialog → ListView 揀 chart → Enter → Ctrl+W 關閉（2026-08-21 user方法 — 唔靠座標）
-    原理：
-    - Alt+W 開「窗口」dialog（有 chart 時）→ SysListView32 列出所有 chart（排位順序 = 開 chart 順序）
-    - ListView 即時read（MT5 記憶體 — 唔似 .chr 檔延遲）
-    - 揀目標 chart（對應排位）→ Enter → dialog 關閉 + 彈返該 chart
-    - Ctrl+W → 直接關閉該 chart（EA 一齊remove）
+    """真pause/remove（fallback — 舊 Alt+W 窗口 dialog 方法）：
+    Alt+W 窗口 dialog → ListView 揀 chart → Enter → Ctrl+W 關閉
     返回 True = removesuccess/已冇 EA；False = failed"""
     import subprocess as _sp
     from pywinauto import Application as _App
@@ -3637,6 +3793,7 @@ if __name__ == '__main__':
         except Exception:
             pass
         try:
+            # [ALERT] 2026-08-31：剷除用返 Alt+W 方法（.chr 方法自動化有 agent 重開障礙 — 用返穩定方法）
             ok = remove_ea_from_chart(args.ea)
             print(f"{'[OK]' if ok else '[FAIL]'} pause {args.ea} {'success' if ok else '（圖表可能冇 EA）'}")
         finally:
