@@ -1125,16 +1125,40 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                             _charts_cl.append((h, _t_cl.value.strip()))
                         return True
                     _u_cl.EnumChildWindows(_main_cl, _WNDENUMPROC_CL(_cb_chart_cl), 0)
-                    # 清走多餘 chart（restart 後冇 EA 掛住 — 全空白）— 保留 1 個（熱鍵測試需要 active chart）
-                    # [ALERT] 熱鍵測試（Ctrl+N 彈 Properties）需要 active chart → 保留 1 個
-                    for _idx_cl, (_h_cl, _t_cl) in enumerate(_charts_cl):
-                        if _idx_cl == 0:
-                            continue  # 保留第一個（熱鍵測試用）
-                        _u_cl.PostMessageW(_h_cl, 0x0010, 0, 0)  # WM_CLOSE
-                        print(f"[CLEAN] restart 後清空白 chart: {_t_cl[:40]}")
-                        time.sleep(0.5)
-                    if len(_charts_cl) > 1:
-                        print(f"[CLEAN] restart 後清 {len(_charts_cl)-1} 個空白 chart（保留 1 個做熱鍵測試）")
+                    # 清走多餘 chart（restart 後冇 EA 掛住 — 全空白）
+                    # [ALERT] 2026-08-31 FIX5：唔好「淨保留 1 個」— 會清走 restore 嘅有 EA chart（MACD_Cross 等自動 restore）
+                    # → 用 _clean_blank_charts 邏輯（保留心跳 EA 掛嘅 symbol + target）— 只清空白 chart
+                    try:
+                        _clean_blank_charts(pid, keep_symbol='')
+                    except Exception:
+                        pass
+                    # [ALERT] 確保至少有 1 個 chart（熱鍵測試需要 active chart — Ctrl+N 彈 Properties）
+                    _chk_charts_after = []
+                    def _cb_chart_aft(h, _):
+                        _cls_aft = _ct_cl.create_unicode_buffer(64)
+                        _u_cl.GetClassNameW(h, _cls_aft, 64)
+                        _t_aft = _ct_cl.create_unicode_buffer(256)
+                        _u_cl.GetWindowTextW(h, _t_aft, 256)
+                        if _t_aft.value.strip() and ',' in _t_aft.value:
+                            _chk_charts_after.append((h, _t_aft.value.strip()))
+                        return True
+                    _u_cl.EnumChildWindows(_main_cl, _WNDENUMPROC_CL(_cb_chart_aft), 0)
+                    if not _chk_charts_after:
+                        # 冇 chart（全部空白清走）→ 開返一個空 chart（熱鍵測試用）
+                        try:
+                            import pyautogui as _pg_cl2
+                            _pg_cl2.FAILSAFE = False
+                            _r_cl2 = _w_hk.rectangle()
+                            _pg_cl2.click(_r_cl2.left + _r_cl2.width() // 2, _r_cl2.top + _r_cl2.height() // 2)
+                            time.sleep(0.5)
+                            from pywinauto.keyboard import send_keys as _sk_cl2
+                            _sk_cl2('^n')  # Ctrl+N 開新 chart（熱鍵測試用）
+                            time.sleep(2)
+                            _sk_cl2('{ENTER}')
+                            time.sleep(2)
+                            print("[CLEAN] 開返一個 chart 做熱鍵測試")
+                        except Exception:
+                            pass
             except Exception as _e_cl:
                 print(f"[CLEAN] restart 後清 chart failed: {_e_cl}")
             _hk_loaded_ok = False
