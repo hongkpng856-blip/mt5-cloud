@@ -3248,6 +3248,13 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         
         if heartbeat or _log_loaded:
             print(f"\n[DONE] SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
+            # [ALERT] 2026-08-31 FIX（Bug #150 — 3 個空白 EURUSD chart 殘留）：
+            # MT5 restart 後 profile restore 舊 chart（空白冇 EA）→ 掃描所有 chart →
+            # 冇掛 EA 嘅空白 chart 關閉（淨保留 target + 其他有 EA 運行中嘅 chart）
+            try:
+                _clean_blank_charts(mt5_pid, keep_symbol=(symbol or '').upper())
+            except Exception:
+                pass
             return True
         else:
             print(f"\n[FAIL] deploydone但verify failed：MT5 log 冇 loaded 記錄 + 心跳冇（應該唔會到呢度 — Step 4 gate 已過）")
@@ -3263,6 +3270,87 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
 
 
 # ─── CLI ───
+def _clean_blank_charts(mt5_pid, keep_symbol=''):
+    """[ALERT] 2026-08-31 FIX（Bug #150 — 3 個空白 EURUSD chart 殘留）
+    掃描 MT5 所有 chart：
+    - 有掛 EA 運行中（心跳新鮮）→ 保留
+    - 係 target symbol（keep_symbol）→ 保留
+    - 其他空白 chart（冇 EA）→ 關閉（WM_CLOSE）
+    目的：MT5 restart 後 profile restore 舊 chart（空白冇 EA）— 唔好殘留一堆空白 chart
+    """
+    try:
+        import ctypes as _ct_cc
+        from ctypes import wintypes as _wt_cc
+        _u_cc = _ct_cc.windll.user32
+
+        # 搵 MT5 主視窗
+        _main_cc = None
+        def _cb_main_cc(h, _):
+            nonlocal _main_cc
+            _cls_cc = _ct_cc.create_unicode_buffer(64)
+            _u_cc.GetClassNameW(h, _cls_cc, 64)
+            if 'MetaTrad' in _cls_cc.value:
+                _main_cc = h
+            return True
+        _WNDENUMPROC_CC = _ct_cc.WINFUNCTYPE(_wt_cc.BOOL, _wt_cc.HWND, _wt_cc.LPARAM)
+        _u_cc.EnumWindows(_WNDENUMPROC_CC(_cb_main_cc), 0)
+        if not _main_cc:
+            print("[CLEAN] 搵唔到 MT5 主視窗 — skip 清空白 chart")
+            return
+
+        # 掃描所有 chart（MDI child — 標題含 , 如 EURUSD,H1）
+        _charts_cc = []
+        def _cb_chart_cc(h, _):
+            _cls_cc = _ct_cc.create_unicode_buffer(64)
+            _u_cc.GetClassNameW(h, _cls_cc, 64)
+            _t_cc = _ct_cc.create_unicode_buffer(256)
+            _u_cc.GetWindowTextW(h, _t_cc, 256)
+            if _t_cc.value.strip() and ',' in _t_cc.value:
+                _charts_cc.append((h, _t_cc.value.strip()))
+            return True
+        _u_cc.EnumChildWindows(_main_cc, _WNDENUMPROC_CC(_cb_chart_cc), 0)
+
+        if not _charts_cc:
+            print("[CLEAN] 冇 chart — skip")
+            return
+
+        # 判斷邊啲 chart 有 EA 運行中（心跳 fresh <300s）
+        import glob as _g_cc
+        _hb_files_cc = _g_cc.glob(os.path.join(COMMON_FILES, 'state_*.json')) + _g_cc.glob(os.path.join(COMMON_FILES, 'hb_*.txt'))
+        _ea_running_cc = set()
+        import time as _t_cc
+        _now_cc = _t_cc.time()
+        for _hf_cc in _hb_files_cc:
+            try:
+                if _now_cc - os.path.getmtime(_hf_cc) < 300:
+                    _base_cc = os.path.basename(_hf_cc).replace('state_', '').replace('hb_', '').replace('.json', '').replace('.txt', '')
+                    _ea_running_cc.add(_base_cc)
+            except Exception:
+                pass
+
+        # 關閉空白 chart（冇 EA 運行中 + 唔係 target symbol）
+        # [ALERT] 2026-08-31：如果冇任何 EA 心跳（淨係空白殘留 chart）→ 關閉非 target 全部
+        # 如果有 EA 運行中（心跳存在）→ 全部保留（避免誤關有 EA 嘅 chart — 唔知掛喺邊個 chart）
+        _has_running_ea = len(_ea_running_cc) > 0
+        _closed_cc = 0
+        for _h_cc, _title_cc in _charts_cc:
+            _sym_part_cc = _title_cc.split(',')[0].upper()
+            if keep_symbol and _sym_part_cc == keep_symbol:
+                continue
+            if _has_running_ea:
+                # 有 EA 運行中 — 保留所有 chart（保守 — 避免誤關有 EA 嘅 chart）
+                continue
+            # 空白 chart（冇 EA 運行中）→ 關閉
+            _u_cc.PostMessageW(_h_cc, 0x0010, 0, 0)  # WM_CLOSE
+            _closed_cc += 1
+            print(f"[CLEAN] 關閉空白 chart: {_title_cc[:40]}")
+            _t_cc.sleep(0.5)
+
+        print(f"[CLEAN] 清空白 chart 完成 — 關閉 {_closed_cc} 個（保留 target {keep_symbol}{' + 運行中 EA' if _has_running_ea else ''}）")
+    except Exception as _e_cc:
+        print(f"[CLEAN] 清空白 chart failed: {_e_cc}")
+
+
 def _exec_open_chart_script():
     """[ALERT] 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — user實測方法）
     取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
