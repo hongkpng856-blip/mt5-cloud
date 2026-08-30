@@ -203,6 +203,44 @@ def do_restart_mt5():
         except Exception:
             pass
         print(f"[OK] MT5 restarted, PID={pid}")
+        # [ALERT] 2026-08-31 FIX（Bug #150 根治 — user要求「唔好 restart 後殘留空白 chart」）：
+        # MT5 開機時 Default profile 空（profile.ini 0 bytes）→ MT5 自動開 3 個預設 EURUSD chart（空白）
+        # → 即刻清走（restart 後所有 chart 都空白 — 直接清晒 — 之後開 target chart）
+        # [ALERT] 唔可以用 _clean_blank_charts（佢會讀心跳/log 保留舊 symbol — restart 後唔啱）
+        # → 直接關閉所有 chart（restart 後冇 EA 掛住 — 全空白）
+        try:
+            import ctypes as _ct_rb
+            from ctypes import wintypes as _wt_rb
+            _u_rb = _ct_rb.windll.user32
+            _main_rb = None
+            def _cb_rb(h, _):
+                nonlocal _main_rb
+                _cls_rb = _ct_rb.create_unicode_buffer(64)
+                _u_rb.GetClassNameW(h, _cls_rb, 64)
+                if 'MetaTrad' in _cls_rb.value:
+                    _main_rb = h
+                return True
+            _WNDENUMPROC_RB = _ct_rb.WINFUNCTYPE(_wt_rb.BOOL, _wt_rb.HWND, _wt_rb.LPARAM)
+            _u_rb.EnumWindows(_WNDENUMPROC_RB(_cb_rb), 0)
+            if _main_rb:
+                _charts_rb = []
+                def _cb_chart_rb(h, _):
+                    _cls_rb = _ct_rb.create_unicode_buffer(64)
+                    _u_rb.GetClassNameW(h, _cls_rb, 64)
+                    _t_rb = _ct_rb.create_unicode_buffer(256)
+                    _u_rb.GetWindowTextW(h, _t_rb, 256)
+                    if _t_rb.value.strip() and ',' in _t_rb.value:
+                        _charts_rb.append((h, _t_rb.value.strip()))
+                    return True
+                _u_rb.EnumChildWindows(_main_rb, _WNDENUMPROC_RB(_cb_chart_rb), 0)
+                for _h_rb, _t_rb in _charts_rb:
+                    _u_rb.PostMessageW(_h_rb, 0x0010, 0, 0)  # WM_CLOSE
+                    print(f"[CLEAN] restart 後關閉預設空白 chart: {_t_rb[:40]}")
+                    time.sleep(0.5)
+                if _charts_rb:
+                    print(f"[CLEAN] restart 後清 {len(_charts_rb)} 個預設 chart（MT5 開機自動開）")
+        except Exception as _e_rb:
+            print(f"[CLEAN] restart 後清 chart failed: {_e_rb}")
         return pid
     else:
         print("[FAIL] MT5 failed to start")
