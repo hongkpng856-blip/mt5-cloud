@@ -1865,9 +1865,6 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 # [ALERT] 2026-08-19（user發現嘅可靠方法）：直接開 target symbol chart
                 # Alt+F → Enter → Enter → Space → 打 symbol → Enter
                 # （pyautogui 實測 work — 取代 Ctrl+9 熱鍵 — 唔受 MT5 重啟洗走 hotkeys.ini <scripts> 區影響）
-                # [ALERT] 2026-09-01 FIX（用戶實測：部署撞代替 dialog — 部署應該開新 chart 唔取代）：
-                # Alt+F（File menu）方法喺某啲 MT5 版本/語言唔穩定（menu 揀錯 → 用現有 chart → 代替 dialog）
-                # → 改用 Ctrl+N（MT5 系統快捷鍵 — 一定開「新 chart」— 唔會用現有）+ Ctrl+U（Symbol 選單）轉 symbol
                 # success（active chart = _sym）→ skip Ctrl+9
                 _oc_ok2 = False
                 try:
@@ -1875,16 +1872,16 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     _pg_new2.FAILSAFE = False
                     _u_oc.SetForegroundWindow(_ct_oc.c_void_p(int(win.element_info.handle)))
                     time.sleep(1)
-                    print(f"[PIN] 開新 chart（Ctrl+N）→ 轉 symbol（Ctrl+U → {_sym}）")
-                    # [ALERT] 2026-08-21（user要求：認證有冇 dialog 先繼續next step）：開 chart 前檢查閘門 — 有 dialog 擋住 → 開 chart 必failed
+                    print(f"[PIN] 新方法開 chart: Alt+F→Enter→Enter→Space→{_sym}→Enter")
+                    # [ALERT] 2026-08-21（user要求：認證有冇 dialog 先繼續next step）：開 chart 前檢查閘門 — 有 dialog 擋住 Alt+F menu → 開 chart 必failed
                     if not _ensure_no_dialog(f'開 chart {_sym} 前', max_wait=8):
                         print(f"[FAIL] 開 chart 中止：dialog 關唔到 — 唔開 chart（避免假failed）")
                         return False
-                    # Ctrl+N 開新 chart（MT5 系統快捷鍵 — 一定新 chart）
-                    _pg_new2.hotkey('ctrl', 'n'); time.sleep(3)
-                    # Ctrl+U 開 Symbol 選單 → 打 symbol → Enter（轉 symbol）
-                    _pg_new2.hotkey('ctrl', 'u'); time.sleep(2)
-                    _pg_new2.typewrite(_sym, interval=0.15); time.sleep(1.5)
+                    _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
+                    _pg_new2.press('enter'); time.sleep(1.5)
+                    _pg_new2.press('enter'); time.sleep(2)
+                    _pg_new2.press('space'); time.sleep(1.5)
+                    _pg_new2.typewrite(_sym, interval=0.2); time.sleep(1)
                     _pg_new2.press('enter'); time.sleep(3)
                     _new_title2 = win.window_text()
                     # [ALERT] 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
@@ -1924,16 +1921,17 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 if not _oc_ok2:
                     # [ALERT] 2026-08-25 FIX（連環deploy偶發failed — Breakout 案例）：open chart failed重試 2 次
                     # （Alt+F menu 時序 — MT5 restart 後 UI 未完全穩定 → 第一次開 chart 可能failed → 重試success）
-                    # [ALERT] 2026-09-01 FIX：retry 都改 Ctrl+N + Ctrl+U（唔再用 Alt+F — 唔穩定）
                     _oc_retried = False
                     for _oc_r2 in range(2):
                         print(f"[RETRY] open chart retry {_oc_r2+1}/2（{_sym}）...")
                         try:
                             import pyautogui as _pg_r2
                             _pg_r2.FAILSAFE = False
-                            _pg_r2.hotkey('ctrl', 'n'); time.sleep(3)
-                            _pg_r2.hotkey('ctrl', 'u'); time.sleep(2)
-                            _pg_r2.typewrite(_sym, interval=0.15); time.sleep(1.5)
+                            _pg_r2.hotkey('alt', 'f'); time.sleep(1.5)
+                            _pg_r2.press('enter'); time.sleep(1.5)
+                            _pg_r2.press('enter'); time.sleep(2)
+                            _pg_r2.press('space'); time.sleep(1.5)
+                            _pg_r2.typewrite(_sym, interval=0.2); time.sleep(1)
                             _pg_r2.press('enter'); time.sleep(3)
                             # 驗證 chart 出現
                             try:
