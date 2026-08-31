@@ -184,6 +184,17 @@ def do_restart_mt5():
             _rf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.show')
             if os.path.exists(_rf):
                 os.remove(_rf)
+            # [ALERT] 2026-09-01 FIX（用戶實測：剷除後警告視窗未關 — 開發目錄 show flag 殘留）：
+            # alert_worker（電腦版警告視窗）可能讀開發目錄版（mt5-cloud/agent/alert_worker.py）→ 要同步刪開發目錄 show flag
+            try:
+                for _cd_del in (os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'agent'),
+                                os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud-stable', 'agent')):
+                    _rf_del = os.path.join(_cd_del, '.ai_control.show')
+                    if os.path.isdir(_cd_del) and os.path.exists(_rf_del):
+                        os.remove(_rf_del)
+                        print(f"[OK] 同步刪開發目錄 show flag: {_rf_del}")
+            except Exception:
+                pass
             _sf = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
             if os.path.exists(_sf):
                 import json as _j3
