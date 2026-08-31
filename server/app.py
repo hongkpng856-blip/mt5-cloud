@@ -554,6 +554,15 @@ def _market_closed_for_symbol(symbol):
     """
     try:
         import MetaTrader5 as _mt5
+        # [ALERT] 2026-09-01 FIX（用戶實測：冇操作都開 MT5 — 網頁 poll /api/ea-config → _market_closed_for_symbol → mt5.initialize 自動開 terminal64）：
+        # → 先檢查 terminal64 有冇開（tasklist）— 未開 → 唔 initialize（返回 None — 唔自動開）
+        try:
+            import subprocess as _sp_mc
+            _r_mc = _sp_mc.run('tasklist /FI "IMAGENAME eq terminal64.exe" /NH', shell=True, capture_output=True, timeout=5)
+            if b'terminal64' not in _r_mc.stdout:
+                return None
+        except Exception:
+            pass
         # 唔 initialize 新connection — 用 agent 已有嘅？唔得，呢度獨立。輕量 initialize + shutdown
         if not _mt5.initialize(timeout=4000):
             return None
@@ -1141,7 +1150,9 @@ def ensure_mt5_running():
         r = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /NH', shell=True, capture_output=True, timeout=5)
         if b'terminal64' in r.stdout:
             return True
-        print("[ensure_mt5] MT5 未開啟 — 自動start...")
+        # [ALERT] 2026-09-01 DEBUG：記錄邊個 call（搵「冇操作都開 MT5」源頭）
+        import traceback as _tb_dbg
+        print(f"[ensure_mt5] MT5 未開啟 — 自動start...（caller: {_tb_dbg.format_stack(limit=6)[-2].strip()}）", flush=True)
         try:
             _sp.Popen([MT5_EXE_PATH])
         except Exception as e:
