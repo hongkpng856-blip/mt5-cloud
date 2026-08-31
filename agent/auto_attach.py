@@ -2354,7 +2354,58 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         if os.path.isfile(hb):
             print(f"[OK] {ea_name} attach success（heartbeat exists）")
         else:
-            print(f"[OK] {ea_name} 快捷鍵attach流程done（heartbeat waiting tick）")
+            # [ALERT] 2026-09-01 FIX（用戶實測：Breakout loaded 但 OnInit 未跑 — 冇 EA icon + 冇心跳 = 假成功）：
+            # before: 即刻 print「done（heartbeat waiting tick）」→ 即使 OnInit 未跑都話 OK → 假成功
+            # now: 撳「確定」後等 OnInit 心跳（state_<EA>.json / hb_<EA>.txt 出現 — OnInit 寫）最多 20 秒
+            # → 心跳出現 = OnInit 真跑 = 真成功；timeout 冇心跳 → 再睇 MQL5/Logs 有冇 EA「已啟動」Print（OnInit 真跑證據）
+            # → 兩樣都冇 → 唔當 success（chart 未 activate — OnInit 未跑 — 假成功）
+            print(f"[WAIT] {ea_name} 撳確定後等 OnInit 心跳（最多 20 秒 — 確認 EA 真運行）...")
+            _hb_ok_wait = False
+            _wait_start = time.time()
+            while time.time() - _wait_start < 20:
+                _chk_abort()
+                _hb_cand = [
+                    os.path.join(COMMON_FILES, f'state_{ea_name}.json'),
+                    os.path.join(COMMON_FILES, f'hb_{ea_name}.txt'),
+                    os.path.join(COMMON_FILES, f'state_{ea_name}.txt'),
+                ]
+                for _hfc in _hb_cand:
+                    if os.path.isfile(_hfc) and time.time() - os.path.getmtime(_hfc) < 60:
+                        print(f"[OK] {ea_name} OnInit 心跳出現（{os.path.basename(_hfc)} — OnInit 真跑）")
+                        _hb_ok_wait = True
+                        break
+                if _hb_ok_wait:
+                    break
+                time.sleep(2)
+            if not _hb_ok_wait:
+                # 再睇 MQL5/Logs（EA Print「已啟動」= OnInit 跑咗）
+                try:
+                    import glob as _g_ml
+                    _ml_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                    _ml_latest = None
+                    for _d_ml in os.listdir(_ml_dir):
+                        _ml_lgd = os.path.join(_ml_dir, _d_ml, 'MQL5', 'Logs')
+                        if os.path.isdir(_ml_lgd):
+                            for _f_ml in _g_ml.glob(os.path.join(_ml_lgd, '*.log')):
+                                if _ml_latest is None or os.path.getmtime(_f_ml) > os.path.getmtime(_ml_latest):
+                                    _ml_latest = _f_ml
+                    if _ml_latest:
+                        with open(_ml_latest, 'rb') as _f_ml2:
+                            _raw_ml = _f_ml2.read()
+                        for _enc_ml in ('utf-16', 'utf-8', 'cp1252'):
+                            try:
+                                _txt_ml = _raw_ml.decode(_enc_ml); break
+                            except Exception:
+                                continue
+                        if ea_name in _txt_ml and ('已啟動' in _txt_ml or '已start' in _txt_ml):
+                            print(f"[OK] {ea_name} OnInit Print「已啟動」確認（MQL5/Logs — OnInit 真跑）")
+                            _hb_ok_wait = True
+                except Exception:
+                    pass
+            if not _hb_ok_wait:
+                print(f"[FAIL] {ea_name} 撳確定後 OnInit 未跑（冇心跳 + 冇已啟動Print）— 假成功 — chart 可能未 activate")
+            else:
+                print(f"[OK] {ea_name} 快捷鍵attach流程done（OnInit 確認）")
         # [ALERT] 2026-08-12 FIX：steps done 搬去函數最尾（所有操作done後先寫 — 否則user見 steps done 撳確定 → active 仲 true → immediately彈多一次）
         # [TARGET] 圖表平鋪（2026-08-08：deploydone後自動 Alt+R — 圖表整齊排列）
         try:
@@ -2557,6 +2608,10 @@ def verify_heartbeat(ea_name, timeout=60):
     # [ALERT] 2026-08-10：心跳冇 → 睇 MT5 log「已start」（market closeno tick — EA 其實start咗）
     # [ALERT] 2026-08-24 FIX（假success根治）：讀 terminal Logs（<hash>/Logs/ — 英文 loaded successfully）而唔係 MQL5/Logs（MetaEditor 中文「已启动」殘留 → 誤判）
     # + 只認「loaded successfully」+ 最後狀態判斷（removed 後唔算 loaded）
+    # [ALERT] 2026-09-01 FIX（用戶實測：Breakout loaded 但 OnInit 未跑 — 冇 EA icon + 冇心跳 = 假成功）：
+    # 淨靠「loaded successfully」fallback 唔夠 — 要額外確認 OnInit 真跑（EA Print「已啟動」/ heartbeat file 寫入）
+    # → 心跳 timeout 後：睇 log 有冇 EA 自己 Print 嘅「已啟動」/「stopped」（OnInit/OnDeinit 跑過 = 真掛）
+    # → 淨係「loaded successfully」而 OnInit 冇 Print → 唔當 success（可能 chart 未 activate — OnInit 未跑）
     try:
         log_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         import glob as _g
@@ -2567,7 +2622,7 @@ def verify_heartbeat(ea_name, timeout=60):
                 for f in _g.glob(os.path.join(lg, '*.log')):
                     if latest is None or os.path.getmtime(f) > os.path.getmtime(latest):
                         latest = f
-        if latest and time.time() - os.path.getmtime(latest) < 300:
+        if latest and time.time() - os.path.getmtime(latest) < 600:
             with open(latest, 'rb') as f:
                 raw = f.read()
             text = None
@@ -2579,15 +2634,22 @@ def verify_heartbeat(ea_name, timeout=60):
                     continue
             if text and ea_name in text:
                 _last_state = None
+                _oninit_ran = False  # [ALERT] 2026-09-01：OnInit 真跑 = EA Print「已啟動」/「stopped」
                 for _ln in text.splitlines():
                     if ea_name in _ln and 'expert' in _ln.lower():
                         if 'loaded successfully' in _ln:
                             _last_state = 'loaded'
                         elif 'removed' in _ln:
                             _last_state = 'removed'
-                if _last_state == 'loaded':
-                    print(f"[OK] {ea_name} MT5 log 顯示已start（market close no tick — 心跳fallback confirm）")
+                    # OnInit/OnDeinit Print（EA 自己寫 — 「已啟動」= OnInit 跑咗）
+                    if ea_name in _ln and ('已啟動' in _ln or '已start' in _ln or '已停止' in _ln or '已stop' in _ln or 'stopped' in _ln.lower()):
+                        _oninit_ran = True
+                if _last_state == 'loaded' and _oninit_ran:
+                    print(f"[OK] {ea_name} MT5 log 顯示已start + OnInit Print 確認（market close no tick — 心跳fallback confirm）")
                     return True
+                elif _last_state == 'loaded' and not _oninit_ran:
+                    # [ALERT] 2026-09-01：loaded 但 OnInit 未 Print → 假成功（chart 未 activate — OnInit 未跑）→ 唔當 success
+                    print(f"[WARN] {ea_name} MT5 log loaded 但 OnInit 未 Print（chart 可能未 activate — EA 未真正運行）")
     except Exception:
         pass
     
