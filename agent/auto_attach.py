@@ -2351,8 +2351,11 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
 
         # heartbeat verify
         hb = os.path.join(COMMON_FILES, f'state_{ea_name}.json')
-        if os.path.isfile(hb):
-            print(f"[OK] {ea_name} attach success（heartbeat exists）")
+        # [ALERT] 2026-09-01 FIX（假成功 — EMA_Cross 案例）：attach 心跳檢查要 mtime 新鮮（<60s）— 唔可以淨 isfile
+        # （舊殘留 state_<EA>.json 01:30 → isfile True → 誤判 attach success — 但 OnInit 未跑）
+        _hb_exists_fresh = os.path.isfile(hb) and time.time() - os.path.getmtime(hb) < 60
+        if _hb_exists_fresh:
+            print(f"[OK] {ea_name} attach success（heartbeat exists + fresh）")
         else:
             # [ALERT] 2026-09-01 FIX（用戶實測：Breakout loaded 但 OnInit 未跑 — 冇 EA icon + 冇心跳 = 假成功）：
             # before: 即刻 print「done（heartbeat waiting tick）」→ 即使 OnInit 未跑都話 OK → 假成功
@@ -2914,6 +2917,9 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         _oninit_confirmed = False
         if not heartbeat:
             # 睇 MQL5/Logs（EA Print「已啟動」= OnInit 跑咗）
+            # [ALERT] 2026-09-01 FIX（假成功 — EMA_Cross 案例）：OnInit Print 要新鮮（<5 分鐘 — 部署後先算）
+            # （舊 Print「EMA_Cross 已啟動 01:16」殘留 → 誤判 OnInit 真跑 — 但今次部署 OnInit 未跑）
+            _oninit_time = 0
             try:
                 import glob as _g_s5
                 _ml_s5 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
@@ -2932,8 +2938,21 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                             _txt_s5 = _raw_s5.decode(_enc_s5); break
                         except Exception:
                             continue
-                    if ea_name in _txt_s5 and ('已啟動' in _txt_s5 or '已start' in _txt_s5):
+                    # 逐行搵 EA 最後「已啟動」Print + 時間（HH:MM:SS → timestamp）
+                    import re as _re_s5
+                    for _ln_s5 in _txt_s5.splitlines():
+                        if ea_name in _ln_s5 and ('已啟動' in _ln_s5 or '已start' in _ln_s5):
+                            _tm_s5 = _re_s5.search(r'(\d{2}):(\d{2}):(\d{2})\.\d+', _ln_s5)
+                            if _tm_s5:
+                                _h_s5, _m_s5, _s_s5 = map(int, _tm_s5.groups())
+                                _oninit_time = _h_s5 * 3600 + _m_s5 * 60 + _s_s5
+                    # 而家時間（HH:MM:SS → seconds）
+                    _now_tm = time.localtime()
+                    _now_sec = _now_tm.tm_hour * 3600 + _now_tm.tm_min * 60 + _now_tm.tm_sec
+                    # 最後「已啟動」Print 喺 5 分鐘內（同一天）→ OnInit 真跑（今次部署）
+                    if _oninit_time and (_now_sec - _oninit_time) < 300 and (_now_sec - _oninit_time) >= 0:
                         _oninit_confirmed = True
+                        print(f"[OK] {ea_name} OnInit Print「已啟動」新鮮確認（{_oninit_time}s ago — OnInit 真跑）")
             except Exception:
                 pass
         
