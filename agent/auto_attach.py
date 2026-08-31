@@ -1887,11 +1887,34 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     # [ALERT] 2026-08-20 FIX：驗證唔可以淨靠主窗口標題（MT5 主窗口標題唔一定含 active chart symbol — 實測開咗 EURUSD chart 但標題冇後綴）
                     # → 檢查 MDI chart 窗口（有冇 <SYM>,H1 chart exists）— chart 開咗就算success
                     # [ALERT] 2026-08-21 FIX：改用 EnumChildWindows（pywinauto descendants 對 MT5 chart 窗口不可靠 — 實測開 chart success但 descendants check fail → 假failed）
+                    # [ALERT] 2026-09-01 FIX（用戶實測：部署撞代替 dialog — 部署落已有 EA 嘅 symbol → 誤判開 chart 成功 → attach 落舊 chart → 代替）：
+                    # 淨 check「有冇 <SYM> chart」唔夠（舊 chart 都存在 → 誤判成功）→ 要 check「chart 數量有冇增加」（Alt+F 開咗新 chart = 數量+1）
+                    # → 數量冇增加 = 開 chart 失敗（唔 attach — 避免 attach 落舊 chart → 代替 dialog）
                     _chart_found2 = False
+                    _chart_count_before = 0
                     try:
                         import ctypes as _ct_f2
                         _u_f2 = _ct_f2.windll.user32
                         _main_hwnd_f2 = int(win.element_info.handle)
+                        # 開 chart 前數 chart 數量（所有含 ',' 嘅 chart 窗口）
+                        def _count_charts_f2():
+                            _cnt = 0
+                            @_ct_f2.WINFUNCTYPE(_ct_f2.c_bool, _ct_f2.c_size_t, _ct_f2.c_size_t)
+                            def _cb_cnt(hwnd, _):
+                                nonlocal _cnt
+                                _cls_cnt = _ct_f2.create_unicode_buffer(128)
+                                _u_f2.GetClassNameW(_ct_f2.c_void_p(hwnd), _cls_cnt, 128)
+                                if 'Afx' in _cls_cnt.value and 'ControlBar' not in _cls_cnt.value:
+                                    _len_cnt = _u_f2.GetWindowTextLengthW(hwnd)
+                                    if _len_cnt > 0:
+                                        _buf_cnt = _ct_f2.create_unicode_buffer(_len_cnt + 1)
+                                        _u_f2.GetWindowTextW(hwnd, _buf_cnt, _len_cnt + 1)
+                                        if ',' in _buf_cnt.value:
+                                            _cnt += 1
+                                return True
+                            _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_cnt, 0)
+                            return _cnt
+                        _chart_count_before = _count_charts_f2()
                         @_ct_f2.WINFUNCTYPE(_ct_f2.c_bool, _ct_f2.c_size_t, _ct_f2.c_size_t)
                         def _cb_f2(hwnd, _):
                             nonlocal _chart_found2
@@ -1907,13 +1930,20 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                                         return False  # 停
                             return True
                         _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
+                        # 開 chart 後再數（Alt+F 成功 = 數量+1）
+                        _chart_count_after = _count_charts_f2()
+                        print(f"[CLIP] 開 chart 前 {_chart_count_before} 個 chart → 後 {_chart_count_after} 個（目標 {_sym} chart exists: {_chart_found2}）")
+                        if _chart_count_after > _chart_count_before:
+                            print(f"[OK] chart 數量增加（{_chart_count_before} → {_chart_count_after}）— 新 chart 已開")
+                        else:
+                            print(f"[WARN] chart 數量冇增加（{_chart_count_before} → {_chart_count_after}）— 可能開 chart 失敗（已有 chart 誤判）")
                     except Exception:
                         pass
-                    if _sym in _new_title2 or _chart_found2:
+                    if (_sym in _new_title2 or _chart_found2) and _chart_count_after > _chart_count_before:
                         _oc_ok2 = True
-                        print(f"[OK] 新方法chart opened: active chart = {_sym}")
+                        print(f"[OK] 新方法chart opened: active chart = {_sym}（新 chart 確認）")
                     else:
-                        print(f"[WARN] 新方法未確認（active: {_new_title2[:50]}...）— open chart failed，唔attach！")
+                        print(f"[WARN] 新方法未確認（active: {_new_title2[:50]}... chart 數冇增加）— open chart failed，唔attach！")
                 except Exception as _eneg2:
                     print(f"[WARN] 新方法open chart failed: {_eneg2}")
 
@@ -1933,13 +1963,14 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             _pg_r2.press('space'); time.sleep(1.5)
                             _pg_r2.typewrite(_sym, interval=0.2); time.sleep(1)
                             _pg_r2.press('enter'); time.sleep(3)
-                            # 驗證 chart 出現
+                            # 驗證 chart 出現（數量有增加 = 新 chart 開咗 — 唔可以淨 check exists）
                             try:
                                 _chart_found2 = False
+                                _chart_cnt_r2 = _count_charts_f2() if '_count_charts_f2' in dir() else 0
                                 _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
                             except Exception:
                                 pass
-                            if _chart_found2:
+                            if _chart_found2 and _chart_cnt_r2 > _chart_count_before:
                                 _oc_ok2 = True
                                 _oc_retried = True
                                 print(f"[OK] open chart retrysuccess（{_sym} chart 出現）")
