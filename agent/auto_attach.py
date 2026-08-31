@@ -2377,6 +2377,26 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
             _wait_start = time.time()
             while time.time() - _wait_start < 20:
                 _chk_abort()
+                # [ALERT] 2026-09-01 FIX（用戶實測：MT5 系統更新彈窗喺 attach 後彈出 — 阻住 OnInit）：
+                # 等心跳期間同時掃 dialog（update/通知彈窗）→ 即刻 WM_CLOSE 關（唔阻 OnInit 跑）
+                try:
+                    import ctypes as _ct_hb
+                    _u_hb = _ct_hb.windll.user32
+                    def _scan_hb(hwnd, _):
+                        _cls_hb = _ct_hb.create_unicode_buffer(128)
+                        _u_hb.GetClassNameW(_ct_hb.c_void_p(hwnd), _cls_hb, 128)
+                        if _cls_hb.value == '#32770':
+                            _t_hb = _ct_hb.create_unicode_buffer(256)
+                            _u_hb.GetWindowTextW(_ct_hb.c_void_p(hwnd), _t_hb, 256)
+                            _tt_hb = _t_hb.value
+                            # 關閉所有 dialog（包括 MT5 update/通知彈窗 — 唔阻部署）
+                            _u_hb.PostMessageW(_ct_hb.c_void_p(hwnd), 0x0010, 0, 0)  # WM_CLOSE
+                            if _tt_hb.strip():
+                                print(f"  [DIALOG] 等心跳期間關閉 dialog: [{_tt_hb[:60]}]")
+                        return True
+                    _u_hb.EnumWindows(_ct_hb.WINFUNCTYPE(_ct_hb.c_bool, _ct_hb.c_size_t, _ct_hb.c_size_t)(_scan_hb), 0)
+                except Exception:
+                    pass
                 _hb_cand = [
                     os.path.join(COMMON_FILES, f'state_{ea_name}.json'),
                     os.path.join(COMMON_FILES, f'hb_{ea_name}.txt'),
