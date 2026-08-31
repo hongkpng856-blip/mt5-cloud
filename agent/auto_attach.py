@@ -3868,6 +3868,42 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
             pass
         if _this_removed:
             _removed_ok = True
+            # [ALERT] 2026-09-01 FIX（用戶實測：剷除後有殘留心跳 — EMA_Cross/Fibonacci state_*.json 殘留）：
+            # before: Ctrl+W 關 chart + 心跳停就當 success — 但冇刪心跳檔 → 檔殘留（mtime 舊但存在）→ 用戶/後續判斷混亂
+            # now: 剷除成功後刪心跳檔（state_<EA>.json + hb_<EA>.txt — 乾淨）
+            try:
+                _cfd_del = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+                for _hfn_del in (f'state_{ea_name}.json', f'hb_{ea_name}.txt', f'state_{ea_name}.txt'):
+                    _hfp_del = os.path.join(_cfd_del, _hfn_del)
+                    if os.path.isfile(_hfp_del):
+                        try:
+                            os.remove(_hfp_del)
+                            print(f"[OK] 已刪心跳檔: {_hfn_del}")
+                        except Exception:
+                            pass
+                # 亦刪 MQL5/Files 嘅 hb_<EA>.txt（舊版 EA 寫嗰度 — 冇 FILE_COMMON）
+                try:
+                    _mql5_del = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                    import glob as _g_del
+                    for _d_del in os.listdir(_mql5_del):
+                        _f_del = os.path.join(_mql5_del, _d_del, 'MQL5', 'Files', f'hb_{ea_name}.txt')
+                        if os.path.isfile(_f_del):
+                            try:
+                                os.remove(_f_del)
+                                print(f"[OK] 已刪 MQL5/Files 心跳: hb_{ea_name}.txt")
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
+                # 亦刪 hb_<EA>.txt 喺 Terminal Common（其他位置）
+                _hb_glob_del = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files', f'hb_{ea_name}.txt')
+                if os.path.isfile(_hb_glob_del):
+                    try:
+                        os.remove(_hb_glob_del)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
             break
         # 未remove → 可能remove咗冇 EA 嘅 chart — 再開窗口 dialog 試下一個
         print(f"[WARN] chart [{_target_idx}] remove後 {ea_name} still running — try next chart")
