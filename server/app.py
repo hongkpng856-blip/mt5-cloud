@@ -4122,6 +4122,9 @@ def api_deploy():
                 'magic': str(magic),
                 'lot': str(lot),
                 'inject_trades': inject_trades,
+                # [ALERT] 2026-09-01 FIX（用戶實測：代替 dialog 阻住部署 — 想取代其他 EA 但 auto_attach 硬性撳「否」）：
+                # allow_replace: true = 用戶確認取代目標 chart 已有 EA（代替 dialog 撳「是」）；冇/false = 撳「否」保護
+                'allow_replace': bool(request.json.get('allow_replace')) if request.json else False,
                 'source': 'api_deploy'
             }
             socketio.emit('deploy_ea', _dp_payload, room=_agent_dp.agent_id)
@@ -4162,6 +4165,7 @@ def api_deploy():
             'magic': str(magic),
             'lot': str(lot),
             'inject_trades': inject_trades,  # [ALERT] 2026-08-21：數據注入選擇
+            'allow_replace': bool(request.json.get('allow_replace')) if request.json else False,  # [ALERT] 2026-09-01：允許取代（代替 dialog 撳「是」）
             'timestamp': _wt.strftime('%Y-%m-%dT%H:%M:%S'),
             'source': 'api_deploy',
             # [FP] fingerprint（2026-08-31）

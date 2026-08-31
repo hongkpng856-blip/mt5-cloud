@@ -2168,18 +2168,64 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             # [ALERT] 2026-08-21 FIX（user實測：關 chart 後deploy代替咗 TestTrades）：代替 dialog 出現 = 目標 chart 已有 EA
                             # = open chart failed/掛錯 chart → 唔可以接受代替（會取代其他 EA）→ 撳「否」+ fail
                             # （before撳「是」→ 取代 TestTrades → 其他 EA 消失 + 心跳殘留假success）
-                            print("[ALERT] 偵測到「代替」dialog — 唔接受（會取代其他 EA）— 撳「否」+ 中止deploy")
-                            _dw = _app.window(handle=_h)
-                            _clicked_no = False
-                            for _b in _dw.children(class_name='Button'):
+                            # [ALERT] 2026-09-01 FIX（用戶實測：想用 Scalping_M1 取代 Fibonacci — 但硬性撳「否」→ 部署失敗）：
+                            # allow_replace=True（用戶喺網頁確認「要取代」）→ 撳「是」接受取代；冇/false → 撳「否」保護（唔誤剷其他 EA）
+                            _allow_rpl = False
+                            try:
+                                if isinstance(getattr(locals().get('_dp_payload', None), 'get', lambda *a: None)('allow_replace', False), bool):
+                                    _allow_rpl = bool(_dp_payload.get('allow_replace'))
+                            except Exception:
+                                pass
+                            # 檢查 deploy_cmd 檔（如果 deploy_cmd 有 allow_replace 就用）
+                            if not _allow_rpl:
                                 try:
-                                    if '否' in _b.window_text() or 'No' in _b.window_text() or 'Cancel' in _b.window_text():
-                                        if _bm_click(_b):
-                                            _clicked_no = True
-                                            print("[OK] 已撳「否」（refused代替）")
-                                            break
+                                    import glob as _g_rpl
+                                    _cfd_rpl = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+                                    for _f_rpl in _g_rpl.glob(os.path.join(_cfd_rpl, f'deploy_cmd_{ea_name}_*.json')):
+                                        try:
+                                            _cmd_rpl = json.load(open(_f_rpl, 'r', encoding='utf-8'))
+                                            if _cmd_rpl.get('allow_replace'):
+                                                _allow_rpl = True
+                                                break
+                                        except Exception:
+                                            pass
                                 except Exception:
                                     pass
+                            if _allow_rpl:
+                                # 用戶確認取代 → 撳「是」（接受代替 — 取代目標 chart 嘅 EA）
+                                print(f"[ALERT] 偵測到「代替」dialog — allow_replace=True（用戶確認取代）— 撳「是」")
+                                _dw = _app.window(handle=_h)
+                                _clicked_yes = False
+                                for _b in _dw.children(class_name='Button'):
+                                    try:
+                                        if '是' in _b.window_text() or 'Yes' in _b.window_text() or 'Y' in _b.window_text():
+                                            if _bm_click(_b):
+                                                _clicked_yes = True
+                                                print("[OK] 已撳「是」（接受代替）")
+                                            break
+                                    except Exception:
+                                        pass
+                                if not _clicked_yes:
+                                    try:
+                                        _sk('{ENTER}')
+                                        print("[OK] 已 ENTER 接受代替")
+                                    except Exception:
+                                        pass
+                                _clicked_once.add(_h)
+                                acted = True
+                            else:
+                                print("[ALERT] 偵測到「代替」dialog — 唔接受（會取代其他 EA）— 撳「否」+ 中止deploy")
+                                _dw = _app.window(handle=_h)
+                                _clicked_no = False
+                                for _b in _dw.children(class_name='Button'):
+                                    try:
+                                        if '否' in _b.window_text() or 'No' in _b.window_text() or 'Cancel' in _b.window_text():
+                                            if _bm_click(_b):
+                                                _clicked_no = True
+                                                print("[OK] 已撳「否」（refused代替）")
+                                                break
+                                    except Exception:
+                                        pass
                             if not _clicked_no:
                                 try:
                                     _sk('{ESC}')
