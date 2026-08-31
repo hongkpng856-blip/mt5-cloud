@@ -188,6 +188,7 @@ except Exception as _e_sio:
     sio = socketio.Client(logger=False, engineio_logger=False)
 ea_config_cache = {}
 ea_heartbeats = {}
+_last_reconnect_attempt = 0  # [ALERT] 2026-09-01：reconnect backoff（30 秒內唔好試多過一次）
 _popup_shown = False  # [ALERT] 2026-08-27：success彈窗只彈一次
 _deals_cache = None  # [ALERT] 2026-08-27：deals 攞取 cache（60 秒）— 唔好每次 sync 攞全部（卡 → disconnect）
 _deals_cache_ts = 0
@@ -1581,10 +1582,19 @@ def _start_tray_icon():
 
 
 def _ensure_connected():
-    """[ALERT] 2026-08-26（multi-user Phase 1）：確保 SocketIO connection（connect() failed但背景未連 → 重試）"""
+    """[ALERT] 2026-08-26（multi-user Phase 1）：確保 SocketIO connection（connect() failed但背景未連 → 重試）
+    [ALERT] 2026-09-01 FIX（agent 每 60 秒 reconnect 循環）：加 reconnect backoff —
+    連唔到先等 30 秒再試（唔好每 5 秒即刻重連 — 會令 server 每次 reconnect auto-sent EA config → 開 MT5）"""
+    global _last_reconnect_attempt
     if sio.connected:
+        _last_reconnect_attempt = 0
         return True
     try:
+        # 唔好太密重連（30 秒內唔好試多過一次）
+        _now_rc = time.time()
+        if _last_reconnect_attempt and _now_rc - _last_reconnect_attempt < 30:
+            return False
+        _last_reconnect_attempt = _now_rc
         # [ALERT] 2026-08-27 FIX：改 websocket（polling 喺 threading async_mode 下唔穩定 — 成日disconnect/BadNamespace）
         sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
         return True

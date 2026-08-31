@@ -282,7 +282,11 @@ def api_activity():
     return jsonify({'activities': entries[:500], 'total': len(entries)})
 import os
 _async_mode = 'eventlet' if os.environ.get('RENDER', '') else 'threading'
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode=_async_mode, logger=False, engineio_logger=False)
+# [ALERT] 2026-09-01 FIX（agent 每 60 秒 reconnect — socket 斷）：threading mode 下 SocketIO 長連接唔穩定
+# → 加 ping_interval/ping_timeout（server 主動發 ping — 唔會 60 秒 idle 斷）
+# （default ping_interval=25, ping_timeout=20 — 但 threading mode 可能唔work — 明確設定）
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=_async_mode, logger=False, engineio_logger=False,
+                    ping_interval=25, ping_timeout=60)
 
 # === Database ===
 class User(UserMixin, db.Model):
