@@ -1183,18 +1183,18 @@ def _ensure_hotkey_loaded(ea_name, mt5_pid):
                     _u_cl.EnumChildWindows(_main_cl, _WNDENUMPROC_CL(_cb_chart_aft), 0)
                     if not _chk_charts_after:
                         # 冇 chart（全部空白清走）→ 開返一個空 chart（熱鍵測試用）
+                        # [ALERT] 2026-09-01 FIX（user要求：唔好用 Ctrl+N — 統一 Alt+F 方法）
                         try:
                             import pyautogui as _pg_cl2
                             _pg_cl2.FAILSAFE = False
                             _r_cl2 = _w_hk.rectangle()
                             _pg_cl2.click(_r_cl2.left + _r_cl2.width() // 2, _r_cl2.top + _r_cl2.height() // 2)
                             time.sleep(0.5)
-                            from pywinauto.keyboard import send_keys as _sk_cl2
-                            _sk_cl2('^n')  # Ctrl+N 開新 chart（熱鍵測試用）
-                            time.sleep(2)
-                            _sk_cl2('{ENTER}')
-                            time.sleep(2)
-                            print("[CLEAN] 開返一個 chart 做熱鍵測試")
+                            # Alt+F → Enter → Enter（開新 chart — 同部署開 chart 一致 — 唔用 Ctrl+N）
+                            _pg_cl2.hotkey('alt', 'f'); time.sleep(1.5)
+                            _pg_cl2.press('enter'); time.sleep(1.5)
+                            _pg_cl2.press('enter'); time.sleep(2)
+                            print("[CLEAN] 開返一個 chart 做熱鍵測試（Alt+F 方法）")
                         except Exception:
                             pass
             except Exception as _e_cl:
@@ -3498,6 +3498,9 @@ def _exec_open_chart_script():
                 pass
             time.sleep(0.8)
         # 熱鍵 Ctrl+4（OpenChart_Helper — attach落圖表 → OnInit 讀 json → ChartOpen(symbol) → ExpertRemove）
+        # [ALERT] 2026-09-01（user要求：唔好用 Ctrl+1-9 — 統一 Ctrl+1 重用 + Alt+F 開 chart）：
+        # 呢個係死 code（_exec_open_chart_script 冇被任何地方 call — OpenChart_Helper 舊方法已停用）
+        # 保留做參考（stable 結構）— 但唔會實際行
         # [ALERT] 2026-08-15：改用 pyautogui（真實 keydown/keyup — 比 pywinauto send_keys 穩定 — user揀 B）
         try:
             import pyautogui as _pg2
