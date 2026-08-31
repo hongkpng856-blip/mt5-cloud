@@ -2908,7 +2908,9 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         # Step 4 gate 已確認 MT5 log loaded → 心跳只係輔助（market closeno tick 心跳唔寫 — log 有 = success）
         # 心跳有 → 錦上添花；心跳冇但 log 已 loaded → 都係success（唔好因心跳誤判failed）
         _log_loaded = _ea_loaded_in_log(ea_name, (symbol or 'EURUSD'))
-        heartbeat = verify_heartbeat(ea_name, timeout=15)
+        # [ALERT] 2026-09-01 FIX（假成功 — EMA_Cross 案例）：heartbeat timeout 15s → 30s
+        # （EA OnInit + 心跳寫入需要時間 — 特別係 MT5 慢/重啟後 — 15s 太短 → 誤報 FAIL）
+        heartbeat = verify_heartbeat(ea_name, timeout=30)
         
         # [ALERT] 2026-09-01 FIX（用戶實測：Breakout loaded 但 OnInit 未跑 — 冇 EA icon + 冇心跳 = 假成功）：
         # before: `if heartbeat or _log_loaded` → 淨 log loaded 就話 SUCCESS（繞過 OnInit 驗證 — 假成功）
