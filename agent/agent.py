@@ -1184,9 +1184,22 @@ def check_macd_cross(symbol, tf, fast=12, slow=26, signal=9):
         return 'sell'
     return None
 
+def _mt5_process_running():
+    """[ALERT] 2026-09-01：檢查 terminal64 有冇開 — mt5.initialize() 會自動啟動 terminal！
+    所有 initialize 之前 call 呢個（未開 → False — 唔 initialize — 唔自動開 MT5）"""
+    try:
+        import subprocess as _sp_mr
+        _r_mr = _sp_mr.run('tasklist /FI "IMAGENAME eq terminal64.exe" /NH', shell=True, capture_output=True, timeout=5)
+        return b'terminal64' in _r_mr.stdout
+    except Exception:
+        return True  # 檢查唔到 → 當開住（保守 — 唔會誤判關咗）
+
+
 def run_ea_strategies(ea_config, lot_size):
     """執行 EA 策略 — 根據 config 嘅 EA 名決定用邊個策略"""
     import MetaTrader5 as mt5
+    if not _mt5_process_running():
+        return
     if not mt5.initialize():
         return
     
@@ -1286,6 +1299,8 @@ def check_ea_heartbeat_files():
 def check_ea_alive_via_trades():
     """Fallback: check recent trades"""
     import MetaTrader5 as mt5
+    if not _mt5_process_running():
+        return {}
     if not mt5.initialize():
         return {}
     from datetime import datetime, timedelta
@@ -1724,6 +1739,10 @@ def connect_mt5():
 
 def get_mt5_status():
     import MetaTrader5 as mt5
+    # [ALERT] 2026-09-01 FIX（用戶實測：一刪咗 MT5 就自動開返）：mt5.initialize() 會自動啟動 terminal64！
+    # → 先檢查 MT5 有冇開（tasklist）— 未開 → 唔 initialize（返回 not available — 唔自動開）
+    if not _mt5_process_running():
+        return {"error": "MT5 not available (not running)", "mt5_auto_launch": False}
     if not mt5.initialize():
         return {"error": "MT5 not available"}
     
