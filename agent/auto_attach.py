@@ -1592,6 +1592,16 @@ def _ensure_no_dialog(desc='', max_wait=8, close_btn=True):
             _cls = _ct_nd.create_unicode_buffer(128)
             _u_nd.GetClassNameW(_ct_nd.c_void_p(hwnd), _cls, 128)
             if _cls.value == '#32770':
+                # [ALERT] 2026-09-01 FIX（用戶實測：MT5 系統更新彈窗阻住部署 — 警告視窗話成功但圖表冇掛 EA）：
+                # 識別 MT5 更新/通知彈窗（標題含 update/build/新版本/通知）— log 出嚟（debug 用）
+                try:
+                    _t_nd = _ct_nd.create_unicode_buffer(256)
+                    _u_nd.GetWindowTextW(_ct_nd.c_void_p(hwnd), _t_nd, 256)
+                    _tt_nd = _t_nd.value
+                    if any(_k_nd in _tt_nd.lower() for _k_nd in ('update', 'new version', 'build', '通知', '更新', '版本')):
+                        print(f"  [DIALOG] 偵測到 MT5 系統彈窗: [{_tt_nd[:60]}] — 關閉（唔阻部署）")
+                except Exception:
+                    pass
                 _dlgs.append(hwnd)
             return True
         _u_nd.EnumWindows(_ct_nd.WINFUNCTYPE(_ct_nd.c_bool, _ct_nd.c_size_t, _ct_nd.c_size_t)(_cb), 0)
@@ -2971,6 +2981,36 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         else:
             # [ALERT] 2026-09-01：心跳冇 + OnInit 未確認 → 假成功（唔話 SUCCESS）
             print(f"[FAIL] {ea_name} 心跳冇 + OnInit 未確認（MQL5/Logs 冇『已啟動』）— 假成功 — 唔當部署成功")
+            # [ALERT] 2026-09-01 FIX（用戶實測：警告視窗話成功但圖表冇掛 EA — MT5 系統更新彈窗阻住）：
+            # before: return False 但 steps 由 server 寫 done（4 步全 done）→ 警告視窗話成功但實際失敗 → 誤導
+            # now: 失敗時覆寫 steps 顯示失敗（警告視窗/網頁見到「失敗」— 唔會誤導）
+            try:
+                import json as _j_fail
+                _stf_fail = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                with open(_stf_fail, 'w', encoding='utf-8') as _f_fail:
+                    _j_fail.dump([
+                        {'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
+                        {'text': f'create新圖表（{symbol}）', 'status': 'done'},
+                        {'text': f'attach {ea_name}', 'status': 'done'},
+                        {'text': f'驗證running狀態', 'status': 'doing'},
+                        {'text': '[FAIL] 部署失敗：EA 未真正運行（OnInit 未確認 — 可能 MT5 彈窗/更新阻住）', 'status': 'fail'},
+                    ], _f_fail, ensure_ascii=False)
+                # 同步開發目錄（網頁版讀）
+                try:
+                    _cd_fail = os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'agent')
+                    if os.path.isdir(_cd_fail):
+                        with open(os.path.join(_cd_fail, '.ai_control.steps'), 'w', encoding='utf-8') as _f_fail2:
+                            _j_fail.dump([
+                                {'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
+                                {'text': f'create新圖表（{symbol}）', 'status': 'done'},
+                                {'text': f'attach {ea_name}', 'status': 'done'},
+                                {'text': f'驗證running狀態', 'status': 'doing'},
+                                {'text': '[FAIL] 部署失敗：EA 未真正運行（OnInit 未確認 — 可能 MT5 彈窗/更新阻住）', 'status': 'fail'},
+                            ], _f_fail2, ensure_ascii=False)
+                except Exception:
+                    pass
+            except Exception:
+                pass
             return False
     except ControlAborted:
         print(f"\n[ALERT] deploy被user緊急stop！")
