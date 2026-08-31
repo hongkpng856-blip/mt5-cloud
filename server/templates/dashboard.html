@@ -1995,14 +1995,19 @@ async function fetchActivity() {
         const res = await fetch('/api/activity?t=' + Date.now() + includeDb, { signal: AbortSignal.timeout(5000) });
         const d = await res.json();
         const rows = d.activities || [];
+        // [ALERT] 2026-09-01 FIX（dropdown lag / 網頁卡 — 用戶實測）：
+        // before: render 全部 rows（10117 條 → DOM 10000+ <tr> → Chrome 主 thread 阻塞 → dropdown 開唔到 + 卡）
+        // now: 只 render 最近 200 條（活動記錄永久保存 — 但 UI 只顯示最新 — 效能優先）
+        const MAX_RENDER = 200;
+        const visible = rows.slice(0, MAX_RENDER);
         const tbody = document.querySelector('#activityTable tbody');
         const count = document.getElementById('activityCount');
         if (count) count.textContent = rows.length;
-        if (!rows.length) {
+        if (!visible.length) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-muted)">暫無活動記錄</td></tr>';
             return;
         }
-        tbody.innerHTML = rows.map(a => {
+        tbody.innerHTML = visible.map(a => {
             const icon = activityIconMap[a.action] || '<i class="icon-activity" style="color:var(--text-muted)"></i>';
             const label = activityActionLabel[a.action] || a.action;
             const t = new Date(a.time * 1000);

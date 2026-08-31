@@ -277,7 +277,9 @@ def api_activity():
         entries = [e for e in entries if not e.get('user') or e.get('user') == _cur_u]
     except Exception:
         pass
-    return jsonify({'activities': entries})  # 全部顯示 — log 唔會delete
+    # [ALERT] 2026-09-01 FIX（dropdown lag — 用戶實測）：server 返回 limit 500 條（之前全部 10117 條 → 前端 render 10000+ <tr> → Chrome 卡）
+    # 活動記錄永久保存（唔刪）— 但 API 只返回最新 500 條（前端 render 200）— 效能優先
+    return jsonify({'activities': entries[:500], 'total': len(entries)})
 import os
 _async_mode = 'eventlet' if os.environ.get('RENDER', '') else 'threading'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=_async_mode, logger=False, engineio_logger=False)
