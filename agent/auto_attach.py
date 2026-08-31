@@ -3889,9 +3889,74 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     # → 搵唔到 target symbol → 唔好亂關（直接 fail — 寧願 user 再撳多次）
     _candidates = []
     if _target_sym:
+        # [ALERT] 2026-09-01 FIX（用戶實測：剷 Momentum 誤剷 Breakout — 兩個都掛 USDCHF）：
+        # before: 所有 match symbol 嘅 chart 都當 candidates（USDCHF ×2 → 逐個剷 → 先剷錯 Breakout）
+        # now: 用 .chr 檔精準判斷「邊個 chart 掛緊 target EA」（MQL5/Profiles/Charts/<profile>/*.chr — 有 path=Experts\<EA>.ex5）
+        # → 淨剷「掛緊 target EA」嗰個 chart（唔會誤剷其他 EA 嘅 chart）
+        _chr_sym_map = {}  # chart index（ListView 順序）-> EA 名
+        try:
+            import glob as _g_chr_rm
+            import re as _re_chr_rm
+            _data_root_chr_rm = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            _best_prof_chr_rm = None
+            _best_mt_chr_rm = 0
+            for _d_chr_rm in os.listdir(_data_root_chr_rm):
+                _charts_root_rm = os.path.join(_data_root_chr_rm, _d_chr_rm, 'MQL5', 'Profiles', 'Charts')
+                if not os.path.isdir(_charts_root_rm):
+                    continue
+                for _p_chr_rm in os.listdir(_charts_root_rm):
+                    _pd_chr_rm = os.path.join(_charts_root_rm, _p_chr_rm)
+                    if not os.path.isdir(_pd_chr_rm):
+                        continue
+                    for _cf_chr_rm in _g_chr_rm.glob(os.path.join(_pd_chr_rm, '*.chr')):
+                        try:
+                            _mt_chr_rm = os.path.getmtime(_cf_chr_rm)
+                            if _mt_chr_rm > _best_mt_chr_rm:
+                                _best_mt_chr_rm = _mt_chr_rm
+                                _best_prof_chr_rm = _pd_chr_rm
+                        except Exception:
+                            pass
+            if _best_prof_chr_rm:
+                # .chr 檔名順序 = 開 chart 順序（chart01.chr, chart02.chr...）— 對應 ListView 順序
+                _chr_files_rm = sorted(_g_chr_rm.glob(os.path.join(_best_prof_chr_rm, 'chart*.chr')))
+                for _ci_rm, _cf_rm in enumerate(_chr_files_rm):
+                    try:
+                        _raw_rm = open(_cf_rm, 'rb').read()
+                        _txt_rm = None
+                        for _enc_rm in ('utf-16', 'utf-8', 'cp1252'):
+                            try:
+                                _txt_rm = _raw_rm.decode(_enc_rm); break
+                            except Exception:
+                                continue
+                        if _txt_rm:
+                            _m_rm = _re_chr_rm.search(r'path=Experts\\([A-Za-z_][A-Za-z0-9_]*)\.ex5', _txt_rm)
+                            _m_sym_rm = _re_chr_rm.search(r'symbol=([A-Za-z0-9_]+)', _txt_rm)
+                            if _m_rm and _m_sym_rm:
+                                _ea_chr_rm = _m_rm.group(1)
+                                _sym_chr_rm = _m_sym_rm.group(1).upper()
+                                if _sym_chr_rm == _target_sym.upper():
+                                    _chr_sym_map[_ci_rm] = _ea_chr_rm
+                                    print(f"[CLIP] .chr [{_ci_rm}] = {_sym_chr_rm} 掛 {_ea_chr_rm}")
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         for _i, _t in enumerate(_items):
             if _t.upper().startswith(_target_sym.upper()):
+                # 如果 .chr 有記錄 → 只剷「掛緊 target EA」嗰個；冇 .chr 記錄 → 保守（match symbol 都當候選 — 但逐個試會 check 心跳）
+                _chr_ea = _chr_sym_map.get(_i)
+                if _chr_ea and _chr_ea != ea_name:
+                    print(f"[SKIP] chart [{_i}] {_t} 掛 {_chr_ea}（唔係 {ea_name}）— 唔剷（防誤剷）")
+                    continue
                 _candidates.append(_i)
+    # [ALERT] 2026-09-01 FIX：.chr 有記錄但冇 match target EA → 冇 candidates → 唔亂剷
+    if not _candidates and _chr_sym_map:
+        print(f"[FAIL] .chr 顯示冇 chart 掛緊 {ea_name}（可能已剷）— 唔亂剷其他 EA")
+        try:
+            _sk('{ESC}')
+        except Exception:
+            pass
+        return False
     if not _candidates:
         # [ALERT] 2026-08-31 FIX2：唔再 fallback 全部 chart（誤剷其他 EA）
         # 只容許「log 完全冇記錄」（_lat_r 唔存在/讀唔到）時 fallback（單 chart 環境 — 安全）
