@@ -2377,11 +2377,11 @@ async function doDeployEA(eaName, symbol, tf, magic, lot) {
         return;
     }
     window._deploying = true;
-    try {
-        await _doDeployEA_inner(eaName, symbol, tf, magic, lot);
-    } finally {
-        setTimeout(function(){ window._deploying = false; }, 5000);  // 5 秒後解鎖（部署流程通常 <5s 提交）
-    }
+    // [ALERT] 2026-09-01 FIX（用戶實測：部署完第一隻後第二隻冇反應）：
+    // before: await _doDeployEA_inner（入面 await waitDeployDone 最長 5 分鐘）→ _deploying 鎖成 5 分鐘 → 第二隻被擋「上一個部署仲進行緊」
+    // now: 唔 await 成個流程 — 只鎖提交（5 秒後解鎖）— 部署進行中由警告視窗 + agent 處理（唔需要鎖住前端）
+    _doDeployEA_inner(eaName, symbol, tf, magic, lot).catch(e => showLog(' 部署錯誤: '+ (e.message||e), 'log-error'));
+    setTimeout(function(){ window._deploying = false; }, 5000);  // 5 秒後解鎖（只鎖提交 — 唔鎖成個部署流程）
 }
 
 async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
