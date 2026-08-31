@@ -1,7 +1,17 @@
 # Tradotcom — Full Platform Server
 # 公開網站，每人有自己的 EA 配對 + 分析 + Correlation
 
+# 🚨 2026-08-31 FIX（#148 Server 靜默 crash — MSVCP140.dll 0xc0000005）：
+# eventlet async_mode 需要 monkey_patch()（將 blocking I/O 變 green thread）
+# 冇 patch → eventlet hub + 原生 thread（彈返監察 threading.Thread）併發 → 底層 C 擴展崩潰
+# [WARN] monkey_patch 必須喺 import socketio/flask 之前（否則 patch 唔到佢哋用嘅 socket）
 import os
+if os.environ.get('RENDER', ''):
+    try:
+        import eventlet
+        eventlet.monkey_patch()
+    except Exception:
+        pass
 import sys
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import json

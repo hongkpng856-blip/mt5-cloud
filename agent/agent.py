@@ -1056,6 +1056,27 @@ def on_shutdown(data):
         except Exception as _e_tr:
             print(f"   [WARN] 清測試殘留failed: {_e_tr}")
         # [ALERT] 2026-08-28（user要求：remove = 全部清晒）：刪整個 TradotcomAgent 安裝資料夾（最後先做 — 刪自己）
+        # [ALERT] 2026-08-31 FIX（#154 剷除漏清 — 用戶實測：paint_uimap/舊 Setup/ip-records 殘留）：
+        # 逐個刪之前加「指定舊殘留清理」（paint_uimap*/Tradotcom-Agent-Setup*/ip-records*/*.log）
+        # （呢啲檔 mtime 舊（5 月）— 之前剷除流程未清到 — 一直殘留 — 用戶要求剷除 = 全部清晒）
+        try:
+            import glob as _gl_old
+            _old_patterns = [
+                'paint_uimap*.json',
+                'Tradotcom-Agent-Setup*.pyw',
+                'ip-records*.json',
+                '*.log',
+            ]
+            for _pat_old in _old_patterns:
+                for _f_old in _gl_old.glob(os.path.join(_agent_dir, _pat_old)):
+                    try:
+                        if os.path.basename(_f_old) != os.path.basename(__file__):
+                            os.remove(_f_old)
+                            print(f"   [OK] 舊殘留已刪: {os.path.basename(_f_old)}")
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         try:
             import shutil as _sh_sh
             if os.path.isdir(_agent_dir):
