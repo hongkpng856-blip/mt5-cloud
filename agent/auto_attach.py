@@ -809,6 +809,22 @@ def _update_steps(steps):
             merged = merged[-15:]
         with open(_f, 'w', encoding='utf-8') as _fh:
             _j.dump(merged, _fh, ensure_ascii=False)
+        # [ALERT] 2026-08-31 FIX（用戶實測：網頁版警告視窗同電腦版唔一致 — 網頁話執行緊 + 電腦話完成）：
+        # auto_attach 喺 TradotcomAgent 執行 → 只寫 TradotcomAgent steps → 開發目錄（網頁版讀）冇更新 → 兩邊唔同步
+        # → 同步埋開發目錄（同 deploy_watcher 做法 — 網頁版讀開發目錄）
+        try:
+            import os as _os_sync
+            _cand_sync = [
+                _os_sync.path.join(_os_sync.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud', 'agent'),
+                _os_sync.path.join(_os_sync.environ.get('USERPROFILE', ''), 'Desktop', 'mt5-cloud-stable', 'agent'),
+            ]
+            for _cd_sync in _cand_sync:
+                if _os_sync.path.isdir(_cd_sync):
+                    with open(_os_sync.path.join(_cd_sync, '.ai_control.steps'), 'w', encoding='utf-8') as _f_sync:
+                        _j.dump(merged, _f_sync, ensure_ascii=False)
+                    break
+        except Exception:
+            pass
     except Exception:
         pass
 
