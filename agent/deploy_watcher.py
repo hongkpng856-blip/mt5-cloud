@@ -44,6 +44,7 @@ COMMON_FILES = os.path.join(os.environ.get('APPDATA', ''),
 AUTO_ATTACH_SCRIPT = os.path.join(os.path.dirname(__file__), 'auto_attach.py')
 WATCHER_LOCK_FILE = os.path.join(os.path.dirname(__file__), '.watcher_running')
 AUTO_ATTACH_LOCK = os.path.join(os.path.dirname(__file__), '.auto_attach_running')
+_last_pause_time = {}  # 🚨 2026-08-31 FIX（#157）：pause_cmd 60 秒 dedupe（防重複 remove 誤剷其他 EA）
 
 def is_auto_attach_running():
     """Check if auto_attach.py is already running (lock file or process)"""
@@ -1262,6 +1263,19 @@ def process_pause_cmd(fp):
         if not ea_name:
             os.remove(fp)
             return
+        # 🚨 2026-08-31 FIX（#157 剷除誤傷其他 EA — 重複 pause_cmd）：同一 EA 60 秒內只處理一次
+        # （emit+poll 雙保險雙 pause_cmd → 兩個 remove 操作 → 第二個揀 chart [0]（其他 symbol）→ Ctrl+W 關錯 → 誤剷其他 EA — Multi_TimeFrame 案例）
+        _now_pc = time.time()
+        if _now_pc - _last_pause_time.get(ea_name, 0) < 60:
+            print(f"   ⏭️ [WATCHER] {ea_name} 60 秒內已pause過（#157 dedupe）— 跳過重複 cmd: {os.path.basename(fp)}")
+            sys.stdout.flush()
+            try:
+                if os.path.exists(fp):
+                    os.remove(fp)
+            except Exception:
+                pass
+            return
+        _last_pause_time[ea_name] = _now_pc
         _act_word = 'pause' if action != 'delete' else 'delete'
         print(f"⏸️ [WATCHER] {_act_word} {ea_name}（remove圖表 EA）...")
         sys.stdout.flush()

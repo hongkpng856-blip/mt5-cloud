@@ -3583,14 +3583,31 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
     # [ALERT] 2026-08-21 FIX（多個同名 chart 揀錯 — user實測）：唔可以淨揀第一個 match symbol 嘅 chart
     # （3 個 UK100 時 EA 可能attached on第 2/3 個 → remove錯 chart → 假success）
     # → 策略：逐個試（由 symbol match start）→ Ctrl+W 關 → 檢查 EA 真係remove（心跳停/log removed）→ 未remove就下一個
+    # [ALERT] 2026-08-31 FIX2（#157 剷除誤傷其他 EA — Multi_TimeFrame 案例）：唔可以 fallback 揀「全部 chart」
+    # （重複 pause_cmd 第二個 remove 時 _target_sym 讀唔到（GBPUSD 已被第一個 remove 關咗）→ fallback 全部 chart → 揀 chart [0]（USDJPY）→ Ctrl+W 關錯 → 誤剷 Multi_TimeFrame）
+    # → 搵唔到 target symbol → 唔好亂關（直接 fail — 寧願 user 再撳多次）
     _candidates = []
     if _target_sym:
         for _i, _t in enumerate(_items):
             if _t.upper().startswith(_target_sym.upper()):
                 _candidates.append(_i)
     if not _candidates:
-        # fallback：全部 chart 都試（冇 log 記錄時）
-        _candidates = list(range(len(_items)))
+        # [ALERT] 2026-08-31 FIX2：唔再 fallback 全部 chart（誤剷其他 EA）
+        # 只容許「log 完全冇記錄」（_lat_r 唔存在/讀唔到）時 fallback（單 chart 環境 — 安全）
+        _log_unavailable = False
+        try:
+            _log_unavailable = not _lat_r or not os.path.isfile(_lat_r)
+        except Exception:
+            _log_unavailable = True
+        if _log_unavailable:
+            _candidates = list(range(len(_items)))
+        else:
+            print(f"[FAIL] target symbol {_target_sym or '?'} 搵唔到對應 chart（有 log 但冇 match）— 唔亂關（防誤剷其他 EA）")
+            try:
+                _sk('{ESC}')
+            except Exception:
+                pass
+            return False
     print(f"[PIN] target symbol {_target_sym or '?'} → candidate chart: {_candidates}")
 
     _removed_ok = False
