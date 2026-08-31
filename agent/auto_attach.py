@@ -3287,6 +3287,40 @@ def _clean_blank_charts(mt5_pid, keep_symbol=''):
             for _ea_hb, _sym_hb in _ea_latest_sym_cc.items():
                 if _ea_hb in _ea_running_cc:
                     _keep_count_cc[_sym_hb] = _keep_count_cc.get(_sym_hb, 0) + 1
+        # [ALERT] 2026-09-01 FIX（用戶實測：新部署 EA 被 _clean_blank_charts 誤關 — Breakout loaded 後 removed）：
+        # 啱啱部署嘅 EA（MT5 log「loaded successfully」但心跳未寫 — OnInit 延遲）都要保留
+        # → 讀 MT5 log 最新 loaded 嘅 EA（5 分鐘內）— 即使心跳未寫都保留佢嘅 symbol（唔好關）
+        try:
+            import glob as _g_lc
+            _lg_lc = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            _latest_lc = None
+            for _d_lc in os.listdir(_lg_lc):
+                _lgd_lc = os.path.join(_lg_lc, _d_lc, 'logs')
+                if os.path.isdir(_lgd_lc):
+                    for _f_lc in _g_lc.glob(os.path.join(_lgd_lc, '*.log')):
+                        if _latest_lc is None or os.path.getmtime(_f_lc) > os.path.getmtime(_latest_lc):
+                            _latest_lc = _f_lc
+            if _latest_lc and time.time() - os.path.getmtime(_latest_lc) < 600:
+                _raw_lc = open(_latest_lc, 'rb').read()
+                _txt_lc = None
+                for _enc_lc in ('utf-16', 'utf-8', 'cp1252', 'gbk'):
+                    try:
+                        _txt_lc = _raw_lc.decode(_enc_lc); break
+                    except Exception:
+                        continue
+                if _txt_lc:
+                    import re as _re_lc
+                    _loaded_sym_lc = {}  # EA -> 最後 loaded symbol
+                    for _line_lc in _txt_lc.splitlines():
+                        _m_lc = _re_lc.search(r'expert\s+(\w+)\s+\(([A-Z0-9_]+),', _line_lc)
+                        if _m_lc and 'loaded successfully' in _line_lc:
+                            _loaded_sym_lc[_m_lc.group(1)] = _m_lc.group(2).upper()
+                    for _ea_lc, _sym_lc in _loaded_sym_lc.items():
+                        # 啱啱 loaded（心跳未寫都保留 — 唔好誤關新部署 EA）
+                        _keep_count_cc[_sym_lc] = _keep_count_cc.get(_sym_lc, 0) + 1
+                        print(f"[CLEAN] 保留 {_sym_lc}（{_ea_lc} 啱啱 loaded — 心跳未寫都保留）")
+        except Exception:
+            pass
         # 加埋 target symbol（keep_symbol — 部署嗰個）
         if keep_symbol and keep_symbol not in _keep_count_cc:
             _keep_count_cc[keep_symbol] = 1
