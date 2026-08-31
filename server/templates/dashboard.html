@@ -2206,7 +2206,12 @@ async function addEAToPairing(baseName, fileName, source) {
     // Double-check 結果：compile 失敗要警告用戶 + 提供重試
     if (installData.compile_ok === false) {
     showLog(' '+ fileName + ' 已複製至本機，但編譯失敗 — MT5 可能未顯示！', 'log-warn');
-    // 2026-08-10：移除原生 confirm（撳取消後狀態混亂 → 兩個按鈕 + 抽搐 — 用戶投訴）
+        // [ALERT] 2026-08-31 FIX（用戶實測：Demo_Data compile failed 但冇明顯標記 — 誤會綠色=成功）：
+        // compile 失敗 → 活動記錄 + 顯示「編譯失敗」狀態（唔好俾用戶以為成功）
+        showLog(' ❌ '+ fileName + ' 編譯失敗（compile failed）— 未加入配對庫！', 'log-error');
+        try { await fetch('/api/refresh-status', { method: 'POST' }); } catch(e) {}
+        loadEALibrary(); loadEAConfig(); fetchEAInventory();
+        // 2026-08-10：移除原生 confirm（撳取消後狀態混亂 → 兩個按鈕 + 抽搐 — 用戶投訴）
         // 直接失敗流程（警告視窗顯示「編譯失敗」+ 緊急停止 — 用戶自己決定）
         return;
     }
@@ -2456,9 +2461,13 @@ async function _doDeployEA_inner(eaName, symbol, tf, magic, lot) {
 }
 
 // 等部署完成（poll activity log 睇 deploy_result 記錄）— 警告視窗做完動作先消失
-async function waitDeployDone(eaName, maxWaitMs = 120000) {
+// [ALERT] 2026-08-31 FIX（用戶實測：部署 EMA_Cross 網頁警告視窗提早消失 — 電腦未完）：
+// before maxWaitMs=120000（2 分鐘）→ timeout 後 hideControlModal（line 2476）→ 部署 >2 分鐘（auto_attach 通常 2-4 分鐘）→ 網頁 modal 提早關（電腦版仲開住）
+// → 加大到 5 分鐘 + timeout 後唔 hide（由 pollAiControl 控制 — steps 全部 done 先關）
+async function waitDeployDone(eaName, maxWaitMs = 300000) {
     const start = Date.now();
     const deadline = start + maxWaitMs;
+    let found = false;
     while (Date.now() < deadline) {
         try {
             const res = await fetch('/api/activity?t=' + Date.now(), { signal: AbortSignal.timeout(5000) });
@@ -2468,16 +2477,21 @@ async function waitDeployDone(eaName, maxWaitMs = 120000) {
             if (done) {
         showLog(done.message.includes('成功') ? ' '+ done.message : ' '+ done.message,
                     done.message.includes('成功') ? 'log-success' : 'log-error');
+                found = true;
                 break;
             }
         } catch(e) { /* poll 失敗就繼續等 */ }
         await new Promise(r => setTimeout(r, 3000));
     }
-    hideControlModal();
-    // 🚨 2026-08-19 FIX：所有動作完成後自動 refresh（唔使手動 hard refresh）
-    try { await fetch('/api/refresh-status', { method: 'POST' }); } catch(e1) {}
-    loadEAConfig(); fetchEAInventory(); loadEALibrary();
-    setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 1500);
+    if (found) {
+        hideControlModal();
+        // 🚨 2026-08-19 FIX：所有動作完成後自動 refresh（唔使手動 hard refresh）
+        try { await fetch('/api/refresh-status', { method: 'POST' }); } catch(e1) {}
+        loadEAConfig(); fetchEAInventory(); loadEALibrary();
+        setTimeout(() => { loadEAConfig(); fetchEAInventory(); }, 1500);
+    }
+    // [ALERT] 2026-08-31 FIX：timeout 未搵到 deploy_result → 唔 hide（網頁 modal 保持 — 等 pollAiControl steps 全部 done 先關）
+    // （部署 >5 分鐘極少 — 但唔好提早關 — 用戶見到「執行中」等佢完成/緊急停止）
 }
 
 async function toggleBind() {

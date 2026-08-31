@@ -690,6 +690,11 @@ def api_ea_config():
                 _in_hk = _sn_hk_has if _use_snapshot else (ea in _hk_has)
                 if not _has_hb_file:
                     if _in_hk:
+                        # [ALERT] 2026-08-31 FIX（用戶實測：配對完嘅 EA 短暫顯示「等待心跳」）：
+                        # starting 只限「hotkeys.ini 有呢個 EA」+「hotkeys 新」— 但配對（install-local）會寫 hotkeys？
+                        # → 加「EA 名要 match hotkeys 嗰個」（_in_hk 已 check）— 但 hotkeys.ini 可能殘留舊 EA（Fibonacci）
+                        # → 再加「config 有 EA 但未部署過（無心跳 + 無 loaded log）」→ 唔好當 starting — 睇 log 有冇 loaded 過
+                        # （未部署過嘅 EA 唔應該顯示「等待心跳」— 誤導 — 應該「未配對」）
                         runtime[ea] = 'starting' if (time.time() - _hk_mtime < 600) else 'no_hb'
                     else:
                         runtime[ea] = 'unpaired'
