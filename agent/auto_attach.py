@@ -2956,15 +2956,76 @@ def _clean_blank_charts(mt5_pid, keep_symbol=''):
         if keep_symbol:
             _keep_syms_cc.add(keep_symbol)
 
-        # 關閉空白 chart（每個 symbol 保留「心跳 EA 數量」咁多個 — 其餘關閉）
-        # [ALERT] 2026-08-31 FIX4：唔可以「symbol 喺 keep set 就全部保留」— 會留低重複 chart（4 個 GBPUSD）
-        # → 每個 symbol 保留「心跳 EA 掛喺嗰個 symbol 嘅數量」— 其他重複 chart 關閉
-        #   （例如 2 個 EA 掛 GBPUSD → 保留 2 個 GBPUSD chart — 每個 EA 一個）
+        # [ALERT] 2026-08-31 FIX6（用戶實測 — 誤關 MACD_Cross）：唔可以靠「心跳 EA 數量」估邊個 chart 有 EA
+        # （Volume_Spike + MACD_Cross 都掛 GBPUSD → 心跳計數得 1 → 誤關另一個）
+        # → 直接讀 .chr 檔（MQL5/Profiles/Charts/<profile>/*.chr — UTF-16 text — 有 path=Experts\<EA>.ex5）
+        # → 精準知道「邊個 chart 掛邊個 EA」→ 有 EA 嘅 chart 全部保留 + 冇 EA 嘅空白 chart 關閉
+        _chr_ea_cc = {}  # chart 檔名 -> EA 名（冇 EA = 空白）
+        try:
+            import re as _re_chr2
+            import glob as _g_chr2
+            _data_root_chr2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            for _d_chr2 in os.listdir(_data_root_chr2):
+                _charts_root_chr2 = os.path.join(_data_root_chr2, _d_chr2, 'MQL5', 'Profiles', 'Charts')
+                if not os.path.isdir(_charts_root_chr2):
+                    continue
+                # 揀 active profile（最近修改）
+                _best_prof_chr2 = None
+                _best_mt_chr2 = 0
+                for _p_chr2 in os.listdir(_charts_root_chr2):
+                    _pd_chr2 = os.path.join(_charts_root_chr2, _p_chr2)
+                    if not os.path.isdir(_pd_chr2):
+                        continue
+                    for _cf_chr2 in _g_chr2.glob(os.path.join(_pd_chr2, '*.chr')):
+                        try:
+                            _mt_chr2 = os.path.getmtime(_cf_chr2)
+                            if _mt_chr2 > _best_mt_chr2:
+                                _best_mt_chr2 = _mt_chr2
+                                _best_prof_chr2 = _pd_chr2
+                        except Exception:
+                            pass
+                if not _best_prof_chr2:
+                    continue
+                for _cf_chr2 in _g_chr2.glob(os.path.join(_best_prof_chr2, '*.chr')):
+                    try:
+                        with open(_cf_chr2, 'rb') as _fh_chr2:
+                            _data_chr2 = _fh_chr2.read()
+                        _txt_chr2 = _data_chr2.decode('utf-16', errors='replace')
+                        _m_chr2 = _re_chr2.search(r'path=(Experts[^\r\n]+\.ex5)', _txt_chr2)
+                        _ea_chr2 = _m_chr2.group(1).split('\\')[-1].replace('.ex5', '') if _m_chr2 else None
+                        _chr_ea_cc[os.path.basename(_cf_chr2)] = _ea_chr2
+                    except Exception as _e_chr2:
+                        print(f"[CLEAN] 讀 .chr 失敗 {os.path.basename(_cf_chr2)}: {_e_chr2}")
+        except Exception as _e_chr1:
+            print(f"[CLEAN] FIX6 .chr 掃描失敗: {_e_chr1}")
+        # .chr 檔有 EA → 保留（symbol 計數）；冇 EA → 空白 chart 關閉
+        # [ALERT] .chr 檔可能未 sync（MT5 開住時啱啱部署完 — 未 save）→ 有 EA 心跳但 .chr 冇 → 要合併心跳
         _keep_count_cc = {}
-        for _sym_kc in _keep_syms_cc:
-            # 數心跳 EA 最新 loaded 喺呢個 symbol 嘅數量
-            _cnt_kc = sum(1 for _ea_kc, _sym_kc2 in _ea_latest_sym_cc.items() if _sym_kc2 == _sym_kc)
-            _keep_count_cc[_sym_kc] = max(_cnt_kc, 1)  # 最少 1（target）
+        for _cf_cc, _ea_cf in _chr_ea_cc.items():
+            if _ea_cf:
+                # 有 EA → 保留（數 symbol 出現次數 — 每個 EA chart 一個）
+                try:
+                    with open(os.path.join(_best_prof_chr2, _cf_cc), 'rb') as _fh_sym:
+                        _txt_sym = _fh_sym.read().decode('utf-16', errors='replace')
+                    _m_sym = _re_chr2.search(r'symbol=(\S+)', _txt_sym)
+                    if _m_sym:
+                        _sym_cf = _m_sym.group(1).upper()
+                        _keep_count_cc[_sym_cf] = _keep_count_cc.get(_sym_cf, 0) + 1
+                except Exception:
+                    pass
+        # 合併心跳 EA 最新 loaded symbol（.chr 未 sync 嘅 EA — 例如啱啱部署完 — 都要保留）
+        # [ALERT] 2026-08-31 FIX7：.chr 檔可能未包含啱啱部署嘅 EA（MT5 開住時唔 save .chr）
+        # → 心跳 EA 有但 .chr 冇 → 加埋（每個心跳 EA 一個 chart 保留）
+        if _ea_latest_sym_cc:
+            for _ea_hb, _sym_hb in _ea_latest_sym_cc.items():
+                if _ea_hb in _ea_running_cc:
+                    _keep_count_cc[_sym_hb] = _keep_count_cc.get(_sym_hb, 0) + 1
+        # 加埋 target symbol（keep_symbol — 部署嗰個）
+        if keep_symbol and keep_symbol not in _keep_count_cc:
+            _keep_count_cc[keep_symbol] = 1
+        if not _keep_count_cc:
+            print("[CLEAN] 冇 .chr EA 記錄 + 冇心跳 EA — 全部當空白？skip（保守 — 唔亂關）")
+            return
         _kept_cc = {}
         _closed_cc = 0
         for _h_cc, _title_cc in _charts_cc:

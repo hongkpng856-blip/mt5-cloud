@@ -305,7 +305,34 @@ def process_deploy(filepath):
     if not cmd_data:
         return
     ea_name = cmd_data.get('ea_name', 'unknown')
-    
+
+    # 🚨 2026-08-31 FIX（舊 deploy_cmd 殘留觸發 — 用戶實測「未話開始就開始」）：
+    # deploy_cmd 帶 fingerprint（account + agent_id — server 寫）— 檢查係咪屬於「當前本機 agent」
+    # 舊 account 殘留嘅 deploy_cmd（Common/Files 冇清乾淨）→ 新 agent 啟動會誤執行 → 自動部署（用戶投訴）
+    # → fingerprint.account != 當前 agent_config account → 跳過 + 刪除（唔執行）
+    try:
+        import json as _jfp
+        _cfg_fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'agent_config.json')
+        _cur_acct = None
+        if os.path.isfile(_cfg_fp):
+            try:
+                _cfg_fp_d = _jfp.load(open(_cfg_fp, 'r', encoding='utf-8'))
+                _cur_acct = _cfg_fp_d.get('account')
+            except Exception:
+                pass
+        _fp_fp = cmd_data.get('fingerprint') or {}
+        _cmd_acct = _fp_fp.get('account') if isinstance(_fp_fp, dict) else None
+        if _cur_acct and _cmd_acct and _cmd_acct != _cur_acct:
+            print(f"   ⛔ [WATCHER] deploy_cmd 屬於 account {_cmd_acct}（當前本機係 {_cur_acct}）— 舊殘留 — 跳過 + 刪除")
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            except Exception:
+                pass
+            return
+    except Exception:
+        pass
+
     # 🚨 2026-08-31 FIX（#152）：auto_attach running 檢查**喺刪 deploy_cmd before**
     # before：讀完immediately刪 cmd → 偵測到 running → return → cmd 冇咗 + 冇人排隊 → deploy卡死（Mean_Reversion 案例）
     # now：running → 唔刪 cmd（留返）→ return → watcher 下次 poll 再試（deploy_cmd 仲喺度）
