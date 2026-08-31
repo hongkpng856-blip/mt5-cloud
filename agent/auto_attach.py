@@ -2907,7 +2907,37 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
         _log_loaded = _ea_loaded_in_log(ea_name, (symbol or 'EURUSD'))
         heartbeat = verify_heartbeat(ea_name, timeout=15)
         
-        if heartbeat or _log_loaded:
+        # [ALERT] 2026-09-01 FIX（用戶實測：Breakout loaded 但 OnInit 未跑 — 冇 EA icon + 冇心跳 = 假成功）：
+        # before: `if heartbeat or _log_loaded` → 淨 log loaded 就話 SUCCESS（繞過 OnInit 驗證 — 假成功）
+        # now: 要「心跳（OnInit 真跑）」或「log loaded + OnInit Print 確認」先話 SUCCESS
+        # 淨 log loaded 冇 OnInit → FAIL（chart 未 activate — EA 未真正運行）
+        _oninit_confirmed = False
+        if not heartbeat:
+            # 睇 MQL5/Logs（EA Print「已啟動」= OnInit 跑咗）
+            try:
+                import glob as _g_s5
+                _ml_s5 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                _ml_latest_s5 = None
+                for _d_s5 in os.listdir(_ml_s5):
+                    _lg_s5 = os.path.join(_ml_s5, _d_s5, 'MQL5', 'Logs')
+                    if os.path.isdir(_lg_s5):
+                        for _f_s5 in _g_s5.glob(os.path.join(_lg_s5, '*.log')):
+                            if _ml_latest_s5 is None or os.path.getmtime(_f_s5) > os.path.getmtime(_ml_latest_s5):
+                                _ml_latest_s5 = _f_s5
+                if _ml_latest_s5:
+                    with open(_ml_latest_s5, 'rb') as _f_s5b:
+                        _raw_s5 = _f_s5b.read()
+                    for _enc_s5 in ('utf-16', 'utf-8', 'cp1252'):
+                        try:
+                            _txt_s5 = _raw_s5.decode(_enc_s5); break
+                        except Exception:
+                            continue
+                    if ea_name in _txt_s5 and ('已啟動' in _txt_s5 or '已start' in _txt_s5):
+                        _oninit_confirmed = True
+            except Exception:
+                pass
+        
+        if heartbeat or (_log_loaded and _oninit_confirmed):
             print(f"\n[DONE] SUCCESS: {ea_name} is running on {symbol} {timeframe}!")
             # [ALERT] 2026-08-31 FIX（Bug #150 — 3 個空白 EURUSD chart 殘留）：
             # MT5 restart 後 profile restore 舊 chart（空白冇 EA）→ 掃描所有 chart →
@@ -2918,7 +2948,8 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                 pass
             return True
         else:
-            print(f"\n[FAIL] deploydone但verify failed：MT5 log 冇 loaded 記錄 + 心跳冇（應該唔會到呢度 — Step 4 gate 已過）")
+            # [ALERT] 2026-09-01：心跳冇 + OnInit 未確認 → 假成功（唔話 SUCCESS）
+            print(f"[FAIL] {ea_name} 心跳冇 + OnInit 未確認（MQL5/Logs 冇『已啟動』）— 假成功 — 唔當部署成功")
             return False
     except ControlAborted:
         print(f"\n[ALERT] deploy被user緊急stop！")
