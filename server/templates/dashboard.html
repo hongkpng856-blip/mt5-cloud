@@ -1906,6 +1906,14 @@ async function pollAiControl() {
                     if (closeBtn) {
                         var allDone = steps.every(function(s){ return s.status === 'done'; });
                         closeBtn.style.display = (allDone && !hasDoing) ? 'inline-block' : 'none';
+                        // [ALERT] 2026-08-31 FIX（#156）：操作完成（steps 全部 done）→ 即刻 refresh 配對庫 runtime
+                        // （之前靠 setInterval 60 秒 poll — 部署/剷除完成後要等最多 60 秒先更新 → 用戶見「圖表移除」舊狀態）
+                        // → allDone 由 false → true（第一次）先 refresh（唔好每次 poll 都 refresh — 避免頻繁）
+                        if (allDone && !hasDoing && window._stepsAllDone !== true) {
+                            window._stepsAllDone = true;
+                            setTimeout(function(){ try { loadEAConfig(); } catch(e){} }, 500);
+                        }
+                        if (!allDone || hasDoing) window._stepsAllDone = false;
                     }
                     // 4. 標題
                     if (prog) {
