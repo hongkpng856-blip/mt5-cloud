@@ -856,10 +856,12 @@ def download_and_install(ea_name, url, ea_config=None):
                 # Find OnInit { and inject after it
                 import re
                 m = re.search(r'(int\s+OnInit\s*\(\s*\)\s*\{)', content)
+                _injected_any = False
                 if m and hb_var not in content:
                     idx = m.end()
                     content = content[:idx] + '\r\n' + oninit_inject + content[idx:]
                     print(f"   [INJECT] Heartbeat injected (OnInit)")
+                    _injected_any = True
                 
                 # Find OnTick { and inject after it
                 m2 = re.search(r'(void\s+OnTick\s*\(\s*\)\s*\{)', content)
@@ -869,10 +871,17 @@ def download_and_install(ea_name, url, ea_config=None):
                         idx2 = m2.end()
                         content = content[:idx2] + '\r\n' + ontick_inject + content[idx2:]
                         print(f"   [INJECT] Heartbeat injected (OnTick)")
+                        _injected_any = True
                 
-                with open(mq5_path, 'w', encoding='utf-8', newline='\r\n') as f:
-                    f.write(content)
-                print(f"   [SAVE] Saved: {mq5_path}")
+                # [ALERT] 2026-09-01 FIX（用戶實測：冇操作都開 MT5 + refresh 導航頁）：
+                # before: 心跳已注入都照寫 .mq5（touch mtime）→ watcher 偵測變化 → refresh Navigator + 開 MT5
+                # now: 心跳已注入（hb_var 存在）→ 唔寫 .mq5（唔 touch — 唔觸發 watcher）
+                if hb_var in content and not _injected_any:
+                    print(f"   [SKIP] 心跳已注入過（{hb_var}）— 唔 touch .mq5（避免 watcher 誤觸發 refresh）")
+                else:
+                    with open(mq5_path, 'w', encoding='utf-8', newline='\r\n') as f:
+                        f.write(content)
+                    print(f"   [SAVE] Saved: {mq5_path}")
                 
                 # === Compile (skip if .ex5 already exists) ===
                 # [ALERT] 2026-08-28 FIX：before「.ex5 mtime > .mq5 先 skip」— 但心跳注入令 .mq5 永遠新過 .ex5 → 每次 Auto-sent 都 compile → MetaEditor 周不時彈出

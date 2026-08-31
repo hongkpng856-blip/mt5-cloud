@@ -444,7 +444,7 @@ MT5_EXPERTS_DIR = os.path.join(os.environ.get('APPDATA', ''),
 REFRESH_NAV_SCRIPT = os.path.join(os.path.dirname(__file__), 'refresh_navigator.py')
 _last_experts_snapshot = None
 _last_refresh_time = 0
-_refresh_cooldown = 60  # 秒 — 防連環觸發（2026-08-28：3 秒太短 — refresh Navigator 會令 MT5 touch .mq5 → 又偵測變化 → 無限循環 right click；改 60 秒俾 MT5 穩定）
+_refresh_cooldown = 300  # 秒 — 防連環觸發（2026-08-28：3 秒太短 — refresh Navigator 會令 MT5 touch .mq5 → 又偵測變化 → 無限循環 right click；改 60 秒俾 MT5 穩定；2026-09-01：改 300 秒 — 冇操作都唔好成日 refresh）
 
 
 def get_experts_snapshot():

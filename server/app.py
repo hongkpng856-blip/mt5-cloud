@@ -3712,14 +3712,18 @@ def handle_register(data):
         except Exception:
             pass
         # 自動推送 EA 配置俾 Agent（debounce: 每 60 秒最多一次）
+        # [ALERT] 2026-09-01 FIX（用戶實測：冇操作都開 MT5 + refresh 導航頁）：
+        # agent 每 60 秒 reconnect → 每次 reconnect 都過咗 60 秒 debounce → 每次 auto-sent EA config
+        # → agent 心跳注入 touch .mq5 → watcher 偵測變化 → refresh Navigator + 開 MT5
+        # → debounce 加長（60 → 300 秒）— 就算 agent 每 60 秒 reconnect 都唔會每次 auto-sent
         user = agent.user
         if user and user.ea_config and user.ea_config != '{}':
             try:
                 import time as _t
                 now = _t.time()
                 last = _last_config_send.get(agent.agent_id, 0)
-                if now - last < 60:
-                    print(f"[WS] Skip auto-send (debounce): {agent.agent_id} ({now-last:.0f}s ago)")
+                if now - last < 300:
+                    print(f"[WS] Skip auto-send (debounce 300s): {agent.agent_id} ({now-last:.0f}s ago)")
                     return
                 _last_config_send[agent.agent_id] = now
                 
