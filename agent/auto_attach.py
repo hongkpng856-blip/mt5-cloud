@@ -3129,18 +3129,25 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
             print(f"[WARN] 清空白 chart failed: {_e_cln}")
         _pid = find_mt5_pid()
         if _pid:
-            from pywinauto import Application as _App_r
-            _app_r = _App_r(backend='win32').connect(process=_pid, timeout=8)
-            _main_r = _app_r.window(class_name='MetaQuotes::MetaTrader::5.00')
-            _u.PostMessageW(_ct.c_void_p(int(_main_r.element_info.handle)), 0x0010, 0, 0)
-            print("[CLIP] 關 MT5（save profile）...")
-            time.sleep(10)
-            for _chk in range(5):
-                _r_chk = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
-                if b'terminal64' not in _r_chk.stdout:
-                    break
-                time.sleep(2)
-            print("[OK] MT5 已關閉")
+            # [ALERT] 2026-09-01 FIX（user實測：部署失敗 — WM_CLOSE 唔生效 → MT5 冇 restart → 唔 restore chart → EA 唔掛）：
+            # → 改用 taskkill /F（WM_CLOSE 可能被 dialog/狀態擋住 — taskkill 確保真關）
+            try:
+                from pywinauto import Application as _App_r
+                _app_r = _App_r(backend='win32').connect(process=_pid, timeout=8)
+                _main_r = _app_r.window(class_name='MetaQuotes::MetaTrader::5.00')
+                _u.PostMessageW(_ct.c_void_p(int(_main_r.element_info.handle)), 0x0010, 0, 0)
+                print("[CLIP] 關 MT5（save profile）...")
+                time.sleep(8)
+            except Exception:
+                pass
+            # 確保真關（WM_CLOSE 唔生效 → taskkill）
+            _still = find_mt5_pid()
+            if _still:
+                _sp.run('taskkill /F /IM terminal64.exe', shell=True, capture_output=True)
+                print("[CLIP] WM_CLOSE 冇生效 — taskkill /F 強制關")
+                time.sleep(5)
+            else:
+                print("[OK] MT5 已關閉（WM_CLOSE）")
         else:
             print("[INFO] MT5 未開 — 直接開")
     except Exception as _e3:
