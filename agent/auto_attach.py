@@ -2735,20 +2735,24 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         return False
 def verify_heartbeat(ea_name, timeout=60):
     """驗證 EA heartbeat file exists且新鮮（+ MT5 log 後備 — 2026-08-10：market closeno tick 心跳唔寫）"""
-    hb_file = os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')
+    # [ALERT] 2026-09-01 FIX（user實測：部署每次等 90s — verify_heartbeat 只 check hb_<EA>.txt 但 EA 寫 state_<EA>.json）：
+    # → 兩個都 check（state_.json 優先 — EA 而家寫呢個；hb_.txt 後備）
+    hb_files = [os.path.join(COMMON_FILES, f'state_{ea_name}.json'),
+                os.path.join(COMMON_FILES, f'hb_{ea_name}.txt')]
     start = time.time()
     
     while time.time() - start < timeout:
-        if os.path.exists(hb_file):
-            mtime = os.path.getmtime(hb_file)
-            age = time.time() - mtime
-            if age < 300:  # Within 5 minutes
-                # Read content
-                with open(hb_file, 'rb') as f:
-                    raw = f.read()
-                content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
-                print(f"[HB] {ea_name} heartbeat: {content} ({round(age)}s ago)")
-                return True
+        for hb_file in hb_files:
+            if os.path.exists(hb_file):
+                mtime = os.path.getmtime(hb_file)
+                age = time.time() - mtime
+                if age < 300:  # Within 5 minutes
+                    # Read content
+                    with open(hb_file, 'rb') as f:
+                        raw = f.read()
+                    content = raw.decode('utf-16-le', errors='replace').strip().lstrip('\ufeff')
+                    print(f"[HB] {ea_name} heartbeat: {content} ({round(age)}s ago)")
+                    return True
         time.sleep(3)
     
     # [ALERT] 2026-08-10：心跳冇 → 睇 MT5 log「已start」（market closeno tick — EA 其實start咗）
