@@ -258,9 +258,14 @@ def main():
                     _last_sig = sig
                     _all_done_shown = False
                     # 操作期間：確定隱藏 + 緊急停止顯示 + 狀態「處理中」
-                    root._done_btn.pack_forget()
-                    root._stop_btn.pack(fill='x')
-                    root._status_label.config(text=f'執行中：{sig}', fg='#fbbf24')
+                    # [ALERT] 2026-09-01 FIX（user實測：警告視窗卡住冇關 — TclError crash）：root 可能已銷毀（WM_CLOSE）→ 檢查先 call
+                    try:
+                        if root.winfo_exists():
+                            root._done_btn.pack_forget()
+                            root._stop_btn.pack(fill='x')
+                            root._status_label.config(text=f'執行中：{sig}', fg='#fbbf24')
+                    except tk.TclError:
+                        raise
                 if not shown:
                     root.deiconify()
                     shown = True
