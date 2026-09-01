@@ -3721,6 +3721,29 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
             _dst = os.path.join(_bk, f"{time.time():.0f}_{os.path.basename(_target_chr)}")
         os.rename(_target_chr, _dst)
         print(f"[CHR] 已刪除 {ea_name} 嘅 .chr（→ _deleted backup）— MT5 開機唔會 restore")
+        # [ALERT] 2026-09-01 FIX（user實測：剷除後心跳殘留誤判「EA 仲運行」→ steps 話 failed）：
+        # 成功刪 .chr 後 → 一齊刪心跳檔（state_<EA>.json + hb_<EA>.txt — Terminal Common + MQL5/Files）
+        try:
+            import glob as _g_hbd
+            _cfd_hbd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            for _hbd in _g_hbd.glob(os.path.join(_cfd_hbd, f'state_{ea_name}.*')) + _g_hbd.glob(os.path.join(_cfd_hbd, f'hb_{ea_name}.*')):
+                try:
+                    os.remove(_hbd)
+                    print(f"[HB] 已刪心跳檔: {os.path.basename(_hbd)}")
+                except Exception:
+                    pass
+            # MQL5/Files 版（舊 EA 寫 MQL5/Files 唔係 Common/Files）
+            for _d_hbd in os.listdir(os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')):
+                _mf_hbd = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', _d_hbd, 'MQL5', 'Files')
+                if os.path.isdir(_mf_hbd):
+                    for _hbd2 in _g_hbd.glob(os.path.join(_mf_hbd, f'state_{ea_name}.*')) + _g_hbd.glob(os.path.join(_mf_hbd, f'hb_{ea_name}.*')):
+                        try:
+                            os.remove(_hbd2)
+                            print(f"[HB] 已刪 MQL5/Files 心跳檔: {os.path.basename(_hbd2)}")
+                        except Exception:
+                            pass
+        except Exception as _e_hbd:
+            print(f"[WARN] 刪心跳檔 failed: {_e_hbd}")
     except Exception as _e3:
         print(f"[FAIL] 刪 .chr failed: {_e3}")
         _sp.Popen([MT5_PATH])
