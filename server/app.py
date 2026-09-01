@@ -216,7 +216,7 @@ def api_control_steps():
                     steps_data = []
             except Exception:
                 # [ALERT] 2026-08-12：讀唔到（多個 process 同時寫 → file損壞/空）→ 唔返回 []（網頁唔會空白 — 彈嚟彈去根治）
-                steps_data = [{'text': 'wait操作start…', 'status': 'pending'}]
+                steps_data = [{'text': 'Waiting for operation to start...', 'status': 'pending'}]
             # [ALERT] 2026-08-11：返回 steps + mtime（前端用嚟判斷「舊 steps 唔顯示」— 新任務start唔會殘留上一個操作 — user投訴）
             import time as _tm
             return jsonify({"steps": steps_data, "mtime": os.path.getmtime(steps_file)})
@@ -1049,16 +1049,16 @@ def api_ea_config_toggle(ea_name):
                 if new_status == 'paused':
                     _jtg.dump([
                         {'text': f'startpause {ea_name}', 'status': 'doing'},
-                        {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
-                        {'text': 'remove圖表 EA（stop交易）', 'status': 'pending'},
-                        {'text': 'donepause（配置保留 — 可隨時恢復）', 'status': 'pending'},
+                        {'text': 'Check chart (EA running?)', 'status': 'pending'},
+                        {'text': 'Remove EA from chart (stop trading)', 'status': 'pending'},
+                        {'text': 'Done — paused (config kept, can resume)', 'status': 'pending'},
                     ], _f, ensure_ascii=False)
                 else:
                     _jtg.dump([
-                        {'text': f'start恢復 {ea_name}', 'status': 'doing'},
-                        {'text': 'create新圖表', 'status': 'pending'},
-                        {'text': f'attach {ea_name}', 'status': 'pending'},
-                        {'text': '驗證running狀態', 'status': 'pending'},
+                        {'text': f'Start resume {ea_name}', 'status': 'doing'},
+                        {'text': 'Create new chart', 'status': 'pending'},
+                        {'text': f'Attach {ea_name}', 'status': 'pending'},
+                        {'text': 'Verify running status', 'status': 'pending'},
                     ], _f, ensure_ascii=False)
         except Exception:
             pass
@@ -2129,13 +2129,13 @@ def api_ea_library_refresh():
         # [ALERT] 2026-08-29 FIX（PC版warning視窗冇彈 — 重新整理流程）：改用 _write_ai_flags 雙寫
         # before淨寫開發dir（_adir_rf）→ alert_worker（讀 TradotcomAgent）冇 flag → PC版唔彈
         _write_ai_flags('重新整理配對庫', [
-            {'text': 'start重新整理', 'status': 'doing'},
-            {'text': '掃描local EA file', 'status': 'pending'},
-            {'text': '清理殘留配對設定', 'status': 'pending'},
-            {'text': '同步配對設定', 'status': 'pending'},
-            {'text': '刷新localrunning狀態', 'status': 'pending'},
-            {'text': '刷新 EA 倉庫', 'status': 'pending'},
-            {'text': 'done重新整理', 'status': 'pending'},
+            {'text': 'Start refresh', 'status': 'doing'},
+            {'text': 'Scan local EA files', 'status': 'pending'},
+            {'text': 'Clean up stale pairing settings', 'status': 'pending'},
+            {'text': 'Sync pairing settings', 'status': 'pending'},
+            {'text': 'Refresh local running status', 'status': 'pending'},
+            {'text': 'Refresh EA library', 'status': 'pending'},
+            {'text': 'Done — refresh complete', 'status': 'pending'},
         ])
     except Exception:
         pass
@@ -2145,9 +2145,9 @@ def api_ea_library_refresh():
         _tw2.sleep(0.8)
         _st2 = _jrf.load(open(os.path.join(_adir_rf, '.ai_control.steps'), 'r', encoding='utf-8'))
         for _s2 in _st2:
-            if _s2.get('text') == 'start重新整理':
+            if _s2.get('text') == 'Start refresh':
                 _s2['status'] = 'done'
-            elif _s2.get('text') == '掃描local EA file':
+            elif _s2.get('text') == 'Scan local EA files':
                 _s2['status'] = 'doing'
         # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版一致）
         _write_ai_flags(None, _st2)
@@ -2226,8 +2226,8 @@ def api_ea_library_refresh():
         try:
             # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版一致）
             _write_ai_flags(None, [
-                {'text': '重新整理配對庫 in progress…', 'status': 'done'},
-                {'text': 'done重新整理', 'status': 'done'},
+                {'text': 'Refreshing pairing library in progress...', 'status': 'done'},
+                {'text': 'Done — refresh complete', 'status': 'done'},
             ])
             # [ALERT] 2026-08-29 FIX：雙刪 show flag（開發dir + TradotcomAgent）
             for _sf_dir in [_adir_rf, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
@@ -2251,8 +2251,8 @@ def api_ea_library_refresh():
         try:
             # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版一致）
             _write_ai_flags(None, [
-                {'text': '重新整理配對庫 in progress…', 'status': 'done'},
-                {'text': f'重新整理failed（{str(e)[:80]}）', 'status': 'done'},
+                {'text': 'Refreshing pairing library in progress...', 'status': 'done'},
+                {'text': f'Refresh failed ({str(e)[:80]})', 'status': 'done'},
             ])
             # [ALERT] 2026-08-29 FIX：雙刪 show flag（開發dir + TradotcomAgent）
             for _sf_dir in [_adir_rf, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
@@ -2494,12 +2494,12 @@ def api_ea_remove_local(filename):
         with open(os.path.join(_adir_del, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
             # [ALERT] 2026-08-12：詳細步驟（同 watcher 一致 — 活動記錄式 — 唔會 1 行覆蓋）
             _jdel.dump([
-                {'text': f'startdelete {base_only}', 'status': 'doing'},
-                {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
-                {'text': 'remove圖表 EA', 'status': 'pending'},
-                {'text': 'deletelocalfile（.mq5/.ex5）', 'status': 'pending'},
-                {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
-                {'text': 'donedelete', 'status': 'pending'},
+                {'text': f'Start delete {base_only}', 'status': 'doing'},
+                {'text': 'Check chart (EA running?)', 'status': 'pending'},
+                {'text': 'Remove EA from chart', 'status': 'pending'},
+                {'text': 'Delete local files (.mq5/.ex5)', 'status': 'pending'},
+                {'text': 'Clean up settings and release hotkey', 'status': 'pending'},
+                {'text': 'Done — delete complete', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
             # [ALERT] 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → file消失 → 網頁閃）
     except Exception as e_del:
@@ -2603,12 +2603,12 @@ def api_ea_remove_local(filename):
             # [ALERT] 2026-08-12 修：唔寫 done（DELETE config 會寫 pause_cmd → watcher 接手逐步 — 雙重寫 steps → 覆蓋 → 網頁彈嚟彈去）
             # 只係確保 steps 有內容（等 watcher 接手逐步done）
             if not _del_steps:
-                _del_steps = [{'text': f'startdelete {base_only}', 'status': 'doing'},
-                              {'text': '檢查圖表（是否有 EA running）', 'status': 'pending'},
-                              {'text': 'remove圖表 EA', 'status': 'pending'},
-                              {'text': 'deletelocalfile（.mq5/.ex5）', 'status': 'pending'},
-                              {'text': '清理設定並釋放快捷鍵', 'status': 'pending'},
-                              {'text': 'donedelete', 'status': 'pending'}]
+                _del_steps = [{'text': f'Start delete {base_only}', 'status': 'doing'},
+                              {'text': 'Check chart (EA running?)', 'status': 'pending'},
+                              {'text': 'Remove EA from chart', 'status': 'pending'},
+                              {'text': 'Delete local files (.mq5/.ex5)', 'status': 'pending'},
+                              {'text': 'Clean up settings and release hotkey', 'status': 'pending'},
+                              {'text': 'Done — delete complete', 'status': 'pending'}]
             with open(_sf_del, 'w', encoding='utf-8') as _f:
                 _jdel2.dump(_del_steps, _f, ensure_ascii=False)
         except Exception:
@@ -2769,10 +2769,10 @@ def api_ea_install_local(filename):
         _adir_in = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
         # [ALERT] 2026-08-28 FIX（PC版warning視窗冇彈）：雙寫 show + steps（開發dir + TradotcomAgent — alert_worker 讀自己dir）
         _steps_new = [
-            {'text': f'start配對 {_base0}', 'status': 'doing'},
-            {'text': '複製file至local（Experts 根）', 'status': 'pending'},
-            {'text': f'編譯 {_base0}.mq5 → .ex5', 'status': 'pending'},
-            {'text': 'done配對', 'status': 'pending'},
+            {'text': f'Start pairing {_base0}', 'status': 'doing'},
+            {'text': 'Copy file to local (Experts root)', 'status': 'pending'},
+            {'text': f'Compile {_base0}.mq5 → .ex5', 'status': 'pending'},
+            {'text': 'Done — pairing complete', 'status': 'pending'},
         ]
         for _wdir in [_adir_in, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
             try:
@@ -2970,7 +2970,7 @@ void __mt5c_append_trade() {
                 except Exception:
                     _cur_ic = []
                 for _s in _cur_ic:
-                    if isinstance(_s, dict) and _s.get('text') in (f'start配對 {_base0}', '複製file至local（Experts 根）'):
+                    if isinstance(_s, dict) and _s.get('text') in (f'Start pairing {_base0}', 'Copy file to local (Experts root)'):
                         _s['status'] = 'done'
                 # [ALERT] 2026-08-12 FIX：如果唔使編譯（.ex5 已exists且新過 .mq5）→ immediatelydone「編譯」+「done配對」（唔停留 pending — 「兩步就停」根治）
                 try:
@@ -2980,7 +2980,7 @@ void __mt5c_append_trade() {
                         not os.path.exists(_ex5_ic) or os.path.getmtime(_ex5_ic) < os.path.getmtime(_mq5_ic))
                     if not _need_compile:
                         for _s2 in _cur_ic:
-                            if isinstance(_s2, dict) and _s2.get('text') in (f'編譯 {os.path.splitext(dest_name)[0]}.mq5 → .ex5', 'done配對'):
+                            if isinstance(_s2, dict) and _s2.get('text') in (f'編譯 {os.path.splitext(dest_name)[0]}.mq5 → .ex5', 'Done — pairing complete'):
                                 _s2['status'] = 'done'
                 except Exception:
                     pass
@@ -3147,8 +3147,8 @@ void __mt5c_append_trade() {
             _sf_in = os.path.join(_adir_in2, '.ai_control.steps')
             # [ALERT] 2026-08-29 FIX：雙寫（開發dir + TradotcomAgent — PC版warning視窗一致）
             _write_ai_flags(None, [
-                {'text': f'配對 {os.path.splitext(filename)[0]} in progress…', 'status': 'done'},
-                {'text': '配對failed（compile failed）', 'status': 'done'},
+                {'text': f'Pairing {os.path.splitext(filename)[0]} in progress...', 'status': 'done'},
+                {'text': 'Pairing failed (compile failed)', 'status': 'done'},
             ])
             # [ALERT] 清 show flag（done → 唔會再「不停彈」— 視窗保持顯示（確定 — user撳先關））
             for _sf_dir2 in [_adir_in2, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
@@ -3165,10 +3165,10 @@ void __mt5c_append_trade() {
         try:
             _adir_ok = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
             _write_ai_flags(None, [
-                {'text': f'配對 {os.path.splitext(filename)[0]} in progress…', 'status': 'done'},
-                {'text': '複製檔案至本機（Experts 根）', 'status': 'done'},
-                {'text': f'編譯 {filename} → .ex5', 'status': 'done'},
-                {'text': '完成配對', 'status': 'done'},
+                {'text': f'Pairing {os.path.splitext(filename)[0]} in progress...', 'status': 'done'},
+                {'text': 'Copy file to local (Experts root)', 'status': 'done'},
+                {'text': f'Compile {filename} → .ex5', 'status': 'done'},
+                {'text': 'Pairing complete', 'status': 'done'},
             ])
             # 清 show flag（配對完成 → 唔會再「不停彈」）
             for _sf_dir_ok in [_adir_ok, os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
@@ -3384,7 +3384,7 @@ def _restart_mt5():
                         _cur_rt = []
             except Exception:
                 _cur_rt = []
-            _cur_rt = [s for s in _cur_rt if isinstance(s, dict) and s.get('text') != 'wait操作start…']
+            _cur_rt = [s for s in _cur_rt if isinstance(s, dict) and s.get('text') != 'Waiting for operation to start...']
             # append 重啟 MT5 3 步（同名更新）
             for _rstep in [{"text": "關閉 MT5", "status": "doing"},
                            {"text": "載入快捷鍵設定", "status": "pending"},
@@ -4118,9 +4118,9 @@ def api_deploy():
         # [ALERT] 2026-08-28 FIX（PC版warning視窗冇彈）：雙寫 show + steps（開發dir + TradotcomAgent）
         _write_ai_flags(f'deploy {ea_name}', [
             {'text': f'deploy {ea_name}（{symbol.upper()}）', 'status': 'doing'},
-            {'text': f'create新圖表（{symbol.upper()}）', 'status': 'pending'},
-            {'text': f'attach {ea_name}', 'status': 'pending'},
-            {'text': '驗證running狀態', 'status': 'pending'},
+            {'text': f'Create new chart ({symbol.upper()})', 'status': 'pending'},
+            {'text': f'Attach {ea_name}', 'status': 'pending'},
+            {'text': 'Verify running status', 'status': 'pending'},
         ])
     except Exception:
         pass

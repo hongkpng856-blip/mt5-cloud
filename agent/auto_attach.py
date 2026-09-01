@@ -115,7 +115,7 @@ def do_restart_mt5():
                         _cur_rst = []
             except Exception:
                 _cur_rst = []
-            _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != 'wait操作start…']
+            _cur_rst = [s for s in _cur_rst if isinstance(s, dict) and s.get('text') != 'Waiting for operation to start...']
             # [ALERT] 2026-08-12 FIX：重啟 3 步放最前（before append 尾 → 步驟順序「deploy 4 步 + 重啟 3 步」亂 — 重啟應該喺deploy前）
             _RESTART3 = [{"text": "關閉 MT5", "status": "doing"},
                          {"text": "載入快捷鍵設定", "status": "pending"},
@@ -805,7 +805,7 @@ def _update_steps(steps):
         except Exception:
             old = []
         # [ALERT] 2026-08-12 FIX：remove placeholder「wait操作start…」（_clear_steps 寫嘅）— 有新步驟就唔好殘留
-        merged = [s for s in old if isinstance(s, dict) and s.get('text') != 'wait操作start…']
+        merged = [s for s in old if isinstance(s, dict) and s.get('text') != 'Waiting for operation to start...']
         for ns in steps:
             found = False
             for i, os_ in enumerate(merged):
@@ -845,7 +845,7 @@ def _clear_steps():
         import json as _j
         _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
         with open(_f + '.tmp', 'w', encoding='utf-8') as _fh:
-            _j.dump([{'text': 'wait操作start…', 'status': 'pending'}], _fh)
+            _j.dump([{'text': 'Waiting for operation to start...', 'status': 'pending'}], _fh)
         # [ALERT] 2026-08-12 FIX：os.replace 移出 with block（WinError 32）
         os.replace(_f + '.tmp', _f)
     except Exception:
@@ -2179,10 +2179,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                             import json as _jf2
                             _stf2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                             with open(_stf2, 'w', encoding='utf-8') as _f2:
-                                _jf2.dump([{'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
-                                           {'text': f'開圖表（{symbol}）', 'status': 'done'},
-                                           {'text': f'attach {ea_name}', 'status': 'doing'},
-                                           {'text': '驗證running狀態', 'status': 'pending'}], _f2, ensure_ascii=False)
+                                _jf2.dump([{'text': f'Deploy {ea_name} ({symbol})', 'status': 'done'},
+                                           {'text': f'Open chart ({symbol})', 'status': 'done'},
+                                           {'text': f'Attach {ea_name}', 'status': 'doing'},
+                                           {'text': 'Verify running status', 'status': 'pending'}], _f2, ensure_ascii=False)
                         except Exception:
                             pass
                         time.sleep(2)
@@ -2356,11 +2356,11 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 import json as _jf3
                 _stf3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                 with open(_stf3, 'w', encoding='utf-8') as _f3:
-                    _jf3.dump([{'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
-                               {'text': f'開圖表（{symbol}）', 'status': 'done'},
-                               {'text': f'attach {ea_name}', 'status': 'doing'},
-                               {'text': '[WARN] 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
-                               {'text': '驗證running狀態', 'status': 'pending'}], _f3, ensure_ascii=False)
+                    _jf3.dump([{'text': f'Deploy {ea_name} ({symbol})', 'status': 'done'},
+                               {'text': f'Open chart ({symbol})', 'status': 'done'},
+                               {'text': f'Attach {ea_name}', 'status': 'doing'},
+                               {'text': '[WARN] Replace dialog — target chart already has an EA, replacement not accepted', 'status': 'doing'},
+                               {'text': 'Verify running status', 'status': 'pending'}], _f3, ensure_ascii=False)
             except Exception:
                 pass
             return False
@@ -2419,11 +2419,11 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                 import json as _jf4
                 _stf4 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                 with open(_stf4, 'w', encoding='utf-8') as _f4:
-                    _jf4.dump([{'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
-                               {'text': f'開圖表（{symbol}）', 'status': 'done'},
-                               {'text': f'attach {ea_name}', 'status': 'doing'},
-                               {'text': '[WARN] 代替 dialog — 目標 chart 已有 EA，唔接受取代', 'status': 'doing'},
-                               {'text': '驗證running狀態', 'status': 'pending'}], _f4, ensure_ascii=False)
+                    _jf4.dump([{'text': f'Deploy {ea_name} ({symbol})', 'status': 'done'},
+                               {'text': f'Open chart ({symbol})', 'status': 'done'},
+                               {'text': f'Attach {ea_name}', 'status': 'doing'},
+                               {'text': '[WARN] Replace dialog — target chart already has an EA, replacement not accepted', 'status': 'doing'},
+                               {'text': 'Verify running status', 'status': 'pending'}], _f4, ensure_ascii=False)
             except Exception:
                 pass
             return False
@@ -3297,11 +3297,11 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                 _stf_fail = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
                 with open(_stf_fail, 'w', encoding='utf-8') as _f_fail:
                     _j_fail.dump([
-                        {'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
-                        {'text': f'create新圖表（{symbol}）', 'status': 'done'},
-                        {'text': f'attach {ea_name}', 'status': 'done'},
-                        {'text': f'驗證running狀態', 'status': 'doing'},
-                        {'text': '[FAIL] 部署失敗：EA 未真正運行（OnInit 未確認 — 可能 MT5 彈窗/更新阻住）', 'status': 'fail'},
+                        {'text': f'Deploy {ea_name} ({symbol})', 'status': 'done'},
+                        {'text': f'Create new chart ({symbol})', 'status': 'done'},
+                        {'text': f'Attach {ea_name}', 'status': 'done'},
+                        {'text': f'Verify running status', 'status': 'doing'},
+                        {'text': '[FAIL] Deploy failed: EA not truly running (OnInit not confirmed — MT5 popup/update may block)', 'status': 'fail'},
                     ], _f_fail, ensure_ascii=False)
                 # 同步開發目錄（網頁版讀）
                 try:
@@ -3309,11 +3309,11 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                     if os.path.isdir(_cd_fail):
                         with open(os.path.join(_cd_fail, '.ai_control.steps'), 'w', encoding='utf-8') as _f_fail2:
                             _j_fail.dump([
-                                {'text': f'deploy {ea_name}（{symbol}）', 'status': 'done'},
-                                {'text': f'create新圖表（{symbol}）', 'status': 'done'},
-                                {'text': f'attach {ea_name}', 'status': 'done'},
-                                {'text': f'驗證running狀態', 'status': 'doing'},
-                                {'text': '[FAIL] 部署失敗：EA 未真正運行（OnInit 未確認 — 可能 MT5 彈窗/更新阻住）', 'status': 'fail'},
+                                {'text': f'Deploy {ea_name} ({symbol})', 'status': 'done'},
+                                {'text': f'Create new chart ({symbol})', 'status': 'done'},
+                                {'text': f'Attach {ea_name}', 'status': 'done'},
+                                {'text': f'Verify running status', 'status': 'doing'},
+                                {'text': '[FAIL] Deploy failed: EA not truly running (OnInit not confirmed — MT5 popup/update may block)', 'status': 'fail'},
                             ], _f_fail2, ensure_ascii=False)
                 except Exception:
                     pass
