@@ -3587,6 +3587,7 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
     import subprocess as _sp
     import glob as _gl
     import ctypes as _ct
+    import re
     from ctypes import wintypes as _wt
     _u = _ct.windll.user32
 
@@ -3625,6 +3626,25 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                     break
                 time.sleep(2)
             print("[OK] MT5 已完全關閉（等 10s + process 確認）— .chr 已 save，讀 .chr 準確")
+            # [ALERT] 2026-09-01 FIX（user實測：remove 讀唔到 .chr — MT5 關閉 save 需要時間）：
+            # → 等 .chr 檔出現（最多 30 秒 — 大 .chr 檔 7MB save 慢）+ retry 讀
+            _chr_ready = False
+            _chr_now = []
+            _data_root_t = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            for _retry_t in range(15):
+                _chr_now = []
+                for _d_t in os.listdir(_data_root_t):
+                    _ct_t = os.path.join(_data_root_t, _d_t, 'MQL5', 'Profiles', 'Charts')
+                    if os.path.isdir(_ct_t):
+                        _chr_now += _gl.glob(os.path.join(_ct_t, '*', '*.chr'))
+                if _chr_now:
+                    _chr_ready = True
+                    break
+                time.sleep(2)
+            if _chr_ready:
+                print(f"[CHR-DBG] .chr 檔出現（{len(_chr_now)} 個）— 開始讀")
+            else:
+                print(f"[WARN] 等 30 秒 .chr 檔都未出現 — 可能 MT5 關閉冇 save")
         else:
             print("[INFO] MT5 未開 — 直接處理 .chr")
     except Exception as _e2:
@@ -3635,6 +3655,7 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
     # 2. 讀 .chr → double check 搵目標 EA（而家 MT5 關咗 — .chr sync）
     _target_chr = None
     _data_root = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+    print(f"[CHR-DBG] 掃描 .chr 開始 — data_root={_data_root}")
     try:
         for _d in os.listdir(_data_root):
             _charts_root = os.path.join(_data_root, _d, 'MQL5', 'Profiles', 'Charts')
@@ -3656,7 +3677,9 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                     except Exception:
                         pass
             if not _best_prof:
+                print(f"[CHR-DBG] 冇揀到 profile（{_charts_root} 冇 .chr）")
                 continue
+            print(f"[CHR-DBG] 揀咗 profile: {_best_prof}")
             for _cf in _gl.glob(os.path.join(_best_prof, '*.chr')):
                 try:
                     with open(_cf, 'rb') as _fh:
@@ -3664,11 +3687,15 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                     _txt = _data.decode('utf-16', errors='replace')
                     # Double check：path=Experts\<EA>.ex5
                     _m = re.search(r'path=(Experts[^<]+\.ex5)', _txt)
+                    # [ALERT] 2026-09-01 DEBUG：print 每個 .chr 嘅 EA（搵點解話「冇 .chr 檔」）
+                    _dbg_ea = _m.group(1).split('\\')[-1].replace('.ex5', '') if _m else '(冇)'
+                    print(f"[CHR-DBG] {os.path.basename(_cf)}: EA={_dbg_ea}（{len(_data)} bytes）")
                     if _m and _m.group(1).split('\\')[-1].replace('.ex5', '') == ea_name:
                         _target_chr = _cf
                         print(f"[CHR] 搵到 {ea_name} 嘅 .chr: {os.path.basename(_cf)}")
                         break
-                except Exception:
+                except Exception as _e_chr_rd:
+                    print(f"[CHR-DBG] 讀 {os.path.basename(_cf)} failed: {_e_chr_rd}")
                     pass
             if _target_chr:
                 break
