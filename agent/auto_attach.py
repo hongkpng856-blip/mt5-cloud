@@ -3185,6 +3185,19 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
                 print("[OK] 平鋪窗口（WM_COMMAND id=33527）")
         except Exception as _e_t:
             print(f"[WARN] 平鋪窗口 failed: {_e_t}")
+        # [ALERT] 2026-09-01 FIX（user實測：部署成功但警告視窗 steps 卡住 doing — 冇同步）：
+        # → deploy_ea_via_chr 成功後寫 steps 全部 done（同 server 網頁 modal 同步 — 警告視窗自動關）
+        try:
+            _done_steps = [
+                {'text': f'Deploy {ea_name} ({symbol})', 'status': 'done'},
+                {'text': f'Create new chart ({symbol})', 'status': 'done'},
+                {'text': f'Attach {ea_name}', 'status': 'done'},
+                {'text': 'Verify running status', 'status': 'done'},
+            ]
+            _update_steps(_done_steps)
+            print(f"[OK] steps 全部 done（警告視窗同步）")
+        except Exception as _e_steps:
+            print(f"[WARN] steps 更新 failed: {_e_steps}")
         return True
     except Exception as _e4:
         print(f"[FAIL] 開 MT5 failed: {_e4}")
