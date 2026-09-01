@@ -4230,6 +4230,50 @@ def api_deploy():
 
     return jsonify({"success": True, "message": f"[GO] Deploying {ea_name} -> {symbol} {tf}"})
 
+@app.route('/api/clean-blank-charts', methods=['POST'])
+def api_clean_blank_charts():
+    """[ALERT] 2026-09-01（user要求 — 網頁「清理空白」按鈕）：清空白冇部署 EA 嘅 chart
+    流程：寫 clean_cmd（watcher 處理）→ auto_attach.clean_blank_charts（關 MT5 → 清 .chr + order.wnd → 開 MT5）"""
+    if current_user.is_anonymous:
+        return jsonify({"error": "login required"}), 401
+    try:
+        import time as _wt_clean
+        common_files = os.path.join(os.environ.get('APPDATA', ''),
+                                     'MetaQuotes', 'Terminal', 'Common', 'Files')
+        os.makedirs(common_files, exist_ok=True)
+        # 寫 clean_cmd（watcher 處理）
+        cmd_path = os.path.join(common_files, f'clean_cmd_{int(_wt_clean.time())}.json')
+        _fp_account = current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'
+        with open(cmd_path, 'w') as f:
+            json.dump({
+                'action': 'clean_blank',
+                'timestamp': _wt_clean.strftime('%Y-%m-%dT%H:%M:%S'),
+                'source': 'api_clean',
+                'fingerprint': {'account': _fp_account},
+                'account': f'account:{_fp_account}',
+            }, f)
+        print(f"[API] Clean blank charts command written: {os.path.basename(cmd_path)}")
+        log_activity('clean', '清空白冇 EA 嘅 chart（Clean blank charts）', ea='MT5')
+        # 警告視窗（.ai_control.show + steps — alert_worker + 網頁 modal 同步）
+        try:
+            _adir_cl = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+            with open(os.path.join(_adir_cl, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                _f.write('clean blank charts')
+            with open(os.path.join(_adir_cl, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+                json.dump([
+                    {'text': 'Clean blank charts', 'status': 'doing'},
+                    {'text': 'Remove blank charts (no EA)', 'status': 'pending'},
+                    {'text': 'Restart MT5', 'status': 'pending'},
+                    {'text': 'Verify running charts', 'status': 'pending'},
+                ], _f2, ensure_ascii=False)
+        except Exception as _e_clw:
+            print(f"[WARN] clean steps write failed: {_e_clw}")
+        return jsonify({"success": True, "message": "Clean blank charts command sent"})
+    except Exception as e:
+        print(f"[API] Clean blank charts error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/bind-account', methods=['POST'])
 @login_required
 def api_bind_account():

@@ -1433,6 +1433,89 @@ def process_pause_cmd(fp):
             pass
 
 
+
+def process_clean_cmd(fp):
+    """[ALERT] 2026-09-01（user要求 — 網頁「清理空白」按鈕）：處理 clean_cmd（清空白冇 EA 嘅 chart）"""
+    print(f"\n🧹 [WATCHER] Clean command: {os.path.basename(fp)}")
+    sys.stdout.flush()
+    try:
+        with open(fp, 'r') as f:
+            cmd = json.load(f)
+    except Exception as e:
+        print(f"   ⚠️ Cannot read clean cmd {fp}: {e}")
+        try:
+            os.remove(fp)
+        except Exception:
+            pass
+        return
+    # fingerprint 檢查（同 deploy_cmd 一致 — 確保屬於當前 agent）
+    try:
+        _cmd_acct = cmd.get('account', '')
+        _cur_acct = 'account:'
+        try:
+            import json as _jcfg
+            _cfg_p = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'agent_config.json')
+            if os.path.isfile(_cfg_p):
+                _cfg = _jcfg.load(open(_cfg_p, encoding='utf-8'))
+                _cur_acct = _cfg.get('fingerprint', 'account:')
+        except Exception:
+            pass
+        if _cmd_acct and _cur_acct and _cmd_acct != _cur_acct:
+            print(f"   ⛔ [WATCHER] clean_cmd 屬於 account {_cmd_acct}（當前 {_cur_acct}）— 舊殘留 — 跳過 + 刪除")
+            try:
+                os.remove(fp)
+            except Exception:
+                pass
+            return
+    except Exception:
+        pass
+    # 防重入（auto_attach running 就留返）
+    if is_auto_attach_running():
+        print("   ⚠️ auto_attach.py already running — 保留 clean_cmd 等下次 poll")
+        return
+    try:
+        # 刪 command file（處理前 — 防殘留）
+        try:
+            os.remove(fp)
+        except Exception:
+            pass
+        # 執行清理（call auto_attach.clean_blank_charts）
+        import subprocess
+        _py = sys.executable
+        _script = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), 'auto_attach.py')
+        _cmd_args = [_py, '-u', _script, '--clean-blank']
+        # 警告視窗（.ai_control.show — alert_worker 彈）
+        try:
+            import time as _t
+            _show_f = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), '.ai_control.show')
+            with open(_show_f, 'w', encoding='utf-8') as _f:
+                _f.write('clean blank charts')
+            _steps_f = os.path.join(os.path.dirname(AUTO_ATTACH_SCRIPT), '.ai_control.steps')
+            with open(_steps_f, 'w', encoding='utf-8') as _f2:
+                json.dump([
+                    {'text': 'Clean blank charts', 'status': 'doing'},
+                    {'text': 'Remove blank charts (no EA)', 'status': 'pending'},
+                    {'text': 'Restart MT5', 'status': 'pending'},
+                    {'text': 'Verify running charts', 'status': 'pending'},
+                ], _f2, ensure_ascii=False)
+        except Exception:
+            pass
+        print(f"   Running: {_script} --clean-blank")
+        result = subprocess.run(_cmd_args, capture_output=True, text=True, timeout=300)
+        print(f"   Exit code: {result.returncode}")
+        if result.stdout:
+            print(f"   stdout: {result.stdout[-500:]}")
+        if result.stderr:
+            print(f"   stderr: {result.stderr[-500:]}")
+        if result.returncode == 0:
+            print(f"   ✅ Clean blank charts success")
+        else:
+            print(f"   ❌ Clean blank charts failed (exit={result.returncode})")
+    except Exception as e:
+        print(f"   ❌ Clean cmd processing error: {e}")
+        import traceback
+        traceback.print_exc()
+
 def main():
     # single-instance guard：如果已有另一個 watcher 行緊就退出（防兩個 watcher 搶滑鼠/彈兩個視窗）
     if os.path.exists(WATCHER_LOCK_FILE):
@@ -1546,6 +1629,16 @@ def main():
                     process_pause_cmd(pcmd)
             except Exception as e:
                 print(f"   ⚠️ pause scan error: {e}")
+            
+            # ─── Clean 指令（清空白冇 EA 嘅 chart — 2026-09-01 user要求）───
+            try:
+                clean_cmds = sorted(glob.glob(os.path.join(COMMON_FILES, 'clean_cmd_*.json')), key=os.path.getmtime)
+                for clcmd in clean_cmds:
+                    print(f"\n🧹 [WATCHER] Clean command: {os.path.basename(clcmd)}")
+                    sys.stdout.flush()
+                    process_clean_cmd(clcmd)
+            except Exception as e:
+                print(f"   ⚠️ clean scan error: {e}")
             
             # Clean processed set (keep only files that still exist)
             processed = {p for p in processed if os.path.exists(p)}

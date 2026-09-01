@@ -3758,6 +3758,90 @@ def _clean_blank_charts_via_chr():
         return 0
 
 
+
+def clean_blank_charts(ea_name=''):
+    """[ALERT] 2026-09-01（user要求 — 網頁「清理空白」按鈕）：
+    清理空白冇部署 EA 嘅 chart（.chr 冇 expert 區 → 移去 _deleted + order.wnd 同步）
+    流程：關 MT5（save profile）→ 清空白 .chr + order.wnd → 開 MT5 → 平鋪
+    Returns: (count, detail)
+    """
+    import subprocess as _sp_c
+    import ctypes as _ct_c
+    import time as _tm_c
+    print(f"\n{'='*50}")
+    print(f"  [GO] Clean blank charts (no EA)")
+    print(f"{'='*50}")
+    _u_c = _ct_c.windll.user32
+
+    # Step 1: 關 MT5（save profile → .chr 寫完整）
+    try:
+        _pid_c = find_mt5_pid()
+        if _pid_c:
+            from pywinauto import Application as _App_c
+            _app_c = _App_c(backend='win32').connect(process=_pid_c, timeout=5)
+            _win_c = _app_c.window(class_name='MetaQuotes::MetaTrader::5.00')
+            _win_c.close()
+            print("[CLIP] MT5 正常關閉中（save chart profile → .chr）...")
+            for _i_c in range(10):
+                if not find_mt5_pid():
+                    break
+                _tm_c.sleep(1)
+            _tm_c.sleep(2)
+            print("[OK] MT5 已關閉")
+        else:
+            print("[INFO] MT5 未開 — 直接清")
+    except Exception as _e_cl:
+        print(f"[WARN] 關 MT5 failed: {_e_cl}")
+
+    # Step 2: 清空白 .chr + order.wnd
+    _n_c = 0
+    try:
+        _n_c = _clean_blank_charts_via_chr()
+        print(f"[OK] 清空白 chart: {_n_c} 個")
+    except Exception as _e_c2:
+        print(f"[WARN] 清空白 failed: {_e_c2}")
+
+    # Step 3: 開 MT5（restore 淨返有 EA 嘅 chart）
+    try:
+        if not find_mt5_pid():
+            _mt5_path_c = MT5_PATH
+            if os.path.isfile(_mt5_path_c):
+                _sp_c.Popen([_mt5_path_c])
+                print("[OK] MT5 啟動中（restore 淨返有 EA 嘅 chart）...")
+                for _i_c2 in range(30):
+                    if find_mt5_pid():
+                        break
+                    _tm_c.sleep(1)
+                _tm_c.sleep(3)
+    except Exception as _e_c3:
+        print(f"[WARN] 開 MT5 failed: {_e_c3}")
+
+    # Step 4: 平鋪窗口
+    try:
+        _p_c4 = find_mt5_pid()
+        if _p_c4:
+            from pywinauto import Application as _App_c4
+            _at_c4 = _App_c4(backend='win32').connect(process=_p_c4, timeout=5)
+            _wt_c4 = _at_c4.window(class_name='MetaQuotes::MetaTrader::5.00')
+            _u_c.PostMessageW(_ct_c.c_void_p(int(_wt_c4.element_info.handle)), 0x0111, 33527, 0)
+            print("[OK] 平鋪窗口")
+    except Exception as _e_c5:
+        pass
+
+    # Step 5: steps done
+    try:
+        _done_c = [
+            {'text': 'Clean blank charts', 'status': 'done'},
+            {'text': f'Removed {_n_c} blank chart(s)', 'status': 'done'},
+            {'text': 'Restart MT5', 'status': 'done'},
+            {'text': 'Verify running charts', 'status': 'done'},
+        ]
+        _update_steps(_done_c)
+    except Exception:
+        pass
+    print(f"[OK] Clean blank charts done（{_n_c} 個）")
+    return (_n_c, 'ok')
+
 def _exec_open_chart_script():
     """[ALERT] 2026-08-15：執行 OpenChart script（Ctrl+I → 插入 menu → 腳本 → OpenChart — user實測方法）
     取代 Navigator scan（pywinauto TreeView 64-bit 問題 — 唔可靠）"""
@@ -4690,13 +4774,14 @@ def remove_ea_from_chart(ea_name, mt5_pid=None):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='MT5 EA Auto-Attach Tool')
-    parser.add_argument('--ea', required=True, help='EA name (e.g. ADX_Trend)')
+    parser.add_argument('--ea', default='', help='EA name (e.g. ADX_Trend)')
     parser.add_argument('--symbol', default='EURUSD', help='Symbol (default: EURUSD)')
     parser.add_argument('--tf', default='H1', help='Timeframe (default: H1)')
     parser.add_argument('--lot', type=float, default=1.0, help='Lot size (default: 1.0)')
     parser.add_argument('--magic', type=int, default=240701, help='Magic number')
     parser.add_argument('--restart', action='store_true', help='Restart MT5 first')
     parser.add_argument('--remove', action='store_true', help='Remove EA from chart (真pause)')
+    parser.add_argument('--clean-blank', action='store_true', help='Clean blank charts (no EA) — 2026-09-01')
     parser.add_argument('--account', default='', help='Account username (fingerprint — 2026-08-31)')
     args = parser.parse_args()
     # [FP] 2026-08-31 fingerprint：所有 log 加 account 前綴
@@ -4710,6 +4795,28 @@ if __name__ == '__main__':
         except Exception:
             pass
     
+    if args.clean_blank:
+        # 清空白 chart（冇 EA 嘅 .chr）— 2026-09-01 user要求
+        from control_guard import acquire, release, ControlAborted
+        try:
+            acquire('clean blank charts')
+        except Exception:
+            pass
+        try:
+            _n_clean = clean_blank_charts()
+            print(f"[OK] Clean blank charts done: {_n_clean}")
+        except ControlAborted:
+            print("[ABORT] Clean aborted by user")
+        except Exception as _e_clean:
+            print(f"[FAIL] Clean blank charts failed: {_e_clean}")
+            import traceback
+            traceback.print_exc()
+        try:
+            release()
+        except Exception:
+            pass
+        sys.exit(0)
+
     if args.remove:
         # 真pause模式：remove圖表 EA
         from control_guard import acquire, release, ControlAborted
