@@ -702,7 +702,7 @@
 <div class="card" style="margin-bottom:16px">
     <div class="card-title"><i class="icon-database" style="color:var(--accent)"></i> Alpha 管理
         <button class="btn" onclick="refreshPairingLibrary()" style="margin-left:auto"><i class="icon-refresh-cw"></i> 重新整理</button>
-        <button class="btn" onclick="cleanBlankCharts()" style="margin-left:6px" title="清理空白冇部署 EA 嘅 chart（清空 MT5 空白視窗）"><i class="icon-brush"></i> 清理空白</button>
+        <button class="btn" onclick="cleanBlankCharts(this)" style="margin-left:6px" title="清理空白冇部署 EA 嘅 chart（清空 MT5 空白視窗）"><i class="icon-brush"></i> 清理空白圖表</button>
     </div>
 
     <!-- EA Library - 平台提供 + 社群提供 -->
@@ -1243,9 +1243,8 @@ async function fetchEAInventory() {
 }
 
 // 2026-09-01（user要求）：清理空白冇部署 EA 嘅 chart（清空 MT5 空白視窗）
-function cleanBlankCharts() {
-    if (!confirm('確定清理空白 chart？\n\n將關閉 MT5 → 移除所有冇部署 EA 嘅空白 chart（.chr 移去 _deleted）→ 重新開啟 MT5。\n\n有 EA 嘅 chart 會保留。')) return;
-    const btn = event.target.closest('button');
+function cleanBlankCharts(btn) {
+    if (!confirm('確定清理空白圖表？\n\n將關閉 MT5 → 移除所有冇部署 EA 嘅空白 chart（.chr 移去 _deleted）→ 重新開啟 MT5。\n\n有 EA 嘅 chart 會保留。')) return;
     if (btn) { btn.disabled = true; btn.textContent = '清理中...'; }
     fetch('/api/clean-blank-charts', { method: 'POST' })
         .then(r => r.json())
@@ -1255,12 +1254,12 @@ function cleanBlankCharts() {
                 setTimeout(() => location.reload(), 5000);
             } else {
                 alert('❌ 清理失敗: ' + (d.error || d.message || '未知錯誤'));
-                if (btn) { btn.disabled = false; btn.textContent = '清理空白'; }
+                if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; }
             }
         })
         .catch(e => {
             alert('❌ 清理失敗: ' + e.message);
-            if (btn) { btn.disabled = false; btn.textContent = '清理空白'; }
+            if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; }
         });
 }
 

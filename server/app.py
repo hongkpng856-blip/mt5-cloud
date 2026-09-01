@@ -4255,17 +4255,27 @@ def api_clean_blank_charts():
         print(f"[API] Clean blank charts command written: {os.path.basename(cmd_path)}")
         log_activity('clean', '清空白冇 EA 嘅 chart（Clean blank charts）', ea='MT5')
         # 警告視窗（.ai_control.show + steps — alert_worker + 網頁 modal 同步）
+        # [ALERT] 2026-09-01 FIX（user實測：警告視窗唔彈 — server 寫開發目錄但 alert_worker 讀安裝目錄）：
+        # → 雙寫（開發 + 安裝 — 同 deploy/pause 一致）
         try:
-            _adir_cl = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
-            with open(os.path.join(_adir_cl, '.ai_control.show'), 'w', encoding='utf-8') as _f:
-                _f.write('clean blank charts')
-            with open(os.path.join(_adir_cl, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
-                json.dump([
-                    {'text': 'Clean blank charts', 'status': 'doing'},
-                    {'text': 'Remove blank charts (no EA)', 'status': 'pending'},
-                    {'text': 'Restart MT5', 'status': 'pending'},
-                    {'text': 'Verify running charts', 'status': 'pending'},
-                ], _f2, ensure_ascii=False)
+            _dirs_cl = [
+                os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent'),
+                os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent'),
+            ]
+            _clean_steps_cl = [
+                {'text': 'Clean blank charts', 'status': 'doing'},
+                {'text': 'Remove blank charts (no EA)', 'status': 'pending'},
+                {'text': 'Restart MT5', 'status': 'pending'},
+                {'text': 'Verify running charts', 'status': 'pending'},
+            ]
+            for _dcl in _dirs_cl:
+                try:
+                    with open(os.path.join(_dcl, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                        _f.write('clean blank charts')
+                    with open(os.path.join(_dcl, '.ai_control.steps'), 'w', encoding='utf-8') as _f2:
+                        json.dump(_clean_steps_cl, _f2, ensure_ascii=False)
+                except Exception:
+                    pass
         except Exception as _e_clw:
             print(f"[WARN] clean steps write failed: {_e_clw}")
         return jsonify({"success": True, "message": "Clean blank charts command sent"})
