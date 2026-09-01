@@ -2937,7 +2937,7 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
                         with open(_cf, 'rb') as _fh:
                             _bd = _fh.read()
                         _bt = _bd.decode('utf-16', errors='replace')
-                        if '<expert>' in _bt and 'path=Experts' in _bt:
+                        if '<expert>' in _bt and 'path=Experts' in _bt and 'InpSymbol=' in _bt:
                             _base_chr = _cf
                             _base_prof = _pd
                             print(f"[CHR] 基底 .chr: {os.path.basename(_cf)}（{os.path.basename(_pd)} profile）")
@@ -2952,6 +2952,52 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
         print(f"[FAIL] 搵基底 .chr failed: {_e}")
         return False
 
+    if not _base_chr:
+        # [ALERT] 2026-09-01 FIX（user實測：模板有 InpSymbol= 先掛到 EA — 優先模板）：
+        # → 用 repo 模板（chr_template_base.chr.txt — user實測格式）轉 chart_base.chr
+        try:
+            import glob as _gl_tpl2
+            _tpl_path2 = None
+            for _tpl_p2 in _gl_tpl2.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chr_template_base.chr.txt')) + _gl_tpl2.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'agent', 'chr_template_base.chr.txt')):
+                if os.path.isfile(_tpl_p2):
+                    _tpl_path2 = _tpl_p2
+                    break
+            if _tpl_path2:
+                with open(_tpl_path2, encoding='utf-8') as _fh_t2:
+                    _tpl_txt2 = _fh_t2.read()
+                if '<expert>' in _tpl_txt2 and 'InpSymbol=' in _tpl_txt2:
+                    _tpl_txt2 = _tpl_txt2.replace('\r\n', '\n').replace('\n', '\r\n')
+                    # 寫 chart_base.chr 落 active profile（最近修改嘅）
+                    _cr_t2 = None
+                    for _d_t2 in os.listdir(_data_root):
+                        _cc_t2 = os.path.join(_data_root, _d_t2, 'MQL5', 'Profiles', 'Charts')
+                        if os.path.isdir(_cc_t2):
+                            _cr_t2 = _cc_t2
+                            break
+                    if _cr_t2:
+                        _bp_t2 = None
+                        _bm_t2 = 0
+                        for _pp_t2 in os.listdir(_cr_t2):
+                            _pd_t2 = os.path.join(_cr_t2, _pp_t2)
+                            if not os.path.isdir(_pd_t2) or _pp_t2 == '_deleted':
+                                continue
+                            try:
+                                _mt_t2 = os.path.getmtime(_pd_t2)
+                                if _mt_t2 > _bm_t2:
+                                    _bm_t2 = _mt_t2
+                                    _bp_t2 = _pd_t2
+                            except Exception:
+                                pass
+                        if _bp_t2:
+                            _base_c_t2 = os.path.join(_bp_t2, 'chart_base.chr')
+                            with open(_base_c_t2, 'wb') as _f_b2:
+                                _f_b2.write(b'\xff\xfe')
+                                _f_b2.write(_tpl_txt2.encode('utf-16-le'))
+                            _base_chr = _base_c_t2
+                            _base_prof = _bp_t2
+                            print(f"[CHR] 基底模板 → chart_base.chr（{os.path.basename(_bp_t2)} — user實測格式有 InpSymbol=）")
+        except Exception as _e_tpl2:
+            print(f"[WARN] 模板 fallback failed: {_e_tpl2}")
     if not _base_chr:
         # [ALERT] 2026-09-01 FIX（user實測：部署 fail — 環境空白冇基底 .chr）：
         # → 自動生成基底（用 MT5 寫嘅格式 — 完整欄位 — _deleted 有之前 MT5 寫嘅 .chr 可複製）
