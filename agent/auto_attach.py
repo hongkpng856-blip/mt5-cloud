@@ -2959,57 +2959,42 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
         try:
             import glob as _gl2
             _gen_base = None
-            # 1. 先搵 _deleted 入面 MT5 寫嘅 .chr（有 expert 區 — 完整格式）
+            # 1. 先搵 _deleted 入面 MT5 寫嘅 .chr（有 expert 區 — 完整格式 — 掃全部 profile）
             for _d2 in os.listdir(_data_root):
-                _del_dir = os.path.join(_data_root, _d2, 'MQL5', 'Profiles', 'Charts', '_deleted')
-                if not os.path.isdir(_del_dir):
-                    _del_dir = None
-                    # 嘗試各 profile 嘅 _deleted
-                    _charts_root2 = os.path.join(_data_root, _d2, 'MQL5', 'Profiles', 'Charts')
-                    if os.path.isdir(_charts_root2):
-                        for _p2 in os.listdir(_charts_root2):
-                            _dd = os.path.join(_charts_root2, _p2, '_deleted')
-                            if os.path.isdir(_dd):
-                                _del_dir = _dd
-                                break
-                if _del_dir:
-                    for _cf2 in _gl2.glob(os.path.join(_del_dir, '*.chr')):
+                _charts_root2 = os.path.join(_data_root, _d2, 'MQL5', 'Profiles', 'Charts')
+                if not os.path.isdir(_charts_root2):
+                    continue
+                for _p2 in os.listdir(_charts_root2):
+                    _dd = os.path.join(_charts_root2, _p2, '_deleted')
+                    if not os.path.isdir(_dd):
+                        continue
+                    for _cf2 in _gl2.glob(os.path.join(_dd, '*.chr')):
                         try:
                             with open(_cf2, 'rb') as _fh2:
                                 _bd2 = _fh2.read()
                             _bt2 = _bd2.decode('utf-16', errors='replace')
                             if '<expert>' in _bt2 and 'path=Experts' in _bt2 and 'window_left' in _bt2:
                                 _gen_base = _cf2
-                                _base_prof = os.path.dirname(_del_dir)
+                                _base_prof = _dd.replace('_deleted', '').rstrip('\\/')
                                 print(f"[CHR] 自動基底（_deleted）: {os.path.basename(_cf2)}")
                                 break
                         except Exception:
                             pass
+                    if _gen_base:
+                        break
                 if _gen_base:
                     break
             if _gen_base:
-                # 複製到 active profile（Euro — 部署會用）
+                # 複製到 active profile（_base_prof — _deleted 所在 profile — 通常係 Euro — 部署會用）
                 import shutil as _sh
-                _charts_root3 = os.path.join(_data_root, os.listdir(_data_root)[0], 'MQL5', 'Profiles', 'Charts')
-                # 揀 active profile（最近修改嗰個）
-                _best_p = None
-                _best_t = 0
-                for _p3 in os.listdir(_charts_root3):
-                    _pd3 = os.path.join(_charts_root3, _p3)
-                    if not os.path.isdir(_pd3) or _p3 == '_deleted':
-                        continue
-                    try:
-                        _mt3 = os.path.getmtime(_pd3)
-                        if _mt3 > _best_t:
-                            _best_t = _mt3
-                            _best_p = _pd3
-                    except Exception:
-                        pass
-                if _best_p:
-                    _base_chr = os.path.join(_best_p, 'chart_base.chr')
+                # _base_prof 可能係 '...Euro'（_deleted 喺 Euro 入面）
+                if _base_prof and os.path.isdir(_base_prof):
+                    _base_chr = os.path.join(_base_prof, 'chart_base.chr')
                     _sh.copyfile(_gen_base, _base_chr)
-                    _base_prof = _best_p
                     print(f"[CHR] 基底已複製去: {_base_chr}")
+                else:
+                    print(f"[WARN] _base_prof 唔存在: {_base_prof} — 用返 _gen_base 個 profile")
+                    _base_chr = _gen_base
             else:
                 print("[FAIL] 冇基底 .chr（_deleted 都冇 MT5 寫嘅）— 先人手掛一次 EA 落 chart 生成基底")
                 return False
@@ -3047,7 +3032,7 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
 
         # 改 EA 名 + path（name=XXX + path=Experts\\XXX.ex5）
         _txt = _re.sub(r'name=[A-Za-z0-9_]+(?=\r\npath=Experts)', f'name={ea_name}', _txt, count=1)
-        _txt = _re.sub(r'path=Experts\\[A-Za-z0-9_]+\.ex5', lambda _m: 'path=Experts\\\\' + ea_name + '.ex5', _txt, count=1)
+        _txt = _re.sub(r'path=Experts\\[A-Za-z0-9_]+\.ex5', lambda _m: 'path=Experts' + chr(92) + ea_name + '.ex5', _txt, count=1)
 
         # 改 Magic（如果 inputs 有 MagicNumber）
         if inputs and 'MagicNumber' in inputs:
