@@ -2953,8 +2953,69 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
         return False
 
     if not _base_chr:
-        print("[FAIL] 冇基底 .chr（冇任何 EA 掛過嘅 chart）— 先人手掛一次 EA 落 chart 生成基底")
-        return False
+        # [ALERT] 2026-09-01 FIX（user實測：部署 fail — 環境空白冇基底 .chr）：
+        # → 自動生成基底（用 MT5 寫嘅格式 — 完整欄位 — _deleted 有之前 MT5 寫嘅 .chr 可複製）
+        print("[CHR] 冇基底 .chr — 自動生成（用 MT5 寫嘅格式）")
+        try:
+            import glob as _gl2
+            _gen_base = None
+            # 1. 先搵 _deleted 入面 MT5 寫嘅 .chr（有 expert 區 — 完整格式）
+            for _d2 in os.listdir(_data_root):
+                _del_dir = os.path.join(_data_root, _d2, 'MQL5', 'Profiles', 'Charts', '_deleted')
+                if not os.path.isdir(_del_dir):
+                    _del_dir = None
+                    # 嘗試各 profile 嘅 _deleted
+                    _charts_root2 = os.path.join(_data_root, _d2, 'MQL5', 'Profiles', 'Charts')
+                    if os.path.isdir(_charts_root2):
+                        for _p2 in os.listdir(_charts_root2):
+                            _dd = os.path.join(_charts_root2, _p2, '_deleted')
+                            if os.path.isdir(_dd):
+                                _del_dir = _dd
+                                break
+                if _del_dir:
+                    for _cf2 in _gl2.glob(os.path.join(_del_dir, '*.chr')):
+                        try:
+                            with open(_cf2, 'rb') as _fh2:
+                                _bd2 = _fh2.read()
+                            _bt2 = _bd2.decode('utf-16', errors='replace')
+                            if '<expert>' in _bt2 and 'path=Experts' in _bt2 and 'window_left' in _bt2:
+                                _gen_base = _cf2
+                                _base_prof = os.path.dirname(_del_dir)
+                                print(f"[CHR] 自動基底（_deleted）: {os.path.basename(_cf2)}")
+                                break
+                        except Exception:
+                            pass
+                if _gen_base:
+                    break
+            if _gen_base:
+                # 複製到 active profile（Euro — 部署會用）
+                import shutil as _sh
+                _charts_root3 = os.path.join(_data_root, os.listdir(_data_root)[0], 'MQL5', 'Profiles', 'Charts')
+                # 揀 active profile（最近修改嗰個）
+                _best_p = None
+                _best_t = 0
+                for _p3 in os.listdir(_charts_root3):
+                    _pd3 = os.path.join(_charts_root3, _p3)
+                    if not os.path.isdir(_pd3) or _p3 == '_deleted':
+                        continue
+                    try:
+                        _mt3 = os.path.getmtime(_pd3)
+                        if _mt3 > _best_t:
+                            _best_t = _mt3
+                            _best_p = _pd3
+                    except Exception:
+                        pass
+                if _best_p:
+                    _base_chr = os.path.join(_best_p, 'chart_base.chr')
+                    _sh.copyfile(_gen_base, _base_chr)
+                    _base_prof = _best_p
+                    print(f"[CHR] 基底已複製去: {_base_chr}")
+            else:
+                print("[FAIL] 冇基底 .chr（_deleted 都冇 MT5 寫嘅）— 先人手掛一次 EA 落 chart 生成基底")
+                return False
+        except Exception as _e_gen:
+            print(f"[FAIL] 自動生成基底 failed: {_e_gen}")
+            return False
 
     # Step 2: 複製基底 → 改 id + symbol + description + EA 名/path/Magic
     try:
