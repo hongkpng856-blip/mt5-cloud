@@ -2053,6 +2053,21 @@ def api_watcher_report():
 
 # === API: EA 庫 ===
 EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
+def _ea_magic_from_source(mq5_path):
+    """[ALERT] 2026-09-01 FIX（user實測：配對庫 magic 亂 — install-local default 240701 冇讀 EA 內部）：
+    掃 .mq5 源碼攞 InpMagic（input int InpMagic = XXXX）→ 配對時用正確 magic"""
+    try:
+        if not os.path.isfile(mq5_path):
+            return '240701'
+        txt = open(mq5_path, encoding='utf-8', errors='replace').read()
+        m = re.search(r'InpMagic\s*=\s*(\d+)', txt)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return '240701'
+
+
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'static', 'user_ea')
 COMMUNITY_EA_DIR = os.path.join(os.path.dirname(__file__), 'static', 'community_ea')
 
@@ -3092,7 +3107,17 @@ void __mt5c_append_trade() {
         base = os.path.splitext(filename)[0]
         config.setdefault(base, 'EURUSD')
         config.setdefault(base + '_tf', 'H1')
-        config.setdefault(base + '_magic', '240701')
+        # [ALERT] 2026-09-01 FIX（user實測：magic 亂）：讀 EA 內部 InpMagic（唔係 default 240701）
+        _ea_src1 = None
+        for _ed1 in experts_dirs:
+            _cand1 = os.path.join(_ed1, filename)
+            if os.path.isfile(_cand1):
+                _ea_src1 = _cand1
+                break
+        if _ea_src1:
+            config.setdefault(base + '_magic', _ea_magic_from_source(_ea_src1))
+        else:
+            config.setdefault(base + '_magic', '240701')
         config.setdefault(base + '_lot', 1.00)
         # 重新配對 → 由 _removed remove（Bug #64：beforedelete過嘅 EA 重新配對後唔顯示）
         removed = config.get('_removed', [])
@@ -3610,7 +3635,17 @@ def api_ea_upload():
         config = json.loads(current_user.ea_config or '{}')
         config.setdefault(base, 'EURUSD')
         config.setdefault(base + '_tf', 'H1')
-        config.setdefault(base + '_magic', '240701')
+        # [ALERT] 2026-09-01 FIX（user實測：magic 亂）：讀 EA 內部 InpMagic
+        _ea_src2 = None
+        for _ed2 in experts_dirs:
+            _cand2 = os.path.join(_ed2, filename)
+            if os.path.isfile(_cand2):
+                _ea_src2 = _cand2
+                break
+        if _ea_src2:
+            config.setdefault(base + '_magic', _ea_magic_from_source(_ea_src2))
+        else:
+            config.setdefault(base + '_magic', '240701')
         config.setdefault(base + '_lot', 1.00)
         # 重新配對 → 由 _removed remove（Bug #64）
         removed = config.get('_removed', [])
