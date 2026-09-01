@@ -2395,8 +2395,16 @@ def api_refresh_status():
         pass
     # 4. [ALERT] 2026-08-14 自癒 + 2026-08-18 擴展：重新整理 → 自動清殘留
     # （除 config EA 外，所有唔喺配對庫 + 唔係系統保留嘅 .mq5/.ex5 都當殘留清 — 根治累積/彈返）
+    # [ALERT] 2026-09-01 FIX（user實測：EA 倉庫 10 隻新 EA 被「清殘留」誤刪 — 因為唔喺配對庫 config）：
+    # → EA 倉庫有嘅 .mq5（static/ea_library）都保留（唔好刪倉庫 EA — 用戶可隨時加入配對庫）
     _SYSTEM_KEEP = {'ApplyTemplate', 'BatchApplyTemplates', 'StartAgentHelper', 'AgentHelper', 'SMA_Cross', 'TestRunner', 'OpenChart', 'OpenChart_Helper'}  # [ALERT] 2026-08-18：OpenChart 系列係系統 Script tool — 唔喺配對庫都要保留（唔會被「清殘留」誤刪）
     try:
+        # EA 倉庫嘅 .mq5 base（保留 — 唔刪）
+        _lib_dir_rs = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
+        if os.path.isdir(_lib_dir_rs):
+            for _lf_rs in os.listdir(_lib_dir_rs):
+                if _lf_rs.endswith('.mq5'):
+                    _SYSTEM_KEEP.add(os.path.splitext(_lf_rs)[0])
         _data_dir_rs = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         _cfg_rs = json.loads(current_user.ea_config or '{}')
         _cfg_rs_eas = set()
