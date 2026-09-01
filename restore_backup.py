@@ -118,6 +118,46 @@ def _restore_mt5(zf):
             with zf.open(_name) as _src, open(_dst, 'wb') as _out:
                 shutil.copyfileobj(_src, _out)
             restored += 1
+    # [ALERT] 2026-09-02 FIX（restore 測試發現：backup 可能唔齊 .ex5 — metaeditor compile 刪咗）：
+    # → restore 後檢查 EA 倉庫 .mq5 對應 .ex5 — 缺就 compile
+    _compile_needed = []
+    _exp_root = os.path.join(TERMINAL_DIR, 'MQL5', 'Experts')
+    _lib_root = os.path.join(DEV_DIR, 'server', 'static', 'ea_library')
+    if os.path.isdir(_lib_root) and os.path.isdir(_exp_root):
+        for _f in os.listdir(_lib_root):
+            if not _f.endswith('.mq5'):
+                continue
+            _base = os.path.splitext(_f)[0]
+            if not os.path.isfile(os.path.join(_exp_root, _base + '.ex5')):
+                # 確保 .mq5 喺本機
+                _mq5_dst = os.path.join(_exp_root, _f)
+                if not os.path.isfile(_mq5_dst):
+                    shutil.copy2(os.path.join(_lib_root, _f), _mq5_dst)
+                _compile_needed.append(_base)
+    if _compile_needed:
+        print(f'   ⚠️ 缺 {len(_compile_needed)} 隻 .ex5 — 自動 compile: {_compile_needed}')
+        _me64 = r'C:\Program Files\MetaTrader 5\metaeditor64.exe'
+        for _ea in _compile_needed:
+            _mq5 = os.path.join(_exp_root, _ea + '.mq5')
+            _ex5 = os.path.join(_exp_root, _ea + '.ex5')
+            _log = os.path.join(_exp_root, f'_cli_compile_{_ea}.log')
+            try:
+                subprocess.run('taskkill /f /im metaeditor64.exe 2>nul', shell=True, capture_output=True)
+                time.sleep(2)
+                _p = subprocess.Popen([_me64, f'/compile:{_mq5}', f'/log:{_log}'], shell=False)
+                try:
+                    _p.wait(timeout=60)
+                except subprocess.TimeoutExpired:
+                    _p.kill()
+                time.sleep(2)
+                subprocess.run('taskkill /f /im metaeditor64.exe 2>nul', shell=True, capture_output=True)
+                time.sleep(1)
+                if os.path.isfile(_ex5):
+                    print(f'   ✅ {_ea}.ex5 compile OK')
+                else:
+                    print(f'   ❌ {_ea}.ex5 compile 失敗')
+            except Exception as _e_cp:
+                print(f'   ⚠️ {_ea} compile error: {_e_cp}')
     print(f'   ✅ MT5 狀態還原（{restored} 個檔案）')
 
 

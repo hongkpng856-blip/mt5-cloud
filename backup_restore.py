@@ -99,6 +99,30 @@ def make_backup(label=''):
             for _f in os.listdir(_exp_root):
                 if _f.endswith(('.mq5', '.ex5', '.set')):
                     collected[f'mt5/experts/{_f}'] = os.path.join(_exp_root, _f)
+        # 2c-2b. [ALERT] 2026-09-02 FIX（restore 測試發現：backup 唔齊 — 本機 Experts 得 5 隻 — metaeditor compile 刪咗其他）：
+        # → EA 倉庫（static/ea_library — 一定有齊 10 隻 .mq5）補充（restore 時本機有齊）
+        _lib_root = os.path.join(DEV_DIR, 'server', 'static', 'ea_library')
+        if os.path.isdir(_lib_root):
+            for _f in os.listdir(_lib_root):
+                if _f.endswith(('.mq5', '.ex5')):
+                    _arc = f'mt5/experts/{_f}'
+                    if _arc not in collected:
+                        collected[_arc] = os.path.join(_lib_root, _f)
+        # 2c-2c. [ALERT] 2026-09-02 FIX v2（restore 測試發現）：EA 倉庫得 .mq5 冇 .ex5
+        # → 本機冇 .ex5 時提示用 install-local 補（唔好喺度 compile — metaeditor compile 一個會刪其他 — 永遠唔齊）
+        _exp_root2 = os.path.join(TERMINAL_DIR, 'MQL5', 'Experts')
+        _lib_root2 = os.path.join(DEV_DIR, 'server', 'static', 'ea_library')
+        if os.path.isdir(_lib_root2) and os.path.isdir(_exp_root2):
+            _missing_ex5 = []
+            for _f in os.listdir(_lib_root2):
+                if not _f.endswith('.mq5'):
+                    continue
+                _base2 = os.path.splitext(_f)[0]
+                if not os.path.isfile(os.path.join(_exp_root2, _base2 + '.ex5')):
+                    _missing_ex5.append(_base2)
+            if _missing_ex5:
+                print(f'⚠️ [backup] 本機缺 {len(_missing_ex5)} 隻 .ex5: {_missing_ex5}')
+                print(f'   → backup 會包含 .mq5（restore 時可 compile / 或者先喺網頁「加入配對庫」補齊）')
         # 2c-3. 心跳 + trades（Common/Files — state_ + trades_ + hb_）
         _cf = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
         if os.path.isdir(_cf):
