@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                                    TestTrades.mq5 |
+//|                                                    TestRSI.mq5 |
 //|             測試 EA — 持續產生真實 Trades/Win/P&L 數據            |
 //|  用法：附加到任何圖表 → 自動循環開單→平倉                        |
 //|        每 InpIntervalSec 秒開一單（0.10 lot）                     |
@@ -9,14 +9,14 @@
 #property copyright "Tradotcom"
 #property version   "1.00"
 #property strict
-#property description "Test EA: continuous open/close, generates real Trades/Win/P&L data. Open every 15s, hold 10s."
+#property description "Test EA (RSI style): Open every 40s, hold 30s."
 
 //--- input parameters
 input double InpLotSize      = 0.10;    // 手數
-input int    InpIntervalSec  = 15;      // 開單間隔(秒)
-input int    InpHoldSec      = 10;      // 持倉時間(秒)
+input int    InpIntervalSec  = 40;      // 開單間隔(秒)
+input int    InpHoldSec      = 30;      // 持倉時間(秒)
 input int    InpSlippage     = 30;      // 最大滑點(點)
-input int    InpMagic        = 240701;  // Magic Number
+input int    InpMagic        = 240708;  // Magic Number
 input bool   InpAlternate    = true;    // 交替買/賣（產生 win+loss 兩邊）
 
 //--- globals
@@ -40,8 +40,8 @@ int OnInit()
    RebuildTradesFile();
    EventSetTimer(1);   // 每秒檢查一次（唔靠 tick — 心跳另由系統注入 OnTick）
    WriteStats();
-   Comment("TestTrades EA 已啟動 — 每 " + IntegerToString(InpIntervalSec) + " 秒開一單，持倉 " + IntegerToString(InpHoldSec) + " 秒平倉");
-   Print("TestTrades EA 啟動: ", Symbol(), " lot=", DoubleToString(InpLotSize, 2), " magic=", InpMagic);
+   Comment("TestRSI EA 已啟動 — 每 " + IntegerToString(InpIntervalSec) + " 秒開一單，持倉 " + IntegerToString(InpHoldSec) + " 秒平倉");
+   Print("TestRSI EA 啟動: ", Symbol(), " lot=", DoubleToString(InpLotSize, 2), " magic=", InpMagic);
    return(INIT_SUCCEEDED);
 }
 
@@ -68,7 +68,7 @@ void OnDeinit(const int reason)
    EventKillTimer();
    CloseAllPositions();
    Comment("");
-   Print("TestTrades EA 停止 (reason=", reason, ") 總交易=", g_cycle, " 買=", g_buy_count, " 賣=", g_sell_count);
+   Print("TestRSI EA 停止 (reason=", reason, ") 總交易=", g_cycle, " 買=", g_buy_count, " 賣=", g_sell_count);
 }
 
 //+------------------------------------------------------------------+
@@ -124,7 +124,7 @@ void OpenTestOrder()
    request.price        = price;
    request.deviation    = InpSlippage;
    request.magic        = InpMagic;
-   request.comment      = "TestTrades";
+   request.comment      = "TestRSI";
    request.type_filling = ORDER_FILLING_IOC;
 
    if(!OrderSend(request, result))
@@ -142,7 +142,7 @@ void OpenTestOrder()
       g_cycle++;
       g_last_open_time = TimeCurrent();
       if(isBuy) g_buy_count++;  else g_sell_count++;
-      Print("📈 TestTrades 開單 #", result.order, " ", (isBuy ? "Buy" : "Sell"), " ", _Symbol, " ", DoubleToString(lot, 2), " @ ", DoubleToString(price, _Digits), " (cycle=", g_cycle, ")");
+      Print("📈 TestRSI 開單 #", result.order, " ", (isBuy ? "Buy" : "Sell"), " ", _Symbol, " ", DoubleToString(lot, 2), " @ ", DoubleToString(price, _Digits), " (cycle=", g_cycle, ")");
       UpdateComment();
    }
    else
@@ -196,7 +196,7 @@ void ClosePosition(ulong ticket)
    request.price        = isBuy ? SymbolInfoDouble(PositionGetString(POSITION_SYMBOL), SYMBOL_BID) : SymbolInfoDouble(PositionGetString(POSITION_SYMBOL), SYMBOL_ASK);
    request.deviation    = InpSlippage;
    request.magic        = InpMagic;
-   request.comment      = "TestTrades close";
+   request.comment      = "TestRSI close";
    request.position     = ticket;
    request.type_filling = ORDER_FILLING_IOC;
 
@@ -227,7 +227,7 @@ void ClosePosition(ulong ticket)
       }
       g_total_profit += closed_profit;
       g_cycle = g_buy_count + g_sell_count + 1;   // 已平倉單計入
-      Print("📉 TestTrades 平倉 #", ticket, " profit=", DoubleToString(closed_profit, 2), " 累計=", DoubleToString(g_total_profit, 2));
+      Print("📉 TestRSI 平倉 #", ticket, " profit=", DoubleToString(closed_profit, 2), " 累計=", DoubleToString(g_total_profit, 2));
       UpdateComment();
       WriteStats();
       AppendTrade(ticket, closed_profit);   // 🚨 2026-08-21：記錄逐單明細（equity curve / distribution / monthly）
@@ -239,11 +239,11 @@ void ClosePosition(ulong ticket)
 }
 
 //+------------------------------------------------------------------+
-// 記錄逐單明細（JSONL — 每行一單）→ trades_TestTrades.json
+// 記錄逐單明細（JSONL — 每行一單）→ trades_TestRSI.json
 // 🚨 2026-08-21：俾 server 畫 equity curve / distribution / monthly P&L
 void AppendTrade(ulong ticket, double profit)
 {
-   string fname = "trades_TestTrades.json";
+   string fname = "trades_TestRSI.json";
    // 用 FILE_READ|FILE_WRITE 先讀後寫？唔得 — 直接 FILE_WRITE|FILE_READ append 模式
    // MQL5 冇 append flag — 用 FILE_READ|FILE_WRITE 定位到檔尾
    int fh = FileOpen(fname, FILE_READ | FILE_WRITE | FILE_TXT | FILE_COMMON);
@@ -261,7 +261,7 @@ void AppendTrade(ulong ticket, double profit)
 // 🚨 2026-08-21：OnInit 時 call — 確保 trades json 有完整歷史（唔係淨係新單）
 void RebuildTradesFile()
 {
-   string fname = "trades_TestTrades.json";
+   string fname = "trades_TestRSI.json";
    string all = "";
    datetime from = TimeCurrent() - 7 * 86400;   // 最近 7 日
    if(HistorySelect(from, TimeCurrent()))
@@ -290,16 +290,16 @@ void RebuildTradesFile()
 }
 
 //+------------------------------------------------------------------+
-// 寫統計落 state_TestTrades.json（detector 讀呢個檔判斷運行狀態 + 我加 stats）
+// 寫統計落 state_TestRSI.json（detector 讀呢個檔判斷運行狀態 + 我加 stats）
 // 路徑：Common/Files/state_<EA>.json
 // 🚨 2026-08-21：加 win_sum/loss_sum（贏嘅總額/輸嘅總額 — 準確計 avg win/loss）
 void WriteStats()
 {
-   string fname = "state_TestTrades.json";
+   string fname = "state_TestRSI.json";
    int wins = 0, losses = 0;
    double win_sum = 0, loss_sum = 0;
    ScanHistoryStats(wins, losses, win_sum, loss_sum);
-   string json = StringFormat("{\"ea\":\"TestTrades\",\"status\":\"running\",\"ts\":%I64d,\"trades\":%d,\"wins\":%d,\"losses\":%d,\"profit\":%.2f,\"win_sum\":%.2f,\"loss_sum\":%.2f}",
+   string json = StringFormat("{\"ea\":\"TestRSI\",\"status\":\"running\",\"ts\":%I64d,\"trades\":%d,\"wins\":%d,\"losses\":%d,\"profit\":%.2f,\"win_sum\":%.2f,\"loss_sum\":%.2f}",
                               (long)TimeCurrent(), wins + losses, wins, losses, g_total_profit, win_sum, loss_sum);
    int fh = FileOpen(fname, FILE_WRITE | FILE_TXT | FILE_COMMON);
    if(fh != INVALID_HANDLE)
@@ -334,7 +334,7 @@ void ScanHistoryStats(int &wins, int &losses, double &win_sum, double &loss_sum)
 
 //+------------------------------------------------------------------+
 void UpdateComment()
-{   string s = "TestTrades EA 運行中\n";
+{   string s = "TestRSI EA 運行中\n";
    s += "-------------------------\n";
    s += "已開單: " + IntegerToString(g_cycle) + " (買 " + IntegerToString(g_buy_count) + " / 賣 " + IntegerToString(g_sell_count) + ")\n";
    s += "累計 P&L: " + DoubleToString(g_total_profit, 2) + "\n";
