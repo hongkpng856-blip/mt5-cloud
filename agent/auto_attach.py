@@ -2909,6 +2909,7 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
     import glob as _gl
     import ctypes as _ct
     import re as _re
+    import random
     from ctypes import wintypes as _wt
     print(f"\n{'='*50}")
     print(f"  [GO] Deploy-via-CHR: {ea_name} → {symbol} {timeframe}")
@@ -2981,7 +2982,7 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
 
         # 改 EA 名 + path（name=XXX + path=Experts\\XXX.ex5）
         _txt = _re.sub(r'name=[A-Za-z0-9_]+(?=\r\npath=Experts)', f'name={ea_name}', _txt, count=1)
-        _txt = _re.sub(r'path=Experts\\[A-Za-z0-9_]+\.ex5', f'path=Experts\\{ea_name}.ex5', _txt, count=1)
+        _txt = _re.sub(r'path=Experts\\[A-Za-z0-9_]+\.ex5', lambda _m: 'path=Experts\\\\' + ea_name + '.ex5', _txt, count=1)
 
         # 改 Magic（如果 inputs 有 MagicNumber）
         if inputs and 'MagicNumber' in inputs:
