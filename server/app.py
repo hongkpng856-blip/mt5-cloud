@@ -4117,7 +4117,7 @@ def api_deploy():
         os.makedirs(_adir_dp, exist_ok=True)
         # [ALERT] 2026-08-28 FIX（PC版warning視窗冇彈）：雙寫 show + steps（開發dir + TradotcomAgent）
         _write_ai_flags(f'deploy {ea_name}', [
-            {'text': f'deploy {ea_name}（{symbol.upper()}）', 'status': 'doing'},
+            {'text': f'Deploy {ea_name} ({symbol.upper()})', 'status': 'doing'},
             {'text': f'Create new chart ({symbol.upper()})', 'status': 'pending'},
             {'text': f'Attach {ea_name}', 'status': 'pending'},
             {'text': 'Verify running status', 'status': 'pending'},

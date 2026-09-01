@@ -1726,10 +1726,10 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
         # [ALERT] 2026-08-12 FIX2：直接覆寫（唔用 _update_steps 累積 — 新任務start清舊任務 steps — spec：唔跨任務累積）
         # [ALERT] 2026-08-12 FIX3：保留「重啟 MT5」3 步（deploy前 ensure_hotkey 重啟寫嘅 — 唔好洗走 — 完整流程）
         _steps = [
-            {"text": f"deploy {ea_name}（{(symbol or 'EURUSD').upper()}）", "status": "doing"},
-            {"text": f"create新圖表（{(symbol or 'EURUSD').upper()}）", "status": "pending"},
-            {"text": f"attach {ea_name}（快捷鍵 {combo}）", "status": "pending"},
-            {"text": "驗證running狀態", "status": "pending"},
+            {"text": f"Deploy {ea_name} ({(symbol or 'EURUSD').upper()})", "status": "doing"},
+            {"text": f"Create new chart ({(symbol or 'EURUSD').upper()})", "status": "pending"},
+            {"text": f"Attach {ea_name} (hotkey {combo})", "status": "pending"},
+            {"text": "Verify running status", "status": "pending"},
         ]
         try:
             import json as _jdep
