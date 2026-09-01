@@ -3617,8 +3617,14 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
             print("[CLIP] MT5 正常關閉中（save chart profile → .chr）...")
             # [ALERT] 2026-08-31 FIX：唔好 poll 等完全關（最多 20s）— agent.py 會即刻重開 MT5（覆寫 .chr）
             # → 等 4 秒（WM_CLOSE save 完）→ 即刻讀 .chr（趁 agent 重開前）— 爭取時間窗口
-            time.sleep(4)
-            print("[OK] MT5 關閉處理完成（等 4s — .chr 已 save，趁 agent 重開前讀）")
+            # [ALERT] 2026-09-01 FIX（user實測：剷除開窗口 dialog + 冇刪正確圖表）：4 秒太短（MT5 未完全關 — .chr 未 save 完）
+            time.sleep(10)
+            for _chk_t in range(5):
+                _r_chk2 = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+                if b'terminal64' not in _r_chk2.stdout:
+                    break
+                time.sleep(2)
+            print("[OK] MT5 已完全關閉（等 10s + process 確認）— .chr 已 save，讀 .chr 準確")
         else:
             print("[INFO] MT5 未開 — 直接處理 .chr")
     except Exception as _e2:
@@ -3670,9 +3676,41 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
         print(f"[WARN] 搵 .chr failed: {_e}")
 
     if not _target_chr:
-        print(f"[INFO] {ea_name} 冇 .chr 檔（可能未部署/已剷除）— 開返 MT5 用窗口方法 fallback")
+        # [ALERT] 2026-09-01 FIX（user實測：剷除開窗口 dialog + 冇刪正確圖表）：
+        # before: 冇 .chr → fallback 窗口方法（開窗口 dialog — 用戶唔想要）
+        # now: 掃描全部 profile .chr（Ichimoku 可能喺非 Euro profile — 之前只掃「最近修改嘅 profile」漏咗）+ 冇 → 直接 fail
+        try:
+            for _d in os.listdir(_data_root):
+                _charts_root = os.path.join(_data_root, _d, 'MQL5', 'Profiles', 'Charts')
+                if not os.path.isdir(_charts_root):
+                    continue
+                for _p in os.listdir(_charts_root):
+                    _pd = os.path.join(_charts_root, _p)
+                    if not os.path.isdir(_pd) or _p == '_deleted':
+                        continue
+                    for _cf in _gl.glob(os.path.join(_pd, '*.chr')):
+                        try:
+                            with open(_cf, 'rb') as _fh:
+                                _data2 = _fh.read()
+                            _txt2 = _data2.decode('utf-16', errors='replace')
+                            _m2 = re.search(r'path=(Experts[^\r\n]+\.ex5)', _txt2)
+                            if _m2 and _m2.group(1).split('\\')[-1].replace('.ex5', '') == ea_name:
+                                _target_chr = _cf
+                                print(f"[CHR] 搵到 {ea_name} 嘅 .chr（{_p} profile）: {os.path.basename(_cf)}")
+                                break
+                        except Exception:
+                            pass
+                    if _target_chr:
+                        break
+                if _target_chr:
+                    break
+        except Exception as _e_all_chr:
+            print(f"[WARN] 掃描全部 profile .chr failed: {_e_all_chr}")
+    if not _target_chr:
+        # 冇 .chr（可能未部署/已剷除/MT5 未 save）→ 唔 fallback 窗口方法（user要求）→ 開返 MT5 + fail
+        print(f"[INFO] {ea_name} 冇 .chr 檔（可能未部署/已剷除/MT5 未 save）— 唔用窗口方法（user要求）— 開返 MT5")
         _sp.Popen([MT5_PATH])
-        return remove_ea_from_chart(ea_name, mt5_pid)
+        return False
 
     # 3. 刪目標 .chr（移去 _deleted backup）
     try:
