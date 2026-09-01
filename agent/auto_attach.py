@@ -3311,7 +3311,8 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
             print(f"[WARN] Step 4 gate：{ea_name} 30s 內 log 未見 loaded — 交 Step 5 heartbeat fallback最終判定")
         
         # Step 4: Ensure AutoTrading ON
-        ensure_auto_trading_on(mt5_pid)
+        # [ALERT] 2026-09-01 FIX：mt5_pid 未定義（NameError crash — 部署完成但報 failed）→ 用 find_mt5_pid() 攞當前 PID
+        ensure_auto_trading_on(find_mt5_pid())
         check_abort()
         
         # Step 5: Verify（最終驗證 — [ALERT] 2026-08-20 deploy流程檢測系統）
