@@ -1888,6 +1888,23 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                     if not _ensure_no_dialog(f'開 chart {_sym} 前', max_wait=8):
                         print(f"[FAIL] 開 chart 中止：dialog 關唔到 — 唔開 chart（避免假failed）")
                         return False
+                    # [ALERT] 2026-09-01 FIX（user實測機制：MT5 開住時開新 chart → .chr 檔即刻寫入 Euro folder）：
+                    # → 開 chart 前數 .chr 檔（之後對比 — 數量增加 = 新 chart 真係開咗）
+                    _chr_count_before2 = 0
+                    _chr_count_after2 = 0
+                    try:
+                        import glob as _g_chr2v
+                        _chr_root2v = None
+                        for _d2v in os.listdir(os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')):
+                            _pp2v = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', _d2v, 'MQL5', 'Profiles', 'Charts', 'Euro')
+                            if os.path.isdir(_pp2v):
+                                _chr_root2v = _pp2v
+                                break
+                        if _chr_root2v:
+                            _chr_count_before2 = len(_g_chr2v.glob(os.path.join(_chr_root2v, 'chart*.chr')))
+                            print(f"[CLIP] .chr 檔（Euro folder）開前: {_chr_count_before2}")
+                    except Exception:
+                        pass
                     _pg_new2.hotkey('alt', 'f'); time.sleep(1.5)
                     _pg_new2.press('enter'); time.sleep(1.5)
                     _pg_new2.press('enter'); time.sleep(2)
@@ -1943,16 +1960,24 @@ def attach_ea_hotkey(ea_name, mt5_pid, symbol='EURUSD', open_chart=True):
                         _u_f2.EnumChildWindows(_ct_f2.c_void_p(_main_hwnd_f2), _cb_f2, 0)
                         # 開 chart 後再數（Alt+F 成功 = 數量+1）
                         _chart_count_after = _count_charts_f2()
+                        # [ALERT] 2026-09-01 FIX（user實測機制：MT5 開住時開新 chart → .chr 檔即刻寫入 Euro folder）：
+                        # → 開 chart 後數 .chr 檔（對比 before — 數量增加 = 新 chart 真係開咗 — 比 EnumWindows 更可靠）
+                        try:
+                            if _chr_root2v:
+                                _chr_count_after2 = len(_g_chr2v.glob(os.path.join(_chr_root2v, 'chart*.chr')))
+                                print(f"[CLIP] .chr 檔（Euro folder）: 開前 {_chr_count_before2} → 開後 {_chr_count_after2}")
+                        except Exception:
+                            pass
                         print(f"[CLIP] 開 chart 前 {_chart_count_before} 個 chart → 後 {_chart_count_after} 個（目標 {_sym} chart exists: {_chart_found2}）")
-                        if _chart_count_after > _chart_count_before:
-                            print(f"[OK] chart 數量增加（{_chart_count_before} → {_chart_count_after}）— 新 chart 已開")
+                        if _chart_count_after > _chart_count_before or _chr_count_after2 > _chr_count_before2:
+                            print(f"[OK] chart 數量增加（{_chart_count_before} → {_chart_count_after}；.chr {_chr_count_before2} → {_chr_count_after2}）— 新 chart 已開")
                         else:
                             print(f"[WARN] chart 數量冇增加（{_chart_count_before} → {_chart_count_after}）— 可能開 chart 失敗（已有 chart 誤判）")
                     except Exception:
                         pass
-                    if (_sym in _new_title2 or _chart_found2) and _chart_count_after > _chart_count_before:
+                    if ((_sym in _new_title2 or _chart_found2) and _chart_count_after > _chart_count_before) or (_chr_count_after2 > _chr_count_before2):
                         _oc_ok2 = True
-                        print(f"[OK] 新方法chart opened: active chart = {_sym}（新 chart 確認）")
+                        print(f"[OK] 新方法chart opened: active chart = {_sym}（新 chart 確認 — EnumWindows + .chr 雙重驗證）")
                     else:
                         print(f"[WARN] 新方法未確認（active: {_new_title2[:50]}... chart 數冇增加）— open chart failed，唔attach！")
                 except Exception as _eneg2:
@@ -4287,8 +4312,9 @@ if __name__ == '__main__':
         except Exception:
             pass
         try:
-            # [ALERT] 2026-08-31：剷除用返 Alt+W 方法（.chr 方法自動化有 agent 重開障礙 — 用返穩定方法）
-            ok = remove_ea_from_chart(args.ea)
+            # [ALERT] 2026-09-01（user確認機制）：剷除用 .chr 方法（關 MT5 → 刪目標 EA 嘅 .chr → 開 MT5 — chart 唔 restore — EA 自然停）
+            # （之前 Alt+W 方法誤剷其他 EA — .chr 方法精準判斷 + agent 已修「唔自動開 MT5」→ race 解決）
+            ok = remove_ea_via_chr(args.ea)
             print(f"{'[OK]' if ok else '[FAIL]'} pause {args.ea} {'success' if ok else '（圖表可能冇 EA）'}")
         finally:
             try:
