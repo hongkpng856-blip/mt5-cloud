@@ -1449,6 +1449,8 @@ def process_clean_cmd(fp):
             pass
         return
     # fingerprint 檢查（同 deploy_cmd 一致 — 確保屬於當前 agent）
+    # [ALERT] 2026-09-01 FIX（user實測：clean_cmd 被誤判舊殘留 — server 寫 account:hongkpng857 vs config account:hongkpng857|agent:xxx → 唔等 → 跳過）：
+    # → 只比 account 部分（|agent: 之前 — 唔好全個 fingerprint 比較）
     try:
         _cmd_acct = cmd.get('account', '')
         _cur_acct = 'account:'
@@ -1460,8 +1462,11 @@ def process_clean_cmd(fp):
                 _cur_acct = _cfg.get('fingerprint', 'account:')
         except Exception:
             pass
-        if _cmd_acct and _cur_acct and _cmd_acct != _cur_acct:
-            print(f"   ⛔ [WATCHER] clean_cmd 屬於 account {_cmd_acct}（當前 {_cur_acct}）— 舊殘留 — 跳過 + 刪除")
+        # 只比 account 部分（拆 |agent: 前）
+        _cmd_acct_base = str(_cmd_acct).split('|')[0].strip()
+        _cur_acct_base = str(_cur_acct).split('|')[0].strip()
+        if _cmd_acct_base and _cur_acct_base and _cmd_acct_base != _cur_acct_base:
+            print(f"   ⛔ [WATCHER] clean_cmd 屬於 account {_cmd_acct_base}（當前 {_cur_acct_base}）— 舊殘留 — 跳過 + 刪除")
             try:
                 os.remove(fp)
             except Exception:
