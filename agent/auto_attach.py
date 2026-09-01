@@ -3294,7 +3294,7 @@ def _clean_blank_charts(mt5_pid, keep_symbol=''):
                         with open(_cf_chr2, 'rb') as _fh_chr2:
                             _data_chr2 = _fh_chr2.read()
                         _txt_chr2 = _data_chr2.decode('utf-16', errors='replace')
-                        _m_chr2 = _re_chr2.search(r'path=(Experts[^\r\n]+\.ex5)', _txt_chr2)
+                        _m_chr2 = _re_chr2.search(r'path=(Experts[^<]+\.ex5)', _txt_chr2)
                         _ea_chr2 = _m_chr2.group(1).split('\\')[-1].replace('.ex5', '') if _m_chr2 else None
                         _chr_ea_cc[os.path.basename(_cf_chr2)] = _ea_chr2
                     except Exception as _e_chr2:
@@ -3663,7 +3663,7 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                         _data = _fh.read()
                     _txt = _data.decode('utf-16', errors='replace')
                     # Double check：path=Experts\<EA>.ex5
-                    _m = re.search(r'path=(Experts[^\r\n]+\.ex5)', _txt)
+                    _m = re.search(r'path=(Experts[^<]+\.ex5)', _txt)
                     if _m and _m.group(1).split('\\')[-1].replace('.ex5', '') == ea_name:
                         _target_chr = _cf
                         print(f"[CHR] 搵到 {ea_name} 嘅 .chr: {os.path.basename(_cf)}")
@@ -3693,7 +3693,7 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                             with open(_cf, 'rb') as _fh:
                                 _data2 = _fh.read()
                             _txt2 = _data2.decode('utf-16', errors='replace')
-                            _m2 = re.search(r'path=(Experts[^\r\n]+\.ex5)', _txt2)
+                            _m2 = re.search(r'path=(Experts[^<]+\.ex5)', _txt2)
                             if _m2 and _m2.group(1).split('\\')[-1].replace('.ex5', '') == ea_name:
                                 _target_chr = _cf
                                 print(f"[CHR] 搵到 {ea_name} 嘅 .chr（{_p} profile）: {os.path.basename(_cf)}")
