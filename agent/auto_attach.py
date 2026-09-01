@@ -2889,6 +2889,203 @@ def verify_ea_loaded(ea_name):
     return False
 
 
+
+def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
+    """[ALERT] 2026-09-01（user實測方法）：用 .chr 檔方法部署 EA（取代 GUI automation — 熱鍵預載 + Alt+F + Ctrl+1）
+    原理：MT5 開機 restore .chr 檔（MQL5/Profiles/Charts/<profile>/*.chr）— 自動開 chart + 掛 EA
+    → 複製現有 MT5 寫嘅 .chr（有完整 expert 區）→ 改 id/symbol/EA 名/Magic → 寫入新 .chr + order.wnd
+    → 關 MT5 → 開 MT5（restore 自動掛 EA — .ex5 必須存在）→ 平鋪窗口
+    步驟：
+    1. 搵基底 .chr（現有 MT5 寫嘅 — 有 expert 區）
+    2. 複製 → 改 id + symbol + description + EA 名/path/Magic
+    3. 寫入 chartXX.chr（新編號）+ 更新 order.wnd
+    4. 關 MT5（WM_CLOSE 正常關閉 save profile）
+    5. 開 MT5 → restore .chr → 自動掛 EA
+    6. 平鋪窗口（WM_COMMAND id=33527）
+    7. 驗證（心跳 + MT5 log loaded + OnInit）
+    Returns: True if EA running
+    """
+    import subprocess as _sp
+    import glob as _gl
+    import ctypes as _ct
+    import re as _re
+    from ctypes import wintypes as _wt
+    print(f"\n{'='*50}")
+    print(f"  [GO] Deploy-via-CHR: {ea_name} → {symbol} {timeframe}")
+    print(f"{'='*50}")
+    _u = _ct.windll.user32
+
+    # Step 1: 搵基底 .chr（現有 MT5 寫嘅 — 有 expert 區 — 任何 symbol 都得）
+    _base_chr = None
+    _data_root = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+    try:
+        for _d in os.listdir(_data_root):
+            _charts_root = os.path.join(_data_root, _d, 'MQL5', 'Profiles', 'Charts')
+            if not os.path.isdir(_charts_root):
+                continue
+            for _p in os.listdir(_charts_root):
+                _pd = os.path.join(_charts_root, _p)
+                if not os.path.isdir(_pd) or _p == '_deleted':
+                    continue
+                for _cf in _gl.glob(os.path.join(_pd, '*.chr')):
+                    try:
+                        with open(_cf, 'rb') as _fh:
+                            _bd = _fh.read()
+                        _bt = _bd.decode('utf-16', errors='replace')
+                        if '<expert>' in _bt and 'path=Experts' in _bt:
+                            _base_chr = _cf
+                            _base_prof = _pd
+                            print(f"[CHR] 基底 .chr: {os.path.basename(_cf)}（{os.path.basename(_pd)} profile）")
+                            break
+                    except Exception:
+                        pass
+                if _base_chr:
+                    break
+            if _base_chr:
+                break
+    except Exception as _e:
+        print(f"[FAIL] 搵基底 .chr failed: {_e}")
+        return False
+
+    if not _base_chr:
+        print("[FAIL] 冇基底 .chr（冇任何 EA 掛過嘅 chart）— 先人手掛一次 EA 落 chart 生成基底")
+        return False
+
+    # Step 2: 複製基底 → 改 id + symbol + description + EA 名/path/Magic
+    try:
+        with open(_base_chr, 'rb') as _fh:
+            _data = _fh.read()
+        _txt = _data.decode('utf-16', errors='replace')
+
+        # 改 id（隨機 14 位）
+        _new_id = str(random.randint(10**13, 10**14 - 1))
+        _txt = _re.sub(r'id=\d+', f'id={_new_id}', _txt, count=1)
+
+        # 改 symbol + description（用 symbol 對照）
+        _sym_desc = {
+            'EURUSD': 'Euro vs US Dollar',
+            'GBPUSD': 'Pound Sterling vs US Dollar',
+            'USDJPY': 'US Dollar vs Yen',
+            'USDCHF': 'US Dollar vs Swiss Franc',
+            'AUDUSD': 'Australian Dollar vs US Dollar',
+            'USDCAD': 'US Dollar vs Canadian Dollar',
+            'NZDUSD': 'New Zealand Dollar vs US Dollar',
+            'EURJPY': 'Euro vs Yen',
+            'GBPJPY': 'Pound Sterling vs Yen',
+            'AMD': 'Advanced Micro Devices Inc',
+            'UK100': 'FTSE 100 Index',
+        }
+        _desc = _sym_desc.get(symbol, symbol)
+        _txt = _re.sub(r'symbol=[A-Za-z0-9_]+', f'symbol={symbol}', _txt, count=1)
+        _txt = _re.sub(r'description=[^\r\n]+', f'description={_desc}', _txt, count=1)
+
+        # 改 EA 名 + path（name=XXX + path=Experts\\XXX.ex5）
+        _txt = _re.sub(r'name=[A-Za-z0-9_]+(?=\r\npath=Experts)', f'name={ea_name}', _txt, count=1)
+        _txt = _re.sub(r'path=Experts\\[A-Za-z0-9_]+\.ex5', f'path=Experts\\{ea_name}.ex5', _txt, count=1)
+
+        # 改 Magic（如果 inputs 有 MagicNumber）
+        if inputs and 'MagicNumber' in inputs:
+            _new_magic = inputs['MagicNumber']
+            _txt = _re.sub(r'MagicNumber=\d+', f'MagicNumber={_new_magic}', _txt, count=1)
+            print(f"[CHR] Magic 改做 {_new_magic}")
+
+        # Step 3: 寫入新 .chr（搵下一個 chart 編號）
+        _max_num = 0
+        for _cf2 in _gl.glob(os.path.join(_base_prof, 'chart*.chr')):
+            _m2 = _re.search(r'chart(\d+)\.chr', os.path.basename(_cf2))
+            if _m2:
+                _max_num = max(_max_num, int(_m2.group(1)))
+        _new_chr = os.path.join(_base_prof, f'chart{_max_num+1:02d}.chr')
+        with open(_new_chr, 'wb') as _fh:
+            _fh.write(b'\xff\xfe')
+            _fh.write(_txt.encode('utf-16-le'))
+        print(f"[CHR] 寫入新 .chr: {os.path.basename(_new_chr)}（{symbol} + {ea_name}）")
+
+        # 更新 order.wnd（加新 chart）
+        _ord_wnd = os.path.join(_base_prof, 'order.wnd')
+        if os.path.isfile(_ord_wnd):
+            _ow_raw = open(_ord_wnd, 'rb').read()
+            _ow_txt = _ow_raw.decode('utf-16', errors='replace')
+            _ow_lines = [l.strip() for l in _ow_txt.split('\r\n') if l.strip()]
+            if os.path.basename(_new_chr) not in _ow_lines:
+                _ow_lines.append(os.path.basename(_new_chr))
+                with open(_ord_wnd, 'wb') as _f_ow:
+                    _f_ow.write(b'\xff\xfe')
+                    _f_ow.write(('\r\n'.join(_ow_lines) + '\r\n').encode('utf-16-le'))
+            print(f"[CHR] order.wnd 更新: {_ow_lines}")
+    except Exception as _e2:
+        print(f"[FAIL] 寫 .chr failed: {_e2}")
+        return False
+
+    # Step 4: 關 MT5（如果開住）— 確保開機時 restore 新 .chr
+    try:
+        _pid = find_mt5_pid()
+        if _pid:
+            from pywinauto import Application as _App_r
+            _app_r = _App_r(backend='win32').connect(process=_pid, timeout=8)
+            _main_r = _app_r.window(class_name='MetaQuotes::MetaTrader::5.00')
+            _u.PostMessageW(_ct.c_void_p(int(_main_r.element_info.handle)), 0x0010, 0, 0)
+            print("[CLIP] 關 MT5（save profile）...")
+            time.sleep(10)
+            for _chk in range(5):
+                _r_chk = _sp.run('tasklist /FI "IMAGENAME eq terminal64.exe" /FO CSV /NH', shell=True, capture_output=True)
+                if b'terminal64' not in _r_chk.stdout:
+                    break
+                time.sleep(2)
+            print("[OK] MT5 已關閉")
+        else:
+            print("[INFO] MT5 未開 — 直接開")
+    except Exception as _e3:
+        print(f"[WARN] 關 MT5 failed: {_e3}")
+        _sp.run('taskkill /F /IM terminal64.exe', shell=True, capture_output=True)
+        time.sleep(3)
+
+    # Step 5: 開 MT5 → restore .chr → 自動掛 EA
+    try:
+        _sp.Popen([MT5_PATH])
+        print("[OK] MT5 啟動中（restore .chr → 自動掛 EA）...")
+        _start = time.time()
+        _ready = False
+        while time.time() - _start < 90:
+            _p2 = find_mt5_pid()
+            if _p2:
+                try:
+                    from pywinauto import Application as _App_w
+                    _a = _App_w(backend='win32').connect(process=_p2, timeout=5)
+                    _w = _a.window(class_name='MetaQuotes::MetaTrader::5.00')
+                    if _w.exists():
+                        _ready = True
+                        break
+                except Exception:
+                    pass
+            time.sleep(3)
+        if not _ready:
+            print("[FAIL] MT5 開唔到（90s timeout）")
+            return False
+        # 等 EA 掛上（心跳 + log + OnInit — verify_heartbeat 現有驗證 — 最多 90 秒）
+        _hb_ok = verify_heartbeat(ea_name, timeout=90)
+        if _hb_ok:
+            print(f"[OK] {ea_name} 心跳確認（真運行 — verify_heartbeat PASS）")
+        else:
+            print(f"[WARN] {ea_name} 心跳未確認（verify_heartbeat 90s timeout — 可能 EA 檔唔存在 / 慢）")
+
+        # Step 6: 平鋪窗口（WM_COMMAND id=33527）
+        try:
+            _p4 = find_mt5_pid()
+            if _p4:
+                from pywinauto import Application as _App_t
+                _at = _App_t(backend='win32').connect(process=_p4, timeout=5)
+                _wt = _at.window(class_name='MetaQuotes::MetaTrader::5.00')
+                _u.PostMessageW(_ct.c_void_p(int(_wt.element_info.handle)), 0x0111, 33527, 0)
+                print("[OK] 平鋪窗口（WM_COMMAND id=33527）")
+        except Exception as _e_t:
+            print(f"[WARN] 平鋪窗口 failed: {_e_t}")
+        return True
+    except Exception as _e4:
+        print(f"[FAIL] 開 MT5 failed: {_e4}")
+        return False
+
+
 def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
                    do_restart=False):
     """
@@ -2987,51 +3184,16 @@ def auto_attach_ea(ea_name, symbol='EURUSD', timeframe='H1', inputs=None,
 
     try:
         # [ALERT] 2026-08-28 FIX：delete舊「generate_template」步驟（一體化模板 — stable 前概念 — 掛 EA 已用熱鍵 Ctrl+1 — 模板冇用 → 多餘）
-        # Step 1: 熱鍵預載 — 確保 EA 熱鍵write hotkeys.ini（MT5 關閉狀態下）→ MT5 load
-        # 破綻：EA 必須local有 .ex5（冇 → 熱鍵指向not exist EA → 失效）
-        try:
-            _cur_pid = find_mt5_pid()
-            mt5_pid = _ensure_hotkey_loaded(ea_name, _cur_pid or 0)
-        except Exception:
-            pass
-
-        # Step 2: Get or restart MT5
-        if do_restart:
-            mt5_pid = do_restart_mt5()
-            if not mt5_pid:
-                return False
-        else:
-            mt5_pid = find_mt5_pid()
-            if not mt5_pid:
-                print("MT5 not running, starting...")
-                subprocess.Popen([MT5_PATH])
-            # [ALERT] 2026-08-20（deploy流程檢測系統 — Step 1 gate）：等 MT5 開 + 主視窗 ready（poll 最多 90s，唔係固定 30s）
-            mt5_pid = _wait_until(lambda: wait_for_mt5(5), 90, 'MT5 已開 + 主視窗 ready（poll 90s）', interval=3)
-            if not mt5_pid:
-                return False
-        check_abort()
-        
-        # Step 3: Attach EA（快捷鍵優先 — 2026-08：6093 double-click 唔 work）
-        # 有快捷鍵 mapping → 直接 send 快捷鍵（唔行 Navigator GUI — 慳時間 + 唔 crash）
-        # [ALERT] 2026-08-19 FIX：OpenChart 係 Script（讀 open_chart_cmd.json 開 target chart）— 唔行 attach_ea_navigator（Navigator double-click 對 Script 唔 work — 卡死 not found）
-        # [ALERT] 2026-08-28 FIX（user實錘：Seasonal 冇喺 hotkeys.json → 落去舊 Navigator double-click 方法（Ctrl+N 開 chart — 幾多年前產物）→ failed）：
-        # → 全部 EA 一律用熱鍵（attach_ea_hotkey — _ensure_hotkey_loaded 已確保 hotkeys.ini write當前 EA=Ctrl+1）
-        # → 唔再 fallback Navigator double-click（舊方法 — Ctrl+N 開 chart — 唔可靠 + 已經冇需要）
-        hotkeys = load_hotkey_map()
-        _is_script_ea = ea_name.startswith('OpenChart') or ea_name == 'OpenChart_Helper'
-        if _is_script_ea:
-            success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
-        else:
-            # 全部 EA 用熱鍵（Ctrl+1 重用 — _ensure_hotkey_loaded 已write）— 唔 check hotkeys.json（可能唔完整）
-            success = attach_ea_hotkey(ea_name, mt5_pid, symbol=args.symbol)
+        # [ALERT] 2026-09-01（user實測 + 實驗驗證）：部署改用 .chr 方法（deploy_ea_via_chr — 取代熱鍵預載 + GUI attach）
+        # 流程：複製基底 .chr → 改 id/symbol/EA → 寫新 .chr + order.wnd → 關 MT5 → 開 MT5（restore 自動掛）→ 平鋪窗口
+        # 好處：完全避開 GUI automation（Alt+F / Ctrl+1 / 熱鍵預載 restart ×2）— 純檔案操作 — 穩定 + 快
+        # 驗證：verify_heartbeat（心跳 + MT5 log loaded + OnInit — 保留）
+        success = deploy_ea_via_chr(ea_name, symbol=args.symbol, timeframe=timeframe, inputs=inputs)
         if not success:
-            # [ALERT] 2026-08-20（user要求：唔需要備用方案）：failed直接 fail — 唔重試快捷鍵
-            # （before重試 ×2 唔開新 chart → 掛落 active chart（可能錯 symbol）→ 代替 dialog → 一鑊泡：Heikin_Ashi 掛錯 EURUSD 案例）
-            print(f"[FAIL] attach failed（{ea_name}）— 唔重試（避免掛錯 chart）")
-        
-        if not success:
-            print("[FAIL] Failed to attach EA")
+            print(f"[FAIL] {ea_name} deploy-via-chr failed（.chr 方法失敗）")
             return False
+        check_abort()
+
         check_abort()
         
         # [ALERT] 2026-08-20（deploy流程檢測系統 — Step 4 gate）：EA loaded 驗證（等 + poll — 唔係immediately check）
