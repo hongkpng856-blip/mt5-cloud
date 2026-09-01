@@ -702,7 +702,6 @@
 <div class="card" style="margin-bottom:16px">
     <div class="card-title"><i class="icon-database" style="color:var(--accent)"></i> Alpha 管理
         <button class="btn" onclick="refreshPairingLibrary()" style="margin-left:auto"><i class="icon-refresh-cw"></i> 重新整理</button>
-        <button class="btn" onclick="cleanBlankCharts(this)" style="margin-left:6px" title="清理空白冇部署 EA 嘅 chart（清空 MT5 空白視窗）"><i class="icon-brush"></i> 清理空白圖表</button>
     </div>
 
     <!-- EA Library - 平台提供 + 社群提供 -->
@@ -723,6 +722,7 @@
     <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--border)">
         <div class="card-title"><i class="icon-clipboard-list" style="color:var(--accent)"></i> 我的配對庫 <span id="eaCount" class="badge">0</span>
             <span style="font-size:11px;color:var(--text-muted);font-weight:normal">— 可以上傳自己嘅 EA</span>
+            <button class="btn" onclick="cleanBlankCharts(this)" style="margin-left:auto" title="清理空白冇部署 EA 嘅 chart（清空 MT5 空白視窗）"><i class="icon-brush"></i> 清理空白圖表</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
             <label class="btn" style="cursor:pointer"><i class="icon-upload"></i> 上傳自己嘅 EA
@@ -1411,7 +1411,7 @@ async function loadEAConfig() {
         let html = '';
         if (allEAs.length === 0) {
             html = `<tr><td colspan="14" style="text-align:center;padding:30px;color:var(--text-muted)">
-                仲未加入任何 EA<br><span style="font-size:12px">去 EA 倉庫 㩒「<i class="icon-plus-circle"></i> 移去配對」開始</span>
+                仲未加入任何 EA<br><span style="font-size:12px">去 EA 倉庫 㩒「<i class="icon-plus-circle"></i> 加入配對庫」開始</span>
             </td></tr>`;
         } else {
             allEAs.forEach(name => {
@@ -2084,7 +2084,7 @@ async function refreshPairingLibrary() {
         const data = await res.json().catch(() => ({}));
         if (data.success) {
             await updSteps(['done','done','done','pending','pending','pending','pending']);
-      // 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「已加入」/「移去配對」正確）
+      // 2026-08-11：順序刷新 — 攞最新配對狀態 → 渲染 EA 倉庫（「已加入」/「加入配對庫」正確）
       // 2026-08-11 修：fetchEAInventory 要 await（之前冇 await → loadEALibrary 用舊 eaDeployStatus → detect 唔到已加入）
             if (typeof loadEAConfig === 'function') {
                 try { await loadEAConfig(); await updSteps(['done','done','done','done','pending','pending','pending']); await sleep(500); }
@@ -2152,7 +2152,7 @@ async function loadEALibrary() {
                 const baseName = f.name.replace(/\.(mq5|ex5)$/i, '');
           const isTest = isTestEA(baseName); // 2026-08-13 測試 EA 標記 / 2026-08-18 加 OpenChart 系列
       // 2026-08-11 修：已加入 = 本機有檔案（detect 到 = 加入咗 — 用戶理解：「電腦有 EA 就係已加入」）
-            // 「移去配對」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
+            // 「加入配對庫」= 本機冇嗰陣先需要（撳 → 複製去本機 + compile）
             // 🚨 2026-08-19 FIX：本機有冇用 server 直接返回嘅 local_has（check filesystem 即時準確）
             //   之前靠 localSet（detector ea_inventory.json 延遲）→ 配對後「本機冇檔案」殘留要 refresh
             const webHas = !!(eaMappings[baseName] && typeof eaMappings[baseName] === 'string');  // 網頁已配對
@@ -2165,7 +2165,7 @@ async function loadEALibrary() {
                 <td style="font-size:12px;color:#8b949e">${f.size}</td>
                 <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
                     : (webHas ? '<span style="color:#f59e0b;font-size:11px"><i class="icon-alert-triangle"></i> 已加入（本機冇檔案）</span>'
-                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 移去配對</button>`)}</td>
+                    : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','官方')"><i class="icon-plus-circle"></i> 加入配對庫</button>`)}</td>
             </tr>`;
         });
         const offTable = document.querySelector('#officialTable tbody');
@@ -2187,7 +2187,7 @@ async function loadEALibrary() {
                     <td><b>${f.name}</b> <span class="badge badge-blue" style="font-size:10px">社群提供</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
                     <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
-                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','社群')"><i class="icon-plus-circle"></i> 加入配對庫</button>`}</td>
                 </tr>`;
             });
         }
@@ -2203,7 +2203,7 @@ async function loadEALibrary() {
                     <td><b>${f.name}</b> <span class="badge badge-green" style="font-size:10px">用戶上傳</span></td>
                     <td style="font-size:12px;color:#8b949e">${f.size}</td>
                     <td>${added ? '<span style="color:var(--success);font-size:11px"><i class="icon-check-circle"></i> 已加入</span>'
-                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','用戶')"><i class="icon-plus-circle"></i> 移去配對</button>`}</td>
+                        : `<button class="btn" style="padding:2px 10px;font-size:11px" onclick="addEAToPairing('${baseName}','${f.name}','用戶')"><i class="icon-plus-circle"></i> 加入配對庫</button>`}</td>
                 </tr>`;
             });
         }
