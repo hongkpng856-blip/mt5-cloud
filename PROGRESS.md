@@ -35,9 +35,11 @@
 | 159 | **agent 每 60 秒 reconnect（socket 斷）** — server threading mode + 長連接唔穩定 → 每分鐘斷線重連（已加 ping_interval=25/ping_timeout=60 + agent backoff 緩解 — 但 thread mode 根本問題未根治） | 🟡 緩解中 | 每次 reconnect server auto-sent EA config（debounce 300s 已擋 — 唔會再無謂開 MT5） |
 | 158 | **刪除 confirm dialog 顯示 `確定刪除 ${name}？`**（${name} 冇替換 — 但確定掣照 work） | 🟡 顯示問題 | 用戶睇唔到刪緊邊隻（操作照 work） |
 | 148 | **Server 靜默 crash（MSVCP140.dll 0xc0000005）** — eventlet monkey_patch 已修（v0.11.04）— 但 RENDER 環境長跑未完全驗證 | 🟡 已緩解 | 罕見 crash |
+| 162 | **`.chr 檔唔 sync（MT5 開住注入 EA → .chr 延遲/冇寫 EA 記錄）→ remove_ea_via_chr 搵唔到目標 EA → 剷除 fail`**（user實測：Bollinger + Fibonacci 剷除 — MQL5/Logs 已停止（EA 真停）但 .chr 冇 EA 記錄 → `remove_ea_via_chr` 話「冇 .chr 檔」→ fail → 心跳檔冇刪 → watcher 話 failed）— 同埋 **MT5 開機照開 chart（order.wnd 記錄 — 已修 b237e30）但 .chr 唔 sync 令成個 chart 移除做唔到** | 🔴 未修 | 剷除表面 failed（但 EA 其實停咗）— 成個 chart 移除唔可靠 |
 | 161 | **`mt5.initialize()` 自動啟動 terminal64**（MetaTrader5 Python API 特性 — 未開都開）— server `_market_closed_for_symbol` + agent `get_mt5_status` 已加檢查（v0.11.05）— 但其他 code 如有 `mt5.initialize` 都要小心（已全面搜 — agent 4 個 + server 2 個全部檢查咗） | ✅ 已修 | 一刪 MT5 唔會再自動開 |
 
 > 🎉 2026-09-01：#152/#156/#157/#160/#161（dropdown lag/部署第二隻/代替 dialog/剷除誤剷/冇操作開 MT5 真正 root cause/reconnect 循環）已修（見版本表 v0.11.05）。
+> ⏳ 2026-09-01：#162（.chr 唔 sync → 剷除 .chr 方法唔可靠）未修 — 遲啲搞。
 
 ---
 
