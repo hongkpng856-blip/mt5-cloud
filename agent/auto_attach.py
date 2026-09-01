@@ -3100,16 +3100,19 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
 
         # 更新 order.wnd（加新 chart）
         _ord_wnd = os.path.join(_base_prof, 'order.wnd')
+        _ow_lines = []
         if os.path.isfile(_ord_wnd):
             _ow_raw = open(_ord_wnd, 'rb').read()
             _ow_txt = _ow_raw.decode('utf-16', errors='replace')
             _ow_lines = [l.strip() for l in _ow_txt.split('\r\n') if l.strip()]
-            if os.path.basename(_new_chr) not in _ow_lines:
-                _ow_lines.append(os.path.basename(_new_chr))
-                with open(_ord_wnd, 'wb') as _f_ow:
-                    _f_ow.write(b'\xff\xfe')
-                    _f_ow.write(('\r\n'.join(_ow_lines) + '\r\n').encode('utf-16-le'))
-            print(f"[CHR] order.wnd 更新: {_ow_lines}")
+        # [ALERT] 2026-09-01 FIX（user實測：部署失敗 — MT5 開住時 order.wnd 唔存在 → skip → 開機唔 restore chart → EA 唔掛）：
+        # → order.wnd 唔存在都建立（加新 chart — MT5 開機先 restore）
+        if os.path.basename(_new_chr) not in _ow_lines:
+            _ow_lines.append(os.path.basename(_new_chr))
+            with open(_ord_wnd, 'wb') as _f_ow:
+                _f_ow.write(b'\xff\xfe')
+                _f_ow.write(('\r\n'.join(_ow_lines) + '\r\n').encode('utf-16-le'))
+        print(f"[CHR] order.wnd 更新: {_ow_lines}")
     except Exception as _e2:
         print(f"[FAIL] 寫 .chr failed: {_e2}")
         return False
