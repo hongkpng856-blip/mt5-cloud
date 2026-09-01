@@ -3024,6 +3024,14 @@ def deploy_ea_via_chr(ea_name, symbol='EURUSD', timeframe='H1', inputs=None):
 
     # Step 4: 關 MT5（如果開住）— 確保開機時 restore 新 .chr
     try:
+        # [ALERT] 2026-09-01 FIX（user實測：重新開啟 MT5 開好多視窗 — 空白 .chr 越積越多）：
+        # → 關 MT5 前先清空白 chart（_clean_blank_charts_via_chr — 冇 EA 嘅 .chr 移去 _deleted）
+        #   （新方法 deploy_ea_via_chr 之前冇 call — 空白 chart02/06 留低 → order.wnd 越積越多）
+        try:
+            _cleaned_chr = _clean_blank_charts_via_chr()
+            print(f"[CHR] 清空白 chart: {_cleaned_chr} 個（_clean_blank_charts_via_chr）")
+        except Exception as _e_cln:
+            print(f"[WARN] 清空白 chart failed: {_e_cln}")
         _pid = find_mt5_pid()
         if _pid:
             from pywinauto import Application as _App_r
@@ -3621,6 +3629,23 @@ def _clean_blank_charts_via_chr():
                         print(f"[CHR] 刪除 {os.path.basename(_cf2_chr)} failed: {_e_chr2}")
         if _total_deleted:
             print(f"[CHR] 完成 — 刪除 {_total_deleted} 個空白 .chr（MT5 開機唔會 restore 佢哋）")
+            # [ALERT] 2026-09-01 FIX（user實測：開好多視窗 — order.wnd 未同步 — MT5 見 order.wnd 有已刪 chart → 重新生成）：
+            # → 同步 order.wnd（移除已刪 chart 項目 — MT5 開機照 order.wnd 開 chart）
+            try:
+                _ord_wnd_chr = os.path.join(_best_prof, 'order.wnd')
+                if os.path.isfile(_ord_wnd_chr):
+                    _ow_raw_chr = open(_ord_wnd_chr, 'rb').read()
+                    _ow_txt_chr = _ow_raw_chr.decode('utf-16', errors='replace')
+                    _ow_lines_chr = [l.strip() for l in _ow_txt_chr.split('\r\n') if l.strip()]
+                    _deleted_names = {os.path.basename(c) for c in _blank_chr}
+                    _ow_new_chr = [l for l in _ow_lines_chr if l not in _deleted_names]
+                    if len(_ow_new_chr) != len(_ow_lines_chr):
+                        with open(_ord_wnd_chr, 'wb') as _f_ow_chr:
+                            _f_ow_chr.write(b'\xff\xfe')
+                            _f_ow_chr.write(('\r\n'.join(_ow_new_chr) + '\r\n').encode('utf-16-le'))
+                        print(f"[CHR] order.wnd 同步（移除 {len(_ow_lines_chr)-len(_ow_new_chr)} 個已刪 chart）: {_ow_new_chr}")
+            except Exception as _e_ow_chr:
+                print(f"[WARN] order.wnd 同步 failed: {_e_ow_chr}")
         return _total_deleted
     except Exception as _e_chr:
         print(f"[CHR] 清空白 .chr failed: {_e_chr}")
