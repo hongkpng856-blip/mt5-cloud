@@ -3721,6 +3721,26 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
             _dst = os.path.join(_bk, f"{time.time():.0f}_{os.path.basename(_target_chr)}")
         os.rename(_target_chr, _dst)
         print(f"[CHR] 已刪除 {ea_name} 嘅 .chr（→ _deleted backup）— MT5 開機唔會 restore")
+        # [ALERT] 2026-09-01 FIX（user實測：刪 .chr 後 MT5 開機照開 chart — order.wnd 記錄要開邊啲 chart）：
+        # → 要成個 chart 移除，仲要同步刪 order.wnd 入面對應嘅 chart 項目（order.wnd = MT5 開機照呢個開 chart）
+        try:
+            _ord_wnd = os.path.join(os.path.dirname(_target_chr), 'order.wnd')
+            if os.path.isfile(_ord_wnd):
+                _ow_raw = open(_ord_wnd, 'rb').read()
+                _ow_txt = _ow_raw.decode('utf-16', errors='replace')
+                _ow_lines = [l.strip() for l in _ow_txt.split('\r\n') if l.strip()]
+                _ow_target = os.path.basename(_target_chr)
+                if _ow_target in _ow_lines:
+                    _ow_new = [l for l in _ow_lines if l != _ow_target]
+                    _ow_out = '\r\n'.join(_ow_new) + '\r\n'
+                    with open(_ord_wnd, 'wb') as _f_ow:
+                        _f_ow.write(b'\xff\xfe')
+                        _f_ow.write(_ow_out.encode('utf-16-le'))
+                    print(f"[CHR] 已同步刪除 order.wnd 項目: {_ow_target}（MT5 開機唔會再開呢個 chart）")
+                else:
+                    print(f"[CHR] order.wnd 冇 {_ow_target} 項目（唔使刪）")
+        except Exception as _e_ow:
+            print(f"[WARN] 刪 order.wnd 項目 failed: {_e_ow}")
         # [ALERT] 2026-09-01 FIX（user實測：剷除後心跳殘留誤判「EA 仲運行」→ steps 話 failed）：
         # 成功刪 .chr 後 → 一齊刪心跳檔（state_<EA>.json + hb_<EA>.txt — Terminal Common + MQL5/Files）
         try:
