@@ -3700,7 +3700,8 @@ def api_ea_upload():
 @app.route('/api/agent-download')
 def api_agent_download():
     """下載 Windows Agent start器（.bat — double-click 一定開到）— 自動下載 + 執行桌面版安裝程式"""
-    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    # [ALERT] 2026-09-02 FIX（VPS 404）：用絕對路徑（abspath 消走 '..'）— 新版 werkzeug safe_join 拒絕相對 '..' 路徑 → 404
+    agent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'agent'))
     # [ALERT] 2026-08-26 v2：.bat start器（.pyw double-click 冇關聯唔開）→ bat 自動搵 pythonw + 下載 pyw + 執行
     _bat = os.path.join(agent_dir, 'tradotcom_launcher.bat')
     if os.path.isfile(_bat):
@@ -3710,7 +3711,7 @@ def api_agent_download():
 @app.route('/api/agent-pyw')
 def api_agent_pyw():
     """下載桌面版安裝程式（tradotcom_agent.pyw）"""
-    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    agent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'agent'))
     _f = os.path.join(agent_dir, 'tradotcom_agent.pyw')
     if os.path.isfile(_f):
         return send_from_directory(agent_dir, 'tradotcom_agent.pyw', as_attachment=True, download_name='Tradotcom-Agent-Setup.pyw')
@@ -3720,7 +3721,7 @@ def api_agent_pyw():
 @app.route('/api/agent-py')
 def api_agent_py():
     """下載 agent.py"""
-    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    agent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'agent'))
     return send_from_directory(agent_dir, 'agent.py')
 
 
@@ -3733,7 +3734,7 @@ def api_agent_service(name):
                 'auto_attach.py', 'refresh_navigator.py', 'control_guard.py'}
     if name not in _allowed:
         return jsonify({"error": "not allowed"}), 403
-    agent_dir = os.path.join(os.path.dirname(__file__), '..', 'agent')
+    agent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'agent'))
     _f = os.path.join(agent_dir, name)
     if os.path.isfile(_f):
         return send_from_directory(agent_dir, name)
