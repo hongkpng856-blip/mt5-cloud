@@ -4126,8 +4126,25 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
         except Exception as _e_all_chr:
             print(f"[WARN] 掃描全部 profile .chr failed: {_e_all_chr}")
     if not _target_chr:
-        # 冇 .chr（可能未部署/已剷除/MT5 未 save）→ 唔 fallback 窗口方法（user要求）→ 開返 MT5 + fail
-        print(f"[INFO] {ea_name} 冇 .chr 檔（可能未部署/已剷除/MT5 未 save）— 唔用窗口方法（user要求）— 開返 MT5")
+        # 冇 .chr（可能未部署/已剷除/MT5 未 save）→ 唔 fallback 窗口方法（user要求）
+        # [ALERT] 2026-09-03 FIX（剷除報失敗 — EA 未部署冇 .chr 都 fail）：
+        # before: 冇 .chr → return False（fail）→ watcher「pause failed」→ 用戶見剷除失敗
+        # now: 冇 .chr + 冇心跳（EA 根本未 running）→ 當成功（冇 chart 要 remove — 檔案+config 刪咗就得）
+        #      冇 .chr + 有心跳（EA 可能掛緊但 .chr 未 save）→ 先 fail（真異常）
+        _hb_still = False
+        try:
+            _cfd_chk = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            for _hfn_chk in (f'state_{ea_name}.json', f'hb_{ea_name}.txt'):
+                _hfp_chk = os.path.join(_cfd_chk, _hfn_chk)
+                if os.path.isfile(_hfp_chk) and time.time() - os.path.getmtime(_hfp_chk) < 120:
+                    _hb_still = True
+        except Exception:
+            pass
+        if not _hb_still:
+            print(f"[OK] {ea_name} 冇 .chr + 冇心跳（未部署/已剷除）— 當剷除成功（冇 chart 要 remove）")
+            _sp.Popen([MT5_PATH])
+            return True
+        print(f"[INFO] {ea_name} 冇 .chr 檔但有心跳（可能 MT5 未 save）— 開返 MT5")
         _sp.Popen([MT5_PATH])
         return False
 
