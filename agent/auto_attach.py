@@ -4174,8 +4174,27 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
             print(f"[OK] {ea_name} 冇 .chr + 冇心跳（未部署/已剷除）— 當剷除成功（冇 chart 要 remove）")
             _sp.Popen([MT5_PATH])
             return True
-        print(f"[INFO] {ea_name} 冇 .chr 檔但有心跳（可能 MT5 未 save）— 開返 MT5")
-        _sp.Popen([MT5_PATH])
+        # 冇 .chr 但有心跳（EA 掛緊 chart — .chr 唔 sync / 熱鍵部署）→ fallback Ctrl+W 方法（直接關 chart — 連 chart 一齊鏟）
+        print(f"[CHR] {ea_name} 冇 .chr 檔但有心跳 — 開返 MT5 + fallback 窗口方法（Ctrl+W 關 chart — 連 chart 鏟除）")
+        try:
+            # remove_ea_via_chr 開頭已關 MT5（讀 .chr）→ 開返先可以用窗口方法
+            _sp.Popen([MT5_PATH])
+            _fb_ready = False
+            for _fb_i in range(30):
+                time.sleep(3)
+                _fb_pid2 = find_mt5_pid()
+                if _fb_pid2:
+                    _fb_ready = True
+                    _fb_pid_use = _fb_pid2
+                    break
+            if _fb_ready:
+                _ok_fb = remove_ea_from_chart(ea_name, _fb_pid_use)
+                if _ok_fb:
+                    print(f"[OK] fallback 窗口方法成功 — {ea_name} 已連 chart 一齊鏟除")
+                    return True
+            print(f"[WARN] fallback 窗口方法都唔得 — MT5 已開返")
+        except Exception as _e_fb:
+            print(f"[WARN] fallback 窗口方法 error: {_e_fb}")
         return False
 
     # 3. 刪目標 .chr（移去 _deleted backup）
