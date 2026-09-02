@@ -43,9 +43,31 @@ def _check_machine_lock(_my_agent_id):
                 _lock_data = {}
             _other_id = _lock_data.get('agent_id')
             _other_pid = _lock_data.get('pid')
-            # 如果 lock 係自己 → 允許（重啟場景）
-            if _other_id == _my_agent_id:
-                return True
+            # [ALERT] 2026-09-03 FIX（多 agent respawn — 同 ID 多開）：
+            # before: lock 係自己 agent_id → 直接允許（重啟場景）→ 但 respawn 嘅 agent 都係同 ID → 全部允許 → 多開
+            # now: 同 ID 都要 check PID — 如果 lock PID 仲行緊（真 agent 喺度）→ 阻止；死咗先允許（overwrite lock）
+            if _other_id == _my_agent_id and _other_pid:
+                _lock_pid_alive = False
+                try:
+                    import psutil
+                    if psutil.pid_exists(_other_pid):
+                        # 確認係 agent.py process（唔係其他 python）
+                        _pr = psutil.Process(_other_pid)
+                        if 'agent' in ' '.join(_pr.cmdline()).lower():
+                            _lock_pid_alive = True
+                except ImportError:
+                    try:
+                        _out = subprocess.check_output(['tasklist', '/FI', f'PID eq {_other_pid}'], creationflags=0x08000000 if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0).decode('utf-8', 'ignore')
+                        if str(_other_pid) in _out and 'python' in _out.lower():
+                            _lock_pid_alive = True
+                    except Exception:
+                        pass
+                if _lock_pid_alive:
+                    print(f"🚫 local已有 Agent {_other_id} 行緊（PID {_other_pid}）— 阻止start（同 ID 多開防護）")
+                    print(f"   （一部機一個 Agent — 如需更換請先停現有 Agent）")
+                    return False
+                # 死咗 → 繼續（overwrite lock）
+            # 如果 lock 係自己 → 允許（重啟場景 — 舊 PID 已死）
             # 檢查其他 agent 仲行緊（PID exists）
             if _other_pid:
                 try:
