@@ -1106,6 +1106,13 @@ def on_ea_remove(data):
         if not _ea_rm:
             print("[WARN] ea_remove_command: 冇 ea_name", flush=True)
             return
+        # [ALERT] 2026-09-03 FIX（emit + poll 雙重執行）：去重 — 5 秒內同一 EA 唔重複
+        global _last_remove_ea
+        _now_rm = time.time()
+        if '_last_remove_ea' in globals() and _last_remove_ea.get('ea') == _ea_rm and _now_rm - _last_remove_ea.get('t', 0) < 5:
+            print(f"[SKIP] Remove {_ea_rm} 已執行（去重）", flush=True)
+            return
+        _last_remove_ea = {'ea': _ea_rm, 't': _now_rm}
         print(f"[GO] [WS] Remove EA: {_ea_rm}", flush=True)
         _alog_write(f"[WS] 收到 ea_remove_command: {_ea_rm}")
         _terminal_dir_rm = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
