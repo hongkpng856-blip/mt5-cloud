@@ -947,7 +947,14 @@ def download_and_install(ea_name, url, ea_config=None):
                     import subprocess
                     metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
                     log_file = os.path.join(experts_dir, f'{base_name}_compile.log')
-                    
+                    # [ALERT] 2026-09-03 FIX（compile 卡死）：compile 前先 kill 舊 MetaEditor
+                    # （MetaEditor 單實例 — 舊 instance 開住 → 新 compile request 排隊永遠等 → subprocess 卡 120 秒）
+                    try:
+                        subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
+                    except Exception:
+                        pass
+                    time.sleep(1.5)  # 等 process 完全釋放
+
                     try:
                         result = subprocess.run([
                             metaeditor, '/compile', mq5_path,
