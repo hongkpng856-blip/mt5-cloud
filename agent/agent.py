@@ -1008,7 +1008,8 @@ def download_and_install(ea_name, url, ea_config=None):
                 if hb_var in content and not _injected_any:
                     print(f"   [SKIP] 心跳已注入過（{hb_var}）— 唔 touch .mq5（避免 watcher 誤觸發 refresh）")
                 else:
-                    with open(mq5_path, 'w', encoding='utf-8', newline='\r\n') as f:
+                    # [ALERT] 2026-09-03 FIX (double CR - MetaEditor compile root cause): use newline='' (content already normalized)
+                    with open(mq5_path, 'w', encoding='utf-8', newline='') as f:
                         f.write(content)
                     print(f"   [SAVE] Saved: {mq5_path}")
                 
