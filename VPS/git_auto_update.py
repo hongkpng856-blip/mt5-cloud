@@ -14,7 +14,17 @@ Risk (user acknowledged):
 import os, sys, subprocess, time, datetime, json
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.join(BASE, 'tradotcom')  # git clone folder
+# [ALERT] 2026-09-02 FIX：script 喺 repo 入面（tradotcom\VPS\）→ REPO = BASE 上一級
+# （如果 script 喺 VPS folder 外面（舊）→ BASE 已經係 VPS folder — 要搵 tradotcom 子 folder）
+if os.path.basename(BASE) == 'VPS' and os.path.isdir(os.path.dirname(BASE)):
+    # script 喺 repo 入面（tradotcom\VPS\）→ repo = dirname(BASE)
+    _cand = os.path.dirname(BASE)
+    if os.path.isdir(os.path.join(_cand, '.git')):
+        REPO = _cand
+    else:
+        REPO = os.path.join(BASE, 'tradotcom')
+else:
+    REPO = os.path.join(BASE, 'tradotcom')  # git clone folder
 LOG = os.path.join(BASE, 'git_watch_log.txt')
 CHECK_INTERVAL = 60  # seconds
 
