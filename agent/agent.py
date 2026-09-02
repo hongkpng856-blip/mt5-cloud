@@ -1823,9 +1823,26 @@ def sync_loop():
                 # [ALERT] 2026-08-26（multi-user Phase 1）：上報「local MT5 file快照」
                 # → server 讀呢個（每機獨立）— 唔再直接讀localfile
                 try:
-                    data['files_snapshot'] = build_files_snapshot()
+                    _fs_snap = build_files_snapshot()
+                    # [ALERT] 2026-09-03：symbols 加入 snapshot（get_mt5_status 有攞 — 一齊上報 server 做 dropdown）
+                    if data.get('symbols'):
+                        _fs_snap['symbols'] = data.get('symbols')
+                    data['files_snapshot'] = _fs_snap
                 except Exception as _e_snap:
                     print(f'   [SNAP] Error: {_e_snap}')
+                # [ALERT] 2026-09-03（VPS 搬遷）：上報本地 warning steps（.ai_control.steps）
+                # → server 寫自己 .ai_control.steps（網頁 modal 讀）— 遠端 agent steps 同步
+                try:
+                    _steps_up = []
+                    _steps_f_up = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.ai_control.steps')
+                    if os.path.isfile(_steps_f_up):
+                        with open(_steps_f_up, 'r', encoding='utf-8') as _f_st:
+                            _steps_up = json.loads(_f_st.read() or '[]')
+                        if not isinstance(_steps_up, list):
+                            _steps_up = []
+                    data['control_steps'] = _steps_up
+                except Exception:
+                    data['control_steps'] = []
                 # [ALERT] 2026-08-27 FIX：payload 太大（1.2MB deals）→ socket disconnect
                 # → deals 只每 60 秒傳一次（減輕 sync payload — 避免disconnect）
                 global _last_deals_sent
@@ -1902,6 +1919,12 @@ def get_mt5_status():
         "server": account.server if account else "",
         "positions": len(mt5.positions_get() or []),
     }
+    # [ALERT] 2026-09-03（VPS 搬遷 — 方案2）：上報 symbols（agent MT5 有齊 — server VPS 讀唔到）
+    try:
+        _syms = mt5.symbols_get()
+        status["symbols"] = sorted([s.name for s in _syms]) if _syms else []
+    except Exception:
+        status["symbols"] = []
     # [ALERT] 2026-08-21：收集 history deals（Trades/Win/P&L 真實數據）
     # before冇收集 → agent.deals 永遠空 → /api/analysis「No data yet」→ 前端 Trades/Win/P&L 全部「—」
     # [ALERT] 2026-08-21 FIX：history_deals_get(since, now) 有 caching 問題 — 用 (0, now) 攞全部（實測攞到全部 deals）

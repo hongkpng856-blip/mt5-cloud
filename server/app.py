@@ -404,6 +404,18 @@ def get_account_symbols():
     來源：bases/<account>/History dir（account伺服器實際支援過嘅 symbol — 比 symbols.sel 可靠）
     [WARN] symbols.sel 只係「市場報價顯示嘅 symbol」（user可以自己加/remove — 唔係權威）
     [WARN] 揀account：優先搵「有最多 History symbol」嗰個（now登入account通常係最新用嘅）"""
+    # [ALERT] 2026-09-03（VPS 搬遷 — 方案2）：server（VPS）冇 MT5 — 優先讀 agent 上報嘅 symbols
+    try:
+        if current_user.is_authenticated:
+            _agt_sy = Agent.query.filter_by(user_id=current_user.id).first()
+            if _agt_sy and _agt_sy.files_snapshot:
+                _snap_sy = json.loads(_agt_sy.files_snapshot or '{}')
+                _syms_up = _snap_sy.get('symbols')
+                if isinstance(_syms_up, list) and _syms_up:
+                    print(f"[symbols] agent 上報 symbols ({len(_syms_up)}): {_syms_up[:8]}...")
+                    return _syms_up
+    except Exception:
+        pass
     try:
         _mt5d = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
         for _d_s in os.listdir(_mt5d):
@@ -4006,6 +4018,17 @@ def handle_sync(data):
                 agent.ea_heartbeats = json.dumps(_merged_hb)
         agent.last_seen = datetime.utcnow()
         agent.status = data.get('status','connected')
+        # [ALERT] 2026-09-03（VPS 搬遷）：agent 上報嘅 steps → 寫 server 自己 .ai_control.steps（網頁 modal 讀）
+        # （agent 喺 A/B 電腦做操作 — steps 喺 agent 本地 — 要上報 server 網頁先同步）
+        try:
+            _steps_sync = data.get('control_steps')
+            if isinstance(_steps_sync, list) and _steps_sync:
+                _dev_dir_sync = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'agent')
+                _sf_sync = os.path.join(_dev_dir_sync, '.ai_control.steps')
+                with open(_sf_sync, 'w', encoding='utf-8') as _f_sy:
+                    json.dump(_steps_sync, _f_sy, ensure_ascii=False)
+        except Exception:
+            pass
         db.session.commit()
         emit('agent_update', {}, room=agent.agent_id)
 
