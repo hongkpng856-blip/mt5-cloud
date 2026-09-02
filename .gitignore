@@ -22,6 +22,9 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# VPS deploy zip（code 喺 git — zip 只係舊傳輸方法 — 唔使 commit）
+VPS/*.zip
 NUL
 
 # agent runtime 檔案（唔入 repo）
