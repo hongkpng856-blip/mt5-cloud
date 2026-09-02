@@ -1167,6 +1167,28 @@ def download_and_install(ea_name, url, ea_config=None):
                     print(f"   [STEPS] 配對完成 steps 已寫", flush=True)
                 except Exception as _e_st2:
                     print(f"   [WARN] steps 寫入 failed: {_e_st2}", flush=True)
+                # [ALERT] 2026-09-03 FIX（配對後 Navigator 要手動 refresh 先見到 — watcher refresh 太早）：
+                # compile 完成 → 等 4 秒（MT5 detect 新 .ex5）→ 延遲 refresh Navigator（唔靠 watcher 太早嗰次）
+                try:
+                    import threading as _thr_ref
+                    def _delayed_refresh_nav():
+                        try:
+                            time.sleep(4)
+                            # 用 refresh_navigator module（同 watcher 一樣）
+                            import importlib.util as _ilu_r
+                            _rn_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'refresh_navigator.py')
+                            if os.path.isfile(_rn_path):
+                                _spec_r = _ilu_r.spec_from_file_location("refresh_navigator", _rn_path)
+                                _mod_r = _ilu_r.module_from_spec(_spec_r)
+                                _spec_r.loader.exec_module(_mod_r)
+                                _ok_r = _mod_r.refresh_navigator()
+                                print(f"   [NAV] 配對完成延遲 refresh: {'OK' if _ok_r else 'fail'}", flush=True)
+                        except Exception as _e_nav:
+                            print(f"   [NAV] refresh error: {_e_nav}", flush=True)
+                    _thr_r = threading.Thread(target=_delayed_refresh_nav, daemon=True)
+                    _thr_r.start()
+                except Exception:
+                    pass
 
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
