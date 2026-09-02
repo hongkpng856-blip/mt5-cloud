@@ -976,10 +976,12 @@ def download_and_install(ea_name, url, ea_config=None):
                             pass
                 
                 # Check .ex5
+                _compile_ok = True
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
                 if os.path.exists(ex5_path):
                     print(f"   [OK] Compiled: {base_name}.ex5 ({os.path.getsize(ex5_path)} bytes)")
                 else:
+                    _compile_ok = False
                     print(f"   [FAIL] Compile failed (no .ex5)")
                     # Try reading compile log for errors
                     if os.path.exists(log_file):
@@ -1021,6 +1023,31 @@ def download_and_install(ea_name, url, ea_config=None):
                     # Auto-sync just compiles & registers EA. User [GO] Deploy will trigger attach.
                     print(f"   [OK] {base_name} compiled & registered. User [GO] Deploy to attach.")
 
+                # [ALERT] 2026-09-03 FIX（假成功 — compile fail 都話成功 → MT5 冇 EA）：compile fail → 寫失敗 steps + emit error
+                if not _compile_ok:
+                    try:
+                        _b_fail = base_name.replace('.mq5', '')
+                        _steps_fail = [
+                            {'text': f'Start pairing {_b_fail}', 'status': 'done'},
+                            {'text': 'Copy file to local (Experts root)', 'status': 'done'},
+                            {'text': f'Compile {_b_fail}.mq5 failed', 'status': 'done'},
+                            {'text': 'Pairing failed (compile failed)', 'status': 'done'},
+                        ]
+                        _adir_fail = os.path.dirname(os.path.abspath(__file__))
+                        with open(os.path.join(_adir_fail, '.ai_control.steps'), 'w', encoding='utf-8') as _ff1:
+                            json.dump(_steps_fail, _ff1, ensure_ascii=False)
+                        _inst_fail = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+                        try:
+                            os.makedirs(_inst_fail, exist_ok=True)
+                            with open(os.path.join(_inst_fail, '.ai_control.steps'), 'w', encoding='utf-8') as _ff2:
+                                json.dump(_steps_fail, _ff2, ensure_ascii=False)
+                        except Exception:
+                            pass
+                    except Exception:
+                        pass
+                    print(f"   [FAIL] 配對失敗（compile 冇生成 .ex5）— steps 已寫失敗", flush=True)
+                    sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": "Compile failed (no .ex5)"})
+                    return
                 # [ALERT] 2026-09-03（VPS 搬遷 — 配對卡住 FIX）：安裝完成 → 寫本地 steps 全 done
                 # （server 配對時寫「Agent installing... doing」→ 呢度更新 done → 上報 server → 網頁同步）
                 try:
