@@ -1,10 +1,11 @@
 @echo off
 title Tradotcom Server Restart
-echo Restarting Tradotcom Server...
-taskkill /IM python.exe /F >nul 2>&1
-timeout /t 2 /nobreak >nul
-cd /d "%~dp0runtime"
-start "Tradotcom Server" cmd /c "cd /d %~dp0runtime && set RENDER=1&& set PORT=80&& python server\app.py"
-timeout /t 5 /nobreak >nul
-echo Done. Server restarting.
+:: ============================================================
+::  One-click restart with auto-log.
+::  After running, open restart_log.txt to see the result.
+:: ============================================================
+call "%~dp0restart_server_core.bat" > "%~dp0restart_log.txt" 2>&1
+echo.
+echo Done. Open restart_log.txt to see the result.
+echo Log file: %~dp0restart_log.txt
 pause
