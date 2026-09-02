@@ -1032,7 +1032,7 @@ def download_and_install(ea_name, url, ea_config=None):
 
 @sio.on('deploy_ea')
 def on_deploy_ea(data):
-    print(f"[GO] [WS] Deploy: {data}")
+    """收到 server 部署指令 — 寫 deploy_cmd → watcher 處理"""
     sys.stdout.flush()
     try:
         _alog_write(f"[WS] 收到 deploy_ea: {data.get('ea_name')} -> {data.get('symbol')}")
@@ -1052,6 +1052,72 @@ def on_deploy_ea(data):
         _alog_write(f"[WS] execute_deploy done（冇 crash）")
     except Exception as _e_dep:
         _alog_write(f"[WS] execute_deploy crash: {str(_e_dep)[:150]}")
+        import traceback
+        traceback.print_exc()
+
+
+# ================================================================
+#  EA 剷除（遠端 — 2026-09-03 VPS 搬遷）
+#  Server 發 ea_remove_command → agent 喺自己機刪檔案 + 寫 pause_cmd（watcher remove chart EA）
+# ================================================================
+@sio.on('ea_remove_command')
+def on_ea_remove(data):
+    """收到 server 剷除 EA 指令 — 刪自己機 Experts/Scripts 檔案 + 寫 pause_cmd"""
+    try:
+        _ea_rm = str(data.get('ea_name') or '')
+        _fn_rm = str(data.get('filename') or _ea_rm)
+        if not _ea_rm:
+            print("[WARN] ea_remove_command: 冇 ea_name", flush=True)
+            return
+        print(f"[GO] [WS] Remove EA: {_ea_rm}", flush=True)
+        _alog_write(f"[WS] 收到 ea_remove_command: {_ea_rm}")
+        _terminal_dir_rm = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        _deleted_rm = []
+        # 刪 Experts + Scripts 根嘅 .mq5/.ex5/.log
+        if os.path.isdir(_terminal_dir_rm):
+            for _d_rm in os.listdir(_terminal_dir_rm):
+                for _root_kind in ('Experts', 'Scripts'):
+                    _root_rm = os.path.join(_terminal_dir_rm, _d_rm, 'MQL5', _root_kind)
+                    if not os.path.isdir(_root_rm):
+                        continue
+                    for _ext_rm in ('.ex5', '.mq5', '.log'):
+                        _tgt_rm = os.path.join(_root_rm, _ea_rm + _ext_rm)
+                        if os.path.isfile(_tgt_rm):
+                            try:
+                                os.remove(_tgt_rm)
+                                _deleted_rm.append(_tgt_rm)
+                                print(f"   [OK] 刪除: {os.path.basename(_tgt_rm)}", flush=True)
+                            except Exception as _e_del2:
+                                print(f"   [WARN] 刪除失敗: {_tgt_rm} ({_e_del2})", flush=True)
+        if _deleted_rm:
+            print(f"   [OK] EA 檔案已刪: {len(_deleted_rm)} 個", flush=True)
+        # 寫 pause_cmd（action=delete → watcher remove chart EA + 釋放快捷鍵）
+        try:
+            import time as _trm2
+            _common_rm = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            os.makedirs(_common_rm, exist_ok=True)
+            _pcmd_rm = os.path.join(_common_rm, f'pause_cmd_{_ea_rm}_{int(_trm2.time())}.json')
+            with open(_pcmd_rm, 'w', encoding='utf-8') as _fpc2:
+                json.dump({'ea_name': _ea_rm, 'action': 'delete'}, _fpc2, ensure_ascii=False)
+            print(f"   [OK] pause_cmd 已寫（remove chart EA）: {os.path.basename(_pcmd_rm)}", flush=True)
+        except Exception as _epc2:
+            print(f"   [WARN] 寫 pause_cmd failed: {_epc2}", flush=True)
+        # 寫 web_delete flag（watcher 知道來源）
+        try:
+            _common_rm2 = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+            _flag_rm = os.path.join(_common_rm2, f'web_delete_{_fn_rm}.flag')
+            with open(_flag_rm, 'w', encoding='utf-8') as _ff:
+                _ff.write('1')
+        except Exception:
+            pass
+        # 通知 server（完成）
+        try:
+            sio.emit('install_result', {"status": "ok", "ea": _ea_rm, "msg": "EA 已剷除（遠端）"})
+        except Exception:
+            pass
+        _alog_write(f"[WS] EA {_ea_rm} 剷除完成")
+    except Exception as _e_rmh:
+        print(f"[WARN] ea_remove_command handler failed: {_e_rmh}", flush=True)
         import traceback
         traceback.print_exc()
 

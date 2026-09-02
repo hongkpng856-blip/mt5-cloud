@@ -2599,6 +2599,41 @@ def api_ea_remove_local(filename):
     if not _re.fullmatch(r'[A-Za-z0-9_]+(\.[A-Za-z0-9]+)?', filename):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
 
+    # [ALERT] 2026-09-03（VPS 搬遷 — 方案2 遠端執行）：剷除 = server 發指令 → agent 喺自己機刪
+    # server（VPS）冇 MT5 → 唔可以刪 A/B 電腦嘅 EA 檔案 — 要 agent 做
+    # agent 收到 ea_remove_command → 刪自己機 Experts/Scripts 檔案 + 寫 pause_cmd（watcher remove chart EA）
+    _agt_rm = Agent.query.filter_by(user_id=current_user.id).first()
+    _agent_online_rm = bool(_agt_rm and _agt_rm.status == 'connected')
+    if _agent_online_rm:
+        try:
+            import time as _trm
+            # 寫 config（刪除配對記錄）
+            try:
+                _cfg_rm = json.loads(current_user.ea_config or '{}')
+                for _k_rm in [k for k in list(_cfg_rm.keys()) if k == base_only or k.startswith(base_only + '_')]:
+                    _cfg_rm.pop(_k_rm, None)
+                _rem_rm = _cfg_rm.get('_removed', [])
+                if base_only not in _rem_rm:
+                    _rem_rm.append(base_only)
+                _cfg_rm['_removed'] = _rem_rm
+                current_user.ea_config = json.dumps(_cfg_rm)
+                db.session.commit()
+                print(f"[remove-local] [REMOTE] config 已刪: {base_only}", flush=True)
+            except Exception as _ecfg_rm:
+                print(f"[remove-local] [REMOTE] config delete warning: {_ecfg_rm}", flush=True)
+            # 發指令俾 agent（刪自己機檔案 + remove chart）
+            socketio.emit('ea_remove_command', {
+                "ea_name": base_only,
+                "filename": filename,
+            }, room=_agt_rm.agent_id)
+            print(f"[remove-local] [REMOTE] ea_remove_command sent to agent {_agt_rm.agent_id}: {base_only}", flush=True)
+            log_activity('ea_remove', f'{base_only} 剷除指令已發送俾 Agent（遠端刪除）', ea=base_only)
+            return jsonify({"success": True, "message": f"剷除指令已發送俾 Agent（{_agt_rm.agent_id} 遠端刪除）", "removed": [base_only]})
+        except Exception as _e_rm2:
+            print(f"[remove-local] [REMOTE] send failed: {_e_rm2}", flush=True)
+            # fallthrough 去本機模式
+    # 本機模式（server 同 agent 同一部機）— 原有邏輯
+
     experts_dirs = []
     data_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
     if os.path.isdir(data_dir):
@@ -2899,6 +2934,64 @@ def api_ea_install_local(filename):
             break
     if not src_path:
         return jsonify({"success": False, "error": f"{filename} 唔喺 EA 倉庫"}), 404
+
+    # [ALERT] 2026-09-03（VPS 搬遷 — 方案2 遠端執行）：配對 = server 發指令 → agent 喺自己機安裝
+    # server（VPS）冇 MT5 → 唔可以自己複製/編譯 — 要 agent（A/B 電腦）做
+    # agent 收到 install_ea_command → download_and_install（下載 EA 庫 .mq5 → 心跳注入 → 編譯 → 本地 Experts）
+    _agt = Agent.query.filter_by(user_id=current_user.id).first()
+    _agent_online = bool(_agt and _agt.status == 'connected')
+    if _agent_online:
+        try:
+            import time as _ta
+            _dl_url = f"{request.host_url}api/ea-library/"
+            _ea_cfg_send = json.loads(current_user.ea_config or '{}')
+            _ba_send = os.path.splitext(filename)[0]
+            # 預先寫 config（配對記錄 — magic 由 EA 庫 src 讀）
+            try:
+                _cfg_send = json.loads(current_user.ea_config or '{}')
+                _cfg_send.setdefault(_ba_send, 'EURUSD')
+                _cfg_send.setdefault(_ba_send + '_tf', 'H1')
+                _cfg_send.setdefault(_ba_send + '_magic', _ea_magic_from_source(src_path) if src_path.endswith('.mq5') else '240701')
+                _cfg_send.setdefault(_ba_send + '_lot', 1.00)
+                _rem_send = _cfg_send.get('_removed', [])
+                if _ba_send in _rem_send:
+                    _rem_send.remove(_ba_send)
+                    _cfg_send['_removed'] = _rem_send
+                current_user.ea_config = json.dumps(_cfg_send)
+                db.session.commit()
+                print(f"[install-local] [REMOTE] config 已寫: {_ba_send}", flush=True)
+            except Exception as _ecfg_s:
+                print(f"[install-local] [REMOTE] config write warning: {_ecfg_s}", flush=True)
+            # 發指令俾 agent（安裝到自己機）
+            socketio.emit('install_ea_command', {
+                "ea_name": _ba_send,
+                "ea_list": [],
+                "download_url": _dl_url,
+                "ea_config": _ea_cfg_send,
+            }, room=_agt.agent_id)
+            print(f"[install-local] [REMOTE] install_ea_command sent to agent {_agt.agent_id}: {_ba_send}", flush=True)
+            log_activity('ea_install', f'{_ba_send} 配對指令已發送俾 Agent（遠端安裝）', ea=_ba_send)
+            # Steps：配對開始（agent 完成會經 install_result → watcher 更新後續）
+            try:
+                _write_ai_flags(None, [
+                    {'text': f'Start pairing {_ba_send}', 'status': 'done'},
+                    {'text': 'Send install command to agent', 'status': 'done'},
+                    {'text': f'Agent installing {_ba_send} on local MT5', 'status': 'doing'},
+                    {'text': 'Done — pairing complete', 'status': 'pending'},
+                ])
+            except Exception:
+                pass
+            return jsonify({
+                "success": True,
+                "filename": filename,
+                "base": _ba_send,
+                "compile_ok": None,
+                "message": f"配對指令已發送俾 Agent（{_agt.agent_id} 遠端安裝）"
+            })
+        except Exception as _e_rem:
+            print(f"[install-local] [REMOTE] send failed: {_e_rem}", flush=True)
+            # fallthrough 去本機模式（如果 send 失敗）
+    # 本機模式（server 同 agent 同一部機 — 冇遠端 agent / send 失敗）— 原有邏輯
 
     # 2. 搵local MT5 Experts dir
     experts_dirs = []
