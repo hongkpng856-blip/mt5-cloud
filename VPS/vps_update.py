@@ -56,9 +56,13 @@ if os.path.isfile(backup_path):
     os.remove(backup_path)
 log('       OK')
 
-# 3. Stop old server (kill python — VPS only runs the server)
+# 3. Stop old server (kill ONLY server app.py processes — NOT this script!)
 log('[3/5] Stopping old server...')
-subprocess.run('taskkill /IM python.exe /F', shell=True,
+ps = ('powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter '
+      '"Name=\'python.exe\'" | Where-Object { $_.CommandLine -like \'*app.py*\' '
+      '-and $_.CommandLine -notlike \'*vps_*\' } | ForEach-Object { Stop-Process '
+      '-Id $_.ProcessId -Force }"')
+subprocess.run(ps, shell=True,
                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(3)
 log('       OK')
