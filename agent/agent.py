@@ -953,7 +953,7 @@ def download_and_install(ea_name, url, ea_config=None):
                         subprocess.run('taskkill /f /im metaeditor64.exe', shell=True, capture_output=True, timeout=10)
                     except Exception:
                         pass
-                    time.sleep(1.5)  # 等 process 完全釋放
+                    time.sleep(3)  # [ALERT] 2026-09-03：等 process 完全釋放（1.5s 唔夠 — MetaEditor 未死透 → 新 instance 卡）
 
                     try:
                         result = subprocess.run([
