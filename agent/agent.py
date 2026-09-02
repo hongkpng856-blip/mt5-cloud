@@ -1888,7 +1888,12 @@ _alog_write(f"Connecting to {SERVER_URL}...")
 try:
     # [ALERT] 2026-08-27 FIX：wait=False（非阻塞 — 唔會掛死）+ 短 timeout
     # before blocking connect 連唔到 → 永遠卡住 → 冇 log → user「冇綠燈」
-    sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False, retry=False)
+    # [ALERT] 2026-09-03 FIX（VPS 搬遷 — websocket 斷線循環）：試 websocket 唔穩定（VPS eventlet/防火牆）
+    # → 用 polling transport（HTTP long-poll — 穩定 — 唔受長連接斷線影響）
+    try:
+        sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False, retry=False)
+    except Exception:
+        sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False, retry=False)
 except Exception as e:
     # [ALERT] 2026-08-26 FIX（multi-user Phase 1）：python-socketio 5.x connect() 有時 raise
     # 「One or more namespaces failed to connect」— 但背景 namespace 已connect（polling ack 時序）
