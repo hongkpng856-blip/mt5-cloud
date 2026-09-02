@@ -2112,7 +2112,7 @@ def api_watcher_report():
 
 
 # === API: EA 庫 ===
-EA_LIBRARY_DIR = os.path.join(os.path.dirname(__file__), 'static', 'ea_library')
+EA_LIBRARY_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'ea_library'))
 def _ea_magic_from_source(mq5_path):
     """[ALERT] 2026-09-01 FIX（user實測：配對庫 magic 亂 — install-local default 240701 冇讀 EA 內部）：
     掃 .mq5 源碼攞 InpMagic（input int InpMagic = XXXX）→ 配對時用正確 magic"""
@@ -2128,8 +2128,8 @@ def _ea_magic_from_source(mq5_path):
     return '240701'
 
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'static', 'user_ea')
-COMMUNITY_EA_DIR = os.path.join(os.path.dirname(__file__), 'static', 'community_ea')
+UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'user_ea'))
+COMMUNITY_EA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'community_ea'))
 
 # 確保direxists
 os.makedirs(EA_LIBRARY_DIR, exist_ok=True)
