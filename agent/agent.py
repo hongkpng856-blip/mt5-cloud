@@ -1686,12 +1686,9 @@ def sync_loop():
                 try:
                     import urllib.request as _ur_dq
                     # [ALERT] 2026-08-27 FIX：poll 用 localhost（agent 喺local — 直接連 server 快 — 唔經 tunnel 慢/timeout）
+                    # [ALERT] 2026-09-03 FIX（VPS 搬遷）：agent 連 VPS（116.206.150.233）→ localhost fallback 錯
+                    # （A 機 localhost 冇 server → poll 失敗 → 觸發重連循環）— 直接用 SERVER_URL
                     _poll_url = SERVER_URL
-                    if 'mt5cloud.esgov.org' in _poll_url or 'http' in _poll_url and 'localhost' not in _poll_url:
-                        try:
-                            _poll_url = 'http://localhost:5001'
-                        except Exception:
-                            pass
                     _req_dq = _ur_dq.Request(f"{_poll_url}/api/agent-poll-deploy?agent_id={AGENT_ID}")
                     with _ur_dq.urlopen(_req_dq, timeout=10) as _r_dq:
                         _dq = json.loads(_r_dq.read().decode('utf-8'))
