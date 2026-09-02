@@ -2344,6 +2344,9 @@ async function deleteEA(eaName) {
             await loadEAConfig();
             loadEALibrary();
             fetchEAInventory();
+            // [ALERT] 2026-09-03 FIX（EA 倉庫狀態殘留 — 用戶要求自動 refresh）：延遲再 refresh（等 agent snapshot local_eas 更新 — 唔使手動）
+            setTimeout(() => { loadEAConfig(); loadEALibrary(); }, 3000);
+            setTimeout(() => { loadEAConfig(); loadEALibrary(); }, 6000);
         }
     } catch(e) { console.error(e); }
     // 唔即刻 hide — 由 pollAiControl 控制（watcher 可能仲 refresh Navigator）
