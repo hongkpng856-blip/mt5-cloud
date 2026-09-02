@@ -207,6 +207,26 @@ def _write_ai_flags(sig, steps):
     except Exception as _e_push:
         print(f"[WARN] _write_ai_flags socketio push failed: {_e_push}", flush=True)
 
+def _push_alert_socket(sig, steps):
+    """[ALERT] 2026-09-03（VPS 搬遷）：SocketIO push 警告視窗俾 current_user 嘅 agent
+    （server 喺 VPS — agent 喺 A/B 電腦 — 本地寫檔唔通 — 要 SocketIO push）"""
+    try:
+        from flask_login import current_user as _cu2
+        _tgt2 = None
+        if _cu2 is not None and getattr(_cu2, 'is_authenticated', False):
+            _a2 = Agent.query.filter_by(user_id=_cu2.id).first()
+            if _a2:
+                _tgt2 = _a2.agent_id
+        _payload = {'sig': sig or '', 'steps': steps if isinstance(steps, list) else []}
+        if _tgt2:
+            socketio.emit('control_alert', _payload, room=_tgt2)
+        else:
+            socketio.emit('control_alert', _payload)
+    except Exception as _e2:
+        print(f"[WARN] _push_alert_socket failed: {_e2}", flush=True)
+
+
+
 
 @app.route('/api/control-steps', methods=['GET', 'POST'])
 @login_required
@@ -1080,6 +1100,14 @@ def api_ea_config_toggle(ea_name):
                         {'text': f'Attach {ea_name}', 'status': 'pending'},
                         {'text': 'Verify running status', 'status': 'pending'},
                     ], _f, ensure_ascii=False)
+        except Exception:
+            pass
+        # [ALERT] 2026-09-03（VPS 搬遷）：SocketIO push 俾遠端 agent
+        try:
+            _push_alert_socket(f'{"pause" if new_status == "paused" else "resume"} {ea_name}', [
+                {'text': f'{"Pause" if new_status == "paused" else "Resume"} {ea_name}', 'status': 'doing'},
+                {'text': 'Check chart (EA running?)', 'status': 'pending'},
+            ])
         except Exception:
             pass
         if new_status == 'paused':
@@ -2544,7 +2572,19 @@ def api_ea_remove_local(filename):
                 {'text': 'Clean up settings and release hotkey', 'status': 'pending'},
                 {'text': 'Done — delete complete', 'status': 'pending'},
             ], _f2, ensure_ascii=False)
-            # [ALERT] 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → file消失 → 網頁閃）
+            # [ALERT] 2026-09-03（VPS 搬遷）：SocketIO push 俾遠端 agent
+            try:
+                _push_alert_socket(f'delete {base_only}', [
+                    {'text': f'Start delete {base_only}', 'status': 'doing'},
+                    {'text': 'Check chart (EA running?)', 'status': 'pending'},
+                    {'text': 'Remove EA from chart', 'status': 'pending'},
+                    {'text': 'Delete local files (.mq5/.ex5)', 'status': 'pending'},
+                    {'text': 'Clean up settings and release hotkey', 'status': 'pending'},
+                    {'text': 'Done — delete complete', 'status': 'pending'},
+                ])
+            except Exception:
+                pass
+            # [ALERT] 2026-08-12 FIX：直接寫 .steps（唔加 .tmp）— 唔可以 os.replace（會將 .steps rename 成 .st → fi
     except Exception as e_del:
         print(f"[DEBUG] remove-local steps write failed: {e_del}")
     # [ALERT] 2026-08-12 FIX：寫完 steps 先停留 1.5 秒（視窗彈出 + user見到「startdeletein progress」先startdelete — 步驟唔會瞬間done）
@@ -2829,6 +2869,11 @@ def api_ea_install_local(filename):
                            os.path.join(_wdir, '.ai_control.steps'))
             except Exception:
                 pass
+        # [ALERT] 2026-09-03（VPS 搬遷）：SocketIO push 俾遠端 agent
+        try:
+            _push_alert_socket(f'pairing {_base0}', _steps_new)
+        except Exception:
+            pass
     except Exception as _ein_err:
         print(f"[DEBUG] install-local steps write failed: {_ein_err}", flush=True)
 
@@ -4346,6 +4391,11 @@ def api_clean_blank_charts():
                         json.dump(_clean_steps_cl, _f2, ensure_ascii=False)
                 except Exception:
                     pass
+            # [ALERT] 2026-09-03（VPS 搬遷）：SocketIO push 俾遠端 agent
+            try:
+                _push_alert_socket('clean blank charts', _clean_steps_cl)
+            except Exception:
+                pass
         except Exception as _e_clw:
             print(f"[WARN] clean steps write failed: {_e_clw}")
         return jsonify({"success": True, "message": "Clean blank charts command sent"})
