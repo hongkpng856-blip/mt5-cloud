@@ -24,8 +24,8 @@ def log(msg):
     with open(LOG, 'a', encoding='utf-8') as f:
         f.write(line + '\n')
 
-def run(cmd, cwd=None, timeout=60):
-    r = subprocess.run(cmd, cwd=cwd or REPO, capture_output=True, text=True, timeout=timeout)
+def run(cmd, cwd=None, timeout=60, shell=False):
+    r = subprocess.run(cmd, cwd=cwd or REPO, capture_output=True, text=True, timeout=timeout, shell=shell)
     return r
 
 def git_current():
