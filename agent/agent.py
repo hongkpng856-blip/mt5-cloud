@@ -1828,6 +1828,16 @@ def sync_loop():
                         break
                     if _dq.get('ea_name'):
                         _ddq = _dq
+                        # [ALERT] 2026-09-03（VPS 搬遷）：poll 讀到 remove_ea 指令（emit 收唔到 fallback）
+                        if _ddq.get('action') == 'remove_ea':
+                            print(f"[IN] [POLL] 讀到 remove_ea: {_ddq.get('ea_name')}（emit 收唔到 fallback）")
+                            sys.stdout.flush()
+                            _alog_write(f"[POLL] remove_ea fallback: {_ddq.get('ea_name')}")
+                            try:
+                                on_ea_remove({'ea_name': _ddq.get('ea_name'), 'filename': _ddq.get('filename') or _ddq.get('ea_name')})
+                            except Exception as _e_rem_poll:
+                                print(f"[WARN] on_ea_remove poll failed: {_e_rem_poll}", flush=True)
+                            continue
                         print(f"[IN] [POLL] 讀到 deploy_queue: {_ddq.get('ea_name')} -> {_ddq.get('symbol')}（emit 收唔到 fallback）")
                         sys.stdout.flush()
                         _alog_write(f"[POLL] deploy_queue fallback: {_ddq.get('ea_name')}")

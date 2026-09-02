@@ -2655,6 +2655,18 @@ def api_ea_remove_local(filename):
                 "filename": filename,
             }, room=_agt_rm.agent_id)
             print(f"[remove-local] [REMOTE] ea_remove_command sent to agent {_agt_rm.agent_id}: {base_only}", flush=True)
+            # [ALERT] 2026-09-03 FIX（agent 收唔到 emit — socket 斷線循環）：寫 deploy_queue fallback（agent poll 攞到）
+            # （同 deploy_queue 機制 — emit 收唔到 → poll /api/agent-poll-deploy 時攞到）
+            try:
+                _agt_rm.deploy_queue = json.dumps({
+                    "ea_name": base_only,
+                    "filename": filename,
+                    "action": "remove_ea",
+                })
+                db.session.commit()
+                print(f"[remove-local] [REMOTE] deploy_queue fallback 已寫（agent poll 攞到）", flush=True)
+            except Exception as _eq_rm:
+                print(f"[remove-local] [REMOTE] deploy_queue fallback write failed: {_eq_rm}", flush=True)
             log_activity('ea_remove', f'{base_only} 剷除指令已發送俾 Agent（遠端刪除）', ea=base_only)
             return jsonify({"success": True, "message": f"剷除指令已發送俾 Agent（{_agt_rm.agent_id} 遠端刪除）", "removed": [base_only]})
         except Exception as _e_rm2:
