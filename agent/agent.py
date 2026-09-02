@@ -864,6 +864,17 @@ def on_install_ea(data):
 
 def download_and_install(ea_name, url, ea_config=None):
     """完整安裝流程：download → heartbeat inject → compile → preset → auto-attach"""
+    # [ALERT] 2026-09-03 FIX（emit + poll 雙重觸發）：去重 — 5 秒內同一 EA 唔重複安裝
+    try:
+        _b_dedup = str(ea_name).replace('.mq5', '')
+        global _last_install_ea
+        _now_dd = time.time()
+        if '_last_install_ea' in globals() and _last_install_ea.get('ea') == _b_dedup and _now_dd - _last_install_ea.get('t', 0) < 5:
+            print(f"[SKIP] Install {_b_dedup} 已執行（去重）", flush=True)
+            return
+        _last_install_ea = {'ea': _b_dedup, 't': _now_dd}
+    except Exception:
+        pass
     print(f"[IN] Installing EA: {ea_name}")
     print(f"   Downloading from: {url}")
     try:
@@ -1862,6 +1873,18 @@ def sync_loop():
                         break
                     if _dq.get('ea_name'):
                         _ddq = _dq
+                        # [ALERT] 2026-09-03（VPS 搬遷）：poll 讀到 install_ea 指令（emit 收唔到 fallback）
+                        if _ddq.get('action') == 'install_ea':
+                            print(f"[IN] [POLL] 讀到 install_ea: {_ddq.get('ea_name')}（emit 收唔到 fallback）")
+                            sys.stdout.flush()
+                            _alog_write(f"[POLL] install_ea fallback: {_ddq.get('ea_name')}")
+                            try:
+                                _dl_u = _ddq.get('download_url') or (SERVER_URL + '/api/ea-library/')
+                                _cfg_ins = dict(ea_config_cache) if ea_config_cache else {}
+                                download_and_install(str(_ddq.get('ea_name')) + '.mq5', _dl_u + str(_ddq.get('ea_name')) + '.mq5', _cfg_ins)
+                            except Exception as _e_ins_poll:
+                                print(f"[WARN] download_and_install poll failed: {_e_ins_poll}", flush=True)
+                            continue
                         # [ALERT] 2026-09-03（VPS 搬遷）：poll 讀到 remove_ea 指令（emit 收唔到 fallback）
                         if _ddq.get('action') == 'remove_ea':
                             print(f"[IN] [POLL] 讀到 remove_ea: {_ddq.get('ea_name')}（emit 收唔到 fallback）")

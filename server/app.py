@@ -3010,6 +3010,21 @@ def api_ea_install_local(filename):
                 "ea_config": _ea_cfg_send,
             }, room=_agt.agent_id)
             print(f"[install-local] [REMOTE] install_ea_command sent to agent {_agt.agent_id}: {_ba_send}", flush=True)
+            # [ALERT] 2026-09-03 FIX（install 假成功 — agent 收唔到 emit → 冇安裝但 server 話成功）：
+            # → 寫 deploy_queue fallback（agent poll 攞到 → 執行 install — 同 remove 機制一致）
+            try:
+                _agt_ins = Agent.query.filter_by(user_id=current_user.id).first()
+                if _agt_ins:
+                    _agt_ins.deploy_queue = json.dumps({
+                        "ea_name": _ba_send,
+                        "filename": filename,
+                        "download_url": _dl_url,
+                        "action": "install_ea",
+                    })
+                    db.session.commit()
+                    print(f"[install-local] [REMOTE] deploy_queue fallback 已寫（agent poll 攞到 install）", flush=True)
+            except Exception as _eq_ins:
+                print(f"[install-local] [REMOTE] deploy_queue fallback write failed: {_eq_ins}", flush=True)
             log_activity('ea_install', f'{_ba_send} 配對指令已發送俾 Agent（遠端安裝）', ea=_ba_send)
             # Steps：配對開始（agent 完成會經 install_result → watcher 更新後續）
             try:
