@@ -1,6 +1,21 @@
 @echo off
 chcp 65001 >nul
 title Tradotcom VPS Update
+
+:: ============================================================
+::  Auto-log: this script re-runs itself and saves ALL output
+::  to vps_update_log.txt (next to this .bat), so you can open
+::  the txt and read the result (no screenshot needed).
+:: ============================================================
+if not "%1"=="logged" (
+    call "%0" logged > "%~dp0vps_update_log.txt" 2>&1
+    echo.
+    echo Done. Open vps_update_log.txt to see the result.
+    echo Log file: %~dp0vps_update_log.txt
+    pause
+    exit /b
+)
+
 echo ============================================
 echo   Tradotcom Server - One-click Update
 echo   Date: %date% %time%
@@ -12,9 +27,11 @@ echo.
 ::    VPS\server-code-deploy-*.zip   <- new code package (copy here)
 ::    VPS\vps_update.bat             <- this script (double-click)
 ::    VPS\runtime\                   <- server extracted + running here
+::    VPS\vps_update_log.txt         <- this run's log (read this)
 :: ============================================================
 
-set "BASE=C:\Users\Administrator\Desktop\VPS"
+set "BASE=%~dp0"
+set "BASE=%BASE:~0,-1%"
 set "TARGET=%BASE%\runtime"
 
 :: ========== 0. Find latest server-code-deploy-*.zip (in VPS folder) ==========
@@ -22,7 +39,6 @@ for /f "delims=" %%z in ('powershell -NoProfile -Command "Get-ChildItem -Path '%
 if not defined ZIP (
     echo [ERROR] Cannot find server-code-deploy-*.zip in %BASE%
     echo Please put server-code-deploy-YYYYMMDD-HHMM.zip in the VPS folder
-    pause
     exit /b 1
 )
 echo Using zip: %ZIP%
@@ -46,7 +62,6 @@ echo [2/5] Extracting new code into runtime...
 powershell -NoProfile -Command "Expand-Archive -Path '%ZIP%' -DestinationPath '%TARGET%' -Force"
 if errorlevel 1 (
     echo [ERROR] Extract failed
-    pause
     exit /b 1
 )
 if exist "%TEMP%\mt5cloud_backup.db" (
@@ -59,7 +74,7 @@ echo       OK
 
 :: ========== 3. Stop old server ==========
 echo [3/5] Stopping old server...
-powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*VPS\runtime*' -or $_.CommandLine -like '*app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
 timeout /t 3 /nobreak >nul
 echo       OK
 
@@ -79,4 +94,3 @@ echo   Update complete! Server should be running
 echo   Runtime folder: %TARGET%
 echo   Updated: %date% %time%
 echo ============================================
-pause
