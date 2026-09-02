@@ -706,9 +706,16 @@ def check_experts_changes():
             else:
                 _notify_ea_change('modified', base)
 
-        if now - _last_refresh_time < _refresh_cooldown:
-            return  # cooldown 內唔重複 refresh
-        _last_refresh_time = now
+        # [ALERT] 2026-09-03 FIX（配對後 Navigator 唔顯示新 EA — 用戶實錘）：
+        # cooldown 300 秒擋咗「新增 .ex5」嘅 refresh（compile 期間多次 dir 變化 → 第一次 refresh 太早 →
+        # 之後變化俾 cooldown 擋 → 最後 .ex5 生成冇 refresh → MT5 唔顯示）
+        # → 「新增檔案」（真係有新 EA）唔受 cooldown 限制（一定要 refresh — 唔可以漏）
+        # → 只有「修改」（refresh 引起嘅 touch）先受 cooldown 擋（防無限循環）
+        _has_new_file = any(k in snap and k not in old_snap for k in changed)
+        if now - _last_refresh_time < _refresh_cooldown and not _has_new_file:
+            return  # cooldown 內 + 冇新檔案 → 唔重複 refresh（防無限循環）
+        if not _has_new_file:
+            _last_refresh_time = now
 
         # AI 控制守衛：如果已經有 AI 操控緊（auto_attach 等），唔好同時 refresh 搶 MT5
         # （淨係擋 refresh，唔擋通知/activity log）
