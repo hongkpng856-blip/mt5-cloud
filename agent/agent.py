@@ -989,7 +989,7 @@ def on_deploy_ea(data):
     # [ALERT] 2026-08-27 FIX：emit 收到 = 已經執行 — immediately清 server deploy_queue（唔好俾 poll 又讀到 → 重複執行）
     try:
         import urllib.request as _ur_clr
-        _poll_url_clr = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+        _poll_url_clr = SERVER_URL  # 2026-09-02 FIX（B/C/D 電腦）：用 SERVER_URL 唔好 localhost
         _req_clr = _ur_clr.Request(f"{_poll_url_clr}/api/agent-poll-deploy?agent_id={AGENT_ID}")
         with _ur_clr.urlopen(_req_clr, timeout=5) as _r_clr:
             _r_clr.read()
@@ -1111,7 +1111,7 @@ def on_shutdown(data):
         # 通知 server done（清理完先話success）
         try:
             import urllib.request as _ur_sh
-            _url_sh = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+            _url_sh = SERVER_URL  # 2026-09-02 FIX（B/C/D 電腦）：用 SERVER_URL 唔好 localhost
             _req_sh = _ur_sh.Request(f"{_url_sh}/api/agent/remove-complete?agent_id={AGENT_ID}", method='POST')
             _ur_sh.urlopen(_req_sh, timeout=5)
             print("   [OK] 已通知 server removedone")
@@ -1880,7 +1880,8 @@ def _ensure_platform_services():
             if not os.path.isfile(_dep):
                 try:
                     import urllib.request as _ur_dep
-                    _dl_url_dep = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+                    # [ALERT] 2026-09-02 FIX（B/C/D 電腦 10061）：agent 連 VPS → 下載要用 SERVER_URL（localhost 只啱本機開發）
+                    _dl_url_dep = SERVER_URL
                     _dl_url_dep = f"{_dl_url_dep}/api/agent-service/{os.path.basename(_dep)}"
                     _req_dep = _ur_dep.Request(_dl_url_dep, headers={'User-Agent': 'TradotcomAgent/1.0'})
                     with _ur_dep.urlopen(_req_dep, timeout=20) as _r_dep:
@@ -1900,8 +1901,8 @@ def _ensure_platform_services():
                 if not os.path.isfile(_dl_script):
                     try:
                         import urllib.request as _ur_svc
-                        # [ALERT] 用 localhost（local agent 直接連 server 快 — tunnel 可能 407/慢）
-                        _dl_url_svc = 'http://localhost:5001' if 'localhost' not in SERVER_URL else SERVER_URL
+                        # [ALERT] 2026-09-02 FIX（B/C/D 電腦 10061）：agent 連 VPS → 下載要用 SERVER_URL
+                        _dl_url_svc = SERVER_URL
                         _dl_url_svc = f"{_dl_url_svc}/api/agent-service/{os.path.basename(_dl_script)}"
                         _req_svc = _ur_svc.Request(_dl_url_svc, headers={'User-Agent': 'TradotcomAgent/1.0'})
                         with _ur_svc.urlopen(_req_svc, timeout=20) as _r_svc:
@@ -1932,8 +1933,12 @@ def _ensure_platform_services():
             # 開（python.exe + redirect log — 唔好 pythonw 冇 console）
             try:
                 _log_f = open(os.path.join(_svc_dir, f'{_name}.log'), 'a', encoding='utf-8')
+                # [ALERT] 2026-09-02 FIX（B/C/D 電腦）：Popen 要傳 MT5_CLOUD_URL env — 唔係 watcher 用 default localhost
+                _env_svc = dict(os.environ)
+                _env_svc['MT5_CLOUD_URL'] = SERVER_URL
                 _sp_svc.Popen([_py_exe, '-u', _script], stdout=_log_f, stderr=_log_f,
-                              creationflags=0x00000008 if hasattr(_sp_svc, 'CREATE_NO_WINDOW') else 0)
+                              creationflags=0x00000008 if hasattr(_sp_svc, 'CREATE_NO_WINDOW') else 0,
+                              env=_env_svc)
                 print(f"   [OK] [SVC] {_name} 已start")
             except Exception as _e_svc:
                 print(f"   [WARN] [SVC] {_name} startfailed: {_e_svc}")
