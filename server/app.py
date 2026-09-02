@@ -955,7 +955,10 @@ def api_ea_config():
                 # [ALERT] 2026-08-28 FIX：log_last 包含殘留（MT5 log 舊「loaded successfully」記錄 — 新 account 安裝後顯示唔belongs to佢嘅 EA）
                 # → log_last 只計「心跳 alive」嘅 EA（有新鮮心跳 = 真running）；冇心跳 = 舊記錄殘留 — 唔上報
                 _log_e = _log_e & _hb_alive
-                _agent_eas = sorted(set(list(_hb_e) + list(_log_e) + list(_hk_e)))
+                # [ALERT] 2026-09-03（VPS 搬遷 — user要求：配對庫 check 到 MT5 有嘅 EA）：加 local_eas
+                # （本機 Experts/Scripts 有檔案嘅 EA — 唔止部署過/有心跳嗰啲 — 配對庫顯示全部本機 EA）
+                _local_e = set(_snap_e.get('local_eas') or [])
+                _agent_eas = sorted(set(list(_hb_e) + list(_log_e) + list(_hk_e) + list(_local_e)))
             else:
                 # fallback：config EA（冇 agent 上報 — 單機向後兼容）
                 _agent_eas = [k for k in config if not k.startswith('_') and not k.endswith(('_tf','_lot','_magic','_status')) and isinstance(config[k], str)]
