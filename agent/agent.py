@@ -277,6 +277,34 @@ sio.on('registered', on_registered)
 
 
 # ================================================================
+#  警告視窗遠端接收（2026-09-03 — VPS 搬遷：server 喺 VPS — 唔可以寫本地 flag）
+#  Server SocketIO emit 'control_alert' → agent 收到 → 寫自己機 .ai_control.show/.steps
+#  → alert_worker（讀自己機 flag）彈窗 — alert_worker 完全唔使改
+# ================================================================
+@sio.on('control_alert')
+def on_control_alert(data):
+    """收到 server 嘅警告視窗推送 — 寫本地 flag（alert_worker 讀）"""
+    try:
+        _sig = str(data.get('sig') or '')
+        _steps = data.get('steps') if isinstance(data.get('steps'), list) else []
+        _agent_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+        os.makedirs(_agent_dir, exist_ok=True)
+        if _sig:
+            with open(os.path.join(_agent_dir, '.ai_control.show'), 'w', encoding='utf-8') as _f:
+                _f.write(_sig)
+            print(f"[ALERT] 警告視窗推送: {_sig}", flush=True)
+        if _steps:
+            with open(os.path.join(_agent_dir, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                json.dump(_steps, _f, ensure_ascii=False)
+        elif _steps == []:
+            # 空 steps（完成/清空）→ 寫 pending placeholder（alert_worker 顯示等待）
+            with open(os.path.join(_agent_dir, '.ai_control.steps'), 'w', encoding='utf-8') as _f:
+                json.dump([{'text': 'Waiting for operation...', 'status': 'pending'}], _f, ensure_ascii=False)
+    except Exception as _e_al:
+        print(f"[WARN] control_alert handler failed: {_e_al}", flush=True)
+
+
+# ================================================================
 #  MT5 Bridge — 重啟 + wait
 # ================================================================
 

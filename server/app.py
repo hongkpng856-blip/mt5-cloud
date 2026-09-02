@@ -166,6 +166,8 @@ def _write_ai_flags(sig, steps):
     """[ALERT] 2026-08-28 FIX（PC版 + 網頁版warning視窗要一致）：雙寫 show/steps flag
     開發dir（server 讀 — 網頁 modal）+ TradotcomAgent（alert_worker 讀 — PC版視窗）
     → 兩個位置都寫 → PC版 + 網頁版都見到 → 一致
+    [ALERT] 2026-09-03（VPS 搬遷）：server 喺 VPS — agent 喺 A/B 電腦 — 本地雙寫唔通
+    → 加 SocketIO emit（推俾 current_user 嘅 agent）— agent 收到寫自己機 flag → alert_worker 彈窗
     """
     _dirs = []
     # 1. 開發dir（agent/）
@@ -186,6 +188,24 @@ def _write_ai_flags(sig, steps):
                     json.dump(steps, _f, ensure_ascii=False)
         except Exception:
             pass
+    # [ALERT] 2026-09-03（VPS 搬遷）：SocketIO push 俾遠端 agent（agent 收到寫自己機 flag → alert_worker 彈）
+    try:
+        _tgt = None
+        try:
+            from flask_login import current_user as _cu
+            if _cu is not None and getattr(_cu, 'is_authenticated', False):
+                _a_q = Agent.query.filter_by(user_id=_cu.id).first()
+                if _a_q:
+                    _tgt = _a_q.agent_id
+        except Exception:
+            _tgt = None
+        if _tgt:
+            socketio.emit('control_alert', {'sig': sig or '', 'steps': steps if isinstance(steps, list) else []},
+                          room=_tgt)
+        else:
+            socketio.emit('control_alert', {'sig': sig or '', 'steps': steps if isinstance(steps, list) else []})
+    except Exception as _e_push:
+        print(f"[WARN] _write_ai_flags socketio push failed: {_e_push}", flush=True)
 
 
 @app.route('/api/control-steps', methods=['GET', 'POST'])
