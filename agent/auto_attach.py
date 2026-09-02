@@ -3993,6 +3993,36 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                 _hb_fresh = True
     except Exception:
         pass
+    # [ALERT] 2026-09-03 FIX（剷除冇 chart 都關 MT5 — 多餘 restart + fail）：
+    # 未 running（冇心跳）+ 冇熱鍵 → EA 根本冇掛 chart → 直接 done（唔使關 MT5 剷 .chr）
+    try:
+        import glob as _gl_hk
+        _hk_dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        _hk_found = bool(_gl_hk.glob(os.path.join(_hk_dir, f'hotkey_{ea_name}*')) or _gl_hk.glob(os.path.join(_hk_dir, f'*{ea_name}*hotkey*')))
+    except Exception:
+        _hk_found = False
+    if not _hb_fresh and not _hk_found:
+        # 檢查 MT5 log 最後狀態（有冇 loaded 過 + 最近 running）
+        _was_running = False
+        try:
+            import glob as _gl_lg
+            _tdir_lg = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+            for _d_lg in os.listdir(_tdir_lg):
+                _logd = os.path.join(_tdir_lg, _d_lg, 'Logs')
+                if os.path.isdir(_logd):
+                    _logs_lg = sorted(_gl_lg.glob(os.path.join(_logd, '*.log')), key=os.path.getmtime, reverse=True)
+                    if _logs_lg:
+                        _txt_lg = open(_logs_lg[0], 'rb').read().decode('utf-16-le', errors='ignore')
+                        _loaded = [l for l in _txt_lg.splitlines() if f'expert {ea_name} (' in l and 'loaded successfully' in l]
+                        _removed = [l for l in _txt_lg.splitlines() if f'expert {ea_name} (' in l and 'removed' in l]
+                        if _loaded and (not _removed or _loaded[-1].split('\t')[1] > _removed[-1].split('\t')[1]):
+                            _was_running = True
+                        break
+        except Exception:
+            pass
+        if not _was_running:
+            print(f"[OK] {ea_name} 未運行（冇心跳/熱鍵/log 最後唔係 running）— 唔使剷 chart，直接 done")
+            return True
 
     # 1. 關 MT5（WM_CLOSE 正常關閉 — save .chr）
     try:
