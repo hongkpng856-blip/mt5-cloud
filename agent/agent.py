@@ -1156,9 +1156,8 @@ def download_and_install(ea_name, url, ea_config=None):
         print(f"[FAIL] Install error: {e}")
         sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
     finally:
-        # release install lock（唔係就永遠 lock 住）
+        # release install lock（唔係就永遠 lock 住）— _install_in_progress 開頭已 global 宣告
         try:
-            global _install_in_progress
             _b_rel = str(ea_name).replace('.mq5', '')
             if '_install_in_progress' in globals() and _b_rel in _install_in_progress:
                 _install_in_progress.discard(_b_rel)
