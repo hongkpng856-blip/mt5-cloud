@@ -893,9 +893,23 @@ def download_and_install(ea_name, url, ea_config=None):
     except Exception:
         pass
     # [ALERT] 2026-09-03 FIX（emit + poll 雙重觸發）：去重 — 5 秒內同一 EA 唔重複安裝
+    # [ALERT] 2026-09-03 FIX v2（race condition — 兩個 install 同時行 → 兩個 MetaEditor → compile 雙雙失敗）：
+    # → thread lock + _install_in_progress set（EA 裝緊 → skip — 唔淨靠時間 check）
+    global _install_lock_ea, _install_in_progress
+    if '_install_lock_ea' not in globals():
+        import threading as _thr_ea
+        _install_lock_ea = _thr_ea.Lock()
+        _install_in_progress = set()
     try:
         _b_dedup = str(ea_name).replace('.mq5', '')
-        global _last_install_ea
+        with _install_lock_ea:
+            if _b_dedup in _install_in_progress:
+                print(f"[SKIP] Install {_b_dedup} 已執行緊（thread lock 去重）", flush=True)
+                return
+            _install_in_progress.add(_b_dedup)
+    except Exception:
+        pass
+    try:
         _now_dd = time.time()
         if '_last_install_ea' in globals() and _last_install_ea.get('ea') == _b_dedup and _now_dd - _last_install_ea.get('t', 0) < 5:
             print(f"[SKIP] Install {_b_dedup} 已執行（去重）", flush=True)
@@ -1141,6 +1155,15 @@ def download_and_install(ea_name, url, ea_config=None):
     except Exception as e:
         print(f"[FAIL] Install error: {e}")
         sio.emit('install_result', {"status": "error", "ea": ea_name, "msg": str(e)})
+    finally:
+        # release install lock（唔係就永遠 lock 住）
+        try:
+            global _install_in_progress
+            _b_rel = str(ea_name).replace('.mq5', '')
+            if '_install_in_progress' in globals() and _b_rel in _install_in_progress:
+                _install_in_progress.discard(_b_rel)
+        except Exception:
+            pass
 
 
 # ================================================================
