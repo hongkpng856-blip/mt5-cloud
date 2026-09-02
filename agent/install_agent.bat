@@ -123,8 +123,8 @@ echo [步驟 5/6] 設定伺服器與 Agent
 echo.
 echo 請登入你嘅 Tradotcom 網站，撳 Agent 卡「Agent 安裝」睇你嘅 Agent ID 同 Token
 echo.
-set /p SERVER_URL="平台網址 (Enter=預設 https://mt5cloud.esgov.org): "
-if "%SERVER_URL%"=="" set SERVER_URL=https://mt5cloud.esgov.org
+set /p SERVER_URL="平台網址 (Enter=預設 https://tradotcom.com): "
+if "%SERVER_URL%"=="" set SERVER_URL=https://tradotcom.com
 echo.
 set /p AGENT_ID="Agent ID (例如: A1B2C3D4): "
 if "%AGENT_ID%"=="" (

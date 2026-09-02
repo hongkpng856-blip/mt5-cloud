@@ -109,7 +109,7 @@ except Exception as _e_mt5:
         pass
     _sys0.exit(2)
 
-SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://mt5cloud.esgov.org')
+SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://tradotcom.com')
 AGENT_ID = os.environ.get('MT5_CLOUD_AGENT', 'DEV00001')
 AGENT_TOKEN = os.environ.get('MT5_CLOUD_TOKEN', '')
 _alog_write(f"init: import OK, MT5={mt5_available if 'mt5_available' in dir() else '?'}")
@@ -193,6 +193,7 @@ _popup_shown = False  # [ALERT] 2026-08-27：success彈窗只彈一次
 _deals_cache = None  # [ALERT] 2026-08-27：deals 攞取 cache（60 秒）— 唔好每次 sync 攞全部（卡 → disconnect）
 _deals_cache_ts = 0
 _last_deals_sent = 0  # [ALERT] 2026-08-27：deals 傳送間隔（60 秒）— 減輕 sync payload
+_last_trades_raw_sent = 0  # [ALERT] 2026-09-02：trades_raw 傳送間隔（60 秒）— 減輕 sync payload（VPS balance 斷線 fix）
 
 def _show_status_popup(title, msg, ok):
     """[ALERT] 2026-08-26（安裝驗證）：tkinter 彈窗 — Agent startconnectionsuccess/failed顯示
@@ -1700,9 +1701,22 @@ def sync_loop():
                     _last_deals_sent = time.time()
                 else:
                     data.pop('deals', None)  # 輕量 sync（唔帶 deals）
+                # [ALERT] 2026-09-02 FIX（VPS balance 未顯示 — agent 每幾秒斷線）：trades_raw 太大（500 筆×4 EA ≈ 400KB）→ 每 10 秒帶 → socket 斷
+                # → trades_raw 都只每 60 秒帶一次（輕量 sync 唔帶 trades_raw）
+                global _last_trades_raw_sent
+                if time.time() - _last_trades_raw_sent > 60:
+                    _last_trades_raw_sent = time.time()
+                    # 帶 trades_raw（原有）
+                else:
+                    data.pop('trades_raw', None)  # 輕量 sync（唔帶 trades_raw）
+                    if 'files_snapshot' in data and isinstance(data['files_snapshot'], dict):
+                        data['files_snapshot'].pop('trades_raw', None)
                 try:
                     sio.emit('agent_sync', data)
                     last_sync = now
+                    # [ALERT] 2026-09-02 DEBUG（VPS balance 未顯示）：print sync 有冇行
+                    print(f"[SYNC] sent: account={data.get('account',{}).get('balance')} hb={len(data.get('heartbeats',{}))} files_snap={bool(data.get('files_snapshot'))}")
+                    sys.stdout.flush()
                 except Exception as _e_sync_emit:
                     print(f"   [SYNC-EMIT] {_e_sync_emit} → force reconnect")
                     sys.stdout.flush()
