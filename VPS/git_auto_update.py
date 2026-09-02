@@ -73,16 +73,19 @@ def restart_server():
     """Kill old server + start from repo folder"""
     log('restarting server...')
     # kill python running app.py (not self - this is git_watch.py)
-    r = run(['wmic', 'process', 'where', "name='python.exe'", 'get', 'ProcessId,CommandLine', '/format:csv'],
-            shell=True, timeout=30)
-    for line in (r.stdout or '').splitlines():
-        if 'app.py' in line and 'git_watch' not in line and 'vps_' not in line:
-            parts = [p.strip() for p in line.split(',')]
-            for p in parts:
-                if p.isdigit():
-                    subprocess.run('taskkill /PID %s /F' % p, shell=True,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    log('   killed PID %s' % p)
+    try:
+        r = subprocess.run(['wmic', 'process', 'where', "name='python.exe'", 'get', 'ProcessId,CommandLine', '/format:csv'],
+                           capture_output=True, text=True, timeout=30)
+        for line in (r.stdout or '').splitlines():
+            if 'app.py' in line and 'git_watch' not in line and 'git_auto_update' not in line and 'vps_' not in line:
+                parts = [p.strip() for p in line.split(',')]
+                for p in parts:
+                    if p.isdigit():
+                        subprocess.run('taskkill /PID %s /F' % p, shell=True,
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        log('   killed PID %s' % p)
+    except Exception as e:
+        log('   kill error (continue): %s' % e)
     time.sleep(3)
     # start new server from repo
     py = find_python()
@@ -101,12 +104,28 @@ def restart_server():
     except Exception as e:
         log('   verify website FAILED: %s' % e)
 
+def self_restart():
+    """Restart THIS watcher with fresh code (pulled) - spawn new process, exit self.
+    Critical: running process uses old code in memory; must respawn to pick up fixes."""
+    log('restarting watcher with fresh code...')
+    py = find_python()
+    CREATE_NEW_CONSOLE = 0x00000010
+    subprocess.Popen([py, os.path.abspath(__file__)], cwd=os.path.dirname(os.path.abspath(__file__)),
+                     creationflags=CREATE_NEW_CONSOLE)
+    log('   new watcher spawned')
+    os._exit(0)
+
 def main():
     log('=' * 50)
     log('Git Auto-Update Watcher STARTED (check every %ds)' % CHECK_INTERVAL)
     log('Repo: ' + REPO)
     log('Current: ' + str(git_current()))
     log('=' * 50)
+    # [ALERT] 2026-09-02 FIX：啟動時 restart server 一次（self_restart 後新 watcher 用新 code 重啟 server）
+    # → 確保 server 永遠用最新 code（唔會舊 code 運行）
+    time.sleep(2)
+    log('startup: restarting server with current code...')
+    restart_server()
     last_local = git_current()
     while True:
         try:
@@ -118,10 +137,11 @@ def main():
             if remote != local:
                 log('NEW commit detected: %s -> %s' % (str(local)[:8], str(remote)[:8]))
                 if git_pull():
-                    restart_server()
-                    last_local = git_current()
-                    log('updated to: ' + str(last_local)[:8])
-            # else: no change
+                    # [ALERT] 2026-09-02 FIX：pull 完先重啟自己（新 code 喺 memory 未 load）
+                    # → 新 watcher 用新 code 再 restart server（唔會用舊 code crash）
+                    self_restart()
+                    return
+                # pull failed - keep watching
         except Exception as e:
             log('watch error: %s' % e)
             time.sleep(30)
