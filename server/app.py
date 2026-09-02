@@ -3994,8 +3994,11 @@ def handle_register(data):
         # agent 每 60 秒 reconnect → 每次 reconnect 都過咗 60 秒 debounce → 每次 auto-sent EA config
         # → agent 心跳注入 touch .mq5 → watcher 偵測變化 → refresh Navigator + 開 MT5
         # → debounce 加長（60 → 300 秒）— 就算 agent 每 60 秒 reconnect 都唔會每次 auto-sent
+        # [ALERT] 2026-09-03 FIX（VPS 搬遷 — 配對假成功 root cause）：
+        # auto-send bulk install（ea_name=all）同用戶手動配對（install-local 單獨）撞 → compile 衝突 → 假成功
+        # → 停用 bulk auto-send（配對/安裝全部由 install-local 單獨發 — 有 deploy_queue fallback — 唔需要註冊 auto-send）
         user = agent.user
-        if user and user.ea_config and user.ea_config != '{}':
+        if user and False:  # 2026-09-03：停用 auto-send bulk install（同手動配對撞）
             try:
                 import time as _t
                 now = _t.time()
