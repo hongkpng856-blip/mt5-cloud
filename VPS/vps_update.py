@@ -108,12 +108,13 @@ if not python_path:
     log('       [ERROR] Cannot find python.exe!')
     sys.exit(1)
 log('       Python: ' + python_path)
-# [ALERT] 2026-09-02 FIX v2：cmd start 喺 VPS 啟動失敗（connection refused）→ 用 PowerShell Start-Process（更可靠）
-ps_cmd = ('Start-Process -FilePath "%s" -ArgumentList "server\\app.py" '
-          '-WorkingDirectory "%s" -WindowStyle Minimized '
-          '-Environment @{RENDER="1"; PORT="80"}' % (python_path, TARGET))
-subprocess.Popen(['powershell', '-NoProfile', '-Command', ps_cmd],
-                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+# [ALERT] 2026-09-02 FIX v3：PowerShell -Environment 參數喺 PS 5.1 唔支援（VPS = Win2012）→ 直接用 Python Popen（唔經 cmd/powershell）
+_env_srv = dict(os.environ)
+_env_srv['RENDER'] = '1'
+_env_srv['PORT'] = '80'
+CREATE_NEW_CONSOLE = 0x00000010
+subprocess.Popen([python_path, 'server', 'app.py'], cwd=TARGET, env=_env_srv,
+                 creationflags=CREATE_NEW_CONSOLE)
 time.sleep(10)
 log('       OK')
 
