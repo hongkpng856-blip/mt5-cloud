@@ -1913,7 +1913,7 @@ async function pollAiControl() {
                     for (var i = 0; i < steps.length; i++) {
                         var s = steps[i], st = s.status || 'pending', txt = s.text || '';
                         var mk, cl;
-                        if (txt.indexOf('失敗') >= 0) { mk = '失敗'; cl = '#f87171'; hasFail = true; }
+                        if (txt.indexOf('失敗') >= 0 || txt.toLowerCase().indexOf('failed') >= 0) { mk = '失敗'; cl = '#f87171'; hasFail = true; }
                         else if (st === 'doing') { mk = '進行中'; cl = '#fbbf24'; hasDoing = true; }
                         else if (st === 'done') { mk = '完成'; cl = '#0ecb81'; }
                         else { mk = '等待'; cl = '#71717a'; }
@@ -2666,8 +2666,9 @@ function confirmOk() {
         </div>
         <div id="confirmDetails" style="font-size:13px;line-height:1.7;color:var(--text);background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin-bottom:20px"></div>
         <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button class="btn" onclick="closeConfirm()" style="padding:6px 16px;font-size:12px">取消</button>
+            <!-- [ALERT] 2026-09-03（用戶要求）：確定喺左邊，取消喺右邊 -->
             <button class="btn btn-green" onclick="confirmOk()" style="padding:6px 16px;font-size:12px"><i class="icon-check-circle" style="font-size:12px"></i> 確定</button>
+            <button class="btn" onclick="closeConfirm()" style="padding:6px 16px;font-size:12px">取消</button>
         </div>
     </div>
 </div>

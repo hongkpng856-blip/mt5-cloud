@@ -4512,21 +4512,49 @@ def api_clean_blank_charts():
         return jsonify({"error": "login required"}), 401
     try:
         import time as _wt_clean
-        common_files = os.path.join(os.environ.get('APPDATA', ''),
-                                     'MetaQuotes', 'Terminal', 'Common', 'Files')
-        os.makedirs(common_files, exist_ok=True)
-        # 寫 clean_cmd（watcher 處理）
-        cmd_path = os.path.join(common_files, f'clean_cmd_{int(_wt_clean.time())}.json')
-        _fp_account = current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'
-        with open(cmd_path, 'w') as f:
-            json.dump({
+        # [ALERT] 2026-09-03（VPS 搬遷 — 方案2）：clean blank = server 發指令 → agent 喺自己機執行
+        # （server（VPS）寫 clean_cmd 去自己 Common/Files — 冇 watcher 讀 → 失靈）
+        _agt_cl = Agent.query.filter_by(user_id=current_user.id).first()
+        _agent_online_cl = bool(_agt_cl and _agt_cl.status == 'connected')
+        if _agent_online_cl:
+            # 發指令俾 agent（喺自己機寫 clean_cmd → watcher 執行）
+            socketio.emit('clean_blank_command', {
                 'action': 'clean_blank',
                 'timestamp': _wt_clean.strftime('%Y-%m-%dT%H:%M:%S'),
                 'source': 'api_clean',
-                'fingerprint': {'account': _fp_account},
-                'account': f'account:{_fp_account}',
-            }, f)
-        print(f"[API] Clean blank charts command written: {os.path.basename(cmd_path)}")
+                'account': f'account:{current_user.username}',
+            }, room=_agt_cl.agent_id)
+            print(f"[clean-blank] [REMOTE] clean_blank_command sent to agent {_agt_cl.agent_id}", flush=True)
+            # deploy_queue fallback（agent poll 攞到）
+            try:
+                _agt_cl2 = Agent.query.filter_by(user_id=current_user.id).first()
+                if _agt_cl2:
+                    _agt_cl2.deploy_queue = json.dumps({
+                        'action': 'clean_blank',
+                        'timestamp': _wt_clean.strftime('%Y-%m-%dT%H:%M:%S'),
+                        'source': 'api_clean',
+                        'account': f'account:{current_user.username}',
+                    })
+                    db.session.commit()
+                    print(f"[clean-blank] [REMOTE] deploy_queue fallback 已寫", flush=True)
+            except Exception as _eclq:
+                print(f"[clean-blank] deploy_queue fallback failed: {_eclq}", flush=True)
+        else:
+            # 本機模式（fallback — server 自己寫 clean_cmd）
+            common_files = os.path.join(os.environ.get('APPDATA', ''),
+                                         'MetaQuotes', 'Terminal', 'Common', 'Files')
+            os.makedirs(common_files, exist_ok=True)
+            cmd_path = os.path.join(common_files, f'clean_cmd_{int(_wt_clean.time())}.json')
+            _fp_account = current_user.username if (current_user and not current_user.is_anonymous) else 'unknown'
+            with open(cmd_path, 'w') as f:
+                json.dump({
+                    'action': 'clean_blank',
+                    'timestamp': _wt_clean.strftime('%Y-%m-%dT%H:%M:%S'),
+                    'source': 'api_clean',
+                    'fingerprint': {'account': _fp_account},
+                    'account': f'account:{_fp_account}',
+                }, f)
+            print(f"[API] Clean blank charts command written: {os.path.basename(cmd_path)}")
         log_activity('clean', '清空白冇 EA 嘅 chart（Clean blank charts）', ea='MT5')
         # 警告視窗（.ai_control.show + steps — alert_worker + 網頁 modal 同步）
         # [ALERT] 2026-09-01 FIX（user實測：警告視窗唔彈 — server 寫開發目錄但 alert_worker 讀安裝目錄）：

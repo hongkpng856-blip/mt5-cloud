@@ -1149,6 +1149,32 @@ def on_deploy_ea(data):
 #  EA 剷除（遠端 — 2026-09-03 VPS 搬遷）
 #  Server 發 ea_remove_command → agent 喺自己機刪檔案 + 寫 pause_cmd（watcher remove chart EA）
 # ================================================================
+@sio.on('clean_blank_command')
+def on_clean_blank(data):
+    """收到 server 清理空白圖表指令 — 喺自己機寫 clean_cmd（watcher 讀 → 執行）"""
+    try:
+        print(f"[GO] [WS] Clean blank charts command（遠端）", flush=True)
+        _alog_write("[WS] 收到 clean_blank_command（遠端清理空白圖表）")
+        # 喺自己機 Common/Files 寫 clean_cmd（watcher 讀到 → 執行 auto_attach --clean-blank）
+        _cf_dir_cl = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal', 'Common', 'Files')
+        try:
+            os.makedirs(_cf_dir_cl, exist_ok=True)
+        except Exception:
+            pass
+        _cmd_p_cl = os.path.join(_cf_dir_cl, f'clean_cmd_{int(time.time())}.json')
+        with open(_cmd_p_cl, 'w', encoding='utf-8') as _f_cl2:
+            json.dump({
+                'action': 'clean_blank',
+                'timestamp': (data or {}).get('timestamp', time.strftime('%Y-%m-%dT%H:%M:%S')),
+                'source': 'api_clean',
+                'account': (data or {}).get('account', ''),
+            }, _f_cl2, ensure_ascii=False)
+        print(f"[OK] clean_cmd 已寫（自己機 watcher 執行）: {os.path.basename(_cmd_p_cl)}", flush=True)
+        _alog_write(f"[WS] clean_cmd 已寫: {os.path.basename(_cmd_p_cl)}")
+    except Exception as e:
+        print(f"[WARN] clean_blank handler error: {e}", flush=True)
+
+
 @sio.on('ea_remove_command')
 def on_ea_remove(data):
     """收到 server 剷除 EA 指令 — 刪自己機 Experts/Scripts 檔案 + 寫 pause_cmd"""
@@ -1885,8 +1911,18 @@ def sync_loop():
                         _alog_write("[POLL] remove agent（server 標記 fallback）")
                         on_shutdown({'reason': 'web_remove_poll'})
                         break
-                    if _dq.get('ea_name'):
+                    if _dq.get('ea_name') or _dq.get('action'):
                         _ddq = _dq
+                        # [ALERT] 2026-09-03（VPS 搬遷）：poll 讀到 clean_blank 指令（emit 收唔到 fallback）
+                        if _ddq.get('action') == 'clean_blank':
+                            print(f"[IN] [POLL] 讀到 clean_blank（emit 收唔到 fallback）")
+                            sys.stdout.flush()
+                            _alog_write("[POLL] clean_blank fallback")
+                            try:
+                                on_clean_blank(_ddq)
+                            except Exception as _e_cl_poll:
+                                print(f"[WARN] on_clean_blank poll failed: {_e_cl_poll}", flush=True)
+                            continue
                         # [ALERT] 2026-09-03（VPS 搬遷）：poll 讀到 install_ea 指令（emit 收唔到 fallback）
                         if _ddq.get('action') == 'install_ea':
                             print(f"[IN] [POLL] 讀到 install_ea: {_ddq.get('ea_name')}（emit 收唔到 fallback）")
