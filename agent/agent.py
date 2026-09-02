@@ -1831,8 +1831,26 @@ def sync_loop():
                 try:
                     _fs_snap = build_files_snapshot()
                     # [ALERT] 2026-09-03：symbols 加入 snapshot（get_mt5_status 有攞 — 一齊上報 server 做 dropdown）
+                    # [ALERT] 2026-09-03 FIX：過濾 — 只留 FX/金屬/指數（唔要 12397 股票 — dropdown 唔會爆）
                     if data.get('symbols'):
-                        _fs_snap['symbols'] = data.get('symbols')
+                        _syms_all = data.get('symbols')
+                        _syms_filt = []
+                        for _s_sy in _syms_all:
+                            try:
+                                _s_up = str(_s_sy).upper()
+                                # FX（6位 XXXYYY — 尾係主要貨幣）
+                                _fx_maj = ('USD','EUR','GBP','JPY','CHF','AUD','NZD','CAD')
+                                _is_fx = len(_s_up) == 6 and _s_up[:3].isalpha() and _s_up[3:].isalpha() and _s_up[3:] in _fx_maj
+                                # 金屬（XAU/XAG/XPT/XPD 開頭）
+                                _is_met = _s_up.startswith(('XAU','XAG','XPT','XPD'))
+                                # 指數（常見）
+                                _is_idx = _s_up.startswith(('US30','US100','US500','NAS100','SPX500','DAX40','GER40','UK100','JP225','HK50','AUS200','EU50','CAC40','ES35','IBEX35','FTSE100','US30M','US500M'))
+                                if _is_fx or _is_met or _is_idx:
+                                    _syms_filt.append(_s_sy)
+                            except Exception:
+                                pass
+                        _fs_snap['symbols'] = sorted(_syms_filt)
+                        print(f"[SNAP] symbols filtered: {len(_syms_all)} → {len(_syms_filt)} (FX/metal/index)", flush=True)
                     data['files_snapshot'] = _fs_snap
                 except Exception as _e_snap:
                     print(f'   [SNAP] Error: {_e_snap}')
