@@ -1032,10 +1032,10 @@ def download_and_install(ea_name, url, ea_config=None):
                     time.sleep(3)  # [ALERT] 2026-09-03：等 process 完全釋放（1.5s 唔夠 — MetaEditor 未死透 → 新 instance 卡）
 
                     try:
-                        # [ALERT] 2026-09-03 FIX（compile 卡死 v2）：唔好用 subprocess.run（等 MetaEditor 退出 — 但 GUI 唔會退出 → 等 120s timeout）
-                        # → 用 Popen（唔等退出）+ 輪詢 .ex5 出現（compile 完成 = .ex5 生成 — 快 + 唔卡）
+                        # [ALERT] 2026-09-03 FIX（compile 卡死 v3 — 真正 root cause）：
+                        # MetaEditor CLI 要用「/compile:path」冒號格式（/compile path 分開 → 唔識處理 → 卡住唔 compile → 60s timeout 假失敗）
                         _p_me = subprocess.Popen([
-                            metaeditor, '/compile', mq5_path,
+                            metaeditor, f'/compile:{mq5_path}',
                             f'/log:{log_file}'
                         ])
                         # 輪詢 .ex5（最多 60 秒 — 每 2 秒 check）
