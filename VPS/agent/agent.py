@@ -109,7 +109,7 @@ except Exception as _e_mt5:
         pass
     _sys0.exit(2)
 
-SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://mt5cloud.esgov.org')
+SERVER_URL = os.environ.get('MT5_CLOUD_URL', 'https://tradotcom.com')
 AGENT_ID = os.environ.get('MT5_CLOUD_AGENT', 'DEV00001')
 AGENT_TOKEN = os.environ.get('MT5_CLOUD_TOKEN', '')
 _alog_write(f"init: import OK, MT5={mt5_available if 'mt5_available' in dir() else '?'}")

