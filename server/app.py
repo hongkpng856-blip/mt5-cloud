@@ -2130,18 +2130,31 @@ def api_ea_library():
     # [ALERT] 2026-08-19 FIX：加 local_has — server 直接 check local MT5 Experts/ 有冇 <base>.ex5
     # before前端靠 detector ea_inventory.json（延遲）→ 配對後「local冇file」殘留，要 refresh 先啱
     # 呢度直接 filesystem check → 配對done後即時準確
+    # [ALERT] 2026-09-03（VPS 搬遷 — 方案2）：server（VPS）冇 MT5 — 改讀 agent 上報嘅 files_snapshot.local_eas
     local_bases = set()
-    _mt5dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
     try:
-        for _td in os.listdir(_mt5dir) if os.path.isdir(_mt5dir) else []:
-            for _sub in ('MQL5\\Experts', 'MQL5\\Scripts'):
-                _d = os.path.join(_mt5dir, _td, *_sub.split('\\'))
-                if os.path.isdir(_d):
-                    for _fn in os.listdir(_d):
-                        if _fn.endswith('.ex5'):
-                            local_bases.add(os.path.splitext(_fn)[0])
+        if current_user.is_authenticated:
+            _agt_lib = Agent.query.filter_by(user_id=current_user.id).first()
+            if _agt_lib and _agt_lib.files_snapshot:
+                _snap_lib = json.loads(_agt_lib.files_snapshot)
+                _le_lib = _snap_lib.get('local_eas', [])
+                if isinstance(_le_lib, list):
+                    local_bases = set(_le_lib)
     except Exception:
         pass
+    # fallback：如果冇 agent snapshot（本機模式 — server 有 MT5）→ 直接 filesystem
+    if not local_bases:
+        _mt5dir = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+        try:
+            for _td in os.listdir(_mt5dir) if os.path.isdir(_mt5dir) else []:
+                for _sub in ('MQL5\\Experts', 'MQL5\\Scripts'):
+                    _d = os.path.join(_mt5dir, _td, *_sub.split('\\'))
+                    if os.path.isdir(_d):
+                        for _fn in os.listdir(_d):
+                            if _fn.endswith('.ex5'):
+                                local_bases.add(os.path.splitext(_fn)[0])
+        except Exception:
+            pass
     files = []
     # 平台提供嘅 EA
     if os.path.isdir(EA_LIBRARY_DIR):

@@ -1661,6 +1661,24 @@ def build_files_snapshot():
                     break
     except Exception:
         pass
+    # 5. local_eas（Experts/Scripts 根 .mq5/.ex5 — 2026-09-03 VPS 搬遷：server 讀呢個做配對庫「本機有冇」判斷）
+    try:
+        _le = []
+        if os.path.isdir(terminal_dir):
+            for _d_le in os.listdir(terminal_dir):
+                for _root_le in ('Experts', 'Scripts'):
+                    _dir_le = os.path.join(terminal_dir, _d_le, 'MQL5', _root_le)
+                    if not os.path.isdir(_dir_le):
+                        continue
+                    for _f_le in os.listdir(_dir_le):
+                        if _f_le.endswith(('.mq5', '.ex5')):
+                            _b_le = os.path.splitext(_f_le)[0]
+                            if _b_le not in _le:
+                                _le.append(_b_le)
+                break  # 只掃第一個 terminal data folder
+        snap['local_eas'] = sorted(_le)
+    except Exception:
+        snap['local_eas'] = []
     return snap
 
 
