@@ -244,7 +244,31 @@ def on_registered(data):
     _alog_write(f"Registered: {str(data)[:100]}")
     # [ALERT] 2026-08-26（安裝驗證）：註冊failed（token 錯等）→ 紅色彈窗
     if isinstance(data, dict) and data.get('status') == 'error':
-        _show_status_popup("[FAIL] Agent connectionfailed", f"伺服器refused註冊：{data.get('msg', 'token 可能唔啱')}\n\n請檢查 Agent ID 同 Token 是否正確", False)
+        _msg = str(data.get('msg', 'token 可能唔啱'))
+        # [ALERT] 2026-09-02 FIX（B 電腦 fef654c3 情況）：agent 唔存在（剷除/錯 ID）→ 自動清 config + 退出
+        # → 下次開 launcher 彈安裝精靈（用戶重新填正確 ID）— 唔好留舊 config 一直用錯身份
+        if 'unknown_agent' in _msg:
+            print("[FAIL] Agent 唔存在（可能已被剷除或 ID 錯）→ 自動清 config + 退出")
+            _alog_write("[FAIL] Agent 唔存在 → 自動清 config + 退出（下次開 launcher 重新安裝）")
+            try:
+                _agent_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+                _cfg_f = os.path.join(_agent_dir, 'agent_config.json')
+                if os.path.isfile(_cfg_f):
+                    os.remove(_cfg_f)
+                    print("   [OK] agent_config.json 已刪（重新安裝模式）")
+                _lock_f = os.path.join(_agent_dir, 'agent.lock')
+                if os.path.isfile(_lock_f):
+                    os.remove(_lock_f)
+            except Exception as _e_clr:
+                print(f"   [WARN] 清理 failed: {_e_clr}")
+            _show_status_popup("[FAIL] Agent 已失效", f"Agent ID 喺伺服器已不存在（可能已被剷除或輸入錯誤）\n\nConfig 已清除 — 請重新開啟安裝程式\n（輸入網頁 Agent 卡顯示嘅正確 Agent ID 同 Token）", False)
+            # 退出（等 launcher 下次彈精靈）
+            try:
+                os._exit(1)
+            except Exception:
+                pass
+        else:
+            _show_status_popup("[FAIL] Agent connectionfailed", f"伺服器refused註冊：{_msg}\n\n請檢查 Agent ID 同 Token 是否正確", False)
     # Server auto-pushes install_ea_command on register
 
 sio.on('connect', connect)

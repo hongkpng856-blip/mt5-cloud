@@ -3752,6 +3752,12 @@ _last_config_send = {}
 @socketio.on('agent_register')
 def handle_register(data):
     agent = Agent.query.filter_by(agent_id=data.get('agent_id')).first()
+    if not agent:
+        # [ALERT] 2026-09-02 FIX（B 電腦 fef654c3 情況）：agent 唔存在（剷除咗/從未註冊/錯 ID）
+        # → 明確回覆 error — agent 收到後會清 config + 彈安裝精靈（唔好靜默 — 用戶以為裝咗）
+        print(f"[WS] [WARN] Agent {data.get('agent_id')} 唔存在（refusedconnection）")
+        emit('registered', {"status": "error", "msg": "unknown_agent"})
+        return
     if agent:
         # [ALERT] 2026-08-26（Phase 4）：Token 驗證 — 防冒認（agent 有 token 先驗證；DEV00001 舊版冇 token → 放行向後兼容）
         _tk_in = str(data.get('token') or '')
