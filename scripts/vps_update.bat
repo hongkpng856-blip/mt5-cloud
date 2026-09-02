@@ -35,7 +35,11 @@ set "BASE=%BASE:~0,-1%"
 set "TARGET=%BASE%\runtime"
 
 :: ========== 0. Find latest server-code-deploy-*.zip (in VPS folder) ==========
-for /f "delims=" %%z in ('powershell -NoProfile -Command "Get-ChildItem -Path '%BASE%' -Filter 'server-code-deploy-*.zip' | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName"') do set "ZIP=%%z"
+:: (dir /b /o-d = newest first — no pipe inside for/f to avoid cmd parsing issues)
+set "ZIP="
+for /f "delims=" %%z in ('dir /b /o-d "%BASE%\server-code-deploy-*.zip" 2^>nul') do (
+    if not defined ZIP set "ZIP=%BASE%\%%z"
+)
 if not defined ZIP (
     echo [ERROR] Cannot find server-code-deploy-*.zip in %BASE%
     echo Please put server-code-deploy-YYYYMMDD-HHMM.zip in the VPS folder
@@ -74,7 +78,8 @@ echo       OK
 
 :: ========== 3. Stop old server ==========
 echo [3/5] Stopping old server...
-powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+:: (taskkill python — kill all python processes = old server. no pipes at all)
+taskkill /IM python.exe /F >nul 2>&1
 timeout /t 3 /nobreak >nul
 echo       OK
 
