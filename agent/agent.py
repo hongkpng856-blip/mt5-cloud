@@ -846,16 +846,30 @@ def on_install_ea(data):
         print(f"[IN] Bulk install: {len(ea_list)} EAs (background)")
         sys.stdout.flush()
         import threading
-        def _do_install():
+        def _do_install_all():
             for name in ea_list:
                 download_and_install(name + '.mq5', url + name + '.mq5', ea_config)
-        t = threading.Thread(target=_do_install, daemon=True)
+        t = threading.Thread(target=_do_install_all, daemon=True)
         t.start()
         return
 
     print(f"[IN] Installing EA: {ea_name}")
     sys.stdout.flush()
-    download_and_install(ea_name + '.mq5', url + ea_name + '.mq5', ea_config)
+    # [ALERT] 2026-09-03 FIX（compile 假失敗 — socket 斷線中斷 install）：
+    # download_and_install 直接喺 SocketIO handler thread 行 — 斷線（agent 每 ~30-60s disconnect）→
+    # handler thread 被殺 → compile 未執行 → 假失敗
+    # → 改 background daemon thread（唔受 socket 斷線影響 — 同 bulk install 一致）
+    import threading
+    _ea_n = ea_name
+    _url_n = url
+    _cfg_n = ea_config
+    def _do_install_one():
+        try:
+            download_and_install(_ea_n + '.mq5', _url_n + _ea_n + '.mq5', _cfg_n)
+        except Exception as _e_ins1:
+            print(f"[FAIL] install thread error: {_e_ins1}", flush=True)
+    t = threading.Thread(target=_do_install_one, daemon=True)
+    t.start()
 
 
 # ================================================================
