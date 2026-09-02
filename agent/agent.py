@@ -864,6 +864,20 @@ def on_install_ea(data):
 
 def download_and_install(ea_name, url, ea_config=None):
     """完整安裝流程：download → heartbeat inject → compile → preset → auto-attach"""
+    # [ALERT] 2026-09-03 FIX（download 斷線 → compile 假失敗）：download URL 用域名（tradotcom.com — 經 CF）慢/斷
+    # → agent 用自己連緊嘅 SERVER_URL（直連 IP 116.206.150.233 — 快/穩定）
+    try:
+        if url and 'tradotcom.com' in url and SERVER_URL and 'tradotcom.com' not in SERVER_URL:
+            # 將域名部分換成 agent 自己嘅 SERVER_URL（保留路徑）
+            import urllib.parse as _up_dl
+            _parsed_dl = _up_dl.urlparse(url)
+            _new_url_dl = SERVER_URL + _parsed_dl.path
+            if _parsed_dl.query:
+                _new_url_dl += '?' + _parsed_dl.query
+            print(f"   [URL] 域名→直連: {url} → {_new_url_dl}")
+            url = _new_url_dl
+    except Exception:
+        pass
     # [ALERT] 2026-09-03 FIX（emit + poll 雙重觸發）：去重 — 5 秒內同一 EA 唔重複安裝
     try:
         _b_dedup = str(ea_name).replace('.mq5', '')
