@@ -7,33 +7,42 @@ echo   Date: %date% %time%
 echo ============================================
 echo.
 
-:: ========== 0. Find latest server-code-deploy-*.zip ==========
-set "TARGET=C:\Users\Administrator\Desktop\server-code-deploy"
+:: ============================================================
+::  All locations in one place: C:\Users\Administrator\Desktop\VPS
+::    VPS\server-code-deploy-*.zip   <- new code package (copy here)
+::    VPS\vps_update.bat             <- this script (double-click)
+::    VPS\runtime\                   <- server extracted + running here
+:: ============================================================
 
-for /f "delims=" %%z in ('powershell -NoProfile -Command "$d=@('C:\Users\Administrator\Desktop','C:\Users\Administrator\Desktop\VPS','C:\Users\Administrator\Desktop\mt5-cloud'); $f=@(); foreach($x in $d){ if(Test-Path $x){ $f+=Get-ChildItem (Join-Path $x 'server-code-deploy-*.zip') -ErrorAction SilentlyContinue } }; $f | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName"') do set "ZIP=%%z"
+set "BASE=C:\Users\Administrator\Desktop\VPS"
+set "TARGET=%BASE%\runtime"
+
+:: ========== 0. Find latest server-code-deploy-*.zip (in VPS folder) ==========
+for /f "delims=" %%z in ('powershell -NoProfile -Command "Get-ChildItem -Path '%BASE%' -Filter 'server-code-deploy-*.zip' | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName"') do set "ZIP=%%z"
 if not defined ZIP (
-    echo [ERROR] Cannot find server-code-deploy-*.zip
-    echo Please put server-code-deploy-YYYYMMDD-HHMM.zip on Desktop or VPS folder
+    echo [ERROR] Cannot find server-code-deploy-*.zip in %BASE%
+    echo Please put server-code-deploy-YYYYMMDD-HHMM.zip in the VPS folder
     pause
     exit /b 1
 )
 echo Using zip: %ZIP%
+echo.
 
-:: ========== 1. Backup DB + remove old folder ==========
-echo [1/5] Backup DB + remove old folder...
+:: ========== 1. Backup DB + remove old runtime ==========
+echo [1/5] Backup DB + remove old runtime...
 if exist "%TARGET%" (
     if exist "%TARGET%\instance\mt5cloud.db" (
         copy /y "%TARGET%\instance\mt5cloud.db" "%TEMP%\mt5cloud_backup.db" >nul
         echo       DB backed up
     )
     powershell -NoProfile -Command "Remove-Item -Path '%TARGET%' -Recurse -Force"
-    echo       Old folder removed
+    echo       Old runtime removed
 ) else (
-    echo       (No old folder)
+    echo       (No old runtime)
 )
 
-:: ========== 2. Extract new code ==========
-echo [2/5] Extracting new code...
+:: ========== 2. Extract new code into runtime ==========
+echo [2/5] Extracting new code into runtime...
 powershell -NoProfile -Command "Expand-Archive -Path '%ZIP%' -DestinationPath '%TARGET%' -Force"
 if errorlevel 1 (
     echo [ERROR] Extract failed
@@ -50,14 +59,14 @@ echo       OK
 
 :: ========== 3. Stop old server ==========
 echo [3/5] Stopping old server...
-powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*VPS\runtime*' -or $_.CommandLine -like '*app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
 timeout /t 3 /nobreak >nul
 echo       OK
 
 :: ========== 4. Start new server ==========
 echo [4/5] Starting new server...
 cd /d "%TARGET%"
-start "Tradotcom Server" cmd /c "set RENDER=1&& set PORT=80&& python server\app.py"
+start "Tradotcom Server" cmd /c "cd /d %TARGET% && set RENDER=1&& set PORT=80&& python server\app.py"
 timeout /t 5 /nobreak >nul
 echo       OK
 
@@ -67,7 +76,7 @@ curl -s -o nul -w "HTTP %%{http_code}" http://127.0.0.1:80
 echo.
 echo ============================================
 echo   Update complete! Server should be running
-echo   (New window "Tradotcom Server" is the server)
+echo   Runtime folder: %TARGET%
 echo   Updated: %date% %time%
 echo ============================================
 pause
