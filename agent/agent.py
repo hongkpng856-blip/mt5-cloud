@@ -1666,6 +1666,8 @@ def build_files_snapshot():
         _le = []
         if os.path.isdir(terminal_dir):
             for _d_le in os.listdir(terminal_dir):
+                # [ALERT] 2026-09-03 FIX：掃全部 terminal folder（唔好 break 第一個 — 可能係 Common/空 folder）
+                # 只掃有 MQL5/Experts 嘅 folder（真正 terminal data）
                 for _root_le in ('Experts', 'Scripts'):
                     _dir_le = os.path.join(terminal_dir, _d_le, 'MQL5', _root_le)
                     if not os.path.isdir(_dir_le):
@@ -1675,7 +1677,6 @@ def build_files_snapshot():
                             _b_le = os.path.splitext(_f_le)[0]
                             if _b_le not in _le:
                                 _le.append(_b_le)
-                break  # 只掃第一個 terminal data folder
         snap['local_eas'] = sorted(_le)
     except Exception:
         snap['local_eas'] = []
@@ -1748,7 +1749,12 @@ def _ensure_connected():
             return False
         _last_reconnect_attempt = _now_rc
         # [ALERT] 2026-08-27 FIX：改 websocket（polling 喺 threading async_mode 下唔穩定 — 成日disconnect/BadNamespace）
-        sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
+        # [ALERT] 2026-09-03 FIX（VPS 搬遷）：VPS eventlet 嘅 websocket 唔穩定（agent 每 ~50 秒斷線循環）
+        # → reconnect 同主 connect 一致用 polling（HTTP long-poll — 穩定）
+        try:
+            sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False)
+        except Exception:
+            sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
         return True
     except Exception:
         return False
@@ -1876,7 +1882,11 @@ def sync_loop():
                         pass
                     time.sleep(1)
                     try:
-                        sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
+                        # [ALERT] 2026-09-03 FIX（VPS 搬遷）：reconnect 用 polling（websocket 喺 VPS eventlet 唔穩定）
+                        try:
+                            sio.connect(f"{SERVER_URL}", transports=['polling'], wait=False)
+                        except Exception:
+                            sio.connect(f"{SERVER_URL}", transports=['websocket', 'polling'], wait=False)
                     except Exception:
                         pass
                     last_reconn = time.time()
