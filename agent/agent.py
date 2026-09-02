@@ -1014,6 +1014,36 @@ def download_and_install(ea_name, url, ea_config=None):
                     # Auto-sync just compiles & registers EA. User [GO] Deploy will trigger attach.
                     print(f"   [OK] {base_name} compiled & registered. User [GO] Deploy to attach.")
 
+                # [ALERT] 2026-09-03（VPS 搬遷 — 配對卡住 FIX）：安裝完成 → 寫本地 steps 全 done
+                # （server 配對時寫「Agent installing... doing」→ 呢度更新 done → 上報 server → 網頁同步）
+                try:
+                    _b_in = base_name.replace('.mq5', '')
+                    _steps_done = [
+                        {'text': f'Start pairing {_b_in}', 'status': 'done'},
+                        {'text': 'Copy file to local (Experts root)', 'status': 'done'},
+                        {'text': f'Compile {_b_in}.mq5 → .ex5', 'status': 'done'},
+                        {'text': 'Done — pairing complete', 'status': 'done'},
+                    ]
+                    # 寫開發 dir（agent 裝 TradotcomAgent — 讀呢個）
+                    _agent_dir_st = os.path.dirname(os.path.abspath(__file__))
+                    with open(os.path.join(_agent_dir_st, '.ai_control.steps'), 'w', encoding='utf-8') as _f_st2:
+                        json.dump(_steps_done, _f_st2, ensure_ascii=False)
+                    # 寫安裝 dir（alert_worker 讀）
+                    _inst_dir_st = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')
+                    try:
+                        os.makedirs(_inst_dir_st, exist_ok=True)
+                        with open(os.path.join(_inst_dir_st, '.ai_control.steps'), 'w', encoding='utf-8') as _f_st3:
+                            json.dump(_steps_done, _f_st3, ensure_ascii=False)
+                        # 清 show flag（配對完成 → 唔再彈 — 視窗保持顯示等確定）
+                        _sf_show3 = os.path.join(_inst_dir_st, '.ai_control.show')
+                        if os.path.isfile(_sf_show3):
+                            os.remove(_sf_show3)
+                    except Exception:
+                        pass
+                    print(f"   [STEPS] 配對完成 steps 已寫", flush=True)
+                except Exception as _e_st2:
+                    print(f"   [WARN] steps 寫入 failed: {_e_st2}", flush=True)
+
                 sio.emit('install_result', {"status": "ok", "ea": ea_name})
             else:
                 print("[FAIL] Cannot find MT5 Experts folder")
