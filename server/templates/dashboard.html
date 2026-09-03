@@ -1259,6 +1259,20 @@ function cleanBlankCharts(btn) {
                 // 延遲 refresh 網頁狀態（等 agent 上報 snapshot 更新）
                 setTimeout(() => { loadEALibrary(); loadEAConfig(); }, 8000);
                 setTimeout(() => { loadEALibrary(); loadEAConfig(); }, 15000);
+                // [ALERT] 2026-09-03 FIX（清理完成後按鈕仲寫「清理中」— modal 關咗 pollAiControl 唔 poll → 唔復原）：
+                // 獨立輪詢 steps（唔靠 modal）— 全 done → 復原按鈕（最長 60 秒）
+                var _polls = 0;
+                var _pollInt = setInterval(function() {
+                    _polls++;
+                    fetch('/api/control-steps?t=' + Date.now(), { signal: AbortSignal.timeout(3000) })
+                        .then(function(r){ return r.json(); })
+                        .then(function(dd) {
+                            var sts = dd.steps || [];
+                            var allD = sts.length > 0 && sts.every(function(s){ return s.status === 'done'; });
+                            if (allD && btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; clearInterval(_pollInt); }
+                        }).catch(function(){});
+                    if (_polls > 20) { clearInterval(_pollInt); if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; } }
+                }, 3000);
             } else {
                 showLog(' ❌ 清理失敗: ' + (d.error || d.message || '未知錯誤'), 'log-error');
                 if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; }
