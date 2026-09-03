@@ -1941,6 +1941,12 @@ async function pollAiControl() {
                         if (allDone && !hasDoing && window._stepsAllDone !== true) {
                             window._stepsAllDone = true;
                             setTimeout(function(){ try { loadEAConfig(); } catch(e){} }, 500);
+                            // [ALERT] 2026-09-03 FIX（清理完成後按鈕仲寫「清理中」）：復原清理空白圖表按鈕
+                            // （成功路徑冇復原 — 完成先由呢度統一復原 — 同 modal 關閉一致）
+                            try {
+                                var _clBtn = document.querySelector('button[onclick*="cleanBlankCharts"]');
+                                if (_clBtn) { _clBtn.disabled = false; _clBtn.textContent = '清理空白圖表'; }
+                            } catch(e) {}
                         }
                         if (!allDone || hasDoing) window._stepsAllDone = false;
                     }
