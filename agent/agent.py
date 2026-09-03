@@ -1629,6 +1629,17 @@ def check_ea_heartbeat_files():
                     found[ea_name] = {"last_check": mtime, "status": "alive", "age_sec": round(age)}
                 else:
                     found[ea_name] = {"last_check": mtime, "status": "stale", "age_sec": round(age)}
+            # [ALERT] 2026-09-04 FIX（配對庫心跳冇顯示 — state_*.json 冇掃）：EA 寫嘅心跳係 state_<EA>.json（唔係 hb_.txt）
+            # → 一齊掃 state_*.json（先 state 後 hb 覆蓋 — state 有 trades/wins 等詳細）
+            elif fname.startswith('state_') and fname.endswith('.json'):
+                ea_name = fname[6:-5]
+                fpath = os.path.join(fb_dir, fname)
+                mtime = os.path.getmtime(fpath)
+                age = now - mtime
+                if age < 300:
+                    found[ea_name] = {"last_check": mtime, "status": "alive", "age_sec": round(age)}
+                else:
+                    found[ea_name] = {"last_check": mtime, "status": "stale", "age_sec": round(age)}
     return found
 
 
