@@ -4060,8 +4060,12 @@ def handle_sync(data):
                 _sf_sync = os.path.join(_dev_dir_sync, '.ai_control.steps')
                 with open(_sf_sync, 'w', encoding='utf-8') as _f_sy:
                     json.dump(_steps_sync, _f_sy, ensure_ascii=False)
-        except Exception:
-            pass
+                # [ALERT] 2026-09-03 DEBUG：睇 agent 上報 steps 有冇到
+                print(f"[SYNC] control_steps 收到: {len(_steps_sync)} 條（agent {agent.agent_id}）", flush=True)
+            else:
+                print(f"[SYNC] control_steps 空/冇（agent {agent.agent_id}）: {type(_steps_sync).__name__}", flush=True)
+        except Exception as _e_sync_st:
+            print(f"[SYNC] control_steps write failed: {_e_sync_st}", flush=True)
         db.session.commit()
         emit('agent_update', {}, room=agent.agent_id)
 
