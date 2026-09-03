@@ -4202,6 +4202,33 @@ def remove_ea_via_chr(ea_name, mt5_pid=None):
                 _ok_fb = remove_ea_from_chart(ea_name, _fb_pid_use)
                 if _ok_fb:
                     print(f"[OK] fallback 窗口方法成功 — {ea_name} 已連 chart 一齊鏟除")
+                    # [ALERT] 2026-09-04 FIX（鏟除後 .chr 殘留 — Ctrl+W 關 chart 但 .chr 檔喺磁碟 → MT5 restart 會 restore 空白 chart）：
+                    # → fallback 成功後都刪目標 .chr（移去 _deleted — 唔會 restore）
+                    try:
+                        import glob as _gl_fb
+                        _dr_fb = os.path.join(os.environ.get('APPDATA', ''), 'MetaQuotes', 'Terminal')
+                        for _d_fb in os.listdir(_dr_fb):
+                            _cr_fb = os.path.join(_dr_fb, _d_fb, 'MQL5', 'Profiles', 'Charts')
+                            if os.path.isdir(_cr_fb):
+                                for _p_fb in os.listdir(_cr_fb):
+                                    _pd_fb = os.path.join(_cr_fb, _p_fb)
+                                    if not os.path.isdir(_pd_fb) or _p_fb == '_deleted':
+                                        continue
+                                    for _cf_fb in _gl_fb.glob(os.path.join(_pd_fb, '*.chr')):
+                                        try:
+                                            _txt_fb = open(_cf_fb, 'rb').read().decode('utf-16', errors='replace')
+                                            if f'Experts\\{ea_name}.ex5' in _txt_fb or f'Experts\\{ea_name}.mq5' in _txt_fb:
+                                                _bk_fb = os.path.join(_pd_fb, '_deleted')
+                                                os.makedirs(_bk_fb, exist_ok=True)
+                                                _dst_fb = os.path.join(_bk_fb, os.path.basename(_cf_fb))
+                                                if os.path.exists(_dst_fb):
+                                                    _dst_fb = os.path.join(_bk_fb, f"{time.time():.0f}_{os.path.basename(_cf_fb)}")
+                                                os.rename(_cf_fb, _dst_fb)
+                                                print(f"[CHR] fallback 後已刪 .chr: {os.path.basename(_cf_fb)}（→ _deleted）")
+                                        except Exception:
+                                            pass
+                    except Exception as _e_fb2:
+                        print(f"[WARN] fallback 刪 .chr failed: {_e_fb2}")
                     return True
             print(f"[WARN] fallback 窗口方法都唔得 — MT5 已開返")
         except Exception as _e_fb:
