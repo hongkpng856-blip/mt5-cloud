@@ -1246,6 +1246,8 @@ async function fetchEAInventory() {
 function cleanBlankCharts(btn) {
     if (!confirm('確定清理空白圖表？\n\n將關閉 MT5 → 移除所有冇部署 EA 嘅空白 chart（.chr 移去 _deleted）→ 重新開啟 MT5。\n\n有 EA 嘅 chart 會保留。')) return;
     if (btn) { btn.disabled = true; btn.textContent = '清理中...'; }
+    // [ALERT] 2026-09-03 FIX（網頁版冇警告視窗）：加 showControlModal（同 deleteEA/deploy 一致 — 彈網頁警告視窗）
+    showControlModal('清理空白圖表', '正在移除所有冇 EA 嘅空白 chart...');
     fetch('/api/clean-blank-charts', { method: 'POST' })
         .then(r => r.json())
         .then(d => {
@@ -1253,12 +1255,12 @@ function cleanBlankCharts(btn) {
                 showLog(' 清理空白指令已發送（Clean blank charts）', 'log-success');
                 setTimeout(() => location.reload(), 5000);
             } else {
-                alert('❌ 清理失敗: ' + (d.error || d.message || '未知錯誤'));
+                showLog(' ❌ 清理失敗: ' + (d.error || d.message || '未知錯誤'), 'log-error');
                 if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; }
             }
         })
         .catch(e => {
-            alert('❌ 清理失敗: ' + e.message);
+            showLog(' ❌ 清理失敗: ' + e.message, 'log-error');
             if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; }
         });
 }
