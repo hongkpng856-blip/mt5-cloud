@@ -3838,15 +3838,26 @@ def clean_blank_charts(ea_name=''):
     except Exception as _e_c5:
         pass
 
-    # Step 5: steps done
+    # Step 5: steps done — [ALERT] 2026-09-03 FIX：直接覆寫（唔用 _update_steps 累積 — 舊「Remove blank charts pending」殘留 → 卡最尾）
     try:
+        import json as _jc5
         _done_c = [
             {'text': 'Clean blank charts', 'status': 'done'},
             {'text': f'Removed {_n_c} blank chart(s)', 'status': 'done'},
             {'text': 'Restart MT5', 'status': 'done'},
             {'text': 'Verify running charts', 'status': 'done'},
         ]
-        _update_steps(_done_c)
+        # 寫兩個位置（auto_attach dir + TradotcomAgent dir — 電腦版 + 網頁版一致）
+        for _d_c5 in [os.path.dirname(os.path.abspath(__file__)),
+                      os.path.join(os.environ.get('LOCALAPPDATA', ''), 'TradotcomAgent')]:
+            try:
+                os.makedirs(_d_c5, exist_ok=True)
+                _f_c5 = os.path.join(_d_c5, '.ai_control.steps')
+                with open(_f_c5 + '.tmp', 'w', encoding='utf-8') as _fh5:
+                    _jc5.dump(_done_c, _fh5, ensure_ascii=False)
+                os.replace(_f_c5 + '.tmp', _f_c5)
+            except Exception:
+                pass
     except Exception:
         pass
     print(f"[OK] Clean blank charts done（{_n_c} 個）")
