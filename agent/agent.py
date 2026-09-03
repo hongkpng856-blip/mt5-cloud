@@ -1878,14 +1878,15 @@ def build_files_snapshot():
                     break
     except Exception:
         pass
-    # 5. local_eas（Experts/Scripts 根 .mq5/.ex5 — 2026-09-03 VPS 搬遷：server 讀呢個做配對庫「本機有冇」判斷）
+    # 5. local_eas（Experts 根 .mq5/.ex5 — 2026-09-03 VPS 搬遷：server 讀呢個做配對庫「本機有冇」判斷）
+    # [ALERT] 2026-09-04 FIX（user要求：配對庫唔需要顯示 script）：只掃 Experts（唔掃 Scripts — script 唔係 EA）
     try:
         _le = []
         if os.path.isdir(terminal_dir):
             for _d_le in os.listdir(terminal_dir):
                 # [ALERT] 2026-09-03 FIX：掃全部 terminal folder（唔好 break 第一個 — 可能係 Common/空 folder）
                 # 只掃有 MQL5/Experts 嘅 folder（真正 terminal data）
-                for _root_le in ('Experts', 'Scripts'):
+                for _root_le in ('Experts',):
                     _dir_le = os.path.join(terminal_dir, _d_le, 'MQL5', _root_le)
                     if not os.path.isdir(_dir_le):
                         continue
