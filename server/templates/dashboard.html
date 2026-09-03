@@ -1246,15 +1246,16 @@ async function fetchEAInventory() {
 function cleanBlankCharts(btn) {
     if (!confirm('確定清理空白圖表？\n\n將關閉 MT5 → 移除所有冇部署 EA 嘅空白 chart（.chr 移去 _deleted）→ 重新開啟 MT5。\n\n有 EA 嘅 chart 會保留。')) return;
     if (btn) { btn.disabled = true; btn.textContent = '清理中...'; }
-    // [ALERT] 2026-09-03 FIX（網頁版冇警告視窗）：加 showControlModal（同 deleteEA/deploy 一致 — 彈網頁警告視窗）
-    showControlModal('清理空白圖表', '正在移除所有冇 EA 嘅空白 chart...');
+    // [ALERT] 2026-09-03 FIX（網頁版冇警告視窗 + modal 空白）：
+    // showControlModal 要喺 server steps 寫好之後先彈（先彈 → steps mtime 舊 → poll 唔 render → 空白）
+    // → fetch API 成功後先 showControlModal（steps 已寫 — 新過 modal 彈出時間）
     fetch('/api/clean-blank-charts', { method: 'POST' })
         .then(r => r.json())
         .then(d => {
             if (d.success) {
                 showLog(' 清理空白指令已發送（Clean blank charts）', 'log-success');
-                // [ALERT] 2026-09-03 FIX：唔好 5 秒 auto reload（清理仲做緊 — reload 打斷 modal/操作）
-                // → 由 pollAiControl 控制（steps 全 done 先關 modal — 同 deleteEA/deploy 一致）
+                // server steps 已寫 → 而家彈 modal（steps 一定 render 到）
+                showControlModal('清理空白圖表', '正在移除所有冇 EA 嘅空白 chart...');
                 // 延遲 refresh 網頁狀態（等 agent 上報 snapshot 更新）
                 setTimeout(() => { loadEALibrary(); loadEAConfig(); }, 8000);
                 setTimeout(() => { loadEALibrary(); loadEAConfig(); }, 15000);
