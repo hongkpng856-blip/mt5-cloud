@@ -1253,7 +1253,11 @@ function cleanBlankCharts(btn) {
         .then(d => {
             if (d.success) {
                 showLog(' 清理空白指令已發送（Clean blank charts）', 'log-success');
-                setTimeout(() => location.reload(), 5000);
+                // [ALERT] 2026-09-03 FIX：唔好 5 秒 auto reload（清理仲做緊 — reload 打斷 modal/操作）
+                // → 由 pollAiControl 控制（steps 全 done 先關 modal — 同 deleteEA/deploy 一致）
+                // 延遲 refresh 網頁狀態（等 agent 上報 snapshot 更新）
+                setTimeout(() => { loadEALibrary(); loadEAConfig(); }, 8000);
+                setTimeout(() => { loadEALibrary(); loadEAConfig(); }, 15000);
             } else {
                 showLog(' ❌ 清理失敗: ' + (d.error || d.message || '未知錯誤'), 'log-error');
                 if (btn) { btn.disabled = false; btn.textContent = '清理空白圖表'; }
