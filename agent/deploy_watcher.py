@@ -49,11 +49,33 @@ _last_pause_time = {}  # 🚨 2026-08-31 FIX（#157）：pause_cmd 60 秒 dedupe
 def is_auto_attach_running():
     """Check if auto_attach.py is already running (lock file or process)"""
     # Check control_guard lock 都算（AI 控制緊唔好重複）
+    # [ALERT] 2026-09-04 FIX（部署卡死 — lock 殘留）：lock 係「deploy TestMACD|PID」格式 — 要 check PID 仲喺唔喺
+    # （before: lock 存在就 True → auto_attach timeout 死咗但 lock 殘留 → 之後所有 deploy 永遠 skip → 部署卡死）
     try:
         cg_lock = os.path.join(os.path.dirname(__file__), '.ai_control.lock')
         if os.path.exists(cg_lock):
-            return True
-    except:
+            _cg_pid = None
+            _cg_txt = open(cg_lock, 'r', encoding='utf-8', errors='replace').read().strip()
+            if '|' in _cg_txt:
+                _cg_pid = int(_cg_txt.split('|')[-1])
+            elif _cg_txt.isdigit():
+                _cg_pid = int(_cg_txt)
+            if _cg_pid:
+                try:
+                    import psutil as _ps_cg
+                    if _ps_cg.pid_exists(_cg_pid) and _cg_pid != os.getpid():
+                        return True
+                except Exception:
+                    return True
+            else:
+                return True
+            # PID 死咗 → lock 殘留 → 清走（唔好阻新操作）
+            try:
+                os.remove(cg_lock)
+                print(f"   [CLEAN] 舊 .ai_control.lock 已清（PID {_cg_pid} 死咗 — 殘留）")
+            except Exception:
+                pass
+    except Exception:
         pass
     # Check lock file
     if os.path.exists(AUTO_ATTACH_LOCK):
