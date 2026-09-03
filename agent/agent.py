@@ -2302,6 +2302,22 @@ except Exception as e:
         print(f"[WARN] retry connect 都warning: {e2}")
         _alog_write(f"[WARN] retry connect 都warning: {str(e2)[:120]}")
 
+# [ALERT] 2026-09-04 FIX（斷線循環真正 root cause — agent 每 68 秒斷線）：
+# wait=False 非阻塞 connect 之後冇任何嘢處理 engine.io 收發（ping/pong）→ server 收唔到 pong → 60 秒 timeout 斷線
+# → 加 keep-alive daemon thread（sio.wait() — 處理 event 收發 + ping/pong — 連接保持）
+def _sio_keepalive():
+    try:
+        while True:
+            try:
+                if sio.connected:
+                    sio.wait()
+            except Exception:
+                pass
+            time.sleep(3)
+    except Exception:
+        pass
+threading.Thread(target=_sio_keepalive, daemon=True).start()
+
 sync_thread = threading.Thread(target=sync_loop, daemon=True)
 sync_thread.start()
 
