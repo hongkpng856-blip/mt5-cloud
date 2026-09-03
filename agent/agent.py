@@ -1017,8 +1017,13 @@ def download_and_install(ea_name, url, ea_config=None):
                 # [ALERT] 2026-08-28 FIX：before「.ex5 mtime > .mq5 先 skip」— 但心跳注入令 .mq5 永遠新過 .ex5 → 每次 Auto-sent 都 compile → MetaEditor 周不時彈出
                 # → 改為「.ex5 exists就 skip」（心跳注入只改 .mq5 內容 — .ex5 功能一樣 — 唔需要重新 compile）
                 ex5_path = os.path.join(experts_dir, base_name + '.ex5')
-                if os.path.exists(ex5_path):
-                    print(f"   [FFWD] Skip compile: {base_name}.ex5 already exists")
+                # [ALERT] 2026-09-04 FIX（配對假成功 — 舊 .ex5 skip compile → 心跳冇注入）：
+                # before: .ex5 存在就 skip（心跳注入改 .mq5 — 但舊 .ex5 冇心跳碼 → 部署後寫唔到心跳 → 心跳 check 唔到）
+                # → 改：.ex5 存在 + .ex5 新過 .mq5（已含最新心跳注入）先 skip；.mq5 新過 .ex5 → 要重新 compile
+                _ex5_mtime_t = os.path.getmtime(ex5_path) if os.path.exists(ex5_path) else 0
+                _mq5_mtime_t = os.path.getmtime(mq5_path) if os.path.exists(mq5_path) else 0
+                if os.path.exists(ex5_path) and _ex5_mtime_t > _mq5_mtime_t:
+                    print(f"   [FFWD] Skip compile: {base_name}.ex5 already exists (newer than .mq5)")
                 else:
                     import subprocess
                     metaeditor = r"C:\Program Files\MetaTrader 5\metaeditor64.exe"
