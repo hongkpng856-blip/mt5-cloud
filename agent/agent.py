@@ -177,6 +177,32 @@ parser.add_argument('--agent', default=AGENT_ID, help='Agent ID')
 parser.add_argument('--token', default=AGENT_TOKEN, help='Agent token')
 parser.add_argument('--account', default='', help='Account username (fingerprint — 2026-08-31)')
 args, _ = parser.parse_known_args()
+# [ALERT] 2026-09-06 FIX（B 機 direct run 用錯 default — tradotcom.com/DEV00001）：
+# 冇傳參數（或 args 係 default）→ 自動讀 agent_config.json（安裝時寫嘅 config — server/agent/token）
+# （pyw launcher 有讀 config 傳參數 — 但 direct run agent.py 唔會 — 要 fallback 讀 config）
+def _load_config_fallback():
+    try:
+        _cfg_fb = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'agent_config.json')
+        if os.path.isfile(_cfg_fb):
+            import json as _json_fb
+            _cfg_fb_d = _json_fb.load(open(_cfg_fb, 'r', encoding='utf-8'))
+            return _cfg_fb_d
+    except Exception:
+        pass
+    return {}
+_cfg_fb_data = _load_config_fallback()
+# 冇顯式傳參（args 係 default 值）→ 用 config
+try:
+    if args.server == os.environ.get('MT5_CLOUD_URL', 'https://tradotcom.com'):
+        args.server = _cfg_fb_data.get('server_url') or args.server
+    if args.agent == os.environ.get('MT5_CLOUD_AGENT', 'DEV00001'):
+        args.agent = _cfg_fb_data.get('agent_id') or args.agent
+    if not args.token:
+        args.token = _cfg_fb_data.get('agent_token') or args.token
+    if not args.account:
+        args.account = _cfg_fb_data.get('account') or args.account
+except Exception:
+    pass
 SERVER_URL = args.server
 AGENT_ID = args.agent
 AGENT_TOKEN = args.token
