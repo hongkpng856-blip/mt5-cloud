@@ -1335,7 +1335,9 @@ def api_dashboard():
     # [ALERT] 2026-08-26 FIX v2（user實測：新 account 依然見到 5053721681）：
     # → 唔可以 fallback 全局 cache（_global_acc = server local MT5 — 永遠係舊機帳號）
     # → 只顯示「自己 agent 上報嘅 account_info」（每機獨立）— 未上報 → 空（前端顯示「未connect」）
-    _acc_dis = account if account.get('login') else {}
+    # [ALERT] 2026-09-05 FIX（user實測：剷除 Agent 後 offline 依然見到 balance）：
+    # → offline（agent 已移除/斷線）→ account 清空（前端顯示「—」— 唔好顯示舊 balance 誤導）
+    _acc_dis = account if (account.get('login') and _agent_live_status(agent) != 'offline') else {}
     return jsonify({
         "status": _agent_live_status(agent),
         "last_seen": agent.last_seen.isoformat() if agent.last_seen else None,
