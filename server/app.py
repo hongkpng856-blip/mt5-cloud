@@ -4002,6 +4002,18 @@ def handle_register(data):
         join_room(agent.agent_id)
         agent.status = 'connected'
         agent.last_seen = datetime.utcnow()
+        # [ALERT] 2026-09-05 FIX（剷除後再安裝直接啟動 — _remove_agent 標記殘留）：
+        # → agent 重新註冊 = 新 agent 起咗（remove 已完成/取消）→ 清 _remove_agent 標記
+        #   （唔係 → 新 agent poll 讀到舊標記 → 又剷自己 → config 永遠刪唔走/惡性循環）
+        try:
+            _dq_rg = json.loads(agent.deploy_queue or '{}') if agent.deploy_queue else {}
+            if isinstance(_dq_rg, dict) and _dq_rg.get('_remove_agent'):
+                _dq_rg.pop('_remove_agent', None)
+                _dq_rg.pop('_remove_ts', None)
+                agent.deploy_queue = json.dumps(_dq_rg)
+                print(f"[WS] Agent {agent.agent_id} 重新註冊 — 清 _remove_agent 殘留標記")
+        except Exception:
+            pass
         db.session.commit()
         emit('registered', {"status":"ok"})
         # [ALERT] 2026-08-26（安裝驗證）：Agent 連上 → 通知前端（toast「[OK] Agent 已connection」）
@@ -4245,6 +4257,17 @@ def api_agent_remove_complete():
     if agent:
         print(f"[API] [OK] Agent {agent_id} 已remove（agent 回報）— 標記 offline（DB 記錄保留）")
         agent.status = 'offline'
+        # [ALERT] 2026-09-05 FIX（剷除後再安裝直接啟動 — _remove_agent 標記殘留）：
+        # before: 標記永遠留喺 deploy_queue → 新 agent 啟動後 poll 讀到 → 又剷自己（惡性循環 / config 剷唔走）
+        # → agent 完成 remove → 清 _remove_agent 標記（deploy_queue 恢復正常）
+        try:
+            _dq_rm = json.loads(agent.deploy_queue or '{}') if agent.deploy_queue else {}
+            if isinstance(_dq_rm, dict):
+                _dq_rm.pop('_remove_agent', None)
+                _dq_rm.pop('_remove_ts', None)
+                agent.deploy_queue = json.dumps(_dq_rm)
+        except Exception:
+            pass
         db.session.commit()
     return jsonify({"success": True})
 
