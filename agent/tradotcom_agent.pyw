@@ -270,7 +270,7 @@ class InstallWizard:
         try:
             # [ALERT] 2026-08-26 FIX：用「執行 agent 嗰個 Python」（3.11/3.12）裝套件 — 唔用 pyw 自己（可能 3.14/uv — 唔一致）
             _pip_py = _pick_good_python()
-            subprocess.run([_pip_py, "-m", "pip", "install", "-q", "MetaTrader5", "python-socketio[client]", "requests", "pystray", "pillow"],
+            subprocess.run([_pip_py, "-m", "pip", "install", "-q", "MetaTrader5", "python-socketio[client]", "requests", "pystray", "pillow", "pyautogui", "pywinauto"],
                            timeout=180)
         except Exception as e:
             self._status.config(text=f"[WARNING] Package install warning: {e}")
@@ -429,7 +429,8 @@ def direct_launch(cfg):
         _py_exe = _pick_good_python()
         try:
             # 用目標 Python（3.11/3.12）檢查依賴 — 唔用 pyw 自己（3.14 import 會卡死）
-            _chk = subprocess.run([_py_exe, "-c", "import MetaTrader5, socketio"],
+            # [ALERT] 2026-09-06 FIX（B 機冇 pyautogui — Navigator refresh failed → deploy fail）：檢查埋 GUI 依賴（pyautogui/pywinauto — auto_attach 操控 MT5 必需）
+            _chk = subprocess.run([_py_exe, "-c", "import MetaTrader5, socketio, pyautogui, pywinauto"],
                                   capture_output=True, timeout=15)
             if _chk.returncode == 0:
                 _log("依賴 OK")
