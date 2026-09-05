@@ -18,6 +18,9 @@ import subprocess
 import threading
 import json
 
+# [ALERT] 2026-09-05（企業級自動更新）：Agent 版本 — server /api/agent-version 對比（有新版 → 彈視窗通知更新）
+AGENT_VERSION = '0.11.10'
+
 # === Config ===
 import sys as _sys0, os as _os0, traceback as _tb0
 # [ALERT] 2026-08-27 FIX：強制 stdout/stderr UTF-8（pyw start時 cp950 唔支持 emoji → UnicodeEncodeError crash）
@@ -2425,6 +2428,146 @@ except Exception:
 # [ALERT] 2026-08-26（user要求：success明顯啲）：系統匣圖示（綠色=online 紅色=offline）
 try:
     _start_tray_icon()
+except Exception:
+    pass
+
+
+# ================================================================
+#  [ALERT] 2026-09-05（企業級自動更新）：Agent 偵測新版 → 彈視窗通知 → 用戶確認 → 下載更新 + 重啟
+# ================================================================
+_UPDATE_CHECKED = False  # 一次 session 只 check 一次（啟動後）— 唔好成日彈
+
+def _download_file(_url, _dest):
+    """下載檔案去 dest（用 requests — 有 UA）"""
+    try:
+        import requests as _rq_dl
+        _r = _rq_dl.get(_url, timeout=30)
+        if _r.status_code == 200:
+            with open(_dest, 'wb') as _f_dl:
+                _f_dl.write(_r.content)
+            return True
+    except Exception as _e_dl:
+        print(f"[UPDATE] download failed: {_e_dl}")
+    return False
+
+def _do_agent_update():
+    """下載新版 agent.py + 平台服務檔 → 覆蓋 → 重啟 agent"""
+    global AGENT_VERSION
+    try:
+        _base = os.path.dirname(os.path.abspath(__file__))
+        _tmpl = os.path.join(_base, f'agent.py.update.tmp')
+        print(f"[UPDATE] 下載新版 agent.py（{SERVER_URL}/api/agent-py）...")
+        if not _download_file(f"{SERVER_URL}/api/agent-py", _tmpl):
+            print(f"[UPDATE] 下載 agent.py failed — 中止更新")
+            return False
+        # 驗證（基本 — 有 AGENT_VERSION + syntax OK）
+        try:
+            _new_txt = open(_tmpl, 'r', encoding='utf-8', errors='replace').read()
+            import re as _re_upd
+            _m_upd = _re_upd.search(r'AGENT_VERSION\s*=\s*[\'\"]([^\'\"]+)[\'\"]', _new_txt)
+            if not _m_upd:
+                print(f"[UPDATE] 新版 agent.py 冇 AGENT_VERSION — 唔更新（防壞檔）")
+                return False
+            compile(_new_txt, 'agent.py', 'exec')  # syntax check
+        except Exception as _e_val:
+            print(f"[UPDATE] 新版驗證 failed: {_e_val} — 唔更新")
+            return False
+        # 覆蓋 agent.py
+        os.replace(_tmpl, os.path.join(_base, 'agent.py'))
+        print(f"[UPDATE] agent.py 已更新 → {_m_upd.group(1)}")
+        _alog_write(f"[UPDATE] agent 已更新到 {_m_upd.group(1)}")
+        # 下載埋平台服務檔（同版本）
+        for _svc_upd in ('deploy_watcher.py', 'auto_attach.py', 'alert_worker.py', 'deploy_notify.py',
+                         'refresh_navigator.py', 'control_guard.py'):
+            try:
+                _svc_tmp = os.path.join(_base, f'{_svc_upd}.update.tmp')
+                if _download_file(f"{SERVER_URL}/api/agent-service/{_svc_upd}", _svc_tmp):
+                    os.replace(_svc_tmp, os.path.join(_base, _svc_upd))
+                    print(f"[UPDATE] {_svc_upd} 已更新")
+            except Exception:
+                pass
+        # 重啟 agent（新 code）
+        print(f"[UPDATE] 重啟 agent...")
+        _alog_write("[UPDATE] 重啟 agent（食新版本）")
+        try:
+            import subprocess as _sp_upd
+            _py_upd = sys.executable
+            _args_upd = [sys.argv[0]] if sys.argv else []
+            _env_upd = dict(os.environ)
+            # 唔好用 sys.argv（可能有舊參數）— 用 agent_config.json 嘅 server/agent/token
+            _cfg_upd = {}
+            try:
+                _cfg_upd = json.load(open(os.path.join(_base, 'agent_config.json'), 'r', encoding='utf-8'))
+            except Exception:
+                pass
+            _server_upd = _cfg_upd.get('server_url') or (sys.argv[1] if len(sys.argv) > 1 else '')
+            _agent_upd = _cfg_upd.get('agent_id') or (sys.argv[3] if len(sys.argv) > 3 else '')
+            _token_upd = _cfg_upd.get('token') or (sys.argv[5] if len(sys.argv) > 5 else '')
+            _full_args = [_py_upd, '-u', os.path.join(_base, 'agent.py')]
+            if _server_upd:
+                _full_args += ['--server', _server_upd]
+            if _agent_upd:
+                _full_args += ['--agent', _agent_upd]
+            if _token_upd:
+                _full_args += ['--token', _token_upd]
+            # 延遲 2 秒重啟（等呢個 process 完結）
+            threading.Timer(2.0, lambda: _sp_upd.Popen(_full_args, env=_env_upd,
+                                                       creationflags=0x00000008 if hasattr(_sp_upd, 'CREATE_NO_WINDOW') else 0)).start()
+        except Exception as _e_rst:
+            print(f"[UPDATE] 重啟 failed: {_e_rst}")
+        # 結束自己（新 agent 2 秒後起）
+        os._exit(0)
+    except Exception as _e_all_upd:
+        print(f"[UPDATE] 更新流程 error: {_e_all_upd}")
+        _alog_write(f"[UPDATE] 更新流程 error: {str(_e_all_upd)[:120]}")
+    return False
+
+def _check_agent_update():
+    """check server 有冇新版（啟動後 15 秒 + 之後每 12 小時）— 有 → 彈視窗 → 確認 → 更新"""
+    global _UPDATE_CHECKED
+    try:
+        # 啟動後 15 秒先 check（等 agent 連到 server）
+        time.sleep(15)
+        while True:
+            try:
+                if _UPDATE_CHECKED:
+                    break  # 一次 session 一次
+                _UPDATE_CHECKED = True
+                # 攞 server 最新版本
+                import urllib.request as _urq
+                _req_upd = _urq.Request(f"{SERVER_URL}/api/agent-version", headers={'User-Agent': 'Mozilla/5.0 TradotcomAgent/1.0'})
+                _r_upd = _urq.urlopen(_req_upd, timeout=10)
+                _d_upd = json.loads(_r_upd.read())
+                _latest_ver = str(_d_upd.get('version', '0'))
+                print(f"[UPDATE] 版本 check: local={AGENT_VERSION} latest={_latest_ver}")
+                if _latest_ver in ('0', '') or _latest_ver == AGENT_VERSION:
+                    return  # 冇新版
+                # 有新版 → 彈視窗（企業級 UX — 用戶確認先更新）
+                print(f"[UPDATE] 偵測到新版 {_latest_ver}（local {AGENT_VERSION}）— 彈視窗通知")
+                try:
+                    import tkinter as _tk
+                    from tkinter import messagebox as _tk_msg
+                    _answer = _tk_msg.askyesno(
+                        "Tradotcom Agent 更新",
+                        f"Tradotcom Agent 有新版本 {_latest_ver}（你而家係 {AGENT_VERSION}）。\n\n"
+                        f"要而家更新嗎？\n（更新期間 Agent 會自動重啟 — 約 10 秒）"
+                    )
+                    if _answer:
+                        print(f"[UPDATE] 用戶確認更新 → 執行")
+                        _do_agent_update()
+                except Exception as _e_tk:
+                    print(f"[UPDATE] 彈窗 failed（{_e_tk}）— 自動更新")
+                    _do_agent_update()
+                return
+            except Exception as _e_chk:
+                print(f"[UPDATE] check failed: {_e_chk}")
+                return
+    except Exception:
+        pass
+
+# 啟動自動更新檢查（daemon — 唔阻主流程）
+try:
+    threading.Thread(target=_check_agent_update, daemon=True).start()
 except Exception:
     pass
 

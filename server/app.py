@@ -3938,6 +3938,24 @@ def api_agent_py():
     return send_from_directory(agent_dir, 'agent.py')
 
 
+@app.route('/api/agent-version')
+def api_agent_version():
+    """[ALERT] 2026-09-05（企業級自動更新）：返最新 Agent 版本（agent 對比 — 有新版 → 彈視窗更新）
+    讀 server 自己 agent 目錄嘅 agent.py AGENT_VERSION（server 永遠行最新 — 版本權威）"""
+    try:
+        agent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'agent'))
+        _apy = os.path.join(agent_dir, 'agent.py')
+        if os.path.isfile(_apy):
+            import re as _re_ver
+            _txt_ver = open(_apy, 'r', encoding='utf-8', errors='replace').read()
+            _m_ver = _re_ver.search(r'AGENT_VERSION\s*=\s*[\'\"]([^\'\"]+)[\'\"]', _txt_ver)
+            if _m_ver:
+                return jsonify({"version": _m_ver.group(1), "success": True})
+        return jsonify({"version": '0', "success": False})
+    except Exception as _e_ver:
+        return jsonify({"version": '0', "success": False, "error": str(_e_ver)})
+
+
 @app.route('/api/agent-service/<name>')
 def api_agent_service(name):
     """[ALERT] 2026-08-28（user要求：安裝 = 全部裝返）：下載平台服務腳本（deploy_watcher/alert_worker/auto_trade_detector）
